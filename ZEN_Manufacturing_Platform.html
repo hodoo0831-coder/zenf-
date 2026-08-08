@@ -365,7 +365,12 @@ V.prod=()=>{
   const rows=L.map(l=>{const a=G.achieve(l),col=sc(a,70,60);return `<div class="barrow"><div class="nm">${l.key}</div><div>${pbar(a,col)}<div class="mini" style="margin-top:4px">CAPA 부하 ${G.load(l)}% · 예상종료 ${l.end}</div></div><div class="vv" style="color:${col}">${a}%</div></div>`;}).join('');
   const tbl=L.map(l=>{const a=G.achieve(l);return `<tr><td>${l.key}</td><td>${l.target.toLocaleString()}</td><td>${l.actual.toLocaleString()}</td><td style="color:${sc(a,70,60)}">${a}%</td><td>${G.load(l)}%</td><td>${l.end}</td></tr>`;}).join('');
   const trend=[{label:'07',v:14},{label:'08',v:22},{label:'09',v:26},{label:'10',v:25},{label:'11',v:24},{label:'12',v:12},{label:'13',v:23}];
+  let planCard='';
+  if(DB.plan){const wk=DB.plan.weeks[planWeek]||DB.plan.weeks[0];const gmax=Math.max(...wk.groups.map(g=>g.weekTotal));const gtot=wk.groups.reduce((a,g)=>a+g.weekTotal,0);
+    const rows=wk.groups.slice(0,8).map(g=>`<div class="barrow" style="grid-template-columns:150px 1fr 130px"><div class="nm">${g.name}</div><div>${pbar(g.weekTotal/gmax*100,'#3b82f6')}</div><div class="vv">${g.weekTotal.toLocaleString()}</div></div>`).join('');
+    planCard=`<div class="card" style="margin-bottom:14px"><h3>주간 생산계획 목표 (라인군) <span class="hint">${wk.name} · 실 엑셀 연동 · 총 ${gtot.toLocaleString()}개</span><button class="btn" onclick="go('plan')">상세 ›</button></h3>${rows}<div class="mini" style="margin-top:8px">※ 리소스명 자동 매핑 기반 계획(목표) 수량. 실적(달성률)은 MES/실적 파일 연동 시 자동 계산됩니다.</div></div>`;}
   return `
+  ${planCard}
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic">🎯</div><div class="lab">금일 목표 수량</div><div class="val">${(tp.t/1000).toFixed(0)}<small>천개</small></div></div>
     <div class="kpi"><div class="ic">✅</div><div class="lab">현재 실적</div><div class="val">${(tp.a/1000).toFixed(0)}<small>천개</small></div><div class="delta">달성률 ${tp.ach}%</div></div>
@@ -574,6 +579,20 @@ V.data=()=>{
 };
 /* ===== 주간 생산계획 (실 엑셀 파싱) ===== */
 let planWeek=0;
+// 리소스(설비)명 → 공정(라인군) 매핑 규칙
+const GROUP_RULES=[
+  [/^튜브/,'튜브 라인'],[/^치약충전|^치약수/,'치약충전 라인'],[/^세정자동화/,'세정자동화 라인'],
+  [/^직선/,'직선 라인'],[/^멀티셀|^멀티/,'멀티셀 라인'],[/염모|산화/,'염모·산화 라인'],
+  [/세럼충전|^세럼/,'세럼충전 라인'],[/턴테이블/,'턴테이블 라인'],[/^팜플/,'팜플 라인'],[/^리필/,'리필 라인'],[/^로션|^크림/,'로션·크림 라인'],
+];
+function lineGroupOf(name){for(const[re,g]of GROUP_RULES)if(re.test(name))return g;return '기타 라인';}
+function buildGroups(resources){
+  const gm={};
+  resources.forEach(r=>{const g=lineGroupOf(r.name);if(!gm[g])gm[g]={name:g,resCount:0,orderCount:0,weekTotal:0,daily:{},resources:[]};
+    const G=gm[g];G.resCount++;G.orderCount+=r.orders.length;G.weekTotal+=r.weekTotal;G.resources.push(r.name);
+    Object.entries(r.daily).forEach(([d,q])=>G.daily[d]=(G.daily[d]||0)+q);});
+  return Object.values(gm).sort((a,b)=>b.weekTotal-a.weekTotal);
+}
 function parsePlan(wb){
   const weeks=wb.SheetNames.map(sn=>{
     const a=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});
@@ -590,7 +609,8 @@ function parsePlan(wb){
             res.orders.push({date:dc.date,orderNo:String(on),qty,product:prod});
             res.daily[dc.date]=(res.daily[dc.date]||0)+qty;res.weekTotal+=qty;}});
       }}
-    return {name:sn,dates:dateCols.map(d=>d.date),resources:Object.values(rm).filter(r=>r.weekTotal>0).sort((x,y)=>y.weekTotal-x.weekTotal)};
+    const resources=Object.values(rm).filter(r=>r.weekTotal>0).sort((x,y)=>y.weekTotal-x.weekTotal);
+    return {name:sn,dates:dateCols.map(d=>d.date),resources,groups:buildGroups(resources)};
   }).filter(w=>w.resources.length);
   return {weeks};
 }
@@ -606,6 +626,8 @@ V.plan=()=>{
   const allOrders=wk.resources.flatMap(r=>r.orders.map(o=>({...o,res:r.name}))).sort((a,b)=>a.date.localeCompare(b.date)||b.qty-a.qty);
   const oRows=allOrders.slice(0,40).map(o=>`<tr><td>${o.date.slice(5)}</td><td>${o.res}</td><td>${o.orderNo}</td><td style="text-align:left;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.product||'-'}</td><td>${o.qty.toLocaleString()}</td></tr>`).join('');
   const tabs=DB.plan.weeks.map((w,i)=>`<button class="btn ${i===planWeek?'p':''}" onclick="planWeek=${i};go('plan')">${w.name}</button>`).join(' ');
+  const gmax=Math.max(...wk.groups.map(g=>g.weekTotal));
+  const grpRows=wk.groups.map(g=>`<div class="barrow" style="grid-template-columns:150px 1fr 210px"><div class="nm">${g.name}</div><div>${pbar(g.weekTotal/gmax*100,'#14b8a6')}<div class="mini" style="margin-top:4px">리소스 ${g.resCount}대 · 오더 ${g.orderCount}건 · ${g.resources.slice(0,4).join(', ')}${g.resources.length>4?' 외 '+(g.resources.length-4):''}</div></div><div class="vv">${g.weekTotal.toLocaleString()} <span class="mut2" style="font-weight:600">(${Math.round(g.weekTotal/tot*100)}%)</span></div></div>`).join('');
   return `
   <div style="display:flex;gap:8px;margin-bottom:14px">${tabs}<span class="src live" style="margin-left:auto;align-self:center">실데이터: ${dataSource}</span></div>
   <div class="grid g4" style="margin-bottom:14px">
@@ -614,6 +636,7 @@ V.plan=()=>{
     <div class="kpi"><div class="ic">🏭</div><div class="lab">가동 리소스</div><div class="val">${wk.resources.length}<small>개</small></div><div class="delta">설비/라인</div></div>
     <div class="kpi"><div class="ic">🗓</div><div class="lab">계획 일수</div><div class="val">${wk.dates.length}<small>일</small></div><div class="delta">${wk.dates[0]?.slice(5)}~${wk.dates[wk.dates.length-1]?.slice(5)}</div></div>
   </div>
+  <div class="card" style="margin-bottom:14px"><h3>공정(라인군)별 집계 <span class="hint">리소스명 자동 매핑 · ${wk.groups.length}개 라인군</span></h3>${grpRows}</div>
   <div class="grid g2" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
     <div class="card"><h3>리소스별 주간 계획수량 <span class="hint">상위 14 · 개</span></h3>${resRows}</div>
     <div class="card"><h3>일자별 계획수량 <span class="hint">천개</span></h3>${lineChart(daily,{stroke:'#22c55e',fill:'#22c55e22',colorAt:()=>'#22c55e'})}
