@@ -322,8 +322,8 @@ const AGENTS=[
 ];
 const ROLES={
   worker:{name:'현장직',emoji:'🧑‍🏭',allow:['home','prod','clean','safe','safeapp']},
-  leader:{name:'반장',emoji:'👷',allow:['home','prod','labor','clean','stock','safe','qual','plan','safeapp']},
-  manager:{name:'공장장',emoji:'👔',allow:['home','prod','labor','clean','stock','safe','qual','kpi','report','plan','data','safeapp']},
+  leader:{name:'반장',emoji:'👷',allow:['home','prod','labor','clean','stock','safe','qual','plan','delay','safeapp']},
+  manager:{name:'공장장',emoji:'👔',allow:['home','prod','labor','clean','stock','safe','qual','kpi','report','plan','delay','data','safeapp']},
 };
 let role='leader';
 
@@ -367,8 +367,14 @@ V.prod=()=>{
   const trend=[{label:'07',v:14},{label:'08',v:22},{label:'09',v:26},{label:'10',v:25},{label:'11',v:24},{label:'12',v:12},{label:'13',v:23}];
   let planCard='';
   if(DB.plan){const wk=DB.plan.weeks[planWeek]||DB.plan.weeks[0];const gmax=Math.max(...wk.groups.map(g=>g.weekTotal));const gtot=wk.groups.reduce((a,g)=>a+g.weekTotal,0);
-    const rows=wk.groups.slice(0,8).map(g=>`<div class="barrow" style="grid-template-columns:150px 1fr 130px"><div class="nm">${g.name}</div><div>${pbar(g.weekTotal/gmax*100,'#3b82f6')}</div><div class="vv">${g.weekTotal.toLocaleString()}</div></div>`).join('');
-    planCard=`<div class="card" style="margin-bottom:14px"><h3>주간 생산계획 목표 (라인군) <span class="hint">${wk.name} · 실 엑셀 연동 · 총 ${gtot.toLocaleString()}개</span><button class="btn" onclick="go('plan')">상세 ›</button></h3>${rows}<div class="mini" style="margin-top:8px">※ 리소스명 자동 매핑 기반 계획(목표) 수량. 실적(달성률)은 MES/실적 파일 연동 시 자동 계산됩니다.</div></div>`;}
+    const gAct=planHasActual()?groupActual(wk):null;
+    const rows=wk.groups.slice(0,8).map(g=>{let tail=`<div class="vv">${g.weekTotal.toLocaleString()}</div>`,bar=pbar(g.weekTotal/gmax*100,'#3b82f6');
+      if(gAct){const av=gAct[g.name]||0,a=Math.round(av/g.weekTotal*100),col=a>=95?'#22c55e':a>=85?'#f59e0b':'#ef4444';
+        bar=`<div style="position:relative">${pbar(g.weekTotal/gmax*100,'#1c3350')}<div style="position:absolute;top:0;left:0;right:0">${pbar(av/gmax*100,col)}</div></div>`;
+        tail=`<div class="vv" style="color:${col}">${a}% <span class="mut2" style="font-weight:600">/${g.weekTotal.toLocaleString()}</span></div>`;}
+      return `<div class="barrow" style="grid-template-columns:150px 1fr 150px"><div class="nm">${g.name}</div><div>${bar}</div>${tail}</div>`;}).join('');
+    const note=planHasActual()?`실적 연동됨 — 막대=실적/계획, 우측=달성률. <a onclick="go('delay')" style="color:#7fb8ff;cursor:pointer">지연오더 보기 ›</a>`:'※ 계획(목표) 수량. 실적/달성률은 실적 파일 업로드 또는 <a onclick="go(\'data\')" style="color:#7fb8ff;cursor:pointer">데이터 관리</a>에서 시뮬레이션 시 자동 계산됩니다.';
+    planCard=`<div class="card" style="margin-bottom:14px"><h3>주간 생산계획 ${planHasActual()?'계획 대비 실적':'목표'} (라인군) <span class="hint">${wk.name} · 실 엑셀 연동 · 총 ${gtot.toLocaleString()}개</span><button class="btn" onclick="go('plan')">상세 ›</button></h3>${rows}<div class="mini" style="margin-top:8px">${note}</div></div>`;}
   return `
   ${planCard}
   <div class="grid g4" style="margin-bottom:14px">
@@ -551,7 +557,7 @@ const EDIT_COLS=[
 V.data=()=>{
   const rows=DB.lines.map((l,i)=>`<tr><td>${l.key}</td>${EDIT_COLS.map(c=>`<td><input type="number" step="any" value="${l[c.k]}" oninput="editLine(${i},'${c.k}',this.value)"></td>`).join('')}</tr>`).join('');
   return `
-  <div class="grid g3" style="margin-bottom:14px">
+  <div class="grid g2" style="margin-bottom:14px">
     <div class="card"><h3>① 파일 가져오기 <span class="hint">.xlsx / .csv</span></h3>
       <div class="drop" id="drop" onclick="document.getElementById('file').click()">
         <div style="font-size:30px">📥</div><div style="font-weight:800;margin-top:6px">엑셀·CSV 파일을 끌어놓거나 클릭</div>
@@ -568,8 +574,17 @@ V.data=()=>{
         <button class="btn" onclick="resetDB()">↺ 데모값 복원</button>
       </div>
     </div>
-    <div class="card"><h3>③ MES/DB 연동 <span class="hint">참고</span></h3>
-      <p class="mini" style="line-height:1.7">사내 MES·ERP 직접 연동은 보안(사내망·인증)상 백엔드 프록시가 필요합니다. 본 플랫폼은 <b>엑셀/CSV 업로드</b>와 <b>직접 편집</b>으로 동일한 대시보드를 구동합니다. 정기 연동이 필요하면 읽기전용 API 게이트웨이 설계를 별도 진행합니다.</p>
+    <div class="card"><h3>③ 실적 연동 <span class="hint">계획 대비 달성률</span></h3>
+      <p class="mini" style="line-height:1.7">주간계획 업로드 후 <b>실적 파일</b>(오더번호 + 실적수량 헤더)을 올리면 오더별 달성률·<b>지연오더</b>가 자동 계산됩니다. 실적 파일이 없으면 시뮬레이션으로 즉시 확인하세요.</p>
+      <input id="actfile" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importActual(this.files[0])">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn p" onclick="document.getElementById('actfile').click()" ${DB.plan?'':'disabled style=\"opacity:.5\"'}>⬆ 실적 파일 업로드</button>
+        <button class="btn" onclick="simulateActual()" ${DB.plan?'':'disabled style=\"opacity:.5\"'}>▶ 실적 시뮬레이션</button>
+      </div>
+      <div class="mini" style="margin-top:8px">${DB.plan?(planHasActual()?'✅ 실적 연동됨':'생산계획 로드됨 · 실적 대기'):'⚠ 먼저 주간 생산계획을 업로드하세요'}</div>
+    </div>
+    <div class="card"><h3>④ MES/DB 연동 <span class="hint">참고</span></h3>
+      <p class="mini" style="line-height:1.7">사내 MES·ERP 직접 연동은 보안(사내망·인증)상 백엔드 프록시가 필요합니다. 본 플랫폼은 <b>엑셀/CSV 업로드</b>와 <b>직접 편집</b>으로 동일 대시보드를 구동합니다.</p>
     </div>
   </div>
   <div class="card"><h3>라인 데이터 직접 편집 <span class="hint">값을 바꾸면 전 Agent 화면이 즉시 재계산됩니다</span></h3>
@@ -586,6 +601,37 @@ const GROUP_RULES=[
   [/세럼충전|^세럼/,'세럼충전 라인'],[/턴테이블/,'턴테이블 라인'],[/^팜플/,'팜플 라인'],[/^리필/,'리필 라인'],[/^로션|^크림/,'로션·크림 라인'],
 ];
 function lineGroupOf(name){for(const[re,g]of GROUP_RULES)if(re.test(name))return g;return '기타 라인';}
+/* ===== 실적(Actual) 연동 ===== */
+function planHasActual(){return !!(DB.plan&&DB.plan.hasActual);}
+function eachOrder(cb){if(!DB.plan)return;DB.plan.weeks.forEach((w,wi)=>w.resources.forEach(r=>r.orders.forEach(o=>cb(o,r,w,wi))));}
+function groupActual(wk){const m={};wk.resources.forEach(r=>{const gn=lineGroupOf(r.name);r.orders.forEach(o=>{if(o.actual!=null)m[gn]=(m[gn]||0)+o.actual;});});return m;}
+function delayedOrders(wk){return wk.resources.flatMap(r=>r.orders.filter(o=>o.actual!=null&&o.actual<o.qty).map(o=>({...o,res:r.name,group:lineGroupOf(r.name),short:o.qty-o.actual,ach:Math.round(o.actual/o.qty*100)}))).sort((a,b)=>b.short-a.short);}
+function simulateActual(){
+  if(!DB.plan)return toast('먼저 생산계획을 업로드하세요');
+  const hash=o=>{let h=0;const s=String(o.orderNo);for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;};
+  eachOrder(o=>{const hh=hash(o)%100;
+    const rate=hh<10?0.40+(hh/10)*0.30:hh<25?0.70+((hh-10)/15)*0.20:0.92+((hh-25)/75)*0.13;
+    o.actual=Math.round(o.qty*rate);});
+  DB.plan.hasActual=true;if(!/실적/.test(dataSource))dataSource+=' + 실적(시뮬)';saveDB();
+  toast('실적 시뮬레이션 생성 완료 — 계획 대비 달성률 산출');rerender();go('delay');
+}
+const ACT_ORDER_KEYS=['오더번호','오더','오더no','orderno','order'];
+const ACT_QTY_KEYS=['실적','실적수량','생산수량','양품수량','완료수량','생산실적'];
+function importActual(file){
+  if(!DB.plan)return toast('먼저 생산계획을 업로드하세요');
+  const name=file.name.toLowerCase();const rd=new FileReader();
+  rd.onload=e=>{try{
+    let rows;
+    if(name.endsWith('.csv'))rows=csvToRows(e.target.result);
+    else{const wb=XLSX.read(e.target.result,{type:'binary'});rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});}
+    const idx={};eachOrder(o=>{idx[String(o.orderNo)]=o;});
+    let n=0;rows.forEach(r=>{let on,q;Object.keys(r).forEach(h=>{const hn=String(h).trim().toLowerCase();if(ACT_ORDER_KEYS.includes(hn))on=String(r[h]).trim();if(ACT_QTY_KEYS.includes(String(h).trim()))q=+r[h];});
+      if(on&&idx[on]&&!isNaN(q)){idx[on].actual=q;n++;}});
+    if(n>0){DB.plan.hasActual=true;if(!/실적/.test(dataSource))dataSource+=' + 실적';saveDB();toast(n+'건 오더 실적 반영');rerender();go('delay');}
+    else toast('매칭되는 오더번호가 없습니다 (오더번호/실적수량 헤더 확인)');
+  }catch(err){toast('실적 파싱 실패: '+err.message);}};
+  if(name.endsWith('.csv'))rd.readAsText(file);else rd.readAsBinaryString(file);
+}
 function buildGroups(resources){
   const gm={};
   resources.forEach(r=>{const g=lineGroupOf(r.name);if(!gm[g])gm[g]={name:g,resCount:0,orderCount:0,weekTotal:0,daily:{},resources:[]};
@@ -624,10 +670,18 @@ V.plan=()=>{
   const maxR=Math.max(...wk.resources.map(r=>r.weekTotal));
   const resRows=wk.resources.slice(0,14).map((r,i)=>`<div class="barrow" style="grid-template-columns:130px 1fr 96px"><div class="nm">${r.name}</div><div>${pbar(r.weekTotal/maxR*100,'#3b82f6')}<div class="mini" style="margin-top:4px">${r.orders.length}오더 · ${Object.keys(r.daily).length}일 가동</div></div><div class="vv">${r.weekTotal.toLocaleString()}</div></div>`).join('');
   const allOrders=wk.resources.flatMap(r=>r.orders.map(o=>({...o,res:r.name}))).sort((a,b)=>a.date.localeCompare(b.date)||b.qty-a.qty);
-  const oRows=allOrders.slice(0,40).map(o=>`<tr><td>${o.date.slice(5)}</td><td>${o.res}</td><td>${o.orderNo}</td><td style="text-align:left;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.product||'-'}</td><td>${o.qty.toLocaleString()}</td></tr>`).join('');
+  const HA=planHasActual();
+  const oHead=HA?'<tr><th>일자</th><th>리소스</th><th>오더번호</th><th style="text-align:left">품명</th><th>계획</th><th>실적</th><th>달성률</th></tr>':'<tr><th>일자</th><th>리소스</th><th>오더번호</th><th style="text-align:left">품명</th><th>수량</th></tr>';
+  const oRows=allOrders.slice(0,40).map(o=>{const base=`<td>${o.date.slice(5)}</td><td>${o.res}</td><td>${o.orderNo}</td><td style="text-align:left;max-width:${HA?260:340}px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.product||'-'}</td><td>${o.qty.toLocaleString()}</td>`;
+    if(!HA)return `<tr>${base}</tr>`;
+    const a=o.actual!=null?Math.round(o.actual/o.qty*100):null;const col=a==null?'':a<70?'#ef4444':a<90?'#f59e0b':'#22c55e';
+    return `<tr>${base}<td>${o.actual!=null?o.actual.toLocaleString():'-'}</td><td style="color:${col}">${a!=null?a+'%':'-'}</td></tr>`;}).join('');
   const tabs=DB.plan.weeks.map((w,i)=>`<button class="btn ${i===planWeek?'p':''}" onclick="planWeek=${i};go('plan')">${w.name}</button>`).join(' ');
   const gmax=Math.max(...wk.groups.map(g=>g.weekTotal));
-  const grpRows=wk.groups.map(g=>`<div class="barrow" style="grid-template-columns:150px 1fr 210px"><div class="nm">${g.name}</div><div>${pbar(g.weekTotal/gmax*100,'#14b8a6')}<div class="mini" style="margin-top:4px">리소스 ${g.resCount}대 · 오더 ${g.orderCount}건 · ${g.resources.slice(0,4).join(', ')}${g.resources.length>4?' 외 '+(g.resources.length-4):''}</div></div><div class="vv">${g.weekTotal.toLocaleString()} <span class="mut2" style="font-weight:600">(${Math.round(g.weekTotal/tot*100)}%)</span></div></div>`).join('');
+  const gAct=planHasActual()?groupActual(wk):null;
+  const grpRows=wk.groups.map(g=>{
+    const actInfo=gAct?(()=>{const av=gAct[g.name]||0;const a=Math.round(av/g.weekTotal*100);const col=a>=95?'#4ade80':a>=85?'#ffcf5a':'#ff6b6b';return `<span class="mut2" style="font-weight:700;color:${col}"> · 달성 ${a}%</span>`;})():'';
+    return `<div class="barrow" style="grid-template-columns:150px 1fr 210px"><div class="nm">${g.name}</div><div>${pbar(g.weekTotal/gmax*100,'#14b8a6')}<div class="mini" style="margin-top:4px">리소스 ${g.resCount}대 · 오더 ${g.orderCount}건 · ${g.resources.slice(0,4).join(', ')}${g.resources.length>4?' 외 '+(g.resources.length-4):''}</div></div><div class="vv">${g.weekTotal.toLocaleString()} <span class="mut2" style="font-weight:600">(${Math.round(g.weekTotal/tot*100)}%)</span>${actInfo}</div></div>`;}).join('');
   return `
   <div style="display:flex;gap:8px;margin-bottom:14px">${tabs}<span class="src live" style="margin-left:auto;align-self:center">실데이터: ${dataSource}</span></div>
   <div class="grid g4" style="margin-bottom:14px">
@@ -642,10 +696,54 @@ V.plan=()=>{
     <div class="card"><h3>일자별 계획수량 <span class="hint">천개</span></h3>${lineChart(daily,{stroke:'#22c55e',fill:'#22c55e22',colorAt:()=>'#22c55e'})}
       <div class="mini" style="text-align:center">${wk.name} · 일 평균 ${Math.round(tot/wk.dates.length/1000).toLocaleString()}천개</div></div>
   </div>
-  <div class="card"><h3>생산 오더 목록 <span class="hint">전체 ${ords}건 중 상위 40 · 날짜순</span></h3>
-    <div style="overflow-x:auto"><table class="tb"><thead><tr><th>일자</th><th>리소스</th><th>오더번호</th><th style="text-align:left">품명</th><th>수량</th></tr></thead><tbody>${oRows}</tbody></table></div>
+  <div class="card"><h3>생산 오더 목록 <span class="hint">전체 ${ords}건 중 상위 40 · 날짜순${HA?' · 실적 반영':''}</span></h3>
+    <div style="overflow-x:auto"><table class="tb"><thead>${oHead}</thead><tbody>${oRows}</tbody></table></div>
   </div>`;
 };
+V.delay=()=>{
+  if(!DB.plan)return `<div class="card"><h3>지연오더</h3><p class="muted">먼저 <b>데이터 관리</b>에서 주간 생산계획을 업로드하세요.</p></div>`;
+  if(!planHasActual())return `<div class="card"><h3>지연오더 <span class="hint">계획 대비 실적 분석</span></h3>
+    <p class="muted" style="line-height:1.8">지연/미달 오더를 계산하려면 <b>실적 데이터</b>가 필요합니다. 실적 파일이 아직 없으면 시뮬레이션으로 계획 대비 달성률을 즉시 확인할 수 있습니다.</p>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn p" onclick="simulateActual()">▶ 실적 시뮬레이션 생성</button><button class="btn" onclick="go('data')">실적 파일 업로드 →</button></div></div>`;
+  const wk=DB.plan.weeks[planWeek]||DB.plan.weeks[0];
+  const del=delayedOrders(wk);
+  const totPlan=wk.resources.reduce((a,r)=>a+r.weekTotal,0);
+  const totAct=wk.resources.reduce((a,r)=>a+r.orders.reduce((x,o)=>x+(o.actual||0),0),0);
+  const totShort=del.reduce((a,o)=>a+o.short,0);
+  const ach=Math.round(totAct/totPlan*100);
+  const gShort={};del.forEach(o=>gShort[o.group]=(gShort[o.group]||0)+o.short);
+  const gTop=Object.entries(gShort).sort((a,b)=>b[1]-a[1]);
+  const gmax=gTop.length?gTop[0][1]:1;
+  const gRows=gTop.map(([g,s])=>`<div class="barrow" style="grid-template-columns:150px 1fr 110px"><div class="nm">${g}</div><div>${pbar(s/gmax*100,'#ef4444')}</div><div class="vv neg">-${s.toLocaleString()}</div></div>`).join('')||'<div class="mini">지연 없음</div>';
+  const rows=del.slice(0,40).map(o=>{const col=o.ach<70?'#ef4444':o.ach<90?'#f59e0b':'#22c55e';const st=o.ach<70?'지연 심각':o.ach<90?'미달':'경미';
+    return `<tr><td>${o.date.slice(5)}</td><td>${o.res}</td><td>${o.orderNo}</td><td style="text-align:left;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.product||'-'}</td><td>${o.qty.toLocaleString()}</td><td>${o.actual.toLocaleString()}</td><td class="neg">-${o.short.toLocaleString()}</td><td style="color:${col}">${o.ach}%</td><td><span class="tag ${o.ach<70?'t-red':'t-amber'}">${st}</span></td></tr>`;}).join('');
+  return `
+  <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+    ${DB.plan.weeks.map((w,i)=>`<button class="btn ${i===planWeek?'p':''}" onclick="planWeek=${i};go('delay')">${w.name}</button>`).join(' ')}
+    <span class="src live" style="margin-left:auto">실데이터: ${dataSource}</span>
+  </div>
+  <div class="grid g4" style="margin-bottom:14px">
+    <div class="kpi"><div class="ic">⏰</div><div class="lab">지연/미달 오더</div><div class="val neg">${del.length}<small>건</small></div><div class="delta">전체 ${wk.resources.reduce((a,r)=>a+r.orders.length,0)}건 중</div></div>
+    <div class="kpi"><div class="ic">📉</div><div class="lab">총 부족 수량</div><div class="val neg">${(totShort/10000).toFixed(1)}<small>만개</small></div><div class="delta neg">${totShort.toLocaleString()}개</div></div>
+    <div class="kpi"><div class="ic">🎯</div><div class="lab">주간 달성률</div><div class="val" style="color:${ach>=95?'#4ade80':ach>=85?'#ffcf5a':'#ff6b6b'}">${ach}<small>%</small></div><div class="delta">실적 ${(totAct/10000).toFixed(0)}만 / 계획 ${(totPlan/10000).toFixed(0)}만</div></div>
+    <div class="kpi"><div class="ic">🚨</div><div class="lab">최다 지연 라인군</div><div class="val" style="font-size:18px">${gTop[0]?gTop[0][0].replace(' 라인',''):'-'}</div><div class="delta neg">${gTop[0]?'-'+gTop[0][1].toLocaleString():''}</div></div>
+  </div>
+  <div class="grid g2" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
+    <div class="card"><h3>라인군별 부족 수량 <span class="hint">계획-실적</span></h3>${gRows}</div>
+    <div class="card"><h3>지연 원인 · 조치 제안 <span class="hint">AI</span></h3>
+      <div class="reco bad"><div class="ic">⏰</div><div class="tx"><div class="r">${gTop[0]?gTop[0][0]:'-'} 최다 부족</div><div class="s">해당 라인군 잔업·주말 특근 또는 여유 라인 전환 생산 검토</div></div></div>
+      <div class="reco warn"><div class="ic">🔁</div><div class="tx"><div class="r">미달 오더 익주 이월</div><div class="s">달성 90% 미만 오더는 익주 계획 우선 편성 권장</div></div></div>
+      <div class="reco"><div class="ic">📦</div><div class="tx"><div class="r">자재·설비 병목 점검</div><div class="s">반복 지연 리소스는 자재 결품/설비 비가동 이력 교차 확인</div></div></div>
+    </div>
+  </div>
+  <div class="card"><h3>지연오더 목록 <span class="hint">부족수량 순 · 상위 40 / 총 ${del.length}건</span><button class="btn" onclick="exportDelay()">⬇ 내보내기</button></h3>
+    <div style="overflow-x:auto"><table class="tb"><thead><tr><th>일자</th><th>리소스</th><th>오더번호</th><th style="text-align:left">품명</th><th>계획</th><th>실적</th><th>부족</th><th>달성률</th><th>상태</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </div>`;
+};
+function exportDelay(){const wk=DB.plan.weeks[planWeek]||DB.plan.weeks[0];const del=delayedOrders(wk);
+  const head=['일자','리소스','라인군','오더번호','품명','계획','실적','부족','달성률(%)'];
+  const aoa=[head,...del.map(o=>[o.date,o.res,o.group,o.orderNo,o.product,o.qty,o.actual,o.short,o.ach])];
+  const ws=XLSX.utils.aoa_to_sheet(aoa);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'지연오더');XLSX.writeFile(wb,'ZEN_지연오더_'+wk.name+'.xlsx');toast('지연오더를 엑셀로 내보냈습니다');}
 V.safeapp=()=>`<div class="card" style="padding:12px"><h3>안전 관리 (ZENF Safety App) <span class="hint">기존 앱 통합</span><button class="btn" onclick="window.open('ZENF_Safety_App_v65.html','_blank')">↗ 새 창</button></h3><iframe class="safe" src="ZENF_Safety_App_v65.html" title="ZENF Safety App"></iframe></div>`;
 
 /* ============ DATA OPS ============ */
@@ -711,6 +809,7 @@ function buildNav(){
   const items=AGENTS.filter(a=>ROLES[role].allow.includes(a.id));
   const extra=[];
   if(ROLES[role].allow.includes('plan'))extra.push({id:'plan',name:'생산계획(주간)',icon:'📋'});
+  if(ROLES[role].allow.includes('delay'))extra.push({id:'delay',name:'지연오더',icon:'⏰'});
   if(ROLES[role].allow.includes('data'))extra.push({id:'data',name:'데이터 관리',icon:'🗄'});
   extra.push({id:'safeapp',name:'안전 관리(ZENF)',icon:'🧯'});
   const badges={
@@ -728,7 +827,7 @@ function buildNav(){
     <div class="sec">Agent</div>
     ${items.map(a=>`<a data-id="${a.id}" class="${a.id===cur?'on':''}" onclick="go('${a.id}')"><span class="ic">${a.icon}</span><span>${a.name}</span>${badges[a.id]?`<span class="badge ${badges[a.id].c}">${badges[a.id].t}</span>`:''}</a>`).join('')}
     <div class="sec">시스템</div>
-    ${extra.map(a=>`<a data-id="${a.id}" class="${a.id===cur?'on':''}" onclick="go('${a.id}')"><span class="ic">${a.icon}</span><span>${a.name}</span>${a.id==='plan'&&DB.plan?`<span class="badge t-blue">${DB.plan.weeks.length}주</span>`:''}</a>`).join('')}
+    ${extra.map(a=>{let bd='';if(a.id==='plan'&&DB.plan)bd=`<span class="badge t-blue">${DB.plan.weeks.length}주</span>`;if(a.id==='delay'&&planHasActual()){const d=delayedOrders(DB.plan.weeks[planWeek]||DB.plan.weeks[0]).length;if(d)bd=`<span class="badge t-red">${d}</span>`;}return `<a data-id="${a.id}" class="${a.id===cur?'on':''}" onclick="go('${a.id}')"><span class="ic">${a.icon}</span><span>${a.name}</span>${bd}</a>`;}).join('')}
     <div class="spacer"></div>
     <div class="user"><div class="av">${R.emoji}</div><div><div class="nm">홍길동 ${R.name}</div><div class="rl">${R.name} · ${scopeLabel()}</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
 }
@@ -736,7 +835,7 @@ function go(id){
   if(!ROLES[role].allow.includes(id)&&!['data','safeapp'].includes(id))id='home';
   if(id==='data'&&!ROLES[role].allow.includes('data'))id='home';
   cur=id;
-  const meta=AGENTS.find(a=>a.id===id)||{name:{data:'데이터 관리',safeapp:'안전 관리 (ZENF)',plan:'생산계획 (주간)'}[id],sub:{data:'엑셀/CSV 업로드 · 직접 편집으로 대시보드 구동',safeapp:'기존 안전 앱 통합 화면',plan:'주간 생산계획 엑셀 실데이터 · 리소스·오더·수량'}[id]};
+  const meta=AGENTS.find(a=>a.id===id)||{name:{data:'데이터 관리',safeapp:'안전 관리 (ZENF)',plan:'생산계획 (주간)',delay:'지연오더'}[id],sub:{data:'엑셀/CSV 업로드 · 직접 편집으로 대시보드 구동',safeapp:'기존 안전 앱 통합 화면',plan:'주간 생산계획 엑셀 실데이터 · 리소스·오더·수량',delay:'계획 대비 실적 · 지연/미달 오더 분석'}[id]};
   document.getElementById('vTitle').textContent=meta.name;
   document.getElementById('vSub').textContent=meta.sub;
   document.getElementById('view').innerHTML=(V[id]||(()=>'<div class="card">준비 중</div>'))();
