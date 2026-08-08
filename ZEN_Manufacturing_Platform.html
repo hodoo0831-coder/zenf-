@@ -270,7 +270,7 @@ const DEFAULT_DB={
   forecast:[{label:'5/10(금)',v:3},{label:'5/11(토)',v:2},{label:'5/12(월)',v:4},{label:'5/13(화)',v:6},{label:'5/14(수)',v:5},{label:'5/15(목)',v:2},{label:'5/16(금)',v:1}],
   extSys:[ // 외부 연동 시스템(배포 URL) — 역할별(worker/admin) URL, 관련 Agent 화면에 임베드
     {id:'wash',name:'세척실 관리 시스템',icon:'🧼',agent:'clean',urls:{worker:'https://wash-worker.netlify.app/',admin:'https://wash-admin.netlify.app/'}},
-    {id:'orikon',name:'오리콘·피박스 시스템',icon:'📦',agent:'stock',urls:{worker:'https://orikon-pbox-worker.netlify.app/',admin:'https://orikon-pbox-admin.netlify.app/'}},
+    {id:'orikon',name:'오리콘·피박스 시스템',icon:'📦',agent:['stock','clean'],urls:{worker:'https://orikon-pbox-worker.netlify.app/',admin:'https://orikon-pbox-admin.netlify.app/'}},
     {id:'heat',name:'온열질환 히트워치',icon:'🌡',agent:'safe',urls:{worker:'https://zenf-heat-watch-v4.netlify.app/',admin:'https://zenf-heat-watch-v4.netlify.app/'}},
   ],
   plan:null, // 주간 생산계획(엑셀 업로드 시 채워짐)
@@ -294,8 +294,9 @@ function loadDB(){try{const s=localStorage.getItem(LS_KEY);if(s){const o=JSON.pa
 /* ===== 외부 연동 시스템 (배포 URL · 역할별) ===== */
 function sysUrl(s){const u=s.urls||{};return role==='worker'?(u.worker||u.admin||''):(u.admin||u.worker||'');}
 function sysVariant(s){const u=s.urls||{};if(role==='worker')return u.worker?'작업자용':(u.admin?'관리자용':'');return u.admin?'관리자용':(u.worker?'작업자용':'');}
+function inAgent(s,agentId){return Array.isArray(s.agent)?s.agent.includes(agentId):s.agent===agentId;}
 function renderSysLinks(agentId){
-  const list=(DB.extSys||[]).filter(s=>s.agent===agentId);
+  const list=(DB.extSys||[]).filter(s=>inAgent(s,agentId));
   if(!list.length)return '';
   return `<div>`+list.map(s=>{const url=sysUrl(s);
     if(url){const v=sysVariant(s);
@@ -613,7 +614,8 @@ V.data=()=>{
   <div class="card" style="margin-top:14px"><h3>⑤ 연동 시스템 (외부 배포 URL · 역할별) <span class="hint">관련 Agent 화면에 임베드 · 현장직=작업자용 / 반장·공장장=관리자용</span></h3>
     <div style="overflow-x:auto"><table class="tb"><thead><tr><th>시스템</th><th style="text-align:left">작업자용 URL</th><th style="text-align:left">관리자용 URL</th><th>표시 위치</th></tr></thead><tbody>
     ${(DB.extSys||[]).map(s=>{const u=s.urls||{};const inp=(which,val)=>`<input style="width:100%;min-width:230px;background:#0b1a2e;border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:7px 9px;font-size:12px" value="${(val||'').replace(/"/g,'&quot;')}" placeholder="https://..." onchange="setSysUrl('${s.id}','${which}',this.value)">`;
-      return `<tr><td>${s.icon} ${s.name}</td><td style="text-align:left">${inp('worker',u.worker)}</td><td style="text-align:left">${inp('admin',u.admin)}</td><td><span class="chip">${AGENTNAME[s.agent]||s.agent}</span></td></tr>`;}).join('')}
+      const ag=(Array.isArray(s.agent)?s.agent:[s.agent]).map(a=>AGENTNAME[a]||a).join(' · ');
+      return `<tr><td>${s.icon} ${s.name}</td><td style="text-align:left">${inp('worker',u.worker)}</td><td style="text-align:left">${inp('admin',u.admin)}</td><td><span class="chip">${ag}</span></td></tr>`;}).join('')}
     </tbody></table></div>
     <div class="mini" style="margin-top:8px">저장 시 세척/안전/재고 Agent 화면 하단에 현재 로그인 역할에 맞는 URL이 자동 임베드됩니다. iframe 차단 사이트는 '새 창'으로 열립니다. 저장값은 브라우저(localStorage)에 유지됩니다.</div>
   </div>`;
@@ -770,7 +772,7 @@ function exportDelay(){const wk=DB.plan.weeks[planWeek]||DB.plan.weeks[0];const 
   const head=['일자','리소스','라인군','오더번호','품명','계획','실적','부족','달성률(%)'];
   const aoa=[head,...del.map(o=>[o.date,o.res,o.group,o.orderNo,o.product,o.qty,o.actual,o.short,o.ach])];
   const ws=XLSX.utils.aoa_to_sheet(aoa);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'지연오더');XLSX.writeFile(wb,'ZEN_지연오더_'+wk.name+'.xlsx');toast('지연오더를 엑셀로 내보냈습니다');}
-V.safeapp=()=>`<div class="card" style="padding:12px"><h3>안전 관리 (ZENF Safety App) <span class="hint">기존 앱 통합</span><button class="btn" onclick="window.open('ZENF_Safety_App_v65.html','_blank')">↗ 새 창</button></h3><iframe class="safe" src="ZENF_Safety_App_v65.html" title="ZENF Safety App"></iframe></div>`;
+V.safeapp=()=>`<div class="card" style="padding:12px"><h3>안전 관리 (ZEN Keeper) <span class="hint">배포본 연동 · zenkeeper.netlify.app</span><span style="margin-left:auto;display:flex;gap:8px"><button class="btn" onclick="window.open('https://zenkeeper.netlify.app/','_blank')">↗ 새 창</button><button class="btn" onclick="window.open('ZENF_Safety_App_v65.html','_blank')">로컬본</button></span></h3><iframe class="safe" src="https://zenkeeper.netlify.app/" title="ZEN Keeper" loading="lazy"></iframe><div class="mini" style="margin-top:6px">배포된 최신본을 임베드합니다. 임베드가 비어 보이면 '새 창'으로 여세요. 오프라인 필요 시 '로컬본' 버튼 사용.</div></div>`;
 
 /* ============ DATA OPS ============ */
 function rerender(){go(cur);buildNav();document.getElementById('srcTag').textContent='데이터: '+dataSource;document.getElementById('srcTag').classList.toggle('live',dataSource!=='데모');}
