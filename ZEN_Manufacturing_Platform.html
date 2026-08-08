@@ -268,8 +268,15 @@ const DEFAULT_DB={
   paretoVals:[64,48,36,28,24],
   otTrend:[{label:'월',v:22},{label:'화',v:28},{label:'수',v:31},{label:'목',v:26},{label:'금',v:35}],
   forecast:[{label:'5/10(금)',v:3},{label:'5/11(토)',v:2},{label:'5/12(월)',v:4},{label:'5/13(화)',v:6},{label:'5/14(수)',v:5},{label:'5/15(목)',v:2},{label:'5/16(금)',v:1}],
+  extSys:[ // 외부 연동 시스템(배포 URL) — 관련 Agent 화면에 임베드
+    {id:'cleanroom',name:'세척실 관리 시스템',icon:'🧼',agent:'clean',url:''},
+    {id:'oricon',name:'오리콘 세척 시스템',icon:'🌀',agent:'clean',url:''},
+    {id:'heatwatch',name:'온열질환 히트워치',icon:'🌡',agent:'safe',url:''},
+    {id:'pbox',name:'피박스(P-Box)',icon:'📦',agent:'stock',url:''},
+  ],
   plan:null, // 주간 생산계획(엑셀 업로드 시 채워짐)
 };
+const AGENTNAME={clean:'세척 Agent',safe:'안전 Agent',stock:'재고 Agent',prod:'생산 Agent',labor:'인력 Agent',qual:'품질 Agent'};
 let DB=JSON.parse(JSON.stringify(DEFAULT_DB));
 let dataSource='데모';
 
@@ -284,7 +291,17 @@ function scopeLabel(){ return scope&&scope.length?('담당: '+scopeName):'전체
 /* ===== localStorage 지속성 ===== */
 const LS_KEY='zen_mfg_platform_v1';
 function saveDB(){try{localStorage.setItem(LS_KEY,JSON.stringify({DB,dataSource}));}catch(e){}}
-function loadDB(){try{const s=localStorage.getItem(LS_KEY);if(s){const o=JSON.parse(s);if(o&&o.DB&&o.DB.lines){DB=o.DB;if(DB.plan===undefined)DB.plan=null;dataSource=o.dataSource||'저장됨';return true;}}}catch(e){}return false;}
+function loadDB(){try{const s=localStorage.getItem(LS_KEY);if(s){const o=JSON.parse(s);if(o&&o.DB&&o.DB.lines){DB=o.DB;if(DB.plan===undefined)DB.plan=null;if(!DB.extSys)DB.extSys=JSON.parse(JSON.stringify(DEFAULT_DB.extSys));dataSource=o.dataSource||'저장됨';return true;}}}catch(e){}return false;}
+/* ===== 외부 연동 시스템 (배포 URL) ===== */
+function renderSysLinks(agentId){
+  const list=(DB.extSys||[]).filter(s=>s.agent===agentId);
+  if(!list.length)return '';
+  return `<div>`+list.map(s=>{
+    if(s.url){return `<div class="card" style="margin-top:14px;padding:13px"><h3>${s.icon} ${s.name} <span class="hint">외부 연동 시스템</span><span style="margin-left:auto"><button class="btn" onclick="window.open('${s.url.replace(/'/g,"%27")}','_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${s.url.replace(/"/g,'&quot;')}" title="${s.name}" style="height:62vh" loading="lazy"></iframe><div class="mini" style="margin-top:6px">임베드가 비어 보이면 해당 사이트가 iframe 삽입을 차단(X-Frame-Options)한 것 — 위 '새 창'으로 여세요.</div></div>`;}
+    return `<div class="card" style="margin-top:14px"><h3>${s.icon} ${s.name} <span class="hint">외부 연동 시스템 · 미연결</span></h3><p class="mini">연동 URL이 아직 없습니다. <a onclick="go('data')" style="color:#7fb8ff;cursor:pointer">데이터 관리 → 연동 시스템</a>에서 주소를 등록하면 이 화면에 임베드됩니다.</p></div>`;
+  }).join('')+`</div>`;
+}
+function setSysUrl(id,url){const s=(DB.extSys||[]).find(x=>x.id===id);if(!s)return;s.url=(url||'').trim();saveDB();toast(s.name+(s.url?' 연동 URL 저장됨':' 연동 해제'));buildNav();}
 
 /* ============ COMPUTED ============ */
 const G={
@@ -590,6 +607,15 @@ V.data=()=>{
   <div class="card"><h3>라인 데이터 직접 편집 <span class="hint">값을 바꾸면 전 Agent 화면이 즉시 재계산됩니다</span></h3>
     <div style="overflow-x:auto"><table class="edit"><thead><tr><th>라인</th>${EDIT_COLS.map(c=>`<th>${c.t}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
     <div class="mini" style="margin-top:10px">전환(0~1): 0 동일제품 · 0.5 제품전환 · 1.0 색상전환+알러지 · 세척 점수식에 직접 반영</div>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>⑤ 연동 시스템 (외부 배포 URL) <span class="hint">관련 Agent 화면에 임베드</span></h3>
+    ${(DB.extSys||[]).map(s=>`<div style="display:flex;gap:10px;align-items:center;margin-bottom:9px;flex-wrap:wrap">
+      <span style="width:170px;font-size:13px;font-weight:700">${s.icon} ${s.name}</span>
+      <input style="flex:1;min-width:220px;background:#0b1a2e;border:1px solid var(--line2);color:var(--ink);border-radius:9px;padding:9px 11px;font-size:12.5px" value="${s.url.replace(/"/g,'&quot;')}" placeholder="https://... (배포 주소 붙여넣기)" onchange="setSysUrl('${s.id}',this.value)">
+      <span class="chip">${AGENTNAME[s.agent]||s.agent}에 표시</span>
+      ${s.url?`<button class="btn" onclick="window.open('${s.url.replace(/'/g,'%27')}','_blank')">↗ 열기</button>`:''}
+    </div>`).join('')}
+    <div class="mini" style="margin-top:8px">URL 저장 시 해당 Agent 화면(세척/안전/재고) 하단에 자동 임베드됩니다. 사이트가 iframe 삽입을 차단하면 '새 창'으로 열립니다. 저장값은 브라우저에 유지됩니다.</div>
   </div>`;
 };
 /* ===== 주간 생산계획 (실 엑셀 파싱) ===== */
@@ -838,7 +864,9 @@ function go(id){
   const meta=AGENTS.find(a=>a.id===id)||{name:{data:'데이터 관리',safeapp:'안전 관리 (ZENF)',plan:'생산계획 (주간)',delay:'지연오더'}[id],sub:{data:'엑셀/CSV 업로드 · 직접 편집으로 대시보드 구동',safeapp:'기존 안전 앱 통합 화면',plan:'주간 생산계획 엑셀 실데이터 · 리소스·오더·수량',delay:'계획 대비 실적 · 지연/미달 오더 분석'}[id]};
   document.getElementById('vTitle').textContent=meta.name;
   document.getElementById('vSub').textContent=meta.sub;
-  document.getElementById('view').innerHTML=(V[id]||(()=>'<div class="card">준비 중</div>'))();
+  let html=(V[id]||(()=>'<div class="card">준비 중</div>'))();
+  if(['clean','safe','stock'].includes(id))html+=renderSysLinks(id);
+  document.getElementById('view').innerHTML=html;
   document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.id===id));
   if(id==='data')setTimeout(setupDrop,0);
   window.scrollTo({top:0});
