@@ -158,6 +158,8 @@
       <button data-role="leader" class="on"><span class="e">👷</span>반장</button>
       <button data-role="manager"><span class="e">👔</span>공장장</button>
     </div>
+    <label id="scopeLbl">담당 구역</label>
+    <select id="scopeSel" style="width:100%;border:1px solid var(--line2);background:#0b1a2e;color:var(--ink);border-radius:11px;padding:12px 13px;font-size:14px"></select>
     <label>사번 / 비밀번호</label>
     <input id="pw" type="password" placeholder="데모: 아무 값이나 입력 후 로그인" value="1234">
     <button class="go" onclick="doLogin()">로그인</button>
@@ -266,9 +268,23 @@ const DEFAULT_DB={
   paretoVals:[64,48,36,28,24],
   otTrend:[{label:'월',v:22},{label:'화',v:28},{label:'수',v:31},{label:'목',v:26},{label:'금',v:35}],
   forecast:[{label:'5/10(금)',v:3},{label:'5/11(토)',v:2},{label:'5/12(월)',v:4},{label:'5/13(화)',v:6},{label:'5/14(수)',v:5},{label:'5/15(목)',v:2},{label:'5/16(금)',v:1}],
+  plan:null, // 주간 생산계획(엑셀 업로드 시 채워짐)
 };
 let DB=JSON.parse(JSON.stringify(DEFAULT_DB));
 let dataSource='데모';
+
+/* ===== 역할 스코프(담당 라인/구역) ===== */
+const ZONES={'구강케어':['튜브','치약충전','일회용'],'헤어·바디':['초격차','HnB','FnC']};
+let scope=null; // null=전체
+let scopeName='전체';
+function myLines(){ if(!scope||!scope.length) return DB.lines; const f=DB.lines.filter(l=>scope.includes(l.key)); return f.length?f:DB.lines; }
+function scoped(){ return !!(scope&&scope.length&&myLines().length<DB.lines.length); }
+function scopeLabel(){ return scope&&scope.length?('담당: '+scopeName):'전체 권한'; }
+
+/* ===== localStorage 지속성 ===== */
+const LS_KEY='zen_mfg_platform_v1';
+function saveDB(){try{localStorage.setItem(LS_KEY,JSON.stringify({DB,dataSource}));}catch(e){}}
+function loadDB(){try{const s=localStorage.getItem(LS_KEY);if(s){const o=JSON.parse(s);if(o&&o.DB&&o.DB.lines){DB=o.DB;if(DB.plan===undefined)DB.plan=null;dataSource=o.dataSource||'저장됨';return true;}}}catch(e){}return false;}
 
 /* ============ COMPUTED ============ */
 const G={
@@ -285,10 +301,12 @@ const G={
     const need=s.onhand<=rop;const qty=Math.max(s.moq,Math.ceil(s.targetDays*s.dailyUse-s.onhand));
     return {days,rop,need,qty};},
 };
-function totProd(){const t=DB.lines.reduce((a,l)=>a+l.target,0),a=DB.lines.reduce((x,l)=>x+l.actual,0);return{t,a,ach:Math.round(a/t*100)};}
-function shortSum(){return DB.lines.reduce((a,l)=>a+Math.max(0,l.need-G.cur(l)),0);}
-function avgOEE(){return +(DB.lines.reduce((a,l)=>a+G.oee(l),0)/DB.lines.length).toFixed(1);}
-function avgDefect(){return +(DB.lines.reduce((a,l)=>a+l.defect,0)/DB.lines.length).toFixed(1);}
+function totProd(){const L=myLines();const t=L.reduce((a,l)=>a+l.target,0),a=L.reduce((x,l)=>x+l.actual,0);return{t,a,ach:t?Math.round(a/t*100):0};}
+function shortSum(){return myLines().reduce((a,l)=>a+Math.max(0,l.need-G.cur(l)),0);}
+function avgOEE(){const L=myLines();return +(L.reduce((a,l)=>a+G.oee(l),0)/L.length).toFixed(1);}
+function avgDefect(){const L=myLines();return +(L.reduce((a,l)=>a+l.defect,0)/L.length).toFixed(1);}
+function headNeed(){return scoped()?myLines().reduce((a,l)=>a+l.need,0):DB.headcount.need;}
+function headCur(){return scoped()?myLines().reduce((a,l)=>a+G.cur(l),0):DB.headcount.cur;}
 
 /* ============ AGENTS / ROLES ============ */
 const AGENTS=[
@@ -304,8 +322,8 @@ const AGENTS=[
 ];
 const ROLES={
   worker:{name:'현장직',emoji:'🧑‍🏭',allow:['home','prod','clean','safe','safeapp']},
-  leader:{name:'반장',emoji:'👷',allow:['home','prod','labor','clean','stock','safe','qual','safeapp']},
-  manager:{name:'공장장',emoji:'👔',allow:['home','prod','labor','clean','stock','safe','qual','kpi','report','data','safeapp']},
+  leader:{name:'반장',emoji:'👷',allow:['home','prod','labor','clean','stock','safe','qual','plan','safeapp']},
+  manager:{name:'공장장',emoji:'👔',allow:['home','prod','labor','clean','stock','safe','qual','kpi','report','plan','data','safeapp']},
 };
 let role='leader';
 
@@ -315,8 +333,8 @@ V.home=()=>{
   const tp=totProd(),oee=avgOEE(),df=avgDefect(),short=shortSum();
   const badge={
     prod:{m:tp.ach+'%',tag:tp.ach>=80?'t-green':'t-amber',tt:'진행중'},
-    labor:{m:DB.headcount.cur+'/'+DB.headcount.need,tag:'t-red',tt:(DB.headcount.need-DB.headcount.cur)+'명 부족'},
-    clean:{m:DB.lines.filter(l=>G.cleanScore(l)>=75).length+'건',tag:'t-amber',tt:'우선 세척'},
+    labor:{m:headCur()+'/'+headNeed(),tag:'t-red',tt:(headNeed()-headCur())+'명 부족'},
+    clean:{m:myLines().filter(l=>G.cleanScore(l)>=75).length+'건',tag:'t-amber',tt:'우선 세척'},
     stock:{m:DB.stock.filter(s=>G.stock(s).need).length+'종',tag:'t-red',tt:'긴급 발주'},
     safe:{m:'WBGT '+DB.safety.wbgt,tag:DB.safety.wbgt>=28?'t-amber':'t-green',tt:DB.safety.wbgt>=28?'경고':'양호'},
     qual:{m:df+'%',tag:df>1.5?'t-amber':'t-green',tt:'목표 1.5%'},
@@ -325,15 +343,17 @@ V.home=()=>{
   };
   const cards=AGENTS.filter(a=>a.id!=='home'&&ROLES[role].allow.includes(a.id)).map(a=>{const c=badge[a.id];
     return `<a class="cardlink" onclick="go('${a.id}')"><div class="card agentcard"><div class="top"><div class="ico">${a.icon}</div><div><div class="nm">${a.name}</div><div class="ds">${a.sub}</div></div></div><div class="metric"><div><div class="m">${c.m}</div><div class="mini">${a.sub.split('·')[0]}</div></div><span class="tag ${c.tag}">${c.tt}</span></div></div></a>`;}).join('');
-  const worst=[...DB.lines].sort((a,b)=>G.cleanScore(b)-G.cleanScore(a))[0];
+  const worst=[...myLines()].sort((a,b)=>G.cleanScore(b)-G.cleanScore(a))[0];
+  const planBanner=DB.plan?`<div class="reco"><div class="ic">📋</div><div class="tx"><div class="r">주간 생산계획 연동됨 — ${DB.plan.weeks[0].name}</div><div class="s">리소스 ${DB.plan.weeks[0].resources.length}개 · 총 계획 ${(DB.plan.weeks.reduce((a,w)=>a+w.resources.reduce((x,r)=>x+r.weekTotal,0),0)).toLocaleString()}개. 좌측 '생산계획' 메뉴에서 상세 확인.</div></div></div>`:'';
   return `
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic">📈</div><div class="lab">금일 생산 달성률</div><div class="val">${tp.ach}<small>%</small></div><div class="delta ${tp.ach>=80?'pos':'neg'}">목표 ${(tp.t/1000).toFixed(0)}천 · 실적 ${(tp.a/1000).toFixed(0)}천</div></div>
-    <div class="kpi"><div class="ic">👥</div><div class="lab">현재 투입 인원</div><div class="val">${DB.headcount.cur}<small>/${DB.headcount.need}명</small></div><div class="delta neg">${DB.headcount.need-DB.headcount.cur}명 부족</div></div>
+    <div class="kpi"><div class="ic">👥</div><div class="lab">현재 투입 인원</div><div class="val">${headCur()}<small>/${headNeed()}명</small></div><div class="delta neg">${headNeed()-headCur()}명 부족</div></div>
     <div class="kpi"><div class="ic">📊</div><div class="lab">설비종합효율 OEE</div><div class="val ${oee>=80?'pos':''}">${oee}<small>%</small></div><div class="delta">6개 라인 평균</div></div>
     <div class="kpi"><div class="ic">🔬</div><div class="lab">평균 불량률</div><div class="val">${df}<small>%</small></div><div class="delta ${df>1.5?'neg':'pos'}">목표 1.5%</div></div>
   </div>
   <div class="card" style="margin-bottom:14px"><h3>AI 통합 인사이트 <span class="hint">8개 Agent 종합 · 데이터 반영 실시간</span></h3>
+    ${planBanner}
     <div class="reco bad"><div class="ic">⚠️</div><div class="tx"><div class="r">${worst.key} 라인 — 복합 리스크 감지</div><div class="s">세척 우선순위 ${G.cleanScore(worst)}점(1위) · 불량률 ${worst.defect}% · 인력 ${G.cur(worst)-worst.need>=0?'정상':(worst.need-G.cur(worst))+'명 부족'}. 세척 완료 후 여유 라인 인력 재배치 권장.</div></div></div>
     <div class="reco warn"><div class="ic">📦</div><div class="tx"><div class="r">${DB.stock.filter(s=>G.stock(s).need).map(s=>s.name).join(' · ')||'긴급 발주 없음'} 발주 필요</div><div class="s">재고일수 임박 자재 ${DB.stock.filter(s=>G.stock(s).need).length}종. 미발주 시 라인 가동 중단 위험.</div></div></div>
     <div class="reco"><div class="ic">🦺</div><div class="tx"><div class="r">폭염 ${DB.safety.wbgt>=28?'경고':'주의'} (WBGT ${DB.safety.wbgt}℃)</div><div class="s">고열 작업구간 시간당 휴식·수분 비치 조치. 무재해 ${DB.safety.noAccident}일 지속.</div></div></div>
@@ -341,9 +361,9 @@ V.home=()=>{
   <div class="grid g4">${cards}</div>`;
 };
 V.prod=()=>{
-  const tp=totProd();const ends=DB.lines.map(l=>l.end).sort();
-  const rows=DB.lines.map(l=>{const a=G.achieve(l),col=sc(a,70,60);return `<div class="barrow"><div class="nm">${l.key}</div><div>${pbar(a,col)}<div class="mini" style="margin-top:4px">CAPA 부하 ${G.load(l)}% · 예상종료 ${l.end}</div></div><div class="vv" style="color:${col}">${a}%</div></div>`;}).join('');
-  const tbl=DB.lines.map(l=>{const a=G.achieve(l);return `<tr><td>${l.key}</td><td>${l.target.toLocaleString()}</td><td>${l.actual.toLocaleString()}</td><td style="color:${sc(a,70,60)}">${a}%</td><td>${G.load(l)}%</td><td>${l.end}</td></tr>`;}).join('');
+  const L=myLines();const tp=totProd();const ends=L.map(l=>l.end).sort();
+  const rows=L.map(l=>{const a=G.achieve(l),col=sc(a,70,60);return `<div class="barrow"><div class="nm">${l.key}</div><div>${pbar(a,col)}<div class="mini" style="margin-top:4px">CAPA 부하 ${G.load(l)}% · 예상종료 ${l.end}</div></div><div class="vv" style="color:${col}">${a}%</div></div>`;}).join('');
+  const tbl=L.map(l=>{const a=G.achieve(l);return `<tr><td>${l.key}</td><td>${l.target.toLocaleString()}</td><td>${l.actual.toLocaleString()}</td><td style="color:${sc(a,70,60)}">${a}%</td><td>${G.load(l)}%</td><td>${l.end}</td></tr>`;}).join('');
   const trend=[{label:'07',v:14},{label:'08',v:22},{label:'09',v:26},{label:'10',v:25},{label:'11',v:24},{label:'12',v:12},{label:'13',v:23}];
   return `
   <div class="grid g4" style="margin-bottom:14px">
@@ -360,15 +380,16 @@ V.prod=()=>{
 };
 V.labor=()=>{
   function people(l){let c=[];for(let i=0;i<l.on;i++)c.push(pi('on'));for(let i=0;i<l.leave;i++)c.push(pi('leave'));for(let i=0;i<l.edu;i++)c.push(pi('edu'));for(let i=0;i<Math.max(0,l.need-G.cur(l));i++)c.push(pi('empty'));return c.join('');}
-  const boxes=DB.lines.map(l=>{const d=G.cur(l)-l.need;return `<div class="lbox ${l.cls}"><div class="lh"><span class="lname">${l.label}</span><span class="pill">${d<0?d+'명':d>0?'+'+d+'명':'정상'}</span></div><div class="cnt">${G.cur(l)}<small> / ${l.need}명</small></div><div class="ppl">${people(l)}</div></div>`;}).join('');
-  const tbl=DB.lines.map(l=>{const d=G.cur(l)-l.need;return `<tr><td>${l.key}</td><td>${l.need}</td><td>${G.cur(l)}</td><td class="${d<0?'neg':d>0?'pos':'zero'}">${d>0?'+'+d:d}</td><td><span class="sdot ${d<0?'s-red':'s-green'}"></span></td></tr>`;}).join('');
-  const surplus=DB.lines.filter(l=>G.cur(l)-l.need>0).map(l=>l.key);
-  const deficit=DB.lines.filter(l=>G.cur(l)-l.need<0);
+  const L=myLines();
+  const boxes=L.map(l=>{const d=G.cur(l)-l.need;return `<div class="lbox ${l.cls}"><div class="lh"><span class="lname">${l.label}</span><span class="pill">${d<0?d+'명':d>0?'+'+d+'명':'정상'}</span></div><div class="cnt">${G.cur(l)}<small> / ${l.need}명</small></div><div class="ppl">${people(l)}</div></div>`;}).join('');
+  const tbl=L.map(l=>{const d=G.cur(l)-l.need;return `<tr><td>${l.key}</td><td>${l.need}</td><td>${G.cur(l)}</td><td class="${d<0?'neg':d>0?'pos':'zero'}">${d>0?'+'+d:d}</td><td><span class="sdot ${d<0?'s-red':'s-green'}"></span></td></tr>`;}).join('');
+  const surplus=L.filter(l=>G.cur(l)-l.need>0).map(l=>l.key);
+  const deficit=L.filter(l=>G.cur(l)-l.need<0);
   return `
   <div class="grid g4" style="margin-bottom:14px">
-    <div class="kpi"><div class="ic">👔</div><div class="lab">총 필요 인원</div><div class="val">${DB.headcount.need}<small>명</small></div></div>
-    <div class="kpi"><div class="ic">👥</div><div class="lab">현재 투입</div><div class="val">${DB.headcount.cur}<small>명</small></div></div>
-    <div class="kpi"><div class="ic">⚠️</div><div class="lab">부족 인원</div><div class="val neg">${DB.headcount.need-DB.headcount.cur}<small>명</small></div></div>
+    <div class="kpi"><div class="ic">👔</div><div class="lab">총 필요 인원</div><div class="val">${headNeed()}<small>명</small></div></div>
+    <div class="kpi"><div class="ic">👥</div><div class="lab">현재 투입</div><div class="val">${headCur()}<small>명</small></div></div>
+    <div class="kpi"><div class="ic">⚠️</div><div class="lab">부족 인원</div><div class="val neg">${headNeed()-headCur()}<small>명</small></div></div>
     <div class="kpi"><div class="ic">🗓</div><div class="lab">연차/결근</div><div class="val" style="color:#ffcf5a">${DB.work[1].n+DB.work[2].n}<small>명</small></div></div>
   </div>
   <div class="grid g2" style="grid-template-columns:1.3fr 1fr">
@@ -381,7 +402,7 @@ V.labor=()=>{
   </div>`;
 };
 V.clean=()=>{
-  const ranked=[...DB.lines].map(l=>({l,s:G.cleanScore(l)})).sort((a,b)=>b.s-a.s);
+  const ranked=[...myLines()].map(l=>({l,s:G.cleanScore(l)})).sort((a,b)=>b.s-a.s);
   const rows=ranked.map((r,i)=>{const l=r.l,col=sc(r.s,50,75,true);const cyc=Math.round(Math.min(1,l.clElapsed/8)*100),tr=Math.round(l.clTransfer*100),ld=Math.round(Math.min(1,l.actual/l.capa)*100);
     const reason=l.clTransfer>=1?'색상 전환(백→적)·세척주기 초과':l.clTransfer>=0.5?'제품 전환·잔류물 위험':l.clElapsed>=8?'세척주기 초과(기준 8h)':'동일 제품 연속 생산';
     return `<div class="it"><div class="rank ${i===0?'top':''}">${i+1}</div><div style="flex:1"><div style="font-weight:800">${l.key} 라인 <span class="chip" style="margin-left:6px">경과 ${l.clElapsed}h</span></div><div class="mini" style="margin-top:3px">${reason} · <span class="mut2">전환 ${tr} + 주기 ${cyc} + 부하 ${ld}</span></div></div><div style="text-align:right;min-width:70px"><div class="big" style="color:${col};font-size:20px">${r.s}</div><div class="mini">점</div></div></div>`;}).join('');
@@ -431,12 +452,12 @@ V.safe=()=>{
     {n:'화학물질 취급 — 염모 라인',lv:'낮음',c:'t-green',s:'보호구 착용 양호'},
   ];
   const tbmTime={'튜브':'07:05','치약충전':'07:08','일회용':'-','초격차':'07:02','HnB':'07:12','FnC':'07:06'};
-  const tbm=DB.lines.map(l=>{const done=w.tbmDone.includes(l.key);return `<tr><td>${l.key}</td><td><span class="tag ${done?'t-green':'t-red'}">${done?'실시':'미실시'}</span></td><td>${tbmTime[l.key]||'-'}</td></tr>`;}).join('');
+  const tbm=myLines().map(l=>{const done=w.tbmDone.includes(l.key);return `<tr><td>${l.key}</td><td><span class="tag ${done?'t-green':'t-red'}">${done?'실시':'미실시'}</span></td><td>${tbmTime[l.key]||'-'}</td></tr>`;}).join('');
   return `
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic">🌡</div><div class="lab">폭염 지수 WBGT</div><div class="val" style="color:${sc(w.wbgt,28,31,true)}">${w.wbgt}<small>℃</small></div><div class="delta neg">${w.wbgt>=31?'위험':w.wbgt>=28?'경고':'주의'} 단계</div></div>
     <div class="kpi"><div class="ic">🦺</div><div class="lab">무재해 일수</div><div class="val pos">${w.noAccident}<small>일</small></div><div class="delta">목표 200일</div></div>
-    <div class="kpi"><div class="ic">📋</div><div class="lab">TBM 실시율</div><div class="val">${w.tbmDone.length}<small>/${DB.lines.length} 라인</small></div><div class="delta neg">${DB.lines.filter(l=>!w.tbmDone.includes(l.key)).map(l=>l.key).join(',')||'전 라인 완료'}</div></div>
+    <div class="kpi"><div class="ic">📋</div><div class="lab">TBM 실시율</div><div class="val">${myLines().filter(l=>w.tbmDone.includes(l.key)).length}<small>/${myLines().length} 라인</small></div><div class="delta neg">${myLines().filter(l=>!w.tbmDone.includes(l.key)).map(l=>l.key).join(',')||'전 라인 완료'}</div></div>
     <div class="kpi"><div class="ic">⚠️</div><div class="lab">위험요인</div><div class="val">4<small>건</small></div><div class="delta neg">고위험 ${w.wbgt>=28?1:0}건</div></div>
   </div>
   <div class="grid g2" style="grid-template-columns:1.2fr 1fr;margin-bottom:14px">
@@ -451,11 +472,11 @@ V.safe=()=>{
   <div class="card"><h3>라인별 TBM(Tool Box Meeting) 실시 현황</h3><table class="tb"><thead><tr><th>라인</th><th>실시 여부</th><th>실시 시각</th></tr></thead><tbody>${tbm}</tbody></table></div>`;
 };
 V.qual=()=>{
-  const df=avgDefect();const worst=[...DB.lines].sort((a,b)=>b.defect-a.defect)[0];
+  const df=avgDefect();const worst=[...myLines()].sort((a,b)=>b.defect-a.defect)[0];
   const maxC=Math.max(...DB.paretoVals),totC=DB.paretoVals.reduce((a,b)=>a+b,0);let cum=0;
   const cols=['#ef4444','#f59e0b','#eab308','#3b82f6','#6d84a3'];
   const par=DB.paretoNames.map((n,i)=>{cum+=DB.paretoVals[i];const wd=DB.paretoVals[i]/maxC*100;return `<div class="barrow" style="grid-template-columns:96px 1fr 96px"><div class="nm">${n}</div><div>${pbar(wd,cols[i%cols.length])}</div><div class="vv mut2">${DB.paretoVals[i]}건 · 누적 ${Math.round(cum/totC*100)}%</div></div>`;}).join('');
-  const lrows=DB.lines.map(l=>{const col=sc(l.defect,2.0,2.5,true);return `<tr><td>${l.key}</td><td style="color:${col}">${l.defect}%</td><td><span class="sdot ${l.defect>=2.5?'s-red':l.defect>=2.0?'s-amber':'s-green'}"></span></td></tr>`;}).join('');
+  const lrows=myLines().map(l=>{const col=sc(l.defect,2.0,2.5,true);return `<tr><td>${l.key}</td><td style="color:${col}">${l.defect}%</td><td><span class="sdot ${l.defect>=2.5?'s-red':l.defect>=2.0?'s-amber':'s-green'}"></span></td></tr>`;}).join('');
   return `
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic">🔬</div><div class="lab">평균 불량률</div><div class="val" style="color:${df>1.5?'#ffcf5a':'#4ade80'}">${df}<small>%</small></div><div class="delta ${df>1.5?'neg':'pos'}">목표 1.5%</div></div>
@@ -477,9 +498,9 @@ V.qual=()=>{
   </div>`;
 };
 V.kpi=()=>{
-  const oee=avgOEE();const tbl=DB.lines.map(l=>{const o=G.oee(l),col=sc(o,75,70);return `<tr><td>${l.key}</td><td>${l.oeeA}%</td><td>${l.oeeP}%</td><td>${G.oeeQ(l)}%</td><td style="color:${col}">${o}%</td><td><span class="sdot ${o>=80?'s-green':o>=70?'s-amber':'s-red'}"></span></td></tr>`;}).join('');
-  const bars=DB.lines.map(l=>({label:l.key,v:G.oee(l),color:G.oee(l)>=80?'#22c55e':G.oee(l)>=70?'#f59e0b':'#ef4444'}));
-  const worst=[...DB.lines].sort((a,b)=>G.oee(a)-G.oee(b)).slice(0,2).map(l=>l.key+' '+G.oee(l)+'%');
+  const L=myLines();const oee=avgOEE();const tbl=L.map(l=>{const o=G.oee(l),col=sc(o,75,70);return `<tr><td>${l.key}</td><td>${l.oeeA}%</td><td>${l.oeeP}%</td><td>${G.oeeQ(l)}%</td><td style="color:${col}">${o}%</td><td><span class="sdot ${o>=80?'s-green':o>=70?'s-amber':'s-red'}"></span></td></tr>`;}).join('');
+  const bars=L.map(l=>({label:l.key,v:G.oee(l),color:G.oee(l)>=80?'#22c55e':G.oee(l)>=70?'#f59e0b':'#ef4444'}));
+  const worst=[...L].sort((a,b)=>G.oee(a)-G.oee(b)).slice(0,2).map(l=>l.key+' '+G.oee(l)+'%');
   return `
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic">📊</div><div class="lab">설비종합효율 OEE</div><div class="val ${oee>=80?'pos':''}">${oee}<small>%</small></div><div class="delta">가동률×성능×품질</div></div>
@@ -495,8 +516,8 @@ V.kpi=()=>{
 };
 V.report=()=>{
   const tp=totProd(),oee=avgOEE(),df=avgDefect();const orders=DB.stock.filter(s=>G.stock(s).need);
-  const topLines=DB.lines.filter(l=>G.achieve(l)>=80).map(l=>l.key).join('·');
-  const lowLines=DB.lines.filter(l=>G.achieve(l)<70).map(l=>l.key).join('·');
+  const topLines=myLines().filter(l=>G.achieve(l)>=80).map(l=>l.key).join('·');
+  const lowLines=myLines().filter(l=>G.achieve(l)<70).map(l=>l.key).join('·');
   return `
   <div class="grid g3" style="margin-bottom:14px">
     ${[['일간 보고서','2025.05.10 (금)','📄','t-blue','생성 가능'],['주간 보고서','5/05 ~ 5/10','🗂','t-blue','생성 가능'],['월간 보고서','2025년 4월','📅','t-green','작성 완료']].map(r=>`<a class="cardlink" onclick="genReport('${r[0]}')"><div class="card"><div style="display:flex;gap:11px;align-items:center"><div style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#122443;border:1px solid var(--line2)">${r[2]}</div><div><div style="font-weight:800">${r[0]}</div><div class="mini">${r[1]}</div></div></div><div style="margin-top:12px"><span class="tag ${r[3]}">${r[4]}</span></div></div></a>`).join('')}
@@ -506,11 +527,11 @@ V.report=()=>{
       <h4>AP 대전공장 생산일보 — 2025.05.10 (금)</h4>
       <div class="kv">작성: ZEN Report Agent · 09:30 자동 생성 · 데이터원: ${dataSource}</div>
       <p><b>1. 생산 실적</b><br>전 라인 목표 ${(tp.t/1000).toFixed(0)}천개 대비 실적 ${(tp.a/1000).toFixed(0)}천개(달성률 ${tp.ach}%). ${topLines||'-'} 정상, ${lowLines||'없음'} 부진.</p>
-      <p><b>2. 인력 현황</b><br>필요 ${DB.headcount.need}명 대비 투입 ${DB.headcount.cur}명(${DB.headcount.need-DB.headcount.cur}명 부족), 연차/결근 ${DB.work[1].n+DB.work[2].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p>
+      <p><b>2. 인력 현황</b><br>필요 ${headNeed()}명 대비 투입 ${headCur()}명(${headNeed()-headCur()}명 부족), 연차/결근 ${DB.work[1].n+DB.work[2].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p>
       <p><b>3. 품질</b><br>평균 불량률 ${df}%(목표 1.5%). 주요 원인 ${DB.paretoNames[0]}·${DB.paretoNames[1]}. 최다 라인 조치 진행.</p>
       <p><b>4. 안전</b><br>WBGT ${DB.safety.wbgt}℃ 폭염 ${DB.safety.wbgt>=28?'경고':'주의'}. 휴식·수분 조치. 무재해 ${DB.safety.noAccident}일.</p>
       <p><b>5. 자재/설비</b><br>${orders.length?orders.map(s=>s.name).join('·')+' 긴급 발주 요청':'자재 발주 이슈 없음'}. 완제품 창고 ${DB.warehouse[0].fill}% 포화. 전 라인 OEE ${oee}%.</p>
-      <ul><li><b>금일 조치:</b> 인력 재배치, 발주 ${orders.length}건, 세척 ${DB.lines.filter(l=>G.cleanScore(l)>=75).length}라인</li>
+      <ul><li><b>금일 조치:</b> 인력 재배치, 발주 ${orders.length}건, 세척 ${myLines().filter(l=>G.cleanScore(l)>=75).length}라인</li>
       <li><b>익일 리스크:</b> 자재 미입고 시 라인 중단 · 폭염 지속</li></ul>
     </div>
   </div>`;
@@ -551,12 +572,63 @@ V.data=()=>{
     <div class="mini" style="margin-top:10px">전환(0~1): 0 동일제품 · 0.5 제품전환 · 1.0 색상전환+알러지 · 세척 점수식에 직접 반영</div>
   </div>`;
 };
+/* ===== 주간 생산계획 (실 엑셀 파싱) ===== */
+let planWeek=0;
+function parsePlan(wb){
+  const weeks=wb.SheetNames.map(sn=>{
+    const a=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});
+    const hdr=a[0]||[];const dateCols=[];
+    for(let i=3;i<hdr.length;i++){const v=String(hdr[i]).trim();if(/^\d{4}\.\d{2}\.\d{2}$/.test(v))dateCols.push({i,date:v});}
+    const rm={};
+    for(let r=1;r<a.length;r++){const row=a[r];const rname=String(row[2]||'').trim();
+      if(!rname||rname.endsWith('합계'))continue;
+      if(!rm[rname])rm[rname]={code:String(row[1]||'').trim(),name:rname,daily:{},orders:[],weekTotal:0};
+      const res=rm[rname];
+      if(String(row[3]||'').includes('오더')){
+        dateCols.forEach(dc=>{const qty=+row[dc.i+2];const on=row[dc.i+1];
+          if(qty&&!isNaN(qty)){const prod=a[r+1]?String(a[r+1][dc.i+1]||'').trim():'';
+            res.orders.push({date:dc.date,orderNo:String(on),qty,product:prod});
+            res.daily[dc.date]=(res.daily[dc.date]||0)+qty;res.weekTotal+=qty;}});
+      }}
+    return {name:sn,dates:dateCols.map(d=>d.date),resources:Object.values(rm).filter(r=>r.weekTotal>0).sort((x,y)=>y.weekTotal-x.weekTotal)};
+  }).filter(w=>w.resources.length);
+  return {weeks};
+}
+function isPlanWB(wb){try{const a=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});return a[0]&&/리소스/.test(String(a[0][0])+String(a[0][1]));}catch(e){return false;}}
+V.plan=()=>{
+  if(!DB.plan)return `<div class="card"><h3>주간 생산계획</h3><p class="muted">아직 업로드된 생산계획이 없습니다. <b>데이터 관리 → 파일 가져오기</b>에서 주간 생산계획 엑셀(.xlsx)을 업로드하세요.</p></div>`;
+  const wk=DB.plan.weeks[planWeek]||DB.plan.weeks[0];
+  const tot=wk.resources.reduce((a,r)=>a+r.weekTotal,0);
+  const ords=wk.resources.reduce((a,r)=>a+r.orders.length,0);
+  const daily=wk.dates.map(d=>({label:d.slice(5),v:Math.round(wk.resources.reduce((a,r)=>a+(r.daily[d]||0),0)/1000)}));
+  const maxR=Math.max(...wk.resources.map(r=>r.weekTotal));
+  const resRows=wk.resources.slice(0,14).map((r,i)=>`<div class="barrow" style="grid-template-columns:130px 1fr 96px"><div class="nm">${r.name}</div><div>${pbar(r.weekTotal/maxR*100,'#3b82f6')}<div class="mini" style="margin-top:4px">${r.orders.length}오더 · ${Object.keys(r.daily).length}일 가동</div></div><div class="vv">${r.weekTotal.toLocaleString()}</div></div>`).join('');
+  const allOrders=wk.resources.flatMap(r=>r.orders.map(o=>({...o,res:r.name}))).sort((a,b)=>a.date.localeCompare(b.date)||b.qty-a.qty);
+  const oRows=allOrders.slice(0,40).map(o=>`<tr><td>${o.date.slice(5)}</td><td>${o.res}</td><td>${o.orderNo}</td><td style="text-align:left;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.product||'-'}</td><td>${o.qty.toLocaleString()}</td></tr>`).join('');
+  const tabs=DB.plan.weeks.map((w,i)=>`<button class="btn ${i===planWeek?'p':''}" onclick="planWeek=${i};go('plan')">${w.name}</button>`).join(' ');
+  return `
+  <div style="display:flex;gap:8px;margin-bottom:14px">${tabs}<span class="src live" style="margin-left:auto;align-self:center">실데이터: ${dataSource}</span></div>
+  <div class="grid g4" style="margin-bottom:14px">
+    <div class="kpi"><div class="ic">📦</div><div class="lab">주간 총 계획수량</div><div class="val">${(tot/10000).toFixed(1)}<small>만개</small></div><div class="delta">${tot.toLocaleString()}개</div></div>
+    <div class="kpi"><div class="ic">📋</div><div class="lab">오더 건수</div><div class="val">${ords}<small>건</small></div></div>
+    <div class="kpi"><div class="ic">🏭</div><div class="lab">가동 리소스</div><div class="val">${wk.resources.length}<small>개</small></div><div class="delta">설비/라인</div></div>
+    <div class="kpi"><div class="ic">🗓</div><div class="lab">계획 일수</div><div class="val">${wk.dates.length}<small>일</small></div><div class="delta">${wk.dates[0]?.slice(5)}~${wk.dates[wk.dates.length-1]?.slice(5)}</div></div>
+  </div>
+  <div class="grid g2" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
+    <div class="card"><h3>리소스별 주간 계획수량 <span class="hint">상위 14 · 개</span></h3>${resRows}</div>
+    <div class="card"><h3>일자별 계획수량 <span class="hint">천개</span></h3>${lineChart(daily,{stroke:'#22c55e',fill:'#22c55e22',colorAt:()=>'#22c55e'})}
+      <div class="mini" style="text-align:center">${wk.name} · 일 평균 ${Math.round(tot/wk.dates.length/1000).toLocaleString()}천개</div></div>
+  </div>
+  <div class="card"><h3>생산 오더 목록 <span class="hint">전체 ${ords}건 중 상위 40 · 날짜순</span></h3>
+    <div style="overflow-x:auto"><table class="tb"><thead><tr><th>일자</th><th>리소스</th><th>오더번호</th><th style="text-align:left">품명</th><th>수량</th></tr></thead><tbody>${oRows}</tbody></table></div>
+  </div>`;
+};
 V.safeapp=()=>`<div class="card" style="padding:12px"><h3>안전 관리 (ZENF Safety App) <span class="hint">기존 앱 통합</span><button class="btn" onclick="window.open('ZENF_Safety_App_v65.html','_blank')">↗ 새 창</button></h3><iframe class="safe" src="ZENF_Safety_App_v65.html" title="ZENF Safety App"></iframe></div>`;
 
 /* ============ DATA OPS ============ */
 function rerender(){go(cur);buildNav();document.getElementById('srcTag').textContent='데이터: '+dataSource;document.getElementById('srcTag').classList.toggle('live',dataSource!=='데모');}
-function editLine(i,k,v){DB.lines[i][k]=(v===''||isNaN(+v))?0:+v; if(k==='on'||k==='leave'||k==='edu'){/*headcount는 관제집계 유지*/} go(cur); }
-function resetDB(){DB=JSON.parse(JSON.stringify(DEFAULT_DB));dataSource='데모';toast('데모값으로 복원했습니다');rerender();}
+function editLine(i,k,v){DB.lines[i][k]=(v===''||isNaN(+v))?0:+v; if(dataSource==='데모')dataSource='수동 편집'; saveDB(); go(cur); document.getElementById('srcTag').textContent='데이터: '+dataSource; }
+function resetDB(){DB=JSON.parse(JSON.stringify(DEFAULT_DB));dataSource='데모';planWeek=0;try{localStorage.removeItem(LS_KEY);}catch(e){}toast('데모값으로 복원했습니다 (저장 데이터 삭제)');rerender();}
 const IMPORT_MAP={'라인':'key','필요':'need','출근':'on','연차':'leave','교육':'edu','목표':'target','실적':'actual','capa':'capa','CAPA':'capa','불량%':'defect','불량':'defect','세척경과h':'clElapsed','세척경과':'clElapsed','전환0~1':'clTransfer','전환':'clTransfer'};
 function applyRows(rows){
   // rows: array of objects keyed by header
@@ -573,16 +645,22 @@ function importFile(file){
   if(!file)return;const name=file.name.toLowerCase();const rd=new FileReader();
   rd.onload=e=>{
     try{
-      let rows;
       if(name.endsWith('.csv')){
-        rows=csvToRows(e.target.result);
-      }else{
-        const wb=XLSX.read(e.target.result,{type:'binary'});
-        rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+        const n=applyRows(csvToRows(e.target.result));
+        if(n>0){dataSource=file.name;saveDB();toast(n+'개 라인 데이터를 반영했습니다');rerender();}
+        else toast('매칭되는 라인이 없습니다 (헤더/라인명 확인)');
+        return;
       }
-      const n=applyRows(rows);
-      if(n>0){dataSource=file.name;toast(n+'개 라인 데이터를 반영했습니다');rerender();}
-      else toast('매칭되는 라인이 없습니다 (헤더/라인명 확인)');
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      if(isPlanWB(wb)){
+        DB.plan=parsePlan(wb);planWeek=0;dataSource=file.name;saveDB();
+        const w=DB.plan.weeks[0];
+        toast('주간 생산계획 인식: '+DB.plan.weeks.length+'주 · '+w.resources.length+'개 리소스 · 총 '+w.resources.reduce((a,r)=>a+r.weekTotal,0).toLocaleString()+'개');
+        rerender();go('plan');return;
+      }
+      const n=applyRows(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}));
+      if(n>0){dataSource=file.name;saveDB();toast(n+'개 라인 데이터를 반영했습니다');rerender();}
+      else toast('인식 가능한 데이터가 없습니다. 템플릿 형식 또는 주간계획 형식을 확인하세요.');
     }catch(err){toast('파일 파싱 실패: '+err.message);}
   };
   if(name.endsWith('.csv'))rd.readAsText(file);else rd.readAsBinaryString(file);
@@ -609,6 +687,7 @@ let cur='home';
 function buildNav(){
   const items=AGENTS.filter(a=>ROLES[role].allow.includes(a.id));
   const extra=[];
+  if(ROLES[role].allow.includes('plan'))extra.push({id:'plan',name:'생산계획(주간)',icon:'📋'});
   if(ROLES[role].allow.includes('data'))extra.push({id:'data',name:'데이터 관리',icon:'🗄'});
   extra.push({id:'safeapp',name:'안전 관리(ZENF)',icon:'🧯'});
   const badges={
@@ -626,15 +705,15 @@ function buildNav(){
     <div class="sec">Agent</div>
     ${items.map(a=>`<a data-id="${a.id}" class="${a.id===cur?'on':''}" onclick="go('${a.id}')"><span class="ic">${a.icon}</span><span>${a.name}</span>${badges[a.id]?`<span class="badge ${badges[a.id].c}">${badges[a.id].t}</span>`:''}</a>`).join('')}
     <div class="sec">시스템</div>
-    ${extra.map(a=>`<a data-id="${a.id}" class="${a.id===cur?'on':''}" onclick="go('${a.id}')"><span class="ic">${a.icon}</span><span>${a.name}</span></a>`).join('')}
+    ${extra.map(a=>`<a data-id="${a.id}" class="${a.id===cur?'on':''}" onclick="go('${a.id}')"><span class="ic">${a.icon}</span><span>${a.name}</span>${a.id==='plan'&&DB.plan?`<span class="badge t-blue">${DB.plan.weeks.length}주</span>`:''}</a>`).join('')}
     <div class="spacer"></div>
-    <div class="user"><div class="av">${R.emoji}</div><div><div class="nm">홍길동 ${R.name==='공장장'?'공장장':R.name==='반장'?'반장':'사원'}</div><div class="rl">${R.name} · 권한</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
+    <div class="user"><div class="av">${R.emoji}</div><div><div class="nm">홍길동 ${R.name}</div><div class="rl">${R.name} · ${scopeLabel()}</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
 }
 function go(id){
   if(!ROLES[role].allow.includes(id)&&!['data','safeapp'].includes(id))id='home';
   if(id==='data'&&!ROLES[role].allow.includes('data'))id='home';
   cur=id;
-  const meta=AGENTS.find(a=>a.id===id)||{name:{data:'데이터 관리',safeapp:'안전 관리 (ZENF)'}[id],sub:{data:'엑셀/CSV 업로드 · 직접 편집으로 대시보드 구동',safeapp:'기존 안전 앱 통합 화면'}[id]};
+  const meta=AGENTS.find(a=>a.id===id)||{name:{data:'데이터 관리',safeapp:'안전 관리 (ZENF)',plan:'생산계획 (주간)'}[id],sub:{data:'엑셀/CSV 업로드 · 직접 편집으로 대시보드 구동',safeapp:'기존 안전 앱 통합 화면',plan:'주간 생산계획 엑셀 실데이터 · 리소스·오더·수량'}[id]};
   document.getElementById('vTitle').textContent=meta.name;
   document.getElementById('vSub').textContent=meta.sub;
   document.getElementById('view').innerHTML=(V[id]||(()=>'<div class="card">준비 중</div>'))();
@@ -647,17 +726,35 @@ function setupDrop(){const d=document.getElementById('drop');if(!d)return;
   ['dragleave','drop'].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.classList.remove('hi');}));
   d.addEventListener('drop',e=>{if(e.dataTransfer.files[0])importFile(e.dataTransfer.files[0]);});
 }
-// login
-document.querySelectorAll('#roles button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#roles button').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
+// login — 역할별 스코프 옵션
+function fillScope(r){
+  const sel=document.getElementById('scopeSel'),lbl=document.getElementById('scopeLbl');
+  let opts=[];
+  if(r==='worker'){lbl.textContent='담당 라인 (현장직)';opts=DEFAULT_DB.lines.map(l=>({v:l.key,t:l.key+' 라인'}));}
+  else if(r==='leader'){lbl.textContent='담당 구역 (반장)';opts=Object.keys(ZONES).map(z=>({v:z,t:z+' ('+ZONES[z].join('·')+')'}));}
+  else{lbl.textContent='담당 범위 (공장장)';opts=[{v:'전체',t:'전체 라인 (전권)'}];}
+  sel.innerHTML=opts.map(o=>`<option value="${o.v}">${o.t}</option>`).join('');
+  sel.disabled=(r==='manager');
+}
+document.querySelectorAll('#roles button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#roles button').forEach(x=>x.classList.remove('on'));b.classList.add('on');fillScope(b.dataset.role);});
 function doLogin(){
   role=document.querySelector('#roles button.on').dataset.role;
+  const v=document.getElementById('scopeSel').value;
+  if(role==='worker'){scope=[v];scopeName=v+' 라인';}
+  else if(role==='leader'){scope=ZONES[v]||null;scopeName=v;}
+  else{scope=null;scopeName='전체';}
   document.getElementById('login').style.display='none';
   document.getElementById('app').classList.add('show');
-  cur='home';buildNav();go('home');
+  cur=(DB.plan&&ROLES[role].allow.includes('plan'))?'plan':'home';
+  buildNav();go(cur);
   document.getElementById('srcTag').textContent='데이터: '+dataSource;
+  document.getElementById('srcTag').classList.toggle('live',dataSource!=='데모');
 }
 function logout(){document.getElementById('app').classList.remove('show');document.getElementById('login').style.display='flex';}
 document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+// startup: restore saved data + default scope UI
+loadDB();
+fillScope('leader');
 </script>
 </body>
 </html>
