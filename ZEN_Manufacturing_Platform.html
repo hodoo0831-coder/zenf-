@@ -150,6 +150,25 @@
     .nav{position:static;height:auto;flex-direction:row;flex-wrap:wrap}.nav .logo,.nav .spacer,.nav .user,.nav .sec{display:none}.nav a{flex:0 0 auto}
     .g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}.g2{grid-template-columns:1fr}.lines-grid{grid-template-columns:1fr}
   }
+  /* ===== 히어로 배너 · 시각화 ===== */
+  .hero{border-radius:18px;padding:22px 26px;margin-bottom:16px;color:#eaf1fb;position:relative;overflow:hidden;
+    background:linear-gradient(120deg,#1e3a5c 0,#22506f 55%,#1b4a62 100%);
+    box-shadow:0 12px 34px rgba(30,58,95,.24);display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .hero::before{content:"";position:absolute;right:-40px;top:-90px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(89,211,160,.20),transparent 70%);pointer-events:none}
+  .hero::after{content:"";position:absolute;left:34%;bottom:-120px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(47,111,237,.18),transparent 70%);pointer-events:none}
+  .hero .hbrand{font-size:11.5px;letter-spacing:2.5px;color:#8fd8b9;font-weight:800;text-transform:uppercase}
+  .hero .htitle{font-size:27px;font-weight:800;margin-top:5px}
+  .hero .hsub{font-size:12.5px;color:#b9cbe0;margin-top:6px}
+  .hero .hstats{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
+  .hero .hstat{text-align:center;min-width:78px;padding:10px 14px;border-radius:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+  .hero .hstat .hn{font-size:23px;font-weight:800;line-height:1}
+  .hero .hstat .hl{font-size:11px;color:#a8c0da;margin-top:5px}
+  .kpi .spark{margin-top:9px;opacity:.95}
+  .viz{display:grid;grid-template-columns:1fr 1.2fr 1fr 1.2fr;gap:15px;margin-bottom:16px}
+  .gaugewrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:4px}
+  .gaugewrap .gv{font-size:30px;font-weight:800;margin-top:-10px}
+  .gaugewrap .gl{font-size:11.5px;color:var(--muted);margin-top:3px}
+  @media (max-width:1080px){.viz{grid-template-columns:1fr 1fr}.hero .hstats{margin-left:0;width:100%}}
 </style>
 
 </head>
@@ -243,6 +262,15 @@ function barsChart(data,{w=560,h=200,max,pad={l:34,r:14,t:16,b:26},grid=4}={}){
   return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto">${g}</svg>`;
 }
 function pbar(pct,color){return `<div class="pbar"><i style="width:${Math.max(0,Math.min(100,pct))}%;background:${color}"></i></div>`;}
+function spark(vals,{w=110,h=30,color='#2f6fed',fill}={}){
+  if(!vals||!vals.length)return '';const mn=Math.min(...vals),mx=Math.max(...vals),rng=(mx-mn)||1;
+  const X=i=>(vals.length<2?w/2:i/(vals.length-1)*w),Y=v=>h-3-((v-mn)/rng)*(h-6);
+  const pts=vals.map((v,i)=>[X(i),Y(v)]);
+  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area=`M0 ${h} `+pts.map(p=>`L${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')+` L${w} ${h} Z`;
+  const last=pts[pts.length-1];
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none"><path d="${area}" fill="${fill||color+'20'}"/><path d="${line}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.4" fill="${color}"/></svg>`;
+}
 function pi(cls){return `<svg class="pi ${cls}" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 1.8c-3.4 0-8 1.7-8 5.1V21h16v-2.1c0-3.4-4.6-5.1-8-5.1Z"/></svg>`;}
 function sc(v,warn,bad,invert){if(invert)return v>=bad?'#ef4444':v>=warn?'#f59e0b':'#22c55e';return v<=bad?'#ef4444':v<=warn?'#f59e0b':'#22c55e';}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
@@ -358,12 +386,14 @@ let role='leader';
 /* ============ VIEWS ============ */
 const V={};
 V.home=()=>{
-  const tp=totProd(),oee=avgOEE(),df=avgDefect(),short=shortSum();
+  const tp=totProd(),oee=avgOEE(),df=avgDefect();
+  const need=headNeed(),cur=headCur();
+  const orders=DB.stock.filter(s=>G.stock(s).need);
   const badge={
     prod:{m:tp.ach+'%',tag:tp.ach>=80?'t-green':'t-amber',tt:'진행중'},
-    labor:{m:headCur()+'/'+headNeed(),tag:'t-red',tt:(headNeed()-headCur())+'명 부족'},
+    labor:{m:cur+'/'+need,tag:'t-red',tt:(need-cur)+'명 부족'},
     clean:{m:myLines().filter(l=>G.cleanScore(l)>=75).length+'건',tag:'t-amber',tt:'우선 세척'},
-    stock:{m:DB.stock.filter(s=>G.stock(s).need).length+'종',tag:'t-red',tt:'긴급 발주'},
+    stock:{m:orders.length+'종',tag:'t-red',tt:'긴급 발주'},
     safe:{m:'WBGT '+DB.safety.wbgt,tag:DB.safety.wbgt>=28?'t-amber':'t-green',tt:DB.safety.wbgt>=28?'경고':'양호'},
     qual:{m:df+'%',tag:df>1.5?'t-amber':'t-green',tt:'목표 1.5%'},
     kpi:{m:oee+'%',tag:oee>=80?'t-green':'t-amber',tt:oee>=80?'양호':'개선'},
@@ -373,17 +403,39 @@ V.home=()=>{
     return `<a class="cardlink" onclick="go('${a.id}')"><div class="card agentcard"><div class="top"><div class="ico">${a.icon}</div><div><div class="nm">${a.name}</div><div class="ds">${a.sub}</div></div></div><div class="metric"><div><div class="m">${c.m}</div><div class="mini">${a.sub.split('·')[0]}</div></div><span class="tag ${c.tag}">${c.tt}</span></div></div></a>`;}).join('');
   const worst=[...myLines()].sort((a,b)=>G.cleanScore(b)-G.cleanScore(a))[0];
   const planBanner=DB.plan?`<div class="reco"><div class="ic">📋</div><div class="tx"><div class="r">주간 생산계획 연동됨 — ${DB.plan.weeks[0].name}</div><div class="s">리소스 ${DB.plan.weeks[0].resources.length}개 · 총 계획 ${(DB.plan.weeks.reduce((a,w)=>a+w.resources.reduce((x,r)=>x+r.weekTotal,0),0)).toLocaleString()}개. 좌측 '생산계획' 메뉴에서 상세 확인.</div></div></div>`:'';
+  // ---- 시각화 데이터 ----
+  const sAch=[68,71,70,74,72,73,tp.ach], sHead=[86,88,85,88,90,88,cur], sOee=[79,81,80,82,81,80,oee], sDef=DB.qualTrend.map(d=>d.v);
+  const achColor=tp.ach>=80?'#1fae63':tp.ach>=60?'#f59e0b':'#e5484d';
+  const lineBars=myLines().map(l=>({label:l.key,v:G.achieve(l),color:G.achieve(l)>=80?'#1fae63':G.achieve(l)>=70?'#f59e0b':'#e5484d'}));
+  const workTot=DB.work.reduce((a,b)=>a+b.n,0);
+  const workSegs=DB.work.map(w=>({pct:Math.round(w.n/workTot*100),color:w.color,lab:w.lab,n:w.n}));
   return `
-  <div class="grid g4" style="margin-bottom:14px">
-    <div class="kpi"><div class="ic">📈</div><div class="lab">금일 생산 달성률</div><div class="val">${tp.ach}<small>%</small></div><div class="delta ${tp.ach>=80?'pos':'neg'}">목표 ${(tp.t/1000).toFixed(0)}천 · 실적 ${(tp.a/1000).toFixed(0)}천</div></div>
-    <div class="kpi"><div class="ic">👥</div><div class="lab">현재 투입 인원</div><div class="val">${headCur()}<small>/${headNeed()}명</small></div><div class="delta neg">${headNeed()-headCur()}명 부족</div></div>
-    <div class="kpi"><div class="ic">📊</div><div class="lab">설비종합효율 OEE</div><div class="val ${oee>=80?'pos':''}">${oee}<small>%</small></div><div class="delta">6개 라인 평균</div></div>
-    <div class="kpi"><div class="ic">🔬</div><div class="lab">평균 불량률</div><div class="val">${df}<small>%</small></div><div class="delta ${df>1.5?'neg':'pos'}">목표 1.5%</div></div>
+  <div class="hero">
+    <div><div class="hbrand">AP 대전공장 · 실시간 관제</div><div class="htitle">제조 통합 대시보드</div><div class="hsub">2025.05.10 (금) 09:30 · <span style="color:#59d3a0">● 실시간 연동 중</span> · 가동 6/6 라인</div></div>
+    <div class="hstats">
+      <div class="hstat"><div class="hn">${tp.ach}%</div><div class="hl">생산 달성</div></div>
+      <div class="hstat"><div class="hn">${oee}%</div><div class="hl">OEE</div></div>
+      <div class="hstat"><div class="hn">${cur}/${need}</div><div class="hl">인력</div></div>
+      <div class="hstat"><div class="hn">${df}%</div><div class="hl">불량률</div></div>
+      <div class="hstat"><div class="hn" style="color:#ffcf5a">${orders.length}</div><div class="hl">발주필요</div></div>
+    </div>
   </div>
-  <div class="card" style="margin-bottom:14px"><h3>AI 통합 인사이트 <span class="hint">8개 Agent 종합 · 데이터 반영 실시간</span></h3>
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="kpi"><div class="ic">📈</div><div class="lab">금일 생산 달성률</div><div class="val">${tp.ach}<small>%</small></div>${spark(sAch,{color:'#2f6fed'})}</div>
+    <div class="kpi"><div class="ic">👥</div><div class="lab">현재 투입 인원</div><div class="val">${cur}<small>/${need}명</small></div>${spark(sHead,{color:'#e5484d'})}</div>
+    <div class="kpi"><div class="ic">📊</div><div class="lab">설비종합효율 OEE</div><div class="val">${oee}<small>%</small></div>${spark(sOee,{color:'#1fae63'})}</div>
+    <div class="kpi"><div class="ic">🔬</div><div class="lab">평균 불량률</div><div class="val">${df}<small>%</small></div>${spark(sDef,{color:'#f59e0b'})}</div>
+  </div>
+  <div class="viz">
+    <div class="card"><h3>생산 달성률 <span class="hint">목표 대비</span></h3><div class="gaugewrap">${gauge(tp.ach,{color:achColor,size:190})}<div class="gv" style="color:${achColor}">${tp.ach}%</div><div class="gl">실적 ${(tp.a/1000).toFixed(0)}천 / 목표 ${(tp.t/1000).toFixed(0)}천개</div></div></div>
+    <div class="card"><h3>라인별 달성률 <span class="hint">%</span></h3>${barsChart(lineBars,{max:100})}<div class="mini" style="text-align:center">80% 이상 초록 · 70~80 주황 · 미만 빨강</div></div>
+    <div class="card"><h3>근무 형태별 <span class="hint">총 ${workTot}명</span></h3><div style="display:flex;gap:14px;align-items:center">${donut(workSegs,{size:120,center:workTot,centerSub:'총원'})}<div class="legend">${workSegs.map(w=>`<div class="li"><span class="sw" style="background:${w.color}"></span>${w.lab} <b>${w.n}명</b></div>`).join('')}</div></div></div>
+    <div class="card"><h3>주간 부족인원 예측 <span class="hint">명</span></h3>${lineChart(DB.forecast,{max:8,stroke:'#e5484d',fill:'#e5484d18',colorAt:v=>v>=5?'#e5484d':v>=3?'#f59e0b':'#1fae63'})}<div class="mini" style="text-align:center">피크 화요일 6명 · 사전 배치 필요</div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px"><h3>AI 통합 인사이트 <span class="hint">8개 Agent 종합 · 데이터 반영 실시간</span></h3>
     ${planBanner}
     <div class="reco bad"><div class="ic">⚠️</div><div class="tx"><div class="r">${worst.key} 라인 — 복합 리스크 감지</div><div class="s">세척 우선순위 ${G.cleanScore(worst)}점(1위) · 불량률 ${worst.defect}% · 인력 ${G.cur(worst)-worst.need>=0?'정상':(worst.need-G.cur(worst))+'명 부족'}. 세척 완료 후 여유 라인 인력 재배치 권장.</div></div></div>
-    <div class="reco warn"><div class="ic">📦</div><div class="tx"><div class="r">${DB.stock.filter(s=>G.stock(s).need).map(s=>s.name).join(' · ')||'긴급 발주 없음'} 발주 필요</div><div class="s">재고일수 임박 자재 ${DB.stock.filter(s=>G.stock(s).need).length}종. 미발주 시 라인 가동 중단 위험.</div></div></div>
+    <div class="reco warn"><div class="ic">📦</div><div class="tx"><div class="r">${orders.map(s=>s.name).join(' · ')||'긴급 발주 없음'} 발주 필요</div><div class="s">재고일수 임박 자재 ${orders.length}종. 미발주 시 라인 가동 중단 위험.</div></div></div>
     <div class="reco"><div class="ic">🦺</div><div class="tx"><div class="r">폭염 ${DB.safety.wbgt>=28?'경고':'주의'} (WBGT ${DB.safety.wbgt}℃)</div><div class="s">고열 작업구간 시간당 휴식·수분 비치 조치. 무재해 ${DB.safety.noAccident}일 지속.</div></div></div>
   </div>
   <div class="grid g4">${cards}</div>`;
