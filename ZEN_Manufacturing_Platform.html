@@ -8,8 +8,8 @@
 <style>
   :root{
     --bg:#eef2f7;--bg2:#e6ecf4;--panel:#ffffff;--panel2:#ffffff;
-    --line:#e6ebf2;--line2:#d3dde9;--ink:#1f3a5c;--muted:#6b7c93;--muted2:#9aa8bc;
-    --blue:#3f74b5;--navy:#1e3a5f;--green:#4b9a76;--red:#c58585;--amber:#d0a45f;--purple:#a855f7;--teal:#14b8a6;
+    --line:#e6ebf2;--line2:#d3dde9;--ink:#1f3a5c;--muted:#5f6f86;--muted2:#7d8ba0;
+    --blue:#3f74b5;--navy:#1e3a5f;--green:#22a05f;--red:#dc4b4b;--amber:#d98a2b;--purple:#a855f7;--teal:#14b8a6;
     --shadow:0 6px 20px rgba(30,58,95,.09);--radius:16px;
   }
   *{box-sizing:border-box}
@@ -64,7 +64,7 @@
   .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.8s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
   .src{font-size:11px;font-weight:700;padding:5px 11px;border-radius:20px;border:1px solid var(--line2);background:#fff;color:var(--muted)}
-  .src.live{color:#1e9e5a;border-color:#b8e6cc;background:#eafaf1}
+  .src.live{color:#22a05f;border-color:#b8e6cc;background:#eafaf1}
   .btn{border:1px solid var(--line2);background:#fff;color:var(--navy);padding:9px 14px;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;gap:7px;align-items:center;transition:.14s;box-shadow:0 1px 2px rgba(30,58,95,.05)}
   .btn:hover{border-color:var(--blue);color:var(--blue)}
   .btn.p{border:none;background:linear-gradient(180deg,#3f74b5,#255fd6);color:#fff;box-shadow:0 3px 10px rgba(47,111,237,.28)}
@@ -81,13 +81,13 @@
   .kpi .lab{font-size:12.5px;color:var(--muted);font-weight:600}
   .kpi .val{font-size:27px;font-weight:800;margin-top:6px;color:var(--navy)}.kpi .val small{font-size:13px;color:var(--muted);font-weight:600;margin-left:2px}
   .kpi .delta{font-size:11.5px;font-weight:700;margin-top:4px}
-  .pos{color:#1e9e5a}.neg{color:#c58585}.zero{color:var(--muted)}
+  .pos{color:#22a05f}.neg{color:#dc4b4b}.zero{color:var(--muted)}
   .tag{font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;display:inline-block}
-  .t-red{background:#fdecec;color:#d64545;border:1px solid #f5c2c2}.t-amber{background:#fff6e5;color:#c77700;border:1px solid #f3d9a0}
-  .t-green{background:#e8f6ee;color:#1e9e5a;border:1px solid #b8e6cc}.t-blue{background:#e9f1fd;color:#3f74b5;border:1px solid #c3d9f7}
+  .t-red{background:#fdecec;color:#dc4b4b;border:1px solid #f5c2c2}.t-amber{background:#fff6e5;color:#c77700;border:1px solid #f3d9a0}
+  .t-green{background:#e8f6ee;color:#22a05f;border:1px solid #b8e6cc}.t-blue{background:#e9f1fd;color:#3f74b5;border:1px solid #c3d9f7}
   .sdot{display:inline-block;width:11px;height:11px;border-radius:50%}
-  .s-red{background:var(--red);box-shadow:0 0 0 3px #c5858522}.s-green{background:var(--green);box-shadow:0 0 0 3px #4b9a7622}
-  .s-amber{background:var(--amber);box-shadow:0 0 0 3px #d0a45f22}.s-blue{background:var(--blue)}
+  .s-red{background:var(--red);box-shadow:0 0 0 3px #dc4b4b22}.s-green{background:var(--green);box-shadow:0 0 0 3px #22a05f22}
+  .s-amber{background:var(--amber);box-shadow:0 0 0 3px #d98a2b22}.s-blue{background:var(--blue)}
   table.tb{width:100%;border-collapse:collapse;font-size:13px}
   table.tb th{color:var(--muted);font-weight:700;text-align:right;padding:9px 8px;border-bottom:2px solid var(--line2)}
   table.tb th:first-child{text-align:left}
@@ -113,7 +113,7 @@
   .l-hnb{background:linear-gradient(150deg,#8f57c0,#6d3ba0)}.l-fnc{background:linear-gradient(150deg,#b09a2f,#8f7a1e)}
   .list .it{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}.list .it:last-child{border-bottom:none}
   .rank{width:27px;height:27px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;background:#eaf1fb;border:1px solid var(--line2);color:var(--navy);flex:0 0 auto}
-  .rank.top{background:#fdecec;border-color:#f5c2c2;color:#d64545}
+  .rank.top{background:#fdecec;border-color:#f5c2c2;color:#dc4b4b}
   .muted{color:var(--muted)}.mut2{color:var(--muted2)}.big{font-size:24px;font-weight:800;color:var(--navy)}.mini{font-size:11.5px;color:var(--muted)}
   .chip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:7px;background:#eef2f8;border:1px solid var(--line);color:var(--muted)}
   .reco{display:flex;gap:11px;align-items:flex-start;background:#f5f8fc;border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px}
@@ -140,7 +140,7 @@
   .drop:hover{border-color:var(--blue);color:var(--navy);background:#eef5ff}
   .drop.hi{border-color:var(--green);background:#eafaf1}
   iframe.safe{width:100%;height:calc(100vh - 150px);border:1px solid var(--line);border-radius:14px;background:#fff}
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#eafaf1;border:1px solid #b8e6cc;color:#1e9e5a;padding:12px 20px;border-radius:14px;font-weight:800;font-size:13px;z-index:200;box-shadow:0 12px 30px rgba(30,58,95,.16);opacity:0;transition:.25s;pointer-events:none}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#eafaf1;border:1px solid #b8e6cc;color:#22a05f;padding:12px 20px;border-radius:14px;font-weight:800;font-size:13px;z-index:200;box-shadow:0 12px 30px rgba(30,58,95,.16);opacity:0;transition:.25s;pointer-events:none}
   .toast.show{opacity:1}
   @media (max-width:1080px){
     .app.show{grid-template-columns:1fr}
@@ -226,7 +226,7 @@ break;case"<bookViews":;case"<bookViews>":;case"</bookViews>":break;case"<workbo
 </script>
 <script>
 /* ============ CHART HELPERS ============ */
-function gauge(pct,{color='#22c55e',size=150}={}){
+function gauge(pct,{color='#22a05f',size=150}={}){
   const r=60,cx=80,cy=80,f=Math.max(0,Math.min(1,pct/100)),a=Math.PI*(1-f);
   const x=(cx+r*Math.cos(a)).toFixed(1),y=(cy-r*Math.sin(a)).toFixed(1);
   return `<svg viewBox="0 0 160 92" width="${size}" style="display:block"><path d="M20 80 A60 60 0 0 1 140 80" fill="none" stroke="#e2e8f0" stroke-width="12" stroke-linecap="round"/><path d="M20 80 A60 60 0 0 1 ${x} ${y}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round"/></svg>`;
@@ -242,12 +242,12 @@ function lineChart(data,{w=560,h=200,max,min=0,pad={l:34,r:16,t:18,b:26},stroke=
   const X=i=>pad.l+(data.length<2?iw/2:(i/(data.length-1))*iw);
   const Y=v=>pad.t+(1-(v-min)/(mx-min))*ih;
   let g='';
-  for(let k=0;k<=grid;k++){const gv=min+(mx-min)*k/grid,y=Y(gv);g+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" stroke="#e2e8f0"/><text x="${pad.l-6}" y="${y+3}" font-size="9" text-anchor="end" fill="#94a3b8">${Math.round(gv)}</text>`;}
+  for(let k=0;k<=grid;k++){const gv=min+(mx-min)*k/grid,y=Y(gv);g+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" stroke="#e2e8f0"/><text x="${pad.l-6}" y="${y+3}" font-size="10.5" font-weight="600" text-anchor="end" fill="#5b6b82">${Math.round(gv)}</text>`;}
   const pts=data.map((d,i)=>[X(i),Y(d.v)]);
   const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
   const area=`M${pts[0][0]} ${Y(min)} `+pts.map(p=>`L${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')+` L${pts[pts.length-1][0]} ${Y(min)} Z`;
   g+=`<path d="${area}" fill="${fill}"/><path d="${line}" fill="none" stroke="${stroke}" stroke-width="2.4" stroke-linejoin="round"/>`;
-  data.forEach((d,i)=>{const c=colorAt?colorAt(d.v,d):stroke;g+=`<circle cx="${X(i)}" cy="${Y(d.v)}" r="3.2" fill="${c}" stroke="#ffffff" stroke-width="1.4"/>`;if(showVals)g+=`<text x="${X(i)}" y="${Y(d.v)-8}" font-size="9.5" font-weight="700" text-anchor="middle" fill="${c}">${d.v}${d.suffix||''}</text>`;g+=`<text x="${X(i)}" y="${h-8}" font-size="8.4" text-anchor="middle" fill="#94a3b8">${d.label}</text>`;});
+  data.forEach((d,i)=>{const c=colorAt?colorAt(d.v,d):stroke;g+=`<circle cx="${X(i)}" cy="${Y(d.v)}" r="3.2" fill="${c}" stroke="#ffffff" stroke-width="1.4"/>`;if(showVals)g+=`<text x="${X(i)}" y="${Y(d.v)-8}" font-size="11" font-weight="800" text-anchor="middle" fill="${c}">${d.v}${d.suffix||''}</text>`;g+=`<text x="${X(i)}" y="${h-8}" font-size="9.8" font-weight="600" text-anchor="middle" fill="#5b6b82">${d.label}</text>`;});
   return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto">${g}</svg>`;
 }
 function barsChart(data,{w=560,h=200,max,pad={l:34,r:14,t:16,b:26},grid=4}={}){
@@ -255,8 +255,8 @@ function barsChart(data,{w=560,h=200,max,pad={l:34,r:14,t:16,b:26},grid=4}={}){
   const iw=w-pad.l-pad.r,ih=h-pad.t-pad.b,bw=iw/data.length*0.56;
   const X=i=>pad.l+(i+0.5)/data.length*iw,Y=v=>pad.t+(1-v/mx)*ih;
   let g='';
-  for(let k=0;k<=grid;k++){const gv=mx*k/grid,y=Y(gv);g+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" stroke="#e2e8f0"/><text x="${pad.l-6}" y="${y+3}" font-size="9" text-anchor="end" fill="#94a3b8">${Math.round(gv)}</text>`;}
-  data.forEach((d,i)=>{const x=X(i)-bw/2,y=Y(d.v),bh=pad.t+ih-y;g+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="3" fill="${d.color||'#3b82f6'}"/><text x="${X(i)}" y="${y-6}" font-size="9.5" font-weight="700" text-anchor="middle" fill="${d.color||'#7fb8ff'}">${d.v}${d.suffix||''}</text><text x="${X(i)}" y="${h-8}" font-size="8.4" text-anchor="middle" fill="#94a3b8">${d.label}</text>`;});
+  for(let k=0;k<=grid;k++){const gv=mx*k/grid,y=Y(gv);g+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" stroke="#e2e8f0"/><text x="${pad.l-6}" y="${y+3}" font-size="10.5" font-weight="600" text-anchor="end" fill="#5b6b82">${Math.round(gv)}</text>`;}
+  data.forEach((d,i)=>{const x=X(i)-bw/2,y=Y(d.v),bh=pad.t+ih-y;g+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="3" fill="${d.color||'#3b82f6'}"/><text x="${X(i)}" y="${y-6}" font-size="11" font-weight="800" text-anchor="middle" fill="${d.color||'#7fb8ff'}">${d.v}${d.suffix||''}</text><text x="${X(i)}" y="${h-8}" font-size="9.8" font-weight="600" text-anchor="middle" fill="#5b6b82">${d.label}</text>`;});
   return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto">${g}</svg>`;
 }
 function pbar(pct,color){return `<div class="pbar"><i style="width:${Math.max(0,Math.min(100,pct))}%;background:${color}"></i></div>`;}
@@ -270,7 +270,7 @@ function spark(vals,{w=110,h=30,color='#3f74b5',fill}={}){
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none"><path d="${area}" fill="${fill||color+'20'}"/><path d="${line}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.4" fill="${color}"/></svg>`;
 }
 function pi(cls){return `<svg class="pi ${cls}" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 1.8c-3.4 0-8 1.7-8 5.1V21h16v-2.1c0-3.4-4.6-5.1-8-5.1Z"/></svg>`;}
-function sc(v,warn,bad,invert){if(invert)return v>=bad?'#ef4444':v>=warn?'#d0a45f':'#22c55e';return v<=bad?'#ef4444':v<=warn?'#d0a45f':'#22c55e';}
+function sc(v,warn,bad,invert){if(invert)return v>=bad?'#dc4b4b':v>=warn?'#d98a2b':'#22a05f';return v<=bad?'#dc4b4b':v<=warn?'#d98a2b':'#22a05f';}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
 
 /* ============ SINGLE SOURCE OF TRUTH: DB ============ */
@@ -285,7 +285,7 @@ const DEFAULT_DB={
     {key:'HnB',label:'HnB 라인',cls:'l-hnb', need:20,on:14,leave:1,edu:3, target:30000,actual:19500,capa:34000,end:'18:40', clElapsed:7.0,clTransfer:0.8, defect:1.6, oeeA:88,oeeP:85},
     {key:'FnC',label:'FnC 라인',cls:'l-fnc', need:14,on:14,leave:1,edu:0, target:28000,actual:23800,capa:30000,end:'16:40', clElapsed:0.4,clTransfer:0.0, defect:1.1, oeeA:94,oeeP:91},
   ],
-  work:[{lab:'정상 근무',n:76,color:'#22c55e'},{lab:'연차',n:8,color:'#d0a45f'},{lab:'결근',n:3,color:'#ef4444'},{lab:'교육/출장',n:5,color:'#3b82f6'}],
+  work:[{lab:'정상 근무',n:76,color:'#22a05f'},{lab:'연차',n:8,color:'#d98a2b'},{lab:'결근',n:3,color:'#dc4b4b'},{lab:'교육/출장',n:5,color:'#3b82f6'}],
   headcount:{need:95,cur:88}, // 관제 집계(교육·이동대기 포함)
   stock:[
     {name:'튜브 원단',unit:'ROLL',onhand:38,dailyUse:32,lead:1,moq:200,targetDays:10},
@@ -404,8 +404,8 @@ V.home=()=>{
   const planBanner=DB.plan?`<div class="reco"><div class="ic">📋</div><div class="tx"><div class="r">주간 생산계획 연동됨 — ${DB.plan.weeks[0].name}</div><div class="s">리소스 ${DB.plan.weeks[0].resources.length}개 · 총 계획 ${(DB.plan.weeks.reduce((a,w)=>a+w.resources.reduce((x,r)=>x+r.weekTotal,0),0)).toLocaleString()}개. 좌측 '생산계획' 메뉴에서 상세 확인.</div></div></div>`:'';
   // ---- 시각화 데이터 ----
   const sAch=[68,71,70,74,72,73,tp.ach], sHead=[86,88,85,88,90,88,cur], sOee=[79,81,80,82,81,80,oee], sDef=DB.qualTrend.map(d=>d.v);
-  const achColor=tp.ach>=80?'#4b9a76':tp.ach>=60?'#d0a45f':'#c58585';
-  const lineBars=myLines().map(l=>({label:l.key,v:G.achieve(l),color:G.achieve(l)>=80?'#4f7cb0':G.achieve(l)>=70?'#83a3c9':'#c58a8a'}));
+  const achColor=tp.ach>=80?'#22a05f':tp.ach>=60?'#d98a2b':'#dc4b4b';
+  const lineBars=myLines().map(l=>({label:l.key,v:G.achieve(l),color:G.achieve(l)>=80?'#4f7cb0':G.achieve(l)>=70?'#83a3c9':'#dc4b4b'}));
   const workTot=DB.work.reduce((a,b)=>a+b.n,0);
   const workSegs=DB.work.map(w=>({pct:Math.round(w.n/workTot*100),color:w.color,lab:w.lab,n:w.n}));
   return `
@@ -423,7 +423,7 @@ V.home=()=>{
     <div class="card"><h3>생산 달성률 <span class="hint">목표 대비</span></h3><div class="gaugewrap">${gauge(tp.ach,{color:'#5b86b8',size:190})}<div class="gv" style="color:var(--navy)">${tp.ach}%</div><div class="gl">실적 ${(tp.a/1000).toFixed(0)}천 / 목표 ${(tp.t/1000).toFixed(0)}천개</div></div></div>
     <div class="card"><h3>라인별 달성률 <span class="hint">%</span></h3>${barsChart(lineBars,{max:100})}<div class="mini" style="text-align:center">달성 높을수록 진한 블루 · 미달 라인만 강조</div></div>
     <div class="card"><h3>근무 형태별 <span class="hint">총 ${workTot}명</span></h3><div style="display:flex;gap:14px;align-items:center">${donut(workSegs,{size:120,center:workTot,centerSub:'총원'})}<div class="legend">${workSegs.map(w=>`<div class="li"><span class="sw" style="background:${w.color}"></span>${w.lab} <b>${w.n}명</b></div>`).join('')}</div></div></div>
-    <div class="card"><h3>주간 부족인원 예측 <span class="hint">명</span></h3>${lineChart(DB.forecast,{max:8,stroke:'#c58585',fill:'#c5858518',colorAt:v=>v>=5?'#c58585':v>=3?'#d0a45f':'#4b9a76'})}<div class="mini" style="text-align:center">피크 화요일 6명 · 사전 배치 필요</div></div>
+    <div class="card"><h3>주간 부족인원 예측 <span class="hint">명</span></h3>${lineChart(DB.forecast,{max:8,stroke:'#dc4b4b',fill:'#dc4b4b18',colorAt:v=>v>=5?'#dc4b4b':v>=3?'#d98a2b':'#22a05f'})}<div class="mini" style="text-align:center">피크 화요일 6명 · 사전 배치 필요</div></div>
   </div>
   <div class="card" style="margin-bottom:16px"><h3>AI 통합 인사이트 <span class="hint">8개 Agent 종합 · 데이터 반영 실시간</span></h3>
     ${planBanner}
@@ -442,7 +442,7 @@ V.prod=()=>{
   if(DB.plan){const wk=DB.plan.weeks[planWeek]||DB.plan.weeks[0];const gmax=Math.max(...wk.groups.map(g=>g.weekTotal));const gtot=wk.groups.reduce((a,g)=>a+g.weekTotal,0);
     const gAct=planHasActual()?groupActual(wk):null;
     const rows=wk.groups.slice(0,8).map(g=>{let tail=`<div class="vv">${g.weekTotal.toLocaleString()}</div>`,bar=pbar(g.weekTotal/gmax*100,'#3b82f6');
-      if(gAct){const av=gAct[g.name]||0,a=Math.round(av/g.weekTotal*100),col=a>=95?'#22c55e':a>=85?'#d0a45f':'#ef4444';
+      if(gAct){const av=gAct[g.name]||0,a=Math.round(av/g.weekTotal*100),col=a>=95?'#22a05f':a>=85?'#d98a2b':'#dc4b4b';
         bar=`<div style="position:relative">${pbar(g.weekTotal/gmax*100,'#1c3350')}<div style="position:absolute;top:0;left:0;right:0">${pbar(av/gmax*100,col)}</div></div>`;
         tail=`<div class="vv" style="color:${col}">${a}% <span class="mut2" style="font-weight:600">/${g.weekTotal.toLocaleString()}</span></div>`;}
       return `<div class="barrow" style="grid-template-columns:150px 1fr 150px"><div class="nm">${g.name}</div><div>${bar}</div>${tail}</div>`;}).join('');
@@ -458,7 +458,7 @@ V.prod=()=>{
   </div>
   <div class="grid g2" style="grid-template-columns:1.2fr 1fr;margin-bottom:14px">
     <div class="card"><h3>라인별 목표 대비 실적 <span class="hint">실적/목표</span></h3>${rows}</div>
-    <div class="card"><h3>시간대별 생산 추이 <span class="hint">시간당 산출(천개)</span></h3>${lineChart(trend,{max:30,stroke:'#22c55e',fill:'#22c55e22',colorAt:()=>'#22c55e'})}<div class="mini" style="text-align:center">점심시간(12시) 감소 구간</div></div>
+    <div class="card"><h3>시간대별 생산 추이 <span class="hint">시간당 산출(천개)</span></h3>${lineChart(trend,{max:30,stroke:'#22a05f',fill:'#22a05f22',colorAt:()=>'#22a05f'})}<div class="mini" style="text-align:center">점심시간(12시) 감소 구간</div></div>
   </div>
   <div class="card"><h3>라인별 생산 현황 상세</h3><table class="tb"><thead><tr><th>라인</th><th>목표</th><th>실적</th><th>달성률</th><th>CAPA 부하</th><th>예상 종료</th></tr></thead><tbody>${tbl}</tbody></table></div>`;
 };
@@ -519,20 +519,22 @@ V.stock=()=>{
     const tr=whTotRate(wk);
     const over=wk.zones.filter(z=>z.rate>=100);
     const maxZone=[...wk.zones].sort((a,b)=>b.rate-a.rate)[0];
-    const zoneRows=wk.zones.map(z=>{const col=z.rate>=100?'#c58585':z.rate>=90?'#d0a45f':'#4f7cb0';return `<div class="barrow" style="grid-template-columns:160px 1fr 80px"><div class="nm">${z.name}</div><div>${pbar(Math.min(100,z.rate),col)}<div class="mini" style="margin-top:4px">적재 ${z.count} / CAPA ${z.capa}${z.count>z.capa?' · <span style="color:#c07070">초과 '+(z.count-z.capa)+'</span>':''}</div></div><div class="vv" style="color:${col}">${z.rate}%</div></div>`;}).join('');
+    const _dom=Math.max(120,Math.ceil(maxZone.rate/10)*10);
+    const whBar=(rate)=>{const col=rate>=100?'#dc4b4b':rate>=90?'#d98a2b':'#4f7cb0';const w=Math.min(100,rate/_dom*100);const mk=(100/_dom*100).toFixed(1);const base=Math.min(w,+mk);const over=Math.max(0,w-mk);return `<div class="pbar" style="position:relative;height:11px"><i style="width:${base}%;background:${rate>=90&&rate<100?col:'#4f7cb0'}"></i><i style="position:absolute;top:0;left:${mk}%;height:100%;width:${over}%;background:#dc4b4b"></i><span style="position:absolute;top:-2px;bottom:-2px;left:${mk}%;width:1.5px;background:#8a99ad"></span></div>`;};
+    const zoneRows=wk.zones.map(z=>{const col=z.rate>=100?'#dc4b4b':z.rate>=90?'#d98a2b':'#4f7cb0';return `<div class="barrow" style="grid-template-columns:160px 1fr 80px"><div class="nm">${z.name}</div><div>${whBar(z.rate)}<div class="mini" style="margin-top:4px">적재 ${z.count} / CAPA ${z.capa}${z.count>z.capa?' · <span style="color:#dc4b4b">초과 '+(z.count-z.capa)+'</span>':''}</div></div><div class="vv" style="color:${col}">${z.rate}%</div></div>`;}).join('');
     const trend=[...DB.wh.weeks].reverse().map(w=>({label:w.label,v:whTotRate(w)}));
     const tabs=DB.wh.weeks.map((w,i)=>`<button class="btn ${i===whWeek?'p':''}" style="padding:6px 11px" onclick="whWeek=${i};go('stock')">${w.label}</button>`).join(' ');
     whSection=`
     <div class="card" style="margin-bottom:16px"><h3>창고 구역별 적치율 <span class="hint">주1회 구역별 점검 · ${wk.label} 기준 · 실 엑셀 연동</span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">${tabs}</span></h3>
       <div class="grid g4" style="margin-bottom:14px">
-        <div class="kpi"><div class="lab">전체 적치율</div><div class="val" style="color:${tr>=100?'#c07070':tr>=90?'#c99a4a':'#3f74b5'}">${tr}<small>%</small></div><div class="delta">적재 ${wk.total?wk.total.count.toLocaleString():'-'} / CAPA ${wk.total?wk.total.capa.toLocaleString():'-'}</div></div>
+        <div class="kpi"><div class="lab">전체 적치율</div><div class="val" style="color:${tr>=100?'#dc4b4b':tr>=90?'#d98a2b':'#3f74b5'}">${tr}<small>%</small></div><div class="delta">적재 ${wk.total?wk.total.count.toLocaleString():'-'} / CAPA ${wk.total?wk.total.capa.toLocaleString():'-'}</div></div>
         <div class="kpi"><div class="lab">CAPA 초과 구역</div><div class="val ${over.length?'neg':'pos'}">${over.length}<small>구역</small></div><div class="delta neg">${over.slice(0,2).map(z=>z.name.split(' ')[0]).join(', ')||'없음'}</div></div>
         <div class="kpi"><div class="lab">최고 적치 구역</div><div class="val" style="font-size:16px">${maxZone.name}</div><div class="delta neg">${maxZone.rate}%</div></div>
         <div class="kpi"><div class="lab">점검 주차</div><div class="val">${DB.wh.weeks.length}<small>주</small></div><div class="delta">최신 ${DB.wh.weeks[0].label}</div></div>
       </div>
       <div class="grid g2" style="grid-template-columns:1.5fr 1fr">
         <div class="card" style="box-shadow:none"><h3 style="font-size:13px;border:none;padding:0;margin-bottom:10px">구역별 적치율 <span class="hint">100% 초과 빨강 · 90%+ 주황</span></h3>${zoneRows}</div>
-        <div class="card" style="box-shadow:none"><h3 style="font-size:13px;border:none;padding:0;margin-bottom:10px">전체 적치율 추이 <span class="hint">주별 %</span></h3>${lineChart(trend,{max:120,stroke:'#3f74b5',fill:'#3f74b518',colorAt:v=>v>=100?'#c58585':'#3f74b5'})}
+        <div class="card" style="box-shadow:none"><h3 style="font-size:13px;border:none;padding:0;margin-bottom:10px">전체 적치율 추이 <span class="hint">주별 %</span></h3>${lineChart(trend,{max:120,stroke:'#3f74b5',fill:'#3f74b518',colorAt:v=>v>=100?'#dc4b4b':'#3f74b5'})}
           <div class="reco warn" style="margin-top:10px"><div class="ic">📦</div><div class="tx"><div class="r">HnB 1층 · 임가공[천막] 상시 초과</div><div class="s">CAPA 초과 구역 재배치 또는 적재 CAPA 상향 검토 필요</div></div></div></div>
       </div>
     </div>`;
@@ -544,7 +546,7 @@ V.stock=()=>{
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic">📦</div><div class="lab">부족 임박 자재</div><div class="val ${orders.length?'neg':'pos'}">${orders.length}<small>종</small></div></div>
     <div class="kpi"><div class="ic">⚠️</div><div class="lab">최단 재고</div><div class="val">${Math.min(...DB.stock.map(s=>G.stock(s).days))}<small>일</small></div></div>
-    <div class="kpi"><div class="ic">🏭</div><div class="lab">${DB.wh?'창고 전체 적치율':'완제품 창고 포화'}</div><div class="val" style="color:${DB.wh?(whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0])>=100?'#c07070':'#3f74b5'):sc(DB.warehouse[0].fill,80,90,true)}">${DB.wh?whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0]):DB.warehouse[0].fill}<small>%</small></div></div>
+    <div class="kpi"><div class="ic">🏭</div><div class="lab">${DB.wh?'창고 전체 적치율':'완제품 창고 포화'}</div><div class="val" style="color:${DB.wh?(whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0])>=100?'#dc4b4b':'#3f74b5'):sc(DB.warehouse[0].fill,80,90,true)}">${DB.wh?whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0]):DB.warehouse[0].fill}<small>%</small></div></div>
     <div class="kpi"><div class="ic">🛒</div><div class="lab">발주 추천</div><div class="val ${orders.length?'neg':''}">${orders.length}<small>건</small></div></div>
   </div>
   <div class="grid g2" style="grid-template-columns:1.4fr 1fr">
@@ -585,18 +587,18 @@ V.safe=()=>{
 V.qual=()=>{
   const df=avgDefect();const worst=[...myLines()].sort((a,b)=>b.defect-a.defect)[0];
   const maxC=Math.max(...DB.paretoVals),totC=DB.paretoVals.reduce((a,b)=>a+b,0);let cum=0;
-  const cols=['#ef4444','#d0a45f','#eab308','#3b82f6','#6d84a3'];
+  const cols=['#dc4b4b','#d98a2b','#d98a2b','#3b82f6','#6d84a3'];
   const par=DB.paretoNames.map((n,i)=>{cum+=DB.paretoVals[i];const wd=DB.paretoVals[i]/maxC*100;return `<div class="barrow" style="grid-template-columns:96px 1fr 96px"><div class="nm">${n}</div><div>${pbar(wd,cols[i%cols.length])}</div><div class="vv mut2">${DB.paretoVals[i]}건 · 누적 ${Math.round(cum/totC*100)}%</div></div>`;}).join('');
   const lrows=myLines().map(l=>{const col=sc(l.defect,2.0,2.5,true);return `<tr><td>${l.key}</td><td style="color:${col}">${l.defect}%</td><td><span class="sdot ${l.defect>=2.5?'s-red':l.defect>=2.0?'s-amber':'s-green'}"></span></td></tr>`;}).join('');
   return `
   <div class="grid g4" style="margin-bottom:14px">
-    <div class="kpi"><div class="ic">🔬</div><div class="lab">평균 불량률</div><div class="val" style="color:${df>1.5?'#ffcf5a':'#4ade80'}">${df}<small>%</small></div><div class="delta ${df>1.5?'neg':'pos'}">목표 1.5%</div></div>
+    <div class="kpi"><div class="ic">🔬</div><div class="lab">평균 불량률</div><div class="val" style="color:${df>1.5?'#ffcf5a':'#22a05f'}">${df}<small>%</small></div><div class="delta ${df>1.5?'neg':'pos'}">목표 1.5%</div></div>
     <div class="kpi"><div class="ic">📉</div><div class="lab">주간 평균</div><div class="val">${(DB.qualTrend.reduce((a,b)=>a+b.v,0)/DB.qualTrend.length).toFixed(1)}<small>%</small></div></div>
     <div class="kpi"><div class="ic">🥇</div><div class="lab">최다 불량 유형</div><div class="val" style="font-size:19px">${DB.paretoNames[0]}</div><div class="delta neg">전체의 ${Math.round(DB.paretoVals[0]/totC*100)}%</div></div>
     <div class="kpi"><div class="ic">🚨</div><div class="lab">불량 최다 라인</div><div class="val">${worst.key}</div><div class="delta neg">${worst.defect}%</div></div>
   </div>
   <div class="grid g2" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
-    <div class="card"><h3>불량률 추이 <span class="hint">최근 7일</span></h3>${lineChart(DB.qualTrend,{max:2.5,stroke:'#d0a45f',fill:'#d0a45f22',colorAt:v=>v>=2.0?'#ef4444':'#d0a45f'})}<div class="mini" style="text-align:center">목표 1.5% 초과 추이</div></div>
+    <div class="card"><h3>불량률 추이 <span class="hint">최근 7일</span></h3>${lineChart(DB.qualTrend,{max:2.5,stroke:'#d98a2b',fill:'#d98a2b22',colorAt:v=>v>=2.0?'#dc4b4b':'#d98a2b'})}<div class="mini" style="text-align:center">목표 1.5% 초과 추이</div></div>
     <div class="card"><h3>불량 원인 분석 (파레토) <span class="hint">유형별 건수</span></h3>${par}<div class="mini" style="margin-top:8px">상위 2개 유형이 전체의 ${Math.round((DB.paretoVals[0]+DB.paretoVals[1])/totC*100)}% → 우선 개선</div></div>
   </div>
   <div class="grid g2" style="grid-template-columns:1fr 1.4fr">
@@ -610,7 +612,7 @@ V.qual=()=>{
 };
 V.kpi=()=>{
   const L=myLines();const oee=avgOEE();const tbl=L.map(l=>{const o=G.oee(l),col=sc(o,75,70);return `<tr><td>${l.key}</td><td>${l.oeeA}%</td><td>${l.oeeP}%</td><td>${G.oeeQ(l)}%</td><td style="color:${col}">${o}%</td><td><span class="sdot ${o>=80?'s-green':o>=70?'s-amber':'s-red'}"></span></td></tr>`;}).join('');
-  const bars=L.map(l=>({label:l.key,v:G.oee(l),color:G.oee(l)>=80?'#22c55e':G.oee(l)>=70?'#d0a45f':'#ef4444'}));
+  const bars=L.map(l=>({label:l.key,v:G.oee(l),color:G.oee(l)>=80?'#22a05f':G.oee(l)>=70?'#d98a2b':'#dc4b4b'}));
   const worst=[...L].sort((a,b)=>G.oee(a)-G.oee(b)).slice(0,2).map(l=>l.key+' '+G.oee(l)+'%');
   return `
   <div class="grid g4" style="margin-bottom:14px">
@@ -621,7 +623,7 @@ V.kpi=()=>{
   </div>
   <div class="grid g2" style="grid-template-columns:1.2fr 1fr;margin-bottom:14px">
     <div class="card"><h3>라인별 OEE <span class="hint">가동률×성능×품질</span></h3>${barsChart(bars,{max:100})}<div class="mini" style="text-align:center">개선 우선순위: ${worst.join(' · ')}</div></div>
-    <div class="card"><h3>요일별 잔업 추이 <span class="hint">시간</span></h3>${lineChart(DB.otTrend,{max:40,stroke:'#a855f7',fill:'#a855f722',colorAt:v=>v>=30?'#ef4444':'#a855f7'})}<div class="mini" style="text-align:center">금요일 잔업 집중</div></div>
+    <div class="card"><h3>요일별 잔업 추이 <span class="hint">시간</span></h3>${lineChart(DB.otTrend,{max:40,stroke:'#a855f7',fill:'#a855f722',colorAt:v=>v>=30?'#dc4b4b':'#a855f7'})}<div class="mini" style="text-align:center">금요일 잔업 집중</div></div>
   </div>
   <div class="card"><h3>라인별 KPI 상세 (OEE 구성)</h3><table class="tb"><thead><tr><th>라인</th><th>가동률</th><th>성능</th><th>품질</th><th>OEE</th><th>상태</th></tr></thead><tbody>${tbl}</tbody></table></div>`;
 };
@@ -799,13 +801,13 @@ V.plan=()=>{
   const oHead=HA?'<tr><th>일자</th><th>리소스</th><th>오더번호</th><th style="text-align:left">품명</th><th>계획</th><th>실적</th><th>달성률</th></tr>':'<tr><th>일자</th><th>리소스</th><th>오더번호</th><th style="text-align:left">품명</th><th>수량</th></tr>';
   const oRows=allOrders.slice(0,40).map(o=>{const base=`<td>${o.date.slice(5)}</td><td>${o.res}</td><td>${o.orderNo}</td><td style="text-align:left;max-width:${HA?260:340}px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.product||'-'}</td><td>${o.qty.toLocaleString()}</td>`;
     if(!HA)return `<tr>${base}</tr>`;
-    const a=o.actual!=null?Math.round(o.actual/o.qty*100):null;const col=a==null?'':a<70?'#ef4444':a<90?'#d0a45f':'#22c55e';
+    const a=o.actual!=null?Math.round(o.actual/o.qty*100):null;const col=a==null?'':a<70?'#dc4b4b':a<90?'#d98a2b':'#22a05f';
     return `<tr>${base}<td>${o.actual!=null?o.actual.toLocaleString():'-'}</td><td style="color:${col}">${a!=null?a+'%':'-'}</td></tr>`;}).join('');
   const tabs=DB.plan.weeks.map((w,i)=>`<button class="btn ${i===planWeek?'p':''}" onclick="planWeek=${i};go('plan')">${w.name}</button>`).join(' ');
   const gmax=Math.max(...wk.groups.map(g=>g.weekTotal));
   const gAct=planHasActual()?groupActual(wk):null;
   const grpRows=wk.groups.map(g=>{
-    const actInfo=gAct?(()=>{const av=gAct[g.name]||0;const a=Math.round(av/g.weekTotal*100);const col=a>=95?'#4ade80':a>=85?'#ffcf5a':'#ff6b6b';return `<span class="mut2" style="font-weight:700;color:${col}"> · 달성 ${a}%</span>`;})():'';
+    const actInfo=gAct?(()=>{const av=gAct[g.name]||0;const a=Math.round(av/g.weekTotal*100);const col=a>=95?'#22a05f':a>=85?'#ffcf5a':'#dc4b4b';return `<span class="mut2" style="font-weight:700;color:${col}"> · 달성 ${a}%</span>`;})():'';
     return `<div class="barrow" style="grid-template-columns:150px 1fr 210px"><div class="nm">${g.name}</div><div>${pbar(g.weekTotal/gmax*100,'#14b8a6')}<div class="mini" style="margin-top:4px">리소스 ${g.resCount}대 · 오더 ${g.orderCount}건 · ${g.resources.slice(0,4).join(', ')}${g.resources.length>4?' 외 '+(g.resources.length-4):''}</div></div><div class="vv">${g.weekTotal.toLocaleString()} <span class="mut2" style="font-weight:600">(${Math.round(g.weekTotal/tot*100)}%)</span>${actInfo}</div></div>`;}).join('');
   return `
   <div style="display:flex;gap:8px;margin-bottom:14px">${tabs}<span class="src live" style="margin-left:auto;align-self:center">실데이터: ${dataSource}</span></div>
@@ -818,7 +820,7 @@ V.plan=()=>{
   <div class="card" style="margin-bottom:14px"><h3>공정(라인군)별 집계 <span class="hint">리소스명 자동 매핑 · ${wk.groups.length}개 라인군</span></h3>${grpRows}</div>
   <div class="grid g2" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
     <div class="card"><h3>리소스별 주간 계획수량 <span class="hint">상위 14 · 개</span></h3>${resRows}</div>
-    <div class="card"><h3>일자별 계획수량 <span class="hint">천개</span></h3>${lineChart(daily,{stroke:'#22c55e',fill:'#22c55e22',colorAt:()=>'#22c55e'})}
+    <div class="card"><h3>일자별 계획수량 <span class="hint">천개</span></h3>${lineChart(daily,{stroke:'#22a05f',fill:'#22a05f22',colorAt:()=>'#22a05f'})}
       <div class="mini" style="text-align:center">${wk.name} · 일 평균 ${Math.round(tot/wk.dates.length/1000).toLocaleString()}천개</div></div>
   </div>
   <div class="card"><h3>생산 오더 목록 <span class="hint">전체 ${ords}건 중 상위 40 · 날짜순${HA?' · 실적 반영':''}</span></h3>
@@ -839,8 +841,8 @@ V.delay=()=>{
   const gShort={};del.forEach(o=>gShort[o.group]=(gShort[o.group]||0)+o.short);
   const gTop=Object.entries(gShort).sort((a,b)=>b[1]-a[1]);
   const gmax=gTop.length?gTop[0][1]:1;
-  const gRows=gTop.map(([g,s])=>`<div class="barrow" style="grid-template-columns:150px 1fr 110px"><div class="nm">${g}</div><div>${pbar(s/gmax*100,'#ef4444')}</div><div class="vv neg">-${s.toLocaleString()}</div></div>`).join('')||'<div class="mini">지연 없음</div>';
-  const rows=del.slice(0,40).map(o=>{const col=o.ach<70?'#ef4444':o.ach<90?'#d0a45f':'#22c55e';const st=o.ach<70?'지연 심각':o.ach<90?'미달':'경미';
+  const gRows=gTop.map(([g,s])=>`<div class="barrow" style="grid-template-columns:150px 1fr 110px"><div class="nm">${g}</div><div>${pbar(s/gmax*100,'#dc4b4b')}</div><div class="vv neg">-${s.toLocaleString()}</div></div>`).join('')||'<div class="mini">지연 없음</div>';
+  const rows=del.slice(0,40).map(o=>{const col=o.ach<70?'#dc4b4b':o.ach<90?'#d98a2b':'#22a05f';const st=o.ach<70?'지연 심각':o.ach<90?'미달':'경미';
     return `<tr><td>${o.date.slice(5)}</td><td>${o.res}</td><td>${o.orderNo}</td><td style="text-align:left;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.product||'-'}</td><td>${o.qty.toLocaleString()}</td><td>${o.actual.toLocaleString()}</td><td class="neg">-${o.short.toLocaleString()}</td><td style="color:${col}">${o.ach}%</td><td><span class="tag ${o.ach<70?'t-red':'t-amber'}">${st}</span></td></tr>`;}).join('');
   return `
   <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
@@ -850,7 +852,7 @@ V.delay=()=>{
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic">⏰</div><div class="lab">지연/미달 오더</div><div class="val neg">${del.length}<small>건</small></div><div class="delta">전체 ${wk.resources.reduce((a,r)=>a+r.orders.length,0)}건 중</div></div>
     <div class="kpi"><div class="ic">📉</div><div class="lab">총 부족 수량</div><div class="val neg">${(totShort/10000).toFixed(1)}<small>만개</small></div><div class="delta neg">${totShort.toLocaleString()}개</div></div>
-    <div class="kpi"><div class="ic">🎯</div><div class="lab">주간 달성률</div><div class="val" style="color:${ach>=95?'#4ade80':ach>=85?'#ffcf5a':'#ff6b6b'}">${ach}<small>%</small></div><div class="delta">실적 ${(totAct/10000).toFixed(0)}만 / 계획 ${(totPlan/10000).toFixed(0)}만</div></div>
+    <div class="kpi"><div class="ic">🎯</div><div class="lab">주간 달성률</div><div class="val" style="color:${ach>=95?'#22a05f':ach>=85?'#ffcf5a':'#dc4b4b'}">${ach}<small>%</small></div><div class="delta">실적 ${(totAct/10000).toFixed(0)}만 / 계획 ${(totPlan/10000).toFixed(0)}만</div></div>
     <div class="kpi"><div class="ic">🚨</div><div class="lab">최다 지연 라인군</div><div class="val" style="font-size:18px">${gTop[0]?gTop[0][0].replace(' 라인',''):'-'}</div><div class="delta neg">${gTop[0]?'-'+gTop[0][1].toLocaleString():''}</div></div>
   </div>
   <div class="grid g2" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
