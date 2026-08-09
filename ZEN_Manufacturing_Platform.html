@@ -10,7 +10,7 @@
     --bg:#eef2f7;--bg2:#e6ecf4;--panel:#ffffff;--panel2:#ffffff;
     --line:#e6ebf2;--line2:#d3dde9;--ink:#1f3a5c;--muted:#5f6f86;--muted2:#7d8ba0;
     --blue:#3f74b5;--navy:#1e3a5f;--green:#22a05f;--red:#dc4b4b;--amber:#d98a2b;--purple:#a855f7;--teal:#14b8a6;
-    --shadow:0 6px 20px rgba(30,58,95,.09);--radius:16px;
+    --shadow:0 1px 3px rgba(30,58,95,.06);--radius:16px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
@@ -72,11 +72,10 @@
   .btn.o{border:none;background:linear-gradient(180deg,#f6a623,#ef9310);color:#fff;box-shadow:0 3px 10px rgba(240,150,20,.3)}
 
   .card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow);padding:17px}
-  .card h3{margin:0 0 14px;font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;justify-content:space-between;color:var(--navy);padding-bottom:11px;border-bottom:1px dashed var(--line2)}
+  .card h3{margin:0 0 15px;font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;justify-content:space-between;color:var(--navy)}
   .card h3 .hint{font-size:11.5px;color:var(--muted);font-weight:600}
-  .grid{display:grid;gap:15px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
-  .kpi{border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:14px;background:var(--panel);box-shadow:var(--shadow);padding:15px 16px 15px 17px;position:relative;overflow:hidden}
-  .grid.g4>.kpi{border-left-color:#3f74b5}
+  .grid{display:grid;gap:18px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+  .kpi{border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--shadow);padding:17px 18px;position:relative;overflow:hidden}
   .kpi .ic{position:absolute;right:13px;top:13px;font-size:19px;opacity:.55}
   .kpi .lab{font-size:12.5px;color:var(--muted);font-weight:600}
   .kpi .val{font-size:27px;font-weight:800;margin-top:6px;color:var(--navy)}.kpi .val small{font-size:13px;color:var(--muted);font-weight:600;margin-left:2px}
@@ -432,8 +431,7 @@ V.home=()=>{
     <div class="reco bad"><div class="ic">⚠️</div><div class="tx"><div class="r">${worst.key} 라인 — 복합 리스크 감지</div><div class="s">세척 우선순위 ${G.cleanScore(worst)}점(1위) · 불량률 ${worst.defect}% · 인력 ${G.cur(worst)-worst.need>=0?'정상':(worst.need-G.cur(worst))+'명 부족'}. 세척 완료 후 여유 라인 인력 재배치 권장.</div></div></div>
     <div class="reco warn"><div class="ic">📦</div><div class="tx"><div class="r">${orders.map(s=>s.name).join(' · ')||'긴급 발주 없음'} 발주 필요</div><div class="s">재고일수 임박 자재 ${orders.length}종. 미발주 시 라인 가동 중단 위험.</div></div></div>
     <div class="reco"><div class="ic">🦺</div><div class="tx"><div class="r">폭염 ${DB.safety.wbgt>=28?'경고':'주의'} (WBGT ${DB.safety.wbgt}℃)</div><div class="s">고열 작업구간 시간당 휴식·수분 비치 조치. 무재해 ${DB.safety.noAccident}일 지속.</div></div></div>
-  </div>
-  <div class="grid g4">${cards}</div>`;
+  </div>`;
 };
 V.prod=()=>{
   const L=myLines();const tp=totProd();const ends=L.map(l=>l.end).sort();
