@@ -10,7 +10,7 @@
     --bg:#eef2f7;--bg2:#e6ecf4;--panel:#ffffff;--panel2:#ffffff;
     --line:#e6ebf2;--line2:#d3dde9;--ink:#1f3a5c;--muted:#5f6f86;--muted2:#7d8ba0;
     --blue:#3f74b5;--navy:#1e3a5f;--green:#22a05f;--red:#dc4b4b;--amber:#d98a2b;--purple:#a855f7;--teal:#14b8a6;
-    --shadow:0 1px 3px rgba(30,58,95,.06);--radius:16px;
+    --shadow:0 3px 12px rgba(30,58,95,.08);--radius:16px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
@@ -141,6 +141,16 @@
   iframe.safe{width:100%;height:calc(100vh - 150px);border:1px solid var(--line);border-radius:14px;background:#fff}
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#eafaf1;border:1px solid #b8e6cc;color:#22a05f;padding:12px 20px;border-radius:14px;font-weight:800;font-size:13px;z-index:200;box-shadow:0 12px 30px rgba(30,58,95,.16);opacity:0;transition:.25s;pointer-events:none}
   .toast.show{opacity:1}
+  /* 섹션 헤더 · 에이전트 컴팩트 타일 */
+  .sechead{font-size:13px;font-weight:800;color:var(--muted);letter-spacing:.4px;margin:6px 2px 12px;text-transform:uppercase}
+  .astat{border:1px solid var(--line);border-radius:13px;background:#fff;box-shadow:var(--shadow);padding:14px 16px;display:flex;align-items:center;gap:13px;transition:.14s;height:100%}
+  a.cardlink:hover .astat{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 8px 20px rgba(47,111,237,.12)}
+  .astat .aico{width:40px;height:40px;border-radius:11px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:19px;background:#eef4fb;border:1px solid var(--line2)}
+  .astat .amid{flex:1;min-width:0}
+  .astat .anm{font-weight:800;font-size:14px;color:var(--navy)}
+  .astat .asub{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .astat .aright{text-align:right;flex:0 0 auto}
+  .astat .am{font-size:18px;font-weight:800;color:var(--navy);line-height:1.1}
   @media (max-width:1080px){
     .app.show{grid-template-columns:1fr}
     .nav{position:static;height:auto;flex-direction:row;flex-wrap:wrap}.nav .logo,.nav .spacer,.nav .user,.nav .sec{display:none}.nav a{flex:0 0 auto}
@@ -398,8 +408,8 @@ V.home=()=>{
     kpi:{m:oee+'%',tag:oee>=80?'t-green':'t-amber',tt:oee>=80?'양호':'개선'},
     report:{m:'준비완료',tag:'t-blue',tt:'생성 가능'},
   };
-  const cards=AGENTS.filter(a=>a.id!=='home'&&ROLES[role].allow.includes(a.id)).map(a=>{const c=badge[a.id];
-    return `<a class="cardlink" onclick="go('${a.id}')"><div class="card agentcard"><div class="top"><div class="ico">${a.icon}</div><div><div class="nm">${a.name}</div><div class="ds">${a.sub}</div></div></div><div class="metric"><div><div class="m">${c.m}</div><div class="mini">${a.sub.split('·')[0]}</div></div><span class="tag ${c.tag}">${c.tt}</span></div></div></a>`;}).join('');
+  const tiles=AGENTS.filter(a=>a.id!=='home'&&ROLES[role].allow.includes(a.id)).map(a=>{const c=badge[a.id];
+    return `<a class="cardlink" onclick="go('${a.id}')"><div class="astat"><div class="aico">${a.icon}</div><div class="amid"><div class="anm">${a.name}</div><div class="asub">${a.sub.split('·')[0].trim()}</div></div><div class="aright"><div class="am">${c.m}</div><span class="tag ${c.tag}" style="margin-top:4px;display:inline-block">${c.tt}</span></div></div></a>`;}).join('');
   const worst=[...myLines()].sort((a,b)=>G.cleanScore(b)-G.cleanScore(a))[0];
   const planBanner=DB.plan?`<div class="reco"><div class="ic">📋</div><div class="tx"><div class="r">주간 생산계획 연동됨 — ${DB.plan.weeks[0].name}</div><div class="s">리소스 ${DB.plan.weeks[0].resources.length}개 · 총 계획 ${(DB.plan.weeks.reduce((a,w)=>a+w.resources.reduce((x,r)=>x+r.weekTotal,0),0)).toLocaleString()}개. 좌측 '생산계획' 메뉴에서 상세 확인.</div></div></div>`:'';
   const whAlert=(function(){if(!DB.wh)return '';const wk=DB.wh.weeks[whWeek]||DB.wh.weeks[0];const over=wk.zones.filter(z=>z.rate>=100).sort((a,b)=>b.rate-a.rate);if(!over.length)return '';return `<div class="reco bad"><div class="ic">📦</div><div class="tx"><div class="r">창고 CAPA 초과 ${over.length}구역 — ${over.map(z=>z.name+' '+z.rate+'%').join(' · ')}</div><div class="s">전체 적치율 ${whTotRate(wk)}% (${wk.label} 점검 · 실 엑셀). 초과 구역 재배치 또는 CAPA 상향·출하 우선 배차 필요. <a onclick="go('stock')" style="color:#3f74b5;cursor:pointer">재고 Agent ›</a></div></div></div>`;})();
@@ -431,7 +441,9 @@ V.home=()=>{
     <div class="reco bad"><div class="ic">⚠️</div><div class="tx"><div class="r">${worst.key} 라인 — 복합 리스크 감지</div><div class="s">세척 우선순위 ${G.cleanScore(worst)}점(1위) · 불량률 ${worst.defect}% · 인력 ${G.cur(worst)-worst.need>=0?'정상':(worst.need-G.cur(worst))+'명 부족'}. 세척 완료 후 여유 라인 인력 재배치 권장.</div></div></div>
     <div class="reco warn"><div class="ic">📦</div><div class="tx"><div class="r">${orders.map(s=>s.name).join(' · ')||'긴급 발주 없음'} 발주 필요</div><div class="s">재고일수 임박 자재 ${orders.length}종. 미발주 시 라인 가동 중단 위험.</div></div></div>
     <div class="reco"><div class="ic">🦺</div><div class="tx"><div class="r">폭염 ${DB.safety.wbgt>=28?'경고':'주의'} (WBGT ${DB.safety.wbgt}℃)</div><div class="s">고열 작업구간 시간당 휴식·수분 비치 조치. 무재해 ${DB.safety.noAccident}일 지속.</div></div></div>
-  </div>`;
+  </div>
+  <div class="sechead">에이전트별 현황</div>
+  <div class="grid g4" style="gap:14px">${tiles}</div>`;
 };
 V.prod=()=>{
   const L=myLines();const tp=totProd();const ends=L.map(l=>l.end).sort();
