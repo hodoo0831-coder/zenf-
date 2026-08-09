@@ -308,6 +308,7 @@ const DEFAULT_DB={
     {id:'heat',name:'온열질환 히트워치',icon:'🌡',agent:'safe',urls:{worker:'https://zenf-heat-watch-v4.netlify.app/',admin:'https://zenf-heat-watch-v4.netlify.app/'}},
   ],
   plan:null, // 주간 생산계획(엑셀 업로드 시 채워짐)
+  wh:null,   // 창고 구역별 적치 점검(주1회, 엑셀 업로드 시 채워짐)
 };
 const AGENTNAME={clean:'세척 Agent',safe:'안전 Agent',stock:'재고 Agent',prod:'생산 Agent',labor:'인력 Agent',qual:'품질 Agent'};
 let DB=JSON.parse(JSON.stringify(DEFAULT_DB));
@@ -324,7 +325,7 @@ function scopeLabel(){ return scope&&scope.length?('담당: '+scopeName):'전체
 /* ===== localStorage 지속성 ===== */
 const LS_KEY='zen_mfg_platform_v1';
 function saveDB(){try{localStorage.setItem(LS_KEY,JSON.stringify({DB,dataSource}));}catch(e){}}
-function loadDB(){try{const s=localStorage.getItem(LS_KEY);if(s){const o=JSON.parse(s);if(o&&o.DB&&o.DB.lines){DB=o.DB;if(DB.plan===undefined)DB.plan=null;if(!DB.extSys||!DB.extSys.length||!DB.extSys[0].urls)DB.extSys=JSON.parse(JSON.stringify(DEFAULT_DB.extSys));dataSource=o.dataSource||'저장됨';return true;}}}catch(e){}return false;}
+function loadDB(){try{const s=localStorage.getItem(LS_KEY);if(s){const o=JSON.parse(s);if(o&&o.DB&&o.DB.lines){DB=o.DB;if(DB.plan===undefined)DB.plan=null;if(DB.wh===undefined)DB.wh=null;if(!DB.extSys||!DB.extSys.length||!DB.extSys[0].urls)DB.extSys=JSON.parse(JSON.stringify(DEFAULT_DB.extSys));dataSource=o.dataSource||'저장됨';return true;}}}catch(e){}return false;}
 /* ===== 외부 연동 시스템 (배포 URL · 역할별) ===== */
 function sysUrl(s){const u=s.urls||{};return role==='field'?(u.worker||u.admin||''):(u.admin||u.worker||'');}
 function sysVariant(s){const u=s.urls||{};if(role==='field')return u.worker?'작업자용':(u.admin?'관리자용':'');return u.admin?'관리자용':(u.worker?'작업자용':'');}
@@ -511,19 +512,46 @@ V.stock=()=>{
   const rows=DB.stock.map(s=>{const c=G.stock(s),col=sc(c.days,3,1.5),w=Math.min(100,c.days/8*100);return `<div class="barrow" style="grid-template-columns:130px 1fr 90px"><div class="nm">${s.name}</div><div>${pbar(w,col)}<div class="mini" style="margin-top:4px">재고 ${s.onhand}${s.unit} · 일소비 ${s.dailyUse} · 재주문점 ${c.rop}</div></div><div class="vv" style="color:${col}">${c.days}일</div></div>`;}).join('');
   const wh=DB.warehouse.map(w=>{const col=sc(w.fill,80,90,true);return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:5px"><span>${w.name}</span><span style="color:${col}">${w.fill}%</span></div>${pbar(w.fill,col)}</div>`;}).join('');
   const orders=DB.stock.filter(s=>G.stock(s).need);
+  // ===== 실제 창고 구역별 적치(주1회) =====
+  let whSection='';
+  if(DB.wh){
+    const wk=DB.wh.weeks[whWeek]||DB.wh.weeks[0];
+    const tr=whTotRate(wk);
+    const over=wk.zones.filter(z=>z.rate>=100);
+    const maxZone=[...wk.zones].sort((a,b)=>b.rate-a.rate)[0];
+    const zoneRows=wk.zones.map(z=>{const col=z.rate>=100?'#c58585':z.rate>=90?'#d0a45f':'#4f7cb0';return `<div class="barrow" style="grid-template-columns:160px 1fr 80px"><div class="nm">${z.name}</div><div>${pbar(Math.min(100,z.rate),col)}<div class="mini" style="margin-top:4px">적재 ${z.count} / CAPA ${z.capa}${z.count>z.capa?' · <span style="color:#c07070">초과 '+(z.count-z.capa)+'</span>':''}</div></div><div class="vv" style="color:${col}">${z.rate}%</div></div>`;}).join('');
+    const trend=[...DB.wh.weeks].reverse().map(w=>({label:w.label,v:whTotRate(w)}));
+    const tabs=DB.wh.weeks.map((w,i)=>`<button class="btn ${i===whWeek?'p':''}" style="padding:6px 11px" onclick="whWeek=${i};go('stock')">${w.label}</button>`).join(' ');
+    whSection=`
+    <div class="card" style="margin-bottom:16px"><h3>창고 구역별 적치율 <span class="hint">주1회 구역별 점검 · ${wk.label} 기준 · 실 엑셀 연동</span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">${tabs}</span></h3>
+      <div class="grid g4" style="margin-bottom:14px">
+        <div class="kpi"><div class="lab">전체 적치율</div><div class="val" style="color:${tr>=100?'#c07070':tr>=90?'#c99a4a':'#3f74b5'}">${tr}<small>%</small></div><div class="delta">적재 ${wk.total?wk.total.count.toLocaleString():'-'} / CAPA ${wk.total?wk.total.capa.toLocaleString():'-'}</div></div>
+        <div class="kpi"><div class="lab">CAPA 초과 구역</div><div class="val ${over.length?'neg':'pos'}">${over.length}<small>구역</small></div><div class="delta neg">${over.slice(0,2).map(z=>z.name.split(' ')[0]).join(', ')||'없음'}</div></div>
+        <div class="kpi"><div class="lab">최고 적치 구역</div><div class="val" style="font-size:16px">${maxZone.name}</div><div class="delta neg">${maxZone.rate}%</div></div>
+        <div class="kpi"><div class="lab">점검 주차</div><div class="val">${DB.wh.weeks.length}<small>주</small></div><div class="delta">최신 ${DB.wh.weeks[0].label}</div></div>
+      </div>
+      <div class="grid g2" style="grid-template-columns:1.5fr 1fr">
+        <div class="card" style="box-shadow:none"><h3 style="font-size:13px;border:none;padding:0;margin-bottom:10px">구역별 적치율 <span class="hint">100% 초과 빨강 · 90%+ 주황</span></h3>${zoneRows}</div>
+        <div class="card" style="box-shadow:none"><h3 style="font-size:13px;border:none;padding:0;margin-bottom:10px">전체 적치율 추이 <span class="hint">주별 %</span></h3>${lineChart(trend,{max:120,stroke:'#3f74b5',fill:'#3f74b518',colorAt:v=>v>=100?'#c58585':'#3f74b5'})}
+          <div class="reco warn" style="margin-top:10px"><div class="ic">📦</div><div class="tx"><div class="r">HnB 1층 · 임가공[천막] 상시 초과</div><div class="s">CAPA 초과 구역 재배치 또는 적재 CAPA 상향 검토 필요</div></div></div></div>
+      </div>
+    </div>`;
+  }else{
+    whSection=`<div class="card" style="margin-bottom:16px"><h3>창고 구역별 적치율 <span class="hint">주1회 점검</span></h3><p class="mini">창고 적치 점검 엑셀(구역별 적재CAPA·적재수)을 <a onclick="go('data')" style="color:#3f74b5;cursor:pointer">데이터 관리</a>에서 업로드하면 구역별 적치율·초과 구역·주별 추이가 표시됩니다.</p></div>`;
+  }
   return `
+  ${whSection}
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic">📦</div><div class="lab">부족 임박 자재</div><div class="val ${orders.length?'neg':'pos'}">${orders.length}<small>종</small></div></div>
     <div class="kpi"><div class="ic">⚠️</div><div class="lab">최단 재고</div><div class="val">${Math.min(...DB.stock.map(s=>G.stock(s).days))}<small>일</small></div></div>
-    <div class="kpi"><div class="ic">🏭</div><div class="lab">완제품 창고 포화</div><div class="val" style="color:${sc(DB.warehouse[0].fill,80,90,true)}">${DB.warehouse[0].fill}<small>%</small></div></div>
+    <div class="kpi"><div class="ic">🏭</div><div class="lab">${DB.wh?'창고 전체 적치율':'완제품 창고 포화'}</div><div class="val" style="color:${DB.wh?(whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0])>=100?'#c07070':'#3f74b5'):sc(DB.warehouse[0].fill,80,90,true)}">${DB.wh?whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0]):DB.warehouse[0].fill}<small>%</small></div></div>
     <div class="kpi"><div class="ic">🛒</div><div class="lab">발주 추천</div><div class="val ${orders.length?'neg':''}">${orders.length}<small>건</small></div></div>
   </div>
   <div class="grid g2" style="grid-template-columns:1.4fr 1fr">
     <div class="card"><h3>자재별 재고 소진 예측 <span class="hint">소진일수 = 재고 ÷ 일소비</span></h3>${rows}</div>
-    <div class="card"><h3>창고 포화도 예측</h3>${wh}
-      <div style="margin-top:14px"><h3 style="font-size:13px">AI 발주 추천 <span class="hint">발주량 = max(MOQ, 목표재고−현재고)</span></h3>
+    <div class="card"><h3>AI 발주 추천 <span class="hint">발주량 = max(MOQ, 목표재고−현재고)</span></h3>
       ${orders.length?orders.map(s=>{const c=G.stock(s);return `<div class="reco bad"><div class="ic">🛒</div><div class="tx"><div class="r">${s.name} · 즉시 발주 ${c.qty}${s.unit}</div><div class="s">재고 ${c.days}일 ≤ 재주문점 · 리드타임 ${s.lead}일 · MOQ ${s.moq}</div></div></div>`;}).join(''):'<div class="reco"><div class="ic">✅</div><div class="tx"><div class="r">긴급 발주 없음</div><div class="s">전 자재 재주문점 이상</div></div></div>'}
-      <div class="reco warn"><div class="ic">🚚</div><div class="tx"><div class="r">완제품 출하 조정</div><div class="s">창고 ${DB.warehouse[0].fill}% · 오후 출하 우선 배차 권장</div></div></div></div>
+      <div class="reco warn"><div class="ic">🚚</div><div class="tx"><div class="r">출하·재배치 조정</div><div class="s">${DB.wh?('CAPA 초과 구역 '+(DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones.filter(z=>z.rate>=100).length+'곳 우선 조정'):'완제품 창고 '+DB.warehouse[0].fill+'% · 오후 출하 우선'}</div></div></div>
     </div>
   </div>`;
 };
@@ -741,6 +769,23 @@ function parsePlan(wb){
   return {weeks};
 }
 function isPlanWB(wb){try{const a=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});return a[0]&&/리소스/.test(String(a[0][0])+String(a[0][1]));}catch(e){return false;}}
+/* ===== 창고 구역별 적치 점검(주1회) ===== */
+let whWeek=0;
+function fmtWk(s){s=String(s).trim();return /^\d{4}$/.test(s)?s.slice(0,2)+'/'+s.slice(2):s;}
+function isWhWB(wb){try{const a=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});return /적치|포장재창고|적재\s*CAPA/.test(a.slice(0,5).map(r=>r.join('')).join(''));}catch(e){return false;}}
+function parseWarehouse(wb){
+  const weeks=wb.SheetNames.map(sn=>{
+    const a=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});
+    const zones=[];let total=null,cg='';
+    for(let r=5;r<a.length;r++){const row=a[r];const g=String(row[0]||'').trim();const area=String(row[1]||'').replace(/[\r\n]+/g,' ').trim();
+      if(g==='계'){total={capa:+row[2],max:+row[3],count:+row[4]};break;}
+      if(g)cg=g;const capa=+row[2],max=+row[3],count=+row[4];
+      if(!isNaN(capa)&&capa>0){const cnt=isNaN(count)?0:count;
+        zones.push({name:(cg+(area?' '+area:'')).trim(),capa,max:isNaN(max)?capa:max,count:cnt,rate:Math.round(cnt/capa*100)});}}
+    return {name:sn,label:fmtWk(sn),zones,total};});
+  return {weeks};
+}
+function whTotRate(w){return w.total&&w.total.capa?Math.round(w.total.count/w.total.capa*100):0;}
 V.plan=()=>{
   if(!DB.plan)return `<div class="card"><h3>주간 생산계획</h3><p class="muted">아직 업로드된 생산계획이 없습니다. <b>데이터 관리 → 파일 가져오기</b>에서 주간 생산계획 엑셀(.xlsx)을 업로드하세요.</p></div>`;
   const wk=DB.plan.weeks[planWeek]||DB.plan.weeks[0];
@@ -853,6 +898,12 @@ function importFile(file){
         return;
       }
       const wb=XLSX.read(e.target.result,{type:'binary'});
+      if(isWhWB(wb)){
+        DB.wh=parseWarehouse(wb);whWeek=0;dataSource=file.name;saveDB();
+        const w=DB.wh.weeks[0];
+        toast('창고 적치 점검 인식: '+DB.wh.weeks.length+'주 · '+w.zones.length+'구역 · 전체 적치율 '+whTotRate(w)+'%');
+        rerender();go('stock');return;
+      }
       if(isPlanWB(wb)){
         DB.plan=parsePlan(wb);planWeek=0;dataSource=file.name;saveDB();
         const w=DB.plan.weeks[0];
