@@ -444,7 +444,7 @@ V.home=()=>{
   const orderList=(orders.length?orders.map(s=>{const c=G.stock(s);return `<div class="ai"><div class="aic">📦</div><div class="at"><div class="r">${s.name} · 즉시 발주 ${c.qty}${s.unit}</div><div class="s">재고 ${c.days}일 ≤ 재주문점 · 리드타임 ${s.lead}일</div></div><div class="atime" style="color:#dc4b4b;font-weight:700">MOQ ${s.moq}</div></div>`;}).join(''):'')+`<div class="ai"><div class="aic">🚚</div><div class="at"><div class="r">출하·재배치 조정</div><div class="s">${DB.wh?('CAPA 초과 '+(DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones.filter(z=>z.rate>=100).length+'구역 우선 조정'):'완제품 창고 오후 출하 우선'}</div></div></div>`;
   const mg=(pct,val,lab,color)=>`<div class="mgauge">${gauge(Math.max(3,Math.min(100,pct)),{color,size:96})}<div class="mv" style="color:${color}">${val}</div><div class="ml">${lab}</div></div>`;
   const gq=`<div class="gquad">${mg(tp.ach,tp.ach+'%','생산 달성',tp.ach>=80?'#22a05f':tp.ach>=60?'#d98a2b':'#dc4b4b')}${mg(oee,oee+'%','OEE',oee>=80?'#22a05f':'#d98a2b')}${mg(Math.max(8,100-df*24),df+'%','불량률',df<=1.5?'#22a05f':'#d98a2b')}${mg(Math.min(100,orders.length*18),orders.length,'발주 필요',orders.length?'#dc4b4b':'#22a05f')}</div>`;
-  let wkTabs='',heroKPIs='',zoneCard='',trendCard='',whAlertCard='',bottomRow='',heroSub='가동 6/6 라인';
+  let wkTabs='',heroKPIs='',zoneCard='',bldgCard='',trendCard='',whAlertCard='',bottomRow='',heroSub='가동 6/6 라인';
   const alerts=[];
   if(DB.wh){
     const wk=DB.wh.weeks[whWeek]||DB.wh.weeks[0];
@@ -462,6 +462,9 @@ V.home=()=>{
     </div>`;
     wkTabs=`<div class="mtabs">${DB.wh.weeks.map((w,i)=>`<button class="btn ${i===whWeek?'p':''}" style="padding:6px 12px" onclick="whWeek=${i};go('home')">${w.label}</button>`).join('')}<span class="mini" style="margin-left:6px">창고 적치 주간 점검</span></div>`;
     zoneCard=`<div class="card"><h3>구역별 적치율 <span class="hint">가동 구역 · 100% 초과 빨강</span></h3>${wk.zones.filter(z=>z.count>0).map(z=>{const col=z.rate>=100?'#dc4b4b':z.rate>=90?'#d98a2b':'#4f7cb0';return `<div class="barrow" style="grid-template-columns:118px 1fr 50px;padding:8px 0"><div class="nm" style="font-size:12.5px">${z.name}</div><div>${whBar(z.rate)}<div class="mini" style="margin-top:3px">적재 ${z.count} / CAPA ${z.capa}</div></div><div class="vv" style="color:${col};font-size:12.5px">${z.rate}%</div></div>`;}).join('')}</div>`;
+    const _bmap={};wk.zones.forEach(z=>{const g=z.name.split(' ')[0].replace(/\[.*/,'');if(!_bmap[g])_bmap[g]={capa:0,count:0};_bmap[g].capa+=z.capa;_bmap[g].count+=z.count;});
+    const _blds=Object.keys(_bmap).map(n=>({n,rate:_bmap[n].capa?Math.round(_bmap[n].count/_bmap[n].capa*100):0,count:_bmap[n].count,capa:_bmap[n].capa})).sort((a,b)=>b.rate-a.rate);
+    bldgCard=`<div class="card"><h3>창고 동별 적치율 <span class="hint">건물 단위 집계</span></h3>${_blds.map(b=>{const col=b.rate>=100?'#dc4b4b':b.rate>=90?'#d98a2b':'#4f7cb0';return `<div class="barrow" style="grid-template-columns:96px 1fr 50px;padding:8px 0"><div class="nm" style="font-size:12.5px">${b.n}</div><div>${pbar(Math.min(100,b.rate),col)}<div class="mini" style="margin-top:3px">적재 ${b.count} / CAPA ${b.capa}</div></div><div class="vv" style="color:${col};font-size:12.5px">${b.rate}%</div></div>`;}).join('')}</div>`;
     const trend=[...DB.wh.weeks].reverse().map(w=>({label:w.label,v:whTotRate(w)}));
     trendCard=`<div class="card"><h3>전체 적치율 추이 <span class="hint">주별 %</span></h3>${lineChart(trend,{max:120,stroke:'#3f74b5',fill:'#3f74b518',colorAt:v=>v>=100?'#dc4b4b':'#3f74b5'})}</div>`;
     whAlertCard=over.length?`<div class="reco bad" style="margin:0"><div class="ic">📦</div><div class="tx"><div class="r">${over.slice(0,2).map(z=>z.name).join(' · ')} 상시 초과</div><div class="s">CAPA 초과 ${over.length}구역 재배치 또는 적재 CAPA 상향 검토 필요. <a onclick="go('stock')" style="color:#3f74b5;cursor:pointer">재고 Agent ›</a></div></div></div>`:'';
@@ -494,7 +497,7 @@ V.home=()=>{
   <div class="dash">
     <div class="col">
       ${zoneCard}
-      <div class="card"><h3>자재별 재고 소진 예측 <span class="hint">재고일수</span></h3>${matRows}</div>
+      ${bldgCard}
     </div>
     <div class="col">
       <div class="card"><h3>오늘 핵심 지표 <span class="hint">실적 ${(tp.a/1000).toFixed(0)}천 / 목표 ${(tp.t/1000).toFixed(0)}천</span></h3>${gq}</div>
