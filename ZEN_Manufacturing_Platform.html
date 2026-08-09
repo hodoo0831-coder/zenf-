@@ -179,9 +179,9 @@
     <div class="sub">AP 대전공장 · 제조현장 통합 관리 플랫폼</div>
     <label>역할 선택</label>
     <div class="roles" id="roles">
-      <button data-role="worker"><span class="e">🧑‍🏭</span>현장직</button>
-      <button data-role="leader" class="on"><span class="e">👷</span>반장</button>
-      <button data-role="manager"><span class="e">👔</span>공장장</button>
+      <button data-role="field"><span class="e">🧑‍🏭</span>현장</button>
+      <button data-role="admin"><span class="e">👔</span>관리자</button>
+      <button data-role="center" class="on"><span class="e">🛰️</span>센터</button>
     </div>
     <label id="scopeLbl">담당 구역</label>
     <select id="scopeSel" style="width:100%;border:1px solid var(--line2);background:#0b1a2e;color:var(--ink);border-radius:11px;padding:12px 13px;font-size:14px"></select>
@@ -326,8 +326,8 @@ const LS_KEY='zen_mfg_platform_v1';
 function saveDB(){try{localStorage.setItem(LS_KEY,JSON.stringify({DB,dataSource}));}catch(e){}}
 function loadDB(){try{const s=localStorage.getItem(LS_KEY);if(s){const o=JSON.parse(s);if(o&&o.DB&&o.DB.lines){DB=o.DB;if(DB.plan===undefined)DB.plan=null;if(!DB.extSys||!DB.extSys.length||!DB.extSys[0].urls)DB.extSys=JSON.parse(JSON.stringify(DEFAULT_DB.extSys));dataSource=o.dataSource||'저장됨';return true;}}}catch(e){}return false;}
 /* ===== 외부 연동 시스템 (배포 URL · 역할별) ===== */
-function sysUrl(s){const u=s.urls||{};return role==='worker'?(u.worker||u.admin||''):(u.admin||u.worker||'');}
-function sysVariant(s){const u=s.urls||{};if(role==='worker')return u.worker?'작업자용':(u.admin?'관리자용':'');return u.admin?'관리자용':(u.worker?'작업자용':'');}
+function sysUrl(s){const u=s.urls||{};return role==='field'?(u.worker||u.admin||''):(u.admin||u.worker||'');}
+function sysVariant(s){const u=s.urls||{};if(role==='field')return u.worker?'작업자용':(u.admin?'관리자용':'');return u.admin?'관리자용':(u.worker?'작업자용':'');}
 function inAgent(s,agentId){return Array.isArray(s.agent)?s.agent.includes(agentId):s.agent===agentId;}
 function renderSysLinks(agentId){
   const list=(DB.extSys||[]).filter(s=>inAgent(s,agentId));
@@ -375,11 +375,11 @@ const AGENTS=[
   {id:'report',name:'Report Agent',icon:'📝',sub:'일 · 주 · 월간 보고서 자동 작성'},
 ];
 const ROLES={
-  worker:{name:'현장직',emoji:'🧑‍🏭',allow:['home','prod','clean','safe','safeapp']},
-  leader:{name:'반장',emoji:'👷',allow:['home','prod','labor','clean','stock','safe','qual','plan','delay','safeapp']},
-  manager:{name:'공장장',emoji:'👔',allow:['home','prod','labor','clean','stock','safe','qual','kpi','report','plan','delay','data','safeapp']},
+  field:{name:'현장',emoji:'🧑‍🏭',allow:['home','prod','clean','safe','safeapp']},
+  admin:{name:'관리자',emoji:'👔',allow:['home','prod','labor','clean','stock','safe','qual','plan','delay','data','safeapp']},
+  center:{name:'센터',emoji:'🛰️',allow:['home','prod','labor','clean','stock','safe','qual','kpi','report','plan','delay','data','safeapp']},
 };
-let role='leader';
+let role='center';
 
 /* ============ VIEWS ============ */
 const V={};
@@ -934,18 +934,18 @@ function setupDrop(){const d=document.getElementById('drop');if(!d)return;
 function fillScope(r){
   const sel=document.getElementById('scopeSel'),lbl=document.getElementById('scopeLbl');
   let opts=[];
-  if(r==='worker'){lbl.textContent='담당 라인 (현장직)';opts=DEFAULT_DB.lines.map(l=>({v:l.key,t:l.key+' 라인'}));}
-  else if(r==='leader'){lbl.textContent='담당 구역 (반장)';opts=Object.keys(ZONES).map(z=>({v:z,t:z+' ('+ZONES[z].join('·')+')'}));}
-  else{lbl.textContent='담당 범위 (공장장)';opts=[{v:'전체',t:'전체 라인 (전권)'}];}
+  if(r==='field'){lbl.textContent='담당 라인 (현장)';opts=DEFAULT_DB.lines.map(l=>({v:l.key,t:l.key+' 라인'}));}
+  else if(r==='admin'){lbl.textContent='담당 구역 (관리자)';opts=[{v:'전체',t:'전체 라인'}].concat(Object.keys(ZONES).map(z=>({v:z,t:z+' ('+ZONES[z].join('·')+')'})));}
+  else{lbl.textContent='관제 범위 (센터)';opts=[{v:'전체',t:'전체 라인 (통합 관제 · 전권)'}];}
   sel.innerHTML=opts.map(o=>`<option value="${o.v}">${o.t}</option>`).join('');
-  sel.disabled=(r==='manager');
+  sel.disabled=(r==='center');
 }
 document.querySelectorAll('#roles button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#roles button').forEach(x=>x.classList.remove('on'));b.classList.add('on');fillScope(b.dataset.role);});
 function doLogin(){
   role=document.querySelector('#roles button.on').dataset.role;
   const v=document.getElementById('scopeSel').value;
-  if(role==='worker'){scope=[v];scopeName=v+' 라인';}
-  else if(role==='leader'){scope=ZONES[v]||null;scopeName=v;}
+  if(role==='field'){scope=[v];scopeName=v+' 라인';}
+  else if(role==='admin'){if(v==='전체'){scope=null;scopeName='전체';}else{scope=ZONES[v]||null;scopeName=v;}}
   else{scope=null;scopeName='전체';}
   document.getElementById('login').style.display='none';
   document.getElementById('app').classList.add('show');
@@ -958,7 +958,7 @@ function logout(){document.getElementById('app').classList.remove('show');docume
 document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 // startup: restore saved data + default scope UI
 loadDB();
-fillScope('leader');
+fillScope('center');
 </script>
 </body>
 </html>
