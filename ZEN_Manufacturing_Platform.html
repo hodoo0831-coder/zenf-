@@ -156,10 +156,11 @@
   .hero .hbrand{font-size:11.5px;letter-spacing:2.5px;color:#8fd8b9;font-weight:800;text-transform:uppercase}
   .hero .htitle{font-size:27px;font-weight:800;margin-top:5px}
   .hero .hsub{font-size:12.5px;color:#b9cbe0;margin-top:6px}
-  .hero .hstats{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
-  .hero .hstat{text-align:center;min-width:78px;padding:10px 14px;border-radius:13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
-  .hero .hstat .hn{font-size:23px;font-weight:800;line-height:1}
-  .hero .hstat .hl{font-size:11px;color:#a8c0da;margin-top:5px}
+  .hero .hstats{margin-left:auto;display:flex;gap:0;flex-wrap:wrap;position:relative;z-index:1}
+  .hero .hstat{text-align:center;min-width:72px;padding:2px 22px}
+  .hero .hstat+.hstat{border-left:1px solid rgba(255,255,255,.16)}
+  .hero .hstat .hn{font-size:24px;font-weight:800;line-height:1}
+  .hero .hstat .hl{font-size:11px;color:#a8c0da;margin-top:7px;letter-spacing:.3px}
   .kpi .spark{margin-top:9px;opacity:.95}
   .viz{display:grid;grid-template-columns:1fr 1.2fr 1fr 1.2fr;gap:15px;margin-bottom:16px}
   .gaugewrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:4px}
@@ -416,12 +417,6 @@ V.home=()=>{
       <div class="hstat"><div class="hn">${df}%</div><div class="hl">불량률</div></div>
       <div class="hstat"><div class="hn" style="color:#ffcf5a">${orders.length}</div><div class="hl">발주필요</div></div>
     </div>
-  </div>
-  <div class="grid g4" style="margin-bottom:16px">
-    <div class="kpi"><div class="ic">📈</div><div class="lab">금일 생산 달성률</div><div class="val">${tp.ach}<small>%</small></div>${spark(sAch,{color:'#3f74b5'})}</div>
-    <div class="kpi"><div class="ic">👥</div><div class="lab">현재 투입 인원</div><div class="val">${cur}<small>/${need}명</small></div>${spark(sHead,{color:'#3f74b5'})}</div>
-    <div class="kpi"><div class="ic">📊</div><div class="lab">설비종합효율 OEE</div><div class="val">${oee}<small>%</small></div>${spark(sOee,{color:'#3f74b5'})}</div>
-    <div class="kpi"><div class="ic">🔬</div><div class="lab">평균 불량률</div><div class="val">${df}<small>%</small></div>${spark(sDef,{color:'#3f74b5'})}</div>
   </div>
   <div class="viz">
     <div class="card"><h3>생산 달성률 <span class="hint">목표 대비</span></h3><div class="gaugewrap">${gauge(tp.ach,{color:'#5b86b8',size:190})}<div class="gv" style="color:var(--navy)">${tp.ach}%</div><div class="gl">실적 ${(tp.a/1000).toFixed(0)}천 / 목표 ${(tp.t/1000).toFixed(0)}천개</div></div></div>
