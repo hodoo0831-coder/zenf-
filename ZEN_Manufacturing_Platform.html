@@ -369,6 +369,87 @@ const AGENTNAME={clean:'세척 Agent',safe:'안전 Agent',stock:'재고 Agent',p
 let DB=JSON.parse(JSON.stringify(DEFAULT_DB));
 let dataSource='데모';
 
+/* ===== 통합 라이브(P-BOX·오리콘) — 프로덕션 D1(work_records) 연동 ===== */
+const LIVE_SEED={ // 프로덕션 D1에서 읽은 실제 현재값 (배포 전 표시용 스냅샷)
+  asOf:'2026-08-10T09:30:00',
+  kpi:{
+    pbox:{records:5,totalPLT:20,totalEA:1800,totalMH:90,days:2,pltPerMH:0.22,eaPerMH:20,dailyAvgPLT:10,
+      byPart:{'박스':19,'커버':1}, byType:{'세척':20},
+      workers:[{name:'홍길동',mh:45,plt:13,ea:1170,pltPerMH:0.29},{name:'김철수',mh:27,plt:5,ea:450,pltPerMH:0.19},{name:'이동동',mh:18,plt:2,ea:180,pltPerMH:0.11}]},
+    orikon:{records:2,totalPLT:6,totalEA:720,totalMH:27,days:2,pltPerMH:0.22,eaPerMH:27,dailyAvgPLT:3,
+      byPart:{}, byType:{'세척':6},
+      workers:[{name:'김철수',mh:9,plt:3,ea:360,pltPerMH:0.33},{name:'이동동',mh:9,plt:1.5,ea:180,pltPerMH:0.17},{name:'홍길동',mh:9,plt:1.5,ea:180,pltPerMH:0.17}]},
+  },
+  alerts:[{level:'warn',title:'P-BOX 생산성 편차',detail:'이동동 0.11 PLT/MH (평균 0.22)'}],
+};
+let LIVE={apiBase:'',today:LIVE_SEED,brief:null,status:'demo',sys:'pbox',_tried:false};
+try{LIVE.apiBase=localStorage.getItem('zen_live_api')||'';}catch(e){}
+function fmtN(n){return (Math.round((+n||0)*10)/10).toLocaleString();}
+function localBrief(d){const k=(d&&d.kpi)||{},bits=[];
+  if(k.pbox)bits.push(`P-BOX ${fmtN(k.pbox.totalPLT)} PLT(${(k.pbox.totalEA||0).toLocaleString()} EA)·${fmtN(k.pbox.totalMH)} MH·생산성 ${k.pbox.pltPerMH} PLT/MH`);
+  if(k.orikon)bits.push(`오리콘 ${fmtN(k.orikon.totalPLT)} PLT(${(k.orikon.totalEA||0).toLocaleString()} EA)·${fmtN(k.orikon.totalMH)} MH`);
+  const top=(d&&d.alerts&&d.alerts[0])?d.alerts[0].title+' — '+d.alerts[0].detail:'특이사항 없음';
+  return {oneLine:`[통합현황] ${bits.slice(0,2).join(' / ')||'정상 가동'} · 우선 ${top}`,
+    kakao:`📋 AP 대전공장 통합 브리핑 (${((d&&d.asOf)||'').slice(0,16).replace('T',' ')})\n`+bits.map(b=>'• '+b).join('\n')+`\n\n⚠️ 우선조치: ${top}`};
+}
+async function liveRefresh(){
+  if(!LIVE.apiBase){LIVE.status='demo';LIVE.brief=localBrief(LIVE.today);if(cur==='home')go('home');return;}
+  const base=LIVE.apiBase.replace(/\/+$/,'');
+  LIVE.status='loading';if(cur==='home')go('home');
+  try{
+    const t=await fetch(base+'/today').then(r=>r.json());
+    if(t&&t.kpi){LIVE.today=t;LIVE.status='live';}else throw new Error('bad');
+    try{const b=await fetch(base+'/brief').then(r=>r.json());LIVE.brief={oneLine:b.oneLine,kakao:b.kakao,model:b.model};}catch(e){LIVE.brief=localBrief(LIVE.today);}
+  }catch(e){LIVE.status='error';LIVE.brief=localBrief(LIVE.today);}
+  if(cur==='home')go('home');
+}
+function liveSetApi(){const el=document.getElementById('liveApi');LIVE.apiBase=(el&&el.value||'').trim();try{localStorage.setItem('zen_live_api',LIVE.apiBase);}catch(e){}LIVE._tried=true;toast(LIVE.apiBase?'라이브 서버 연결 시도…':'연결 해제(데모)');liveRefresh();}
+function liveDisconnect(){LIVE.apiBase='';try{localStorage.removeItem('zen_live_api');}catch(e){}LIVE.status='demo';LIVE.brief=localBrief(LIVE.today);toast('라이브 연결 해제(데모 스냅샷)');if(cur==='home')go('home');}
+function liveSys(s){LIVE.sys=s;if(cur==='home')go('home');}
+function copyBrief(){const t=(LIVE.brief&&LIVE.brief.kakao)||localBrief(LIVE.today).kakao;if(navigator.clipboard)navigator.clipboard.writeText(t);toast('카톡 보고문을 복사했습니다');}
+function liveConnectPrompt(){const e=document.getElementById('liveConn');if(e)e.scrollIntoView({behavior:'smooth'});}
+function renderLive(){
+  if(LIVE.apiBase&&!LIVE._tried){LIVE._tried=true;setTimeout(liveRefresh,60);}
+  const d=LIVE.today||LIVE_SEED,k=d.kpi||{};
+  const sys=(LIVE.sys==='orikon')?'orikon':'pbox';
+  const c=k[sys]||k.pbox||{};
+  const badge=LIVE.status==='live'?'<span class="tag t-green">● LIVE</span>':LIVE.status==='loading'?'<span class="tag t-amber">연결 중…</span>':LIVE.status==='error'?'<span class="tag t-red">연결 실패·데모</span>':'<span class="tag t-blue">실데이터 스냅샷</span>';
+  const tab=(id,label)=>`<button class="btn ${sys===id?'p':''}" style="padding:5px 11px" onclick="liveSys('${id}')">${label}</button>`;
+  const kt=`<div class="grid g4" style="margin-bottom:10px">
+    <div class="kpi"><div class="ic">📦</div><div class="lab">총 작업량</div><div class="val">${fmtN(c.totalPLT)}<small> PLT</small></div><div class="delta">${(c.totalEA||0).toLocaleString()} EA</div></div>
+    <div class="kpi"><div class="ic">⏱</div><div class="lab">맨아워</div><div class="val">${fmtN(c.totalMH)}<small> MH</small></div><div class="delta">작업 ${c.days||0}일</div></div>
+    <div class="kpi"><div class="ic">⚡</div><div class="lab">시간당 생산성</div><div class="val">${c.pltPerMH||0}<small> PLT/MH</small></div><div class="delta">${c.eaPerMH||0} EA/MH</div></div>
+    <div class="kpi"><div class="ic">🗓</div><div class="lab">일평균</div><div class="val">${fmtN(c.dailyAvgPLT)}<small> PLT</small></div><div class="delta">기록 ${c.records||0}건</div></div>
+  </div>`;
+  const wk=(c.workers||[]).map(w=>`<tr><td>${w.name}</td><td>${fmtN(w.mh)}</td><td>${fmtN(w.plt)}</td><td>${(w.ea||0).toLocaleString()}</td><td style="color:${w.pltPerMH>=(c.pltPerMH||0)?'#22a05f':'#d98a2b'};font-weight:700">${w.pltPerMH}</td></tr>`).join('');
+  const parts=c.byPart?Object.entries(c.byPart):[],pmax=Math.max(1,...parts.map(p=>p[1]));
+  const types=c.byType?Object.entries(c.byType):[],tmax=Math.max(1,...types.map(p=>p[1]));
+  const bar=(n,v,mx,col)=>`<div class="barrow" style="grid-template-columns:52px 1fr 44px;padding:5px 0"><div class="nm" style="font-size:12px">${n}</div><div>${pbar(v/mx*100,col)}</div><div class="vv" style="font-size:12px">${fmtN(v)}</div></div>`;
+  const partBars=parts.map(([n,v])=>bar(n,v,pmax,'#3f74b5')).join('');
+  const typeBars=types.map(([n,v])=>bar(n,v,tmax,'#22a05f')).join('');
+  const b=LIVE.brief||localBrief(d);
+  const modelTag=(b.model&&b.model!=='rule-fallback')?b.model:'통합현황 자동요약';
+  return `<div class="grid g2" style="grid-template-columns:1.45fr 1fr;margin-top:14px">
+    <div class="card"><h3>P-BOX · 오리콘 통합 실적 ${badge}<span style="margin-left:auto;display:flex;gap:6px">${tab('pbox','P-BOX')}${tab('orikon','오리콘')}</span></h3>
+      ${kt}
+      <div class="grid g2" style="grid-template-columns:1.35fr 1fr">
+        <div><h3 style="font-size:12.5px">작업자별 실적 <span class="hint">공동작업 인원분배</span></h3><table class="tb"><thead><tr><th>작업자</th><th>MH</th><th>PLT</th><th>EA</th><th>PLT/MH</th></tr></thead><tbody>${wk}</tbody></table></div>
+        <div><h3 style="font-size:12.5px">부위·유형별 (PLT)</h3>${partBars||'<div class="mini">부위 구분 없음</div>'}${(partBars&&typeBars)?'<div style="height:8px"></div>':''}${typeBars}</div>
+      </div>
+    </div>
+    <div class="card"><h3>AI 통합 브리핑 <span class="hint">${modelTag}</span><button class="btn" onclick="liveRefresh()">↻ 새로고침</button></h3>
+      <div class="reco" style="margin-bottom:10px"><div class="ic">🤖</div><div class="tx"><div class="r">${(b.oneLine||'').replace(/</g,'&lt;')}</div><div class="s">데이터원: ${LIVE.status==='live'?'실시간 D1(work_records)':'실데이터 스냅샷'} · ${((d.asOf)||'').slice(0,16).replace('T',' ')}</div></div></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600">카톡 보고문</div>
+      <pre style="white-space:pre-wrap;background:#f4f7fb;border:1px solid var(--line2);border-radius:9px;padding:11px;font-size:12.5px;line-height:1.55;font-family:inherit;margin:0">${(b.kakao||'').replace(/</g,'&lt;')}</pre>
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="btn p" onclick="copyBrief()">📋 복사</button><button class="btn" onclick="liveConnectPrompt()">🔌 라이브 연결</button></div>
+    </div>
+  </div>
+  <div class="card" id="liveConn" style="margin-top:14px"><h3>라이브 연결 <span class="hint">통합 API 배포 주소를 붙이면 실시간 전환</span></h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="liveApi" type="text" value="${(LIVE.apiBase||'').replace(/"/g,'&quot;')}" placeholder="https://zen-integration-api.○○○.workers.dev" style="flex:1;min-width:240px;border:1px solid var(--line2);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit"><button class="btn p" onclick="liveSetApi()">연결</button><button class="btn" onclick="liveDisconnect()">해제</button></div>
+    <div class="mini" style="margin-top:6px">현재: <b>${LIVE.status==='live'?'실시간 연결됨 ✓':LIVE.apiBase?'연결 실패 — 데모 스냅샷 표시':'미연결 — 실데이터 스냅샷 표시'}</b> · 배포: <code>integration/</code> 폴더에서 <code>wrangler deploy</code> → 나온 주소를 여기 붙이기</div>
+  </div>`;
+}
+
 /* ===== 역할 스코프(담당 라인/구역) ===== */
 const ZONES={'구강케어':['튜브','치약충전','일회용'],'헤어·바디':['초격차','HnB','FnC']};
 let scope=null; // null=전체
@@ -521,7 +602,7 @@ V.home=()=>{
     </div>
   </div>
   ${bottomRow}
-  ${linkRow}`;
+  ${renderLive()}`;
 };
 V.prod=()=>{
   const L=myLines();const tp=totProd();const ends=L.map(l=>l.end).sort();
