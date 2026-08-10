@@ -69,6 +69,16 @@
   .btn:hover{border-color:var(--blue);color:var(--blue)}
   .btn.p{border:none;background:linear-gradient(180deg,#3f74b5,#255fd6);color:#fff;box-shadow:0 3px 10px rgba(47,111,237,.28)}
   .btn.p:hover{color:#fff;filter:brightness(1.05)}
+  .vtabs{display:flex;gap:4px;border-bottom:1.5px solid var(--line2);margin-bottom:16px;flex-wrap:wrap}
+  .vtabs button{background:none;border:0;padding:10px 16px;font-size:13.5px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;font-family:inherit;transition:.14s;border-radius:8px 8px 0 0}
+  .vtabs button:hover{color:var(--ink);background:#f3f7fc}
+  .vtabs button.on{color:var(--navy);border-bottom-color:var(--blue)}
+  .kstrip{display:flex;gap:0;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+  .kstrip .ki{flex:1;min-width:120px;padding:11px 14px;border-left:1px solid var(--line)}
+  .kstrip .ki:first-child{border-left:0}
+  .kstrip .ki .l{font-size:11px;color:var(--muted);font-weight:700}
+  .kstrip .ki .v{font-size:19px;font-weight:800;color:var(--navy);margin-top:3px}.kstrip .ki .v small{font-size:11px;color:var(--muted);font-weight:600}
+  .kstrip .ki .d{font-size:10.5px;margin-top:1px}
   .btn.o{border:none;background:linear-gradient(180deg,#f6a623,#ef9310);color:#fff;box-shadow:0 3px 10px rgba(240,150,20,.3)}
 
   .card{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow);padding:17px}
@@ -384,6 +394,11 @@ const LIVE_SEED={ // 프로덕션 D1에서 읽은 실제 현재값 (배포 전 �
 };
 let LIVE={apiBase:'',today:LIVE_SEED,brief:null,status:'demo',sys:'pbox',_tried:false};
 try{LIVE.apiBase=localStorage.getItem('zen_live_api')||'';}catch(e){}
+/* ===== 모듈 내부 탭 ===== */
+let vtab={prod:'status',labor:'status',safe:'status',report:'doc'};
+function setVtab(v,t){vtab[v]=t;go(v);window.scrollTo({top:0});}
+function vtabsBar(view,tabs){const list=tabs.filter(t=>t.show!==false);const cur=list.some(t=>t.k===vtab[view])?vtab[view]:list[0].k;return `<div class="vtabs">${list.map(t=>`<button class="${cur===t.k?'on':''}" onclick="setVtab('${view}','${t.k}')">${t.label}</button>`).join('')}</div>`;}
+function vtabActive(view,tabs){const list=tabs.filter(t=>t.show!==false);return list.some(t=>t.k===vtab[view])?vtab[view]:list[0].k;}
 function fmtN(n){return (Math.round((+n||0)*10)/10).toLocaleString();}
 function localBrief(d){const k=(d&&d.kpi)||{},bits=[];
   if(k.pbox)bits.push(`P-BOX ${fmtN(k.pbox.totalPLT)} PLT(${(k.pbox.totalEA||0).toLocaleString()} EA)·${fmtN(k.pbox.totalMH)} MH·생산성 ${k.pbox.pltPerMH} PLT/MH`);
@@ -605,6 +620,17 @@ V.home=()=>{
   ${renderLive()}`;
 };
 V.prod=()=>{
+  const R=ROLES[role];
+  const tabs=[{k:'status',label:'실시간 현황'},{k:'plan',label:'주간계획',show:R.allow.includes('plan')},{k:'delay',label:'지연오더',show:R.allow.includes('delay')},{k:'pbox',label:'P-BOX·오리콘 실적'}];
+  const t=vtabActive('prod',tabs);
+  let body;
+  if(t==='plan')body=V.plan();
+  else if(t==='delay')body=V.delay();
+  else if(t==='pbox')body=`<div class="mini" style="margin:-4px 0 12px">작업자 모바일 입력 → 프로덕션 D1 실시간 집계. 공동작업은 인원수로 분배됩니다.</div>`+renderLive();
+  else body=prodStatus();
+  return vtabsBar('prod',tabs)+body;
+};
+function prodStatus(){
   const L=myLines();const tp=totProd();const ends=L.map(l=>l.end).sort();
   const rows=L.map(l=>{const a=G.achieve(l),col=sc(a,70,60);return `<div class="barrow"><div class="nm">${l.key}</div><div>${pbar(a,col)}<div class="mini" style="margin-top:4px">CAPA 부하 ${G.load(l)}% · 예상종료 ${l.end}</div></div><div class="vv" style="color:${col}">${a}%</div></div>`;}).join('');
   const tbl=L.map(l=>{const a=G.achieve(l);return `<tr><td>${l.key}</td><td>${l.target.toLocaleString()}</td><td>${l.actual.toLocaleString()}</td><td style="color:${sc(a,70,60)}">${a}%</td><td>${G.load(l)}%</td><td>${l.end}</td></tr>`;}).join('');
@@ -617,8 +643,8 @@ V.prod=()=>{
         bar=`<div style="position:relative">${pbar(g.weekTotal/gmax*100,'#1c3350')}<div style="position:absolute;top:0;left:0;right:0">${pbar(av/gmax*100,col)}</div></div>`;
         tail=`<div class="vv" style="color:${col}">${a}% <span class="mut2" style="font-weight:600">/${g.weekTotal.toLocaleString()}</span></div>`;}
       return `<div class="barrow" style="grid-template-columns:150px 1fr 150px"><div class="nm">${g.name}</div><div>${bar}</div>${tail}</div>`;}).join('');
-    const note=planHasActual()?`실적 연동됨 — 막대=실적/계획, 우측=달성률. <a onclick="go('delay')" style="color:#7fb8ff;cursor:pointer">지연오더 보기 ›</a>`:'※ 계획(목표) 수량. 실적/달성률은 실적 파일 업로드 또는 <a onclick="go(\'data\')" style="color:#7fb8ff;cursor:pointer">데이터 관리</a>에서 시뮬레이션 시 자동 계산됩니다.';
-    planCard=`<div class="card" style="margin-bottom:14px"><h3>주간 생산계획 ${planHasActual()?'계획 대비 실적':'목표'} (라인군) <span class="hint">${wk.name} · 실 엑셀 연동 · 총 ${gtot.toLocaleString()}개</span><button class="btn" onclick="go('plan')">상세 ›</button></h3>${rows}<div class="mini" style="margin-top:8px">${note}</div></div>`;}
+    const note=planHasActual()?`실적 연동됨 — 막대=실적/계획, 우측=달성률. <a onclick="setVtab('prod','delay')" style="color:#3f74b5;cursor:pointer;font-weight:700">지연오더 보기 ›</a>`:'※ 계획(목표) 수량. 실적/달성률은 실적 파일 업로드 또는 <a onclick="go(\'data\')" style="color:#3f74b5;cursor:pointer;font-weight:700">데이터 관리</a>에서 시뮬레이션 시 자동 계산됩니다.';
+    planCard=`<div class="card" style="margin-bottom:14px"><h3>주간 생산계획 ${planHasActual()?'계획 대비 실적':'목표'} (라인군) <span class="hint">${wk.name} · 실 엑셀 연동 · 총 ${gtot.toLocaleString()}개</span><button class="btn" onclick="setVtab('prod','plan')">상세 ›</button></h3>${rows}<div class="mini" style="margin-top:8px">${note}</div></div>`;}
   return `
   ${planCard}
   <div class="grid g4" style="margin-bottom:14px">
@@ -634,6 +660,12 @@ V.prod=()=>{
   <div class="card"><h3>라인별 생산 현황 상세</h3><table class="tb"><thead><tr><th>라인</th><th>목표</th><th>실적</th><th>달성률</th><th>CAPA 부하</th><th>예상 종료</th></tr></thead><tbody>${tbl}</tbody></table></div>`;
 };
 V.labor=()=>{
+  const tabs=[{k:'status',label:'현황'},{k:'load',label:'부하 자동계산'}];
+  const t=vtabActive('labor',tabs);
+  const load=`<div class="card" id="laborLoad" style="padding:12px"><h3>인력 부하 자동계산 <span class="hint">주간 계획표 업로드 · 라인별 부하율·필요인원 자동 산출</span><span style="margin-left:auto"><button class="btn" onclick="window.open('ZEN_Labor_Load.html','_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="ZEN_Labor_Load.html" title="인력 부하 자동계산" loading="lazy" style="height:80vh"></iframe><div class="mini" style="margin-top:6px">외부 라이브러리(CDN)를 사용해 온라인에서 동작합니다. 임베드가 비면 '새 창'으로 여세요.</div></div>`;
+  return vtabsBar('labor',tabs)+(t==='load'?load:laborStatus());
+};
+function laborStatus(){
   function people(l){let c=[];for(let i=0;i<l.on;i++)c.push(pi('on'));for(let i=0;i<l.leave;i++)c.push(pi('leave'));for(let i=0;i<l.edu;i++)c.push(pi('edu'));for(let i=0;i<Math.max(0,l.need-G.cur(l));i++)c.push(pi('empty'));return c.join('');}
   const L=myLines();
   const boxes=L.map(l=>{const d=G.cur(l)-l.need;return `<div class="lbox ${l.cls}"><div class="lh"><span class="lname">${l.label}</span><span class="pill">${d<0?d+'명':d>0?'+'+d+'명':'정상'}</span></div><div class="cnt">${G.cur(l)}<small> / ${l.need}명</small></div><div class="ppl">${people(l)}</div></div>`;}).join('');
@@ -654,8 +686,7 @@ V.labor=()=>{
       <div class="reco warn"><div class="ic">⏱</div><div class="tx"><div class="r">잔업 추천 — 잔여 부족 ${Math.max(0,shortSum()-Math.min(2,surplus.length))}명 대응</div><div class="s">여유 인력 재배치 후 잔여분 잔업으로 커버 (인건비 검토 필요)</div></div></div>
       <div style="margin-top:6px"><h3 style="font-size:13px">라인별 인력 현황</h3><table class="tb"><thead><tr><th>구역</th><th>필요</th><th>현재</th><th>과부족</th><th>상태</th></tr></thead><tbody>${tbl}</tbody></table></div>
     </div>
-  </div>
-  <div class="card" id="laborLoad" style="margin-top:14px"><h3>인력 부하 자동계산 <span class="hint">주간 계획표 업로드 · 라인별 부하율·필요인원 자동 산출</span><span style="margin-left:auto"><button class="btn" onclick="window.open('ZEN_Labor_Load.html','_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="ZEN_Labor_Load.html" title="인력 부하 자동계산" loading="lazy" style="height:78vh"></iframe><div class="mini" style="margin-top:6px">외부 폰트·엑셀·차트 라이브러리(CDN)를 사용해 온라인에서 동작합니다. 임베드가 비면 위 '새 창'으로 여세요.</div></div>`;
+  </div>`;
 };
 V.clean=()=>{
   const ranked=[...myLines()].map(l=>({l,s:G.cleanScore(l)})).sort((a,b)=>b.s-a.s);
@@ -730,6 +761,11 @@ V.stock=()=>{
   </div>`;
 };
 V.safe=()=>{
+  const tabs=[{k:'status',label:'현황'},{k:'zenf',label:'ZEN Keeper 앱'}];
+  const t=vtabActive('safe',tabs);
+  return vtabsBar('safe',tabs)+(t==='zenf'?V.safeapp():safeStatus());
+};
+function safeStatus(){
   const w=DB.safety;const risks=[
     {n:'폭염 (옥외·고열작업)',lv:w.wbgt>=31?'매우높음':w.wbgt>=28?'높음':'보통',c:w.wbgt>=28?'t-red':'t-amber',s:`WBGT ${w.wbgt}℃ · 기온 ${w.temp}℃ 습도 ${w.humid}%`},
     {n:'협착 위험 — 튜브 라인 성형기',lv:'중간',c:'t-amber',s:'방호덮개 점검 필요'},
@@ -1116,14 +1152,18 @@ function genReport(t){go('report');toast(t+'를 생성했습니다 (DB 최신값
 
 /* ============ ROUTER / NAV / LOGIN ============ */
 let cur='home';
+const NAV_TOOLS={opl:{name:'OPL 교육자료',icon:'📄'},data:{name:'데이터 관리',icon:'🗄'}};
+const NAV_GROUPS=[
+  {sec:'OVERVIEW',ids:['home']},
+  {sec:'운영 · OPERATIONS',ids:['prod','labor','clean','stock']},
+  {sec:'품질·안전 · QUALITY & EHS',ids:['qual','safe']},
+  {sec:'분석 · ANALYTICS',ids:['kpi','report']},
+  {sec:'관리 · ADMIN',ids:['opl','data']},
+];
 function buildNav(){
-  const items=AGENTS.filter(a=>ROLES[role].allow.includes(a.id));
-  const extra=[];
-  if(ROLES[role].allow.includes('plan'))extra.push({id:'plan',name:'생산계획(주간)',icon:'📋'});
-  if(ROLES[role].allow.includes('delay'))extra.push({id:'delay',name:'지연오더',icon:'⏰'});
-  if(ROLES[role].allow.includes('opl'))extra.push({id:'opl',name:'OPL 생성',icon:'📄'});
-  if(ROLES[role].allow.includes('data'))extra.push({id:'data',name:'데이터 관리',icon:'🗄'});
-  extra.push({id:'safeapp',name:'안전 관리(ZENF)',icon:'🧯'});
+  const R=ROLES[role],allow=id=>R.allow.includes(id);
+  const nm=id=>{const a=AGENTS.find(x=>x.id===id);return a?a.name:(NAV_TOOLS[id]||{}).name;};
+  const ic=id=>{const a=AGENTS.find(x=>x.id===id);return a?a.icon:(NAV_TOOLS[id]||{}).icon;};
   const badges={
     prod:{t:totProd().ach+'%',c:totProd().ach>=80?'t-green':'t-amber'},
     labor:{t:'-'+(DB.headcount.need-DB.headcount.cur),c:'t-red'},
@@ -1133,13 +1173,12 @@ function buildNav(){
     qual:{t:avgDefect()+'%',c:avgDefect()>1.5?'t-amber':'t-green'},
     kpi:{t:avgOEE()+'%',c:avgOEE()>=80?'t-green':'t-amber'},
   };
-  const R=ROLES[role];
+  const link=id=>{const bd=badges[id]?`<span class="badge ${badges[id].c}">${badges[id].t}</span>`:'';
+    return `<a data-id="${id}" class="${id===cur?'on':''}" onclick="go('${id}')"><span class="ic">${ic(id)}</span><span>${nm(id)}</span>${bd}</a>`;};
+  const body=NAV_GROUPS.map(g=>{const ids=g.ids.filter(allow);if(!ids.length)return '';return `<div class="sec">${g.sec}</div>`+ids.map(link).join('');}).join('');
   document.getElementById('nav').innerHTML=`
     <div class="logo"><div class="t"><span>ZEN</span> Manufacturing</div><div class="s">Platform · AP 대전공장</div></div>
-    <div class="sec">Agent</div>
-    ${items.map(a=>`<a data-id="${a.id}" class="${a.id===cur?'on':''}" onclick="go('${a.id}')"><span class="ic">${a.icon}</span><span>${a.name}</span>${badges[a.id]?`<span class="badge ${badges[a.id].c}">${badges[a.id].t}</span>`:''}</a>`).join('')}
-    <div class="sec">시스템</div>
-    ${extra.map(a=>{let bd='';if(a.id==='plan'&&DB.plan)bd=`<span class="badge t-blue">${DB.plan.weeks.length}주</span>`;if(a.id==='delay'&&planHasActual()){const d=delayedOrders(DB.plan.weeks[planWeek]||DB.plan.weeks[0]).length;if(d)bd=`<span class="badge t-red">${d}</span>`;}return `<a data-id="${a.id}" class="${a.id===cur?'on':''}" onclick="go('${a.id}')"><span class="ic">${a.icon}</span><span>${a.name}</span>${bd}</a>`;}).join('')}
+    ${body}
     <div class="spacer"></div>
     <div class="user"><div class="av">${R.emoji}</div><div><div class="nm">홍길동 ${R.name}</div><div class="rl">${R.name} · ${scopeLabel()}</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
 }
@@ -1151,7 +1190,7 @@ function go(id){
   document.getElementById('vTitle').textContent=meta.name;
   document.getElementById('vSub').textContent=meta.sub;
   let html=(V[id]||(()=>'<div class="card">준비 중</div>'))();
-  if(['clean','safe','stock'].includes(id))html+=renderSysLinks(id);
+  if((id==='clean'||id==='stock')||(id==='safe'&&vtab.safe!=='zenf'))html+=renderSysLinks(id);
   document.getElementById('view').innerHTML=html;
   document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.id===id));
   if(id==='data')setTimeout(setupDrop,0);
