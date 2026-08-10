@@ -432,8 +432,8 @@ const AGENTS=[
 ];
 const ROLES={
   field:{name:'현장',emoji:'🧑‍🏭',allow:['home','prod','clean','safe','safeapp']},
-  admin:{name:'관리자',emoji:'👔',allow:['home','prod','labor','clean','stock','safe','qual','plan','delay','data','safeapp']},
-  center:{name:'센터',emoji:'🛰️',allow:['home','prod','labor','clean','stock','safe','qual','kpi','report','plan','delay','data','safeapp']},
+  admin:{name:'관리자',emoji:'👔',allow:['home','prod','labor','clean','stock','safe','qual','plan','delay','data','opl','safeapp']},
+  center:{name:'센터',emoji:'🛰️',allow:['home','prod','labor','clean','stock','safe','qual','kpi','report','plan','delay','data','opl','safeapp']},
 };
 let role='center';
 
@@ -963,6 +963,7 @@ function exportDelay(){const wk=DB.plan.weeks[planWeek]||DB.plan.weeks[0];const 
   const head=['일자','리소스','라인군','오더번호','품명','계획','실적','부족','달성률(%)'];
   const aoa=[head,...del.map(o=>[o.date,o.res,o.group,o.orderNo,o.product,o.qty,o.actual,o.short,o.ach])];
   const ws=XLSX.utils.aoa_to_sheet(aoa);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'지연오더');XLSX.writeFile(wb,'ZEN_지연오더_'+wk.name+'.xlsx');toast('지연오더를 엑셀로 내보냈습니다');}
+V.opl=()=>`<div class="card" id="oplGen" style="padding:12px"><h3>OPL 원포인트레슨 자동생성 <span class="hint">점검·이슈 붙여넣기 → 적발(NG)→준수기준(OK) 카드 + 교육 서명부 · 인쇄/PDF</span><span style="margin-left:auto"><button class="btn" onclick="window.open('ZEN_OPL_Generator.html','_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="ZEN_OPL_Generator.html" title="OPL 생성기" loading="lazy" style="height:80vh"></iframe><div class="mini" style="margin-top:6px">좌측에 점검결과·통지문 내용을 붙여넣고 <b>자동 생성</b>을 누르면 OPL 초안이 만들어집니다. 카드별 <b>적발 사진 업로드</b> 후 <b>PDF/인쇄</b>로 출력하세요. (전체화면은 '새 창')</div></div>`;
 V.safeapp=()=>`<div class="card" style="padding:12px"><h3>안전 관리 (ZEN Keeper) <span class="hint">배포본 연동 · zenkeeper.netlify.app</span><span style="margin-left:auto;display:flex;gap:8px"><button class="btn" onclick="window.open('https://zenkeeper.netlify.app/','_blank')">↗ 새 창</button><button class="btn" onclick="window.open('ZENF_Safety_App_v65.html','_blank')">로컬본</button></span></h3><iframe class="safe" src="https://zenkeeper.netlify.app/" title="ZEN Keeper" loading="lazy"></iframe><div class="mini" style="margin-top:6px">배포된 최신본을 임베드합니다. 임베드가 비어 보이면 '새 창'으로 여세요. 오프라인 필요 시 '로컬본' 버튼 사용.</div></div>`;
 
 /* ============ DATA OPS ============ */
@@ -1035,6 +1036,7 @@ function buildNav(){
   const extra=[];
   if(ROLES[role].allow.includes('plan'))extra.push({id:'plan',name:'생산계획(주간)',icon:'📋'});
   if(ROLES[role].allow.includes('delay'))extra.push({id:'delay',name:'지연오더',icon:'⏰'});
+  if(ROLES[role].allow.includes('opl'))extra.push({id:'opl',name:'OPL 생성',icon:'📄'});
   if(ROLES[role].allow.includes('data'))extra.push({id:'data',name:'데이터 관리',icon:'🗄'});
   extra.push({id:'safeapp',name:'안전 관리(ZENF)',icon:'🧯'});
   const badges={
@@ -1060,7 +1062,7 @@ function go(id){
   if(!ROLES[role].allow.includes(id)&&!['data','safeapp'].includes(id))id='home';
   if(id==='data'&&!ROLES[role].allow.includes('data'))id='home';
   cur=id;
-  const meta=AGENTS.find(a=>a.id===id)||{name:{data:'데이터 관리',safeapp:'안전 관리 (ZENF)',plan:'생산계획 (주간)',delay:'지연오더'}[id],sub:{data:'엑셀/CSV 업로드 · 직접 편집으로 대시보드 구동',safeapp:'기존 안전 앱 통합 화면',plan:'주간 생산계획 엑셀 실데이터 · 리소스·오더·수량',delay:'계획 대비 실적 · 지연/미달 오더 분석'}[id]};
+  const meta=AGENTS.find(a=>a.id===id)||{name:{data:'데이터 관리',safeapp:'안전 관리 (ZENF)',plan:'생산계획 (주간)',delay:'지연오더',opl:'OPL 생성기'}[id],sub:{data:'엑셀/CSV 업로드 · 직접 편집으로 대시보드 구동',safeapp:'기존 안전 앱 통합 화면',plan:'주간 생산계획 엑셀 실데이터 · 리소스·오더·수량',delay:'계획 대비 실적 · 지연/미달 오더 분석',opl:'점검·이슈 내용 → 원포인트레슨(적발→준수기준+서명부) 자동 생성'}[id]};
   document.getElementById('vTitle').textContent=meta.name;
   document.getElementById('vSub').textContent=meta.sub;
   let html=(V[id]||(()=>'<div class="card">준비 중</div>'))();
