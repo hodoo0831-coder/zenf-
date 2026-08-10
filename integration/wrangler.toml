@@ -1,0 +1,18 @@
+name = "zen-integration-api"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+
+# ── 상위(기존) 시스템 데이터 엔드포인트 ────────────────────────────────
+# 각 시스템 Worker가 JSON을 내려주는 주소로 바꾸세요.
+# 지금은 P-BOX·오리콘만 우선 연결. 나머지는 준비되면 채우면 자동 확장됩니다.
+[vars]
+SITE = "AP 대전공장"
+UPSTREAM_PBOX = "https://REPLACE-ME-pbox-orikon-db.workers.dev/api"   # ← ★ 여기만 실제 주소로
+UPSTREAM_SAFECHECK = ""   # 예: https://safecheck.<sub>.workers.dev/summary
+UPSTREAM_HEAT = ""        # 예: https://heat-push.<sub>.workers.dev/now
+UPSTREAM_WASH = ""        # 예: https://wash-db.<sub>.workers.dev/status
+MODEL = "claude-haiku-4-5-20251001"   # /brief 요약 모델 (claude-sonnet-5 등으로 교체 가능)
+
+# ANTHROPIC_API_KEY 는 코드에 넣지 말고 secret 으로:
+#   wrangler secret put ANTHROPIC_API_KEY
+# (미설정이어도 /brief 는 규칙기반 요약으로 동작합니다)
