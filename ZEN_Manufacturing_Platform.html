@@ -177,6 +177,11 @@
   /* 관제 센터 대시보드 */
   .dash{display:grid;grid-template-columns:1.1fr 1fr 1.12fr;gap:16px;align-items:start;margin-bottom:16px}
   .dash .col{gap:16px}
+  .astat{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .astat .t{display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--line2);border-radius:10px;background:#f7fafd}
+  .astat .t .ei{width:27px;height:27px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:#eef4fb;font-size:14px;border:1px solid var(--line2)}
+  .astat .t .nm{font-size:12px;color:var(--muted);font-weight:600}
+  .astat .t .vv{margin-left:auto;font-weight:800;font-size:13px}
   .gquad{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
   .mgauge{display:flex;flex-direction:column;align-items:center}
   .mgauge .mv{font-size:18px;font-weight:800;color:var(--navy);margin-top:-16px}
@@ -486,6 +491,12 @@ V.home=()=>{
       <div class="reco bad" style="margin-bottom:10px"><div class="ic">⚠️</div><div class="tx"><div class="r">${worst.key} 라인 복합 리스크</div><div class="s">세척 ${G.cleanScore(worst)}점 · 불량 ${worst.defect}%</div></div></div>
       <div class="reco" style="margin:0"><div class="ic">🦺</div><div class="tx"><div class="r">폭염 ${DB.safety.wbgt>=28?'경고':'주의'} WBGT ${DB.safety.wbgt}℃</div><div class="s">휴식·수분 조치 · 무재해 ${DB.safety.noAccident}일</div></div></div></div>`;
   }
+  // 좌측 컬럼: 창고 데이터가 있으면 적치 카드, 없으면 라인별 생산 + Agent 상태(항상 채움)
+  const prodCard=`<div class="card"><h3>라인별 생산 달성률 <span class="hint">실적/목표</span></h3>${myLines().map(l=>{const a=G.achieve(l),col=sc(a,70,60);return `<div class="barrow" style="grid-template-columns:78px 1fr 46px;padding:7px 0"><div class="nm" style="font-size:12.5px">${l.key}</div><div>${pbar(a,col)}<div class="mini" style="margin-top:3px">CAPA 부하 ${G.load(l)}% · 종료 ${l.end}</div></div><div class="vv" style="color:${col};font-size:12.5px">${a}%</div></div>`;}).join('')}</div>`;
+  const cln=myLines().filter(l=>G.cleanScore(l)>=75).length;
+  const astat=[['📈','생산',tp.ach+'%',tp.ach>=80?'#22a05f':'#d98a2b','prod'],['👥','인력',(need-cur>0?'-'+(need-cur)+'명':'정상'),need-cur>0?'#dc4b4b':'#22a05f','labor'],['🧼','세척',cln+'라인',cln?'#d98a2b':'#22a05f','clean'],['📦','재고',orders.length+'건',orders.length?'#dc4b4b':'#22a05f','stock'],['🦺','안전',DB.safety.wbgt>=28?'경고':'양호',DB.safety.wbgt>=28?'#d98a2b':'#22a05f','safe'],['🔬','품질',df+'%',df<=1.5?'#22a05f':'#d98a2b','qual'],['📊','KPI',oee+'%',oee>=80?'#22a05f':'#d98a2b','kpi'],['📝','보고','준비','#4f7cb0','report']];
+  const agentCard=`<div class="card"><h3>Agent 상태 <span class="hint">8개 실시간</span></h3><div class="astat">${astat.filter(a=>ROLES[role].allow.includes(a[4])).map(a=>`<div class="t" onclick="go('${a[4]}')" style="cursor:pointer"><div class="ei">${a[0]}</div><div class="nm">${a[1]}</div><div class="vv" style="color:${a[3]}">${a[2]}</div></div>`).join('')}</div></div>`;
+  const leftCol=DB.wh?(zoneCard+bldgCard):(prodCard+agentCard);
   alerts.push({r:'인력 부족 예측',s:'피크 화요일 '+DB.forecast.reduce((m,d)=>Math.max(m,d.v),0)+'명 · 사전 배치 필요',t:'09:25',c:'warn'});
   alerts.push({r:'세척 우선순위 변경 권장',s:worst.key+' 라인 세척 '+G.cleanScore(worst)+'점(1위) · 완료 지연 예상',t:'09:22',c:''});
   const liveBar=`<div class="livebar"><div class="lh"><div class="tag">AI LIVE CONTROL</div><div class="t">실시간 통합 운영 현황</div><div class="s">${heroSub}</div></div>${heroKPIs}<div class="feed"><div class="fh"><span>실시간 알림</span><span style="color:#8fd8b9;cursor:pointer" onclick="alert('알림 상세 (데모)')">더보기 ›</span></div>${alerts.map(a=>`<div class="fitem"><div class="fic">${a.c==='bad'?'🔴':a.c==='warn'?'🟠':'🔔'}</div><div class="ft"><div class="r">${a.r}</div><div class="s">${a.s}</div></div><div class="ftime">${a.t}</div></div>`).join('')}</div></div>`;
@@ -496,8 +507,7 @@ V.home=()=>{
   ${liveBar}
   <div class="dash">
     <div class="col">
-      ${zoneCard}
-      ${bldgCard}
+      ${leftCol}
     </div>
     <div class="col">
       <div class="card"><h3>오늘 핵심 지표 <span class="hint">실적 ${(tp.a/1000).toFixed(0)}천 / 목표 ${(tp.t/1000).toFixed(0)}천</span></h3>${gq}</div>
