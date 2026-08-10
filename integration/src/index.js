@@ -43,31 +43,56 @@ const pick = (o, keys, d) => { for (const k of keys) if (o && o[k] != null) retu
  * ⚠️ 여기만 각 시스템의 실제 필드명에 맞추면 됩니다. (나머지는 그대로 동작)
  * ====================================================================== */
 
-// P-BOX·오리콘: 금일 작업/오류/성공률/대기
+// P-BOX·오리콘: 작업자가 폰으로 입력한 작업기록(records)을 생산 실적으로 집계.
+//   record 예상 필드(한/영 모두 대응): date/작업일, worker/작업자,
+//   part/부위(박스·커버), type/작업유형(세척·간지), plt/PLT/작업량, ea/EA, mh/MH/근무시간
+// ⚠️ 실제 JSON 필드명이 다르면 아래 REC(...) 매핑만 고치면 됩니다.
 function adaptPbox(raw) {
   if (!raw) return null;
-  // 배열(로그)로 오면 집계, 객체(요약)면 필드에서 추출 — 둘 다 대응
-  const arr = Array.isArray(raw) ? raw : (raw.rows || raw.results || raw.items || null);
-  if (arr) {
-    const today = new Date().toISOString().slice(0, 10);
-    const t = arr.filter(r => String(pick(r, ["date", "ts", "created_at", "time"], "")).slice(0, 10) === today);
-    const rows = t.length ? t : arr;
-    const err = rows.filter(r => {
-      const s = String(pick(r, ["status", "result", "state"], "")).toLowerCase();
-      return s.includes("err") || s.includes("fail") || s.includes("ng") || pick(r, ["error", "is_error"], 0);
-    }).length;
+  const arr = Array.isArray(raw) ? raw
+    : (raw.records || raw.rows || raw.results || raw.items || raw.data || null);
+  if (!arr || !arr.length) {
+    // 이미 집계된 요약 객체로 오는 경우
     return {
-      todayCount: rows.length,
-      errorCount: err,
-      successRate: rows.length ? +(100 * (rows.length - err) / rows.length).toFixed(1) : 100,
-      pending: rows.filter(r => String(pick(r, ["status", "state"], "")).toLowerCase().includes("pend")).length,
+      records: num(pick(raw, ["records", "count", "total"], 0)),
+      totalPLT: num(pick(raw, ["totalPLT", "plt", "total_plt"], 0)),
+      totalEA: num(pick(raw, ["totalEA", "ea", "total_ea"], 0)),
+      totalMH: num(pick(raw, ["totalMH", "mh", "total_mh"], 0)),
+      days: num(pick(raw, ["days", "workdays"], 0)),
+      pltPerMH: num(pick(raw, ["pltPerMH", "productivity"], 0)),
+      eaPerMH: 0, byPart: {}, byType: {}, workers: [], daily: [],
     };
   }
+  const REC = (r) => ({
+    date: String(pick(r, ["date", "작업일", "일자", "workDate", "ts", "created_at"], "")).slice(0, 10),
+    worker: pick(r, ["worker", "작업자", "name", "employee"], "미지정"),
+    part: pick(r, ["part", "부위", "boxType", "종류"], "기타"),
+    type: pick(r, ["type", "작업유형", "유형", "workType"], "기타"),
+    plt: num(pick(r, ["plt", "PLT", "작업량", "pallet", "pallets"], 0)),
+    ea: num(pick(r, ["ea", "EA", "수량", "qty"], 0)),
+    mh: num(pick(r, ["mh", "MH", "근무시간", "manhour", "hours"], 0)),
+  });
+  const recs = arr.map(REC);
+  const sum = (f) => recs.reduce((a, r) => a + (r[f] || 0), 0);
+  const totalPLT = +sum("plt").toFixed(1), totalEA = sum("ea"), totalMH = +sum("mh").toFixed(1);
+  const group = (key, val) => { const m = {}; recs.forEach(r => { const k = r[key] || "기타"; m[k] = +( (m[k] || 0) + (r[val] || 0) ).toFixed(1); }); return m; };
+  const days = new Set(recs.map(r => r.date).filter(Boolean)).size;
+  const wmap = {};
+  recs.forEach(r => { const w = wmap[r.worker] || (wmap[r.worker] = { name: r.worker, mh: 0, plt: 0, ea: 0 }); w.mh += r.mh; w.plt += r.plt; w.ea += r.ea; });
+  const workers = Object.values(wmap).map(w => ({ name: w.name, mh: +w.mh.toFixed(1), plt: +w.plt.toFixed(1), ea: w.ea, pltPerMH: w.mh ? +(w.plt / w.mh).toFixed(2) : 0 }))
+    .sort((a, b) => b.plt - a.plt);
+  const dmap = {};
+  recs.forEach(r => { if (r.date) dmap[r.date] = +((dmap[r.date] || 0) + r.plt).toFixed(1); });
+  const daily = Object.keys(dmap).sort().map(d => ({ date: d, plt: dmap[d] }));
   return {
-    todayCount: num(pick(raw, ["todayCount", "today_count", "count", "total", "work_count"], 0)),
-    errorCount: num(pick(raw, ["errorCount", "error_count", "errors", "ng", "fail"], 0)),
-    successRate: num(pick(raw, ["successRate", "success_rate", "rate"], 100)),
-    pending: num(pick(raw, ["pending", "waiting", "queue"], 0)),
+    records: recs.length,
+    totalPLT, totalEA, totalMH, days,
+    pltPerMH: totalMH ? +(totalPLT / totalMH).toFixed(2) : 0,
+    eaPerMH: totalMH ? Math.round(totalEA / totalMH) : 0,
+    dailyAvgPLT: days ? +(totalPLT / days).toFixed(1) : 0,
+    byPart: group("part", "plt"),
+    byType: group("type", "plt"),
+    workers, daily,
   };
 }
 
@@ -130,9 +155,13 @@ async function buildToday(env) {
   };
   const alerts = [];
   if (kpi.heat && kpi.heat.wbgt >= 28) alerts.push({ level: "warn", title: `폭염 ${kpi.heat.level} · WBGT ${kpi.heat.wbgt}℃`, detail: "휴식·수분 조치 필요", src: "heat" });
-  if (kpi.pboxOrikon && kpi.pboxOrikon.errorCount > 0) alerts.push({ level: "warn", title: `P-BOX·오리콘 오류 ${kpi.pboxOrikon.errorCount}건`, detail: `성공률 ${kpi.pboxOrikon.successRate}%`, src: "pbox" });
   if (kpi.safecheck && kpi.safecheck.open > 0) alerts.push({ level: "bad", title: `세이프체크 미조치 ${kpi.safecheck.open}건`, detail: `금일 지적 ${kpi.safecheck.findings}건`, src: "safecheck" });
   if (kpi.wash && kpi.wash.delayed > 0) alerts.push({ level: "warn", title: `세척 지연 ${kpi.wash.delayed}라인`, detail: "우선순위 재조정 필요", src: "wash" });
+  const pbk = kpi.pboxOrikon;
+  if (pbk && pbk.workers && pbk.workers.length) {
+    const low = pbk.workers.filter(w => w.pltPerMH > 0 && w.pltPerMH < pbk.pltPerMH * 0.6);
+    if (low.length) alerts.push({ level: "warn", title: `P-BOX 생산성 편차`, detail: `${low.map(w => w.name).join("·")} 시간당 ${low[0].pltPerMH} PLT/MH (평균 ${pbk.pltPerMH})`, src: "pbox" });
+  }
 
   return {
     asOf: new Date().toISOString(),
@@ -179,7 +208,7 @@ async function buildBrief(env, today) {
 function ruleBrief(t, note) {
   const k = t.kpi || {};
   const bits = [];
-  if (k.pboxOrikon) bits.push(`P-BOX·오리콘 ${k.pboxOrikon.todayCount}건(오류 ${k.pboxOrikon.errorCount}·성공률 ${k.pboxOrikon.successRate}%)`);
+  if (k.pboxOrikon) { const p = k.pboxOrikon; bits.push(`P-BOX 작업 ${p.totalPLT} PLT(${(p.totalEA||0).toLocaleString()} EA)·${p.totalMH} MH·생산성 ${p.pltPerMH} PLT/MH`); }
   if (k.heat) bits.push(`폭염 WBGT ${k.heat.wbgt}℃(${k.heat.level})`);
   if (k.safecheck) bits.push(`세이프체크 지적 ${k.safecheck.findings}·미조치 ${k.safecheck.open}`);
   if (k.wash) bits.push(`세척 ${k.wash.done}/${k.wash.total} 완료·지연 ${k.wash.delayed}`);
