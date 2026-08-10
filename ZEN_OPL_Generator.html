@@ -131,69 +131,71 @@
       <button class="btn g" style="flex:1" onclick="doPrint()">🖨 PDF / 인쇄</button>
       <button class="btn o sm" onclick="loadSample()">예시</button>
     </div>
-    <h1><b>ZEN</b> OPL Generator</h1>
-    <div class="sub">이슈·점검 내용을 넣으면 원포인트레슨(적발→준수기준 + 서명부)을 자동 생성합니다.</div>
+    <h1><b>ZEN</b> OPL 생성기</h1>
+    <div class="sub">붙여넣기 → 자동 생성 → 인쇄. 3단계면 끝납니다.</div>
 
     <div class="grp paste-area">
-      <h3><span class="dot"></span>① 이슈 붙여넣기 → 자동생성</h3>
+      <h3><span class="dot"></span>① 점검·이슈 내용 붙여넣기</h3>
       <textarea id="paste" placeholder="점검결과/통지문 내용을 그대로 붙여넣으세요.
+
 예)
 제목: 설비 세척 후 부속 보관 기준 준수
 적발: 호퍼 내부에 자재(봉)를 넣은 채 보관
-준수: 호퍼 봉은 반드시 분리하여 별도 보관
+준수: 호퍼 봉은 분리하여 별도 보관
 적발: 부속을 겹쳐 쌓아 세척 사각지대 발생
 준수: 겹치지 않도록 간격을 두고 단독 보관
 WHY: 세척·살균 불량 및 교차오염 위험"></textarea>
-      <div class="hint">‘적발/준수(또는 NG/OK)’ 쌍, ‘1. …→…’, ‘제목:’, ‘WHY:’ 형식을 자동 인식합니다. 생성 후 아래에서 자유롭게 수정하세요.</div>
       <div class="btnrow">
         <button class="btn p" style="flex:1" onclick="autoGen()">⚡ 자동 생성</button>
         <button class="btn o" onclick="clearAll()">비우기</button>
       </div>
+      <div class="hint">‘적발/준수’(또는 NG/OK) 문장만 있으면 됩니다. 제목·WHY는 넣으면 반영, 없으면 자동 처리돼요.</div>
     </div>
 
     <div class="grp">
-      <h3><span class="dot"></span>② 기본 정보</h3>
+      <h3><span class="dot"></span>② 내용 확인·수정</h3>
       <label>제목</label><input type="text" id="f_title">
-      <label>부제</label><input type="text" id="f_subtitle">
-      <div class="row2">
-        <div><label>분류</label>
-          <select id="f_class"><option>개선·문제해결</option><option>안전</option><option>품질</option><option>설비</option><option>세척·위생</option><option>작업표준</option></select>
-        </div>
-        <div><label>관리번호</label><input type="text" id="f_docNo" placeholder="OPL-YYMM-주제-01"></div>
-      </div>
-      <div class="row2">
-        <div><label>작성일</label><input type="text" id="f_date" placeholder="2025. 08. 10."></div>
-        <div><label>작성자</label><input type="text" id="f_author"></div>
-      </div>
-      <div class="row2">
-        <div><label>교육대상</label><input type="text" id="f_target"></div>
-        <div><label>소속</label><input type="text" id="f_org"></div>
-      </div>
-      <label>핵심 한 줄 <span class="hint" style="display:inline">(강조는 *별표*)</span></label>
-      <textarea id="f_core" rows="2" placeholder="세척이 끝난 부속은 *분리 보관*해야 사각지대가 없습니다."></textarea>
-    </div>
-
-    <div class="grp">
-      <h3><span class="dot"></span>③ 적발(NG) → 준수(OK) 카드</h3>
       <div id="cardList"></div>
-      <button class="btn o sm" onclick="addCard()">＋ 카드 추가</button>
-      <div class="hint">카드 2~4개 권장. 제목은 12자 내외로 간결하게.</div>
+      <button class="btn o sm" onclick="addCard()">＋ 항목 추가</button>
+      <label style="margin-top:12px">WHY · 왜 지켜야 하나 <span class="hint" style="display:inline">(강조는 *별표*)</span></label>
+      <textarea id="f_why" rows="2" placeholder="접촉면에 세척액·UV가 닿지 않아 *세척·살균 불량 및 교차오염* 위험이 발생합니다."></textarea>
     </div>
 
-    <div class="grp">
-      <h3><span class="dot"></span>④ WHY · 서명부</h3>
-      <label>WHY (왜 지켜야 하나) <span class="hint" style="display:inline">(강조는 *별표*)</span></label>
-      <textarea id="f_why" rows="2" placeholder="접촉면에 세척액·UV가 닿지 않아 *세척·살균 불량 및 교차오염* 위험이 발생합니다."></textarea>
-      <div class="row2">
-        <div><label>교육장소</label><input type="text" id="f_eduPlace" placeholder="AP 대전공장 현장"></div>
-        <div><label>교육자</label><input type="text" id="f_eduTeacher"></div>
+    <div class="grp" style="padding:0;overflow:hidden">
+      <div style="padding:12px;cursor:pointer;display:flex;align-items:center;gap:6px" onclick="toggleAdv()">
+        <span id="advArrow" style="color:var(--gold);font-size:12px">▸</span>
+        <span style="font-size:12px;font-weight:700;color:var(--navy)">상세 설정 (선택)</span>
+        <span class="hint" style="margin:0 0 0 auto">관리번호·작성자·서명부 등</span>
       </div>
-      <div class="row2">
-        <div><label>서명 인원수</label><input type="text" id="f_signRows" value="18"></div>
-        <div><label>교육일자</label><input type="text" id="f_eduDate" placeholder="2025.   .   "></div>
+      <div id="advBody" style="display:none;padding:0 12px 12px;border-top:1px solid var(--line)">
+        <div class="row2" style="margin-top:10px">
+          <div><label>분류</label>
+            <select id="f_class"><option>개선·문제해결</option><option>안전</option><option>품질</option><option>설비</option><option>세척·위생</option><option>작업표준</option></select>
+          </div>
+          <div><label>관리번호</label><input type="text" id="f_docNo" placeholder="OPL-YYMM-주제-01"></div>
+        </div>
+        <label>부제</label><input type="text" id="f_subtitle">
+        <div class="row2">
+          <div><label>작성일</label><input type="text" id="f_date" placeholder="2025. 08. 10."></div>
+          <div><label>작성자</label><input type="text" id="f_author"></div>
+        </div>
+        <div class="row2">
+          <div><label>교육대상</label><input type="text" id="f_target"></div>
+          <div><label>소속</label><input type="text" id="f_org"></div>
+        </div>
+        <label>핵심 한 줄 <span class="hint" style="display:inline">(비우면 미표시 · 강조 *별표*)</span></label>
+        <textarea id="f_core" rows="2" placeholder="세척이 끝난 부속은 *분리 보관*해야 사각지대가 없습니다."></textarea>
+        <div class="row2">
+          <div><label>교육장소</label><input type="text" id="f_eduPlace" placeholder="AP 대전공장 현장"></div>
+          <div><label>교육자</label><input type="text" id="f_eduTeacher"></div>
+        </div>
+        <div class="row2">
+          <div><label>서명 인원수</label><input type="text" id="f_signRows" value="18"></div>
+          <div><label>교육일자</label><input type="text" id="f_eduDate" placeholder="2025.   .   "></div>
+        </div>
+        <label>동의 문구</label>
+        <textarea id="f_note" rows="2"></textarea>
       </div>
-      <label>동의 문구</label>
-      <textarea id="f_note" rows="2"></textarea>
     </div>
   </div>
 
@@ -237,12 +239,10 @@ function renderCardEdit(){
   const box=document.getElementById('cardList');
   box.innerHTML=S.cards.map((c,i)=>`
     <div class="card-edit">
-      <div class="ch"><div class="t">카드 ${i+1}</div><button class="rm" onclick="rmCard(${i})" title="삭제">×</button></div>
-      <label class="ngtag">✕ 적발 제목</label><input type="text" value="${escAttr(c.ngTitle)}" oninput="setCard(${i},'ngTitle',this.value)">
-      <label class="ngtag">✕ 적발 내용</label><textarea rows="2" oninput="setCard(${i},'ng',this.value)">${esc(c.ng)}</textarea>
-      <label class="oktag">✓ 준수 제목</label><input type="text" value="${escAttr(c.okTitle)}" oninput="setCard(${i},'okTitle',this.value)">
-      <label class="oktag">✓ 준수 내용</label><textarea rows="2" oninput="setCard(${i},'ok',this.value)">${esc(c.ok)}</textarea>
-      <label class="photo-btn" onclick="document.getElementById('ph${i}').click()">📷 적발 사진 업로드</label>
+      <div class="ch"><div class="t">항목 ${i+1}</div><button class="rm" onclick="rmCard(${i})" title="삭제">×</button></div>
+      <label class="ngtag">✕ 적발 (이렇게 하면 안 됨)</label><textarea rows="2" oninput="setCard(${i},'ng',this.value)" placeholder="적발 상황을 한 줄로">${esc(c.ng)}</textarea>
+      <label class="oktag">✓ 준수 기준 (이렇게 하세요)</label><textarea rows="2" oninput="setCard(${i},'ok',this.value)" placeholder="올바른 작업 방법을 한 줄로">${esc(c.ok)}</textarea>
+      <label class="photo-btn" onclick="document.getElementById('ph${i}').click()">📷 적발 사진 ${c.photo?'변경':'업로드'}</label>
       <input type="file" id="ph${i}" accept="image/*" style="display:none" onchange="setPhoto(${i},this)">
       ${c.photo?`<img class="photo-thumb" src="${c.photo}">`:''}
     </div>`).join('');
@@ -265,15 +265,15 @@ function renderPreview(){
       ${c.photo?`<img class="ph" src="${c.photo}">`:`<div class="ph empty">점검 사진</div>`}
       <div class="ngchip">✕ 적발</div>
       <div class="ngwrap">
-        <div class="ngk">이렇게 보관하면 안 됩니다</div>
-        <div class="ngt">${esc(c.ngTitle)}</div>
-        <div class="ngd">${esc(c.ng)}</div>
+        <div class="ngk">이렇게 하면 안 됩니다</div>
+        <div class="ngt">${esc(c.ngTitle||c.ng)}</div>
+        ${c.ng&&c.ng!==(c.ngTitle||c.ng)?`<div class="ngd">${esc(c.ng)}</div>`:''}
       </div>
       <div class="div"><div class="o">▼</div></div>
       <div class="okwrap">
         <div class="okk">✓ 준수 기준</div>
-        <div class="okt">${esc(c.okTitle)}</div>
-        <div class="okd">${esc(c.ok)}</div>
+        <div class="okt">${esc(c.okTitle||c.ok)}</div>
+        ${c.ok&&c.ok!==(c.okTitle||c.ok)?`<div class="okd">${esc(c.ok)}</div>`:''}
       </div>
     </div>`).join('');
   document.getElementById('page1').innerHTML=`
@@ -289,7 +289,7 @@ function renderPreview(){
       <div class="c"><b>승인</b><span class="v empty">&nbsp;</span></div>
       <div class="c"><b>교육대상</b><span class="v">${esc(S.target)||'&nbsp;'}</span></div>
     </div>
-    <div class="core"><span class="k">핵심</span>${hl(S.core)}</div>
+    ${S.core&&S.core.trim()?`<div class="core"><span class="k">핵심</span>${hl(S.core)}</div>`:''}
     <div class="cards">${cards}</div>
     <div class="why"><span class="w">WHY</span><span class="tx">${hl(S.why)}</span><span class="org">${esc(S.org)}</span></div>`;
   // page2
@@ -324,9 +324,10 @@ function bindForm(){
 }
 function fillForm(){const map={f_title:'title',f_subtitle:'subtitle',f_class:'classification',f_docNo:'docNo',f_date:'date',f_author:'author',f_target:'target',f_org:'org',f_core:'core',f_why:'why',f_eduPlace:'eduPlace',f_eduTeacher:'eduTeacher',f_eduDate:'eduDate',f_signRows:'signRows',f_note:'note'};for(const id in map){document.getElementById(id).value=S[map[id]]??'';}}
 
-function setCard(i,k,v){S.cards[i][k]=v;renderPreview();}
+function setCard(i,k,v){S.cards[i][k]=v;if(k==='ng')S.cards[i].ngTitle=shorten(v,16);if(k==='ok')S.cards[i].okTitle=shorten(v,16);renderPreview();}
+function toggleAdv(){const b=document.getElementById('advBody'),a=document.getElementById('advArrow');const open=b.style.display==='none';b.style.display=open?'block':'none';a.textContent=open?'▾':'▸';}
 function setPhoto(i,input){const f=input.files[0];if(!f)return;const rd=new FileReader();rd.onload=e=>{S.cards[i].photo=e.target.result;renderCardEdit();renderPreview();};rd.readAsDataURL(f);}
-function addCard(){if(S.cards.length>=4){alert('카드는 최대 4개까지 권장합니다.');return;}S.cards.push({ngTitle:'적발 항목',ng:'적발 상황을 입력하세요',okTitle:'준수 기준',ok:'올바른 작업 방법을 입력하세요',photo:null});renderCardEdit();renderPreview();}
+function addCard(){if(S.cards.length>=4){alert('항목은 최대 4개까지 권장합니다.');return;}S.cards.push({ngTitle:'',ng:'',okTitle:'',ok:'',photo:null});renderCardEdit();renderPreview();}
 function rmCard(i){if(S.cards.length<=1){alert('최소 1개 카드가 필요합니다.');return;}S.cards.splice(i,1);renderCardEdit();renderPreview();}
 
 /* ---- auto-generate from pasted text ---- */
@@ -363,12 +364,17 @@ function autoGen(){
     if(cards.length && !core){/* ignore */}
   }
   if(pendingNG!=null)cards.push(mkCard(pendingNG,''));
-  if(title)S.title=title;
-  if(core)S.core=core;
-  if(why)S.why=why;
   if(cards.length){S.cards=cards.slice(0,4);}
-  if(!S.docNo||/^OPL-2508/.test(S.docNo)){const t=(S.title||'주제').replace(/\s/g,'').slice(0,6);S.docNo='OPL-'+ymm()+'-'+t+'-01';}
+  S.title=title||deriveTitle(S.cards);
+  S.core=core||'';   // 없으면 미표시
+  S.why=why||'';     // 없으면 비움(②에서 입력)
+  const t=(S.title||'주제').replace(/[\s·:]/g,'').slice(0,6);S.docNo='OPL-'+ymm()+'-'+t+'-01';
   fillForm();renderCardEdit();renderPreview();
+}
+function deriveTitle(cards){
+  const ok=(cards.find(c=>c.ok&&c.ok.trim())||{}).ok||'';
+  if(ok){let t=ok.replace(/[.。]$/,'');t=shorten(t,16);return /준수|기준/.test(t)?t:t+' 기준 준수';}
+  return '점검 지적사항 준수';
 }
 function mkCard(ng,ok){
   ng=(ng||'').trim();ok=(ok||'').trim();
@@ -377,7 +383,7 @@ function mkCard(ng,ok){
 function shorten(s,n){s=(s||'').replace(/[.。]$/,'');return s.length>n?s.slice(0,n):s;}
 function ymm(){return '2508';}
 
-function clearAll(){S.title='';S.subtitle='';S.core='';S.why='';S.cards=[{ngTitle:'적발 항목',ng:'',okTitle:'준수 기준',ok:'',photo:null}];fillForm();renderCardEdit();renderPreview();}
+function clearAll(){S.title='';S.subtitle='';S.core='';S.why='';S.cards=[{ngTitle:'',ng:'',okTitle:'',ok:'',photo:null}];document.getElementById('paste').value='';fillForm();renderCardEdit();renderPreview();}
 function loadSample(){location.reload();}
 function doPrint(){window.print();}
 
