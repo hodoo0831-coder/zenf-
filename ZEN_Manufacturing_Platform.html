@@ -404,6 +404,7 @@ const DEFAULT_DB={
     {id:'wash',name:'세척실 관리 시스템',icon:'🧼',agent:'clean',urls:{worker:'https://wash-worker.netlify.app/',admin:'https://wash-admin.netlify.app/'}},
     {id:'orikon',name:'오리콘·피박스 시스템',icon:'📦',agent:['clean'],urls:{worker:'https://orikon-pbox-worker.netlify.app/',admin:'https://orikon-pbox-admin.netlify.app/'}},
     {id:'heat',name:'온열질환 히트워치',icon:'🌡',agent:'safe',urls:{worker:'https://zenf-heat-watch-v4.netlify.app/',admin:'https://zenf-heat-watch-v4.netlify.app/'}},
+    {id:'zenkeeper',name:'ZEN Keeper 안전관리',icon:'🦺',agent:'safe',urls:{worker:'https://zenkeeper.netlify.app/',admin:'https://zenkeeper.netlify.app/'}},
   ],
   plan:null, // 주간 생산계획(엑셀 업로드 시 채워짐)
   wh:null,   // 창고 구역별 적치 점검(주1회, 엑셀 업로드 시 채워짐)
@@ -537,7 +538,10 @@ function scopeLabel(){ return scope&&scope.length?('담당: '+scopeName):'전체
 /* ===== localStorage 지속성 ===== */
 const LS_KEY='zen_mfg_platform_v1';
 function saveDB(){try{localStorage.setItem(LS_KEY,JSON.stringify({DB,dataSource}));}catch(e){}}
-function loadDB(){try{const s=localStorage.getItem(LS_KEY);if(s){const o=JSON.parse(s);if(o&&o.DB&&o.DB.lines){DB=o.DB;if(DB.plan===undefined)DB.plan=null;if(DB.wh===undefined)DB.wh=null;if(!DB.extSys||!DB.extSys.length||!DB.extSys[0].urls)DB.extSys=JSON.parse(JSON.stringify(DEFAULT_DB.extSys));dataSource=o.dataSource||'저장됨';return true;}}}catch(e){}return false;}
+function loadDB(){try{const s=localStorage.getItem(LS_KEY);if(s){const o=JSON.parse(s);if(o&&o.DB&&o.DB.lines){DB=o.DB;if(DB.plan===undefined)DB.plan=null;if(DB.wh===undefined)DB.wh=null;if(!DB.extSys||!DB.extSys.length||!DB.extSys[0].urls)DB.extSys=JSON.parse(JSON.stringify(DEFAULT_DB.extSys));
+    /* 연동시스템 배치(agent/name/icon)는 항상 코드 기준으로 정렬 — URL만 사용자 값 유지 */
+    DB.extSys.forEach(s=>{const d=DEFAULT_DB.extSys.find(x=>x.id===s.id);if(d){s.agent=d.agent;s.name=d.name;s.icon=d.icon;}});
+    dataSource=o.dataSource||'저장됨';return true;}}}catch(e){}return false;}
 /* ===== 외부 연동 시스템 (배포 URL · 역할별) ===== */
 function sysUrl(s){const u=s.urls||{};return role==='field'?(u.worker||u.admin||''):(u.admin||u.worker||'');}
 function sysVariant(s){const u=s.urls||{};if(role==='field')return u.worker?'작업자용':(u.admin?'관리자용':'');return u.admin?'관리자용':(u.worker?'작업자용':'');}
@@ -779,9 +783,10 @@ V.stock=()=>{
   <div class="card" id="whAdmin" style="margin-top:14px;padding:12px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic('package',16)}</span> 포장재 창고 적치 관리 시스템 <span class="hint">구역·로케이션·적치율 · 엑셀 연동</span><span style="margin-left:auto"><button class="btn" onclick="window.open(whURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${whURL()}" title="포장재 창고 적치 관리 시스템" style="height:82vh"></iframe><div class="mini" style="margin-top:6px">플랫폼 파일에 내장되어 별도 파일이 필요 없습니다. 외부 라이브러리(CDN)를 사용해 온라인에서 동작합니다.</div></div>`;
 };
 V.safe=()=>{
-  const tabs=[{k:'status',label:'현황'},{k:'zenf',label:'ZEN Keeper 앱'}];
+  const nsys=(DB.extSys||[]).filter(s=>inAgent(s,'safe')).length;
+  const tabs=[{k:'status',label:'현황'},{k:'sys',label:'연동 시스템'+(nsys?' ('+nsys+')':'')}];
   const t=vtabActive('safe',tabs);
-  return vtabsBar('safe',tabs)+(t==='zenf'?V.safeapp():safeStatus());
+  return vtabsBar('safe',tabs)+(t==='sys'?(renderSysLinks('safe')||'<div class="card"><p class="mini">연동 시스템이 없습니다.</p></div>'):safeStatus());
 };
 function safeStatus(){
   const w=DB.safety;const risks=[
@@ -1210,7 +1215,7 @@ function go(id){
   document.getElementById('vTitle').textContent=meta.name;
   document.getElementById('vSub').textContent=meta.sub;
   let html=(V[id]||(()=>'<div class="card">준비 중</div>'))();
-  if((id==='clean'||id==='stock')||(id==='safe'&&vtab.safe!=='zenf'))html+=renderSysLinks(id);
+  if(id==='clean'||id==='stock')html+=renderSysLinks(id);
   document.getElementById('view').innerHTML=html;hydrateIcons(document.getElementById('view'));
   document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.id===id));
   if(id==='data')setTimeout(setupDrop,0);
