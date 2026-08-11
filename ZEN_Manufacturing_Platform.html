@@ -541,6 +541,8 @@ function saveDB(){try{localStorage.setItem(LS_KEY,JSON.stringify({DB,dataSource}
 function loadDB(){try{const s=localStorage.getItem(LS_KEY);if(s){const o=JSON.parse(s);if(o&&o.DB&&o.DB.lines){DB=o.DB;if(DB.plan===undefined)DB.plan=null;if(DB.wh===undefined)DB.wh=null;if(!DB.extSys||!DB.extSys.length||!DB.extSys[0].urls)DB.extSys=JSON.parse(JSON.stringify(DEFAULT_DB.extSys));
     /* 연동시스템 배치(agent/name/icon)는 항상 코드 기준으로 정렬 — URL만 사용자 값 유지 */
     DB.extSys.forEach(s=>{const d=DEFAULT_DB.extSys.find(x=>x.id===s.id);if(d){s.agent=d.agent;s.name=d.name;s.icon=d.icon;}});
+    /* 코드에 새로 추가된 연동 시스템(예: ZEN Keeper)을 저장데이터에도 채움 */
+    DEFAULT_DB.extSys.forEach(d=>{if(!DB.extSys.find(s=>s.id===d.id))DB.extSys.push(JSON.parse(JSON.stringify(d)));});
     dataSource=o.dataSource||'저장됨';return true;}}}catch(e){}return false;}
 /* ===== 외부 연동 시스템 (배포 URL · 역할별) ===== */
 function sysUrl(s){const u=s.urls||{};return role==='field'?(u.worker||u.admin||''):(u.admin||u.worker||'');}
