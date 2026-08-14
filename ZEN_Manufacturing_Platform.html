@@ -295,7 +295,7 @@
   <main class="stage">
     <div class="bar">
       <div>
-        <h1 id="vTitle">통합 관제</h1>
+        <h1 id="vTitle">종합 상황판</h1>
         <div class="sub" id="vSub">AP 대전공장 · 8 Agent 통합 대시보드</div>
       </div>
       <div class="right">
@@ -583,7 +583,7 @@ function headCur(){return scoped()?myLines().reduce((a,l)=>a+G.cur(l),0):DB.head
 
 /* ============ AGENTS / ROLES ============ */
 const AGENTS=[
-  {id:'home',name:'통합 관제',icon:'🏭',sub:'AP 대전공장 · 8 Agent 통합 대시보드'},
+  {id:'home',name:'종합 상황판',icon:'🏭',sub:'AP 대전공장 · 실시간 종합 운영 현황'},
   {id:'prod',name:'생산 Agent',icon:'📈',sub:'목표 · 실적 · CAPA · 예상 종료시간'},
   {id:'labor',name:'인력 Agent',icon:'👥',sub:'출근 · 결원 · 대체인력 · 잔업 추천'},
   {id:'clean',name:'세척 Agent',icon:'🧼',sub:'세척 우선순위 자동 계산'},
@@ -1234,7 +1234,7 @@ function fillScope(r){
   let opts=[];
   if(r==='field'){lbl.textContent='담당 라인 (현장)';opts=DEFAULT_DB.lines.map(l=>({v:l.key,t:l.key+' 라인'}));}
   else if(r==='admin'){lbl.textContent='담당 구역 (관리자)';opts=[{v:'전체',t:'전체 라인'}].concat(Object.keys(ZONES).map(z=>({v:z,t:z+' ('+ZONES[z].join('·')+')'})));}
-  else{lbl.textContent='관제 범위 (센터)';opts=[{v:'전체',t:'전체 라인 (통합 관제 · 전권)'}];}
+  else{lbl.textContent='운영 범위 (센터)';opts=[{v:'전체',t:'전체 라인 (종합 상황판 · 전권)'}];}
   sel.innerHTML=opts.map(o=>`<option value="${o.v}">${o.t}</option>`).join('');
   sel.disabled=(r==='center');
 }
