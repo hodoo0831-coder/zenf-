@@ -345,7 +345,7 @@ function lineChart(data,{w=560,h=200,max,min=0,pad={l:34,r:16,t:18,b:26},stroke=
   const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
   const area=`M${pts[0][0]} ${Y(min)} `+pts.map(p=>`L${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')+` L${pts[pts.length-1][0]} ${Y(min)} Z`;
   g+=`<path d="${area}" fill="${fill}"/><path d="${line}" fill="none" stroke="${stroke}" stroke-width="2.4" stroke-linejoin="round"/>`;
-  data.forEach((d,i)=>{const c=colorAt?colorAt(d.v,d):stroke;g+=`<circle cx="${X(i)}" cy="${Y(d.v)}" r="3.2" fill="${c}" stroke="#ffffff" stroke-width="1.4"/>`;if(showVals)g+=`<text x="${X(i)}" y="${Y(d.v)-8}" font-size="11" font-weight="800" text-anchor="middle" fill="${c}">${d.v}${d.suffix||''}</text>`;g+=`<text x="${X(i)}" y="${h-8}" font-size="9.8" font-weight="600" text-anchor="middle" fill="#5b6b82">${d.label}</text>`;});
+  data.forEach((d,i)=>{const c=colorAt?colorAt(d.v,d):stroke;g+=`<circle cx="${X(i)}" cy="${Y(d.v)}" r="3.2" fill="${c}" stroke="#ffffff" stroke-width="1.4"/>`;if(showVals)g+=`<text x="${X(i)}" y="${Y(d.v)-8}" font-size="11" font-weight="800" text-anchor="middle" fill="${c}">${d.v}${d.suffix||''}</text>`;g+=`<text x="${X(i)}" y="${h-8}" font-size="9.8" font-weight="600" text-anchor="middle" fill="#5b6b82">${d.label}</text>`;g+=`<circle cx="${X(i)}" cy="${Y(d.v)}" r="11" fill="transparent" style="cursor:pointer" onmousemove='chtip(event,${JSON.stringify(String(d.label||"")+" · "+d.v+(d.suffix||""))})' onmouseout="chtipHide()"/>`;});
   return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto">${g}</svg>`;
 }
 function barsChart(data,{w=560,h=200,max,pad={l:34,r:14,t:16,b:26},grid=4}={}){
@@ -354,7 +354,7 @@ function barsChart(data,{w=560,h=200,max,pad={l:34,r:14,t:16,b:26},grid=4}={}){
   const X=i=>pad.l+(i+0.5)/data.length*iw,Y=v=>pad.t+(1-v/mx)*ih;
   let g='';
   for(let k=0;k<=grid;k++){const gv=mx*k/grid,y=Y(gv);g+=`<line x1="${pad.l}" y1="${y}" x2="${w-pad.r}" y2="${y}" stroke="#e2e8f0"/><text x="${pad.l-6}" y="${y+3}" font-size="10.5" font-weight="600" text-anchor="end" fill="#5b6b82">${Math.round(gv)}</text>`;}
-  data.forEach((d,i)=>{const x=X(i)-bw/2,y=Y(d.v),bh=pad.t+ih-y;g+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="3" fill="${d.color||'#3b82f6'}"/><text x="${X(i)}" y="${y-6}" font-size="11" font-weight="800" text-anchor="middle" fill="${d.color||'#7fb8ff'}">${d.v}${d.suffix||''}</text><text x="${X(i)}" y="${h-8}" font-size="9.8" font-weight="600" text-anchor="middle" fill="#5b6b82">${d.label}</text>`;});
+  data.forEach((d,i)=>{const x=X(i)-bw/2,y=Y(d.v),bh=pad.t+ih-y;g+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="3" fill="${d.color||'#3b82f6'}"/><text x="${X(i)}" y="${y-6}" font-size="11" font-weight="800" text-anchor="middle" fill="${d.color||'#7fb8ff'}">${d.v}${d.suffix||''}</text><text x="${X(i)}" y="${h-8}" font-size="9.8" font-weight="600" text-anchor="middle" fill="#5b6b82">${d.label}</text><rect x="${X(i)-iw/data.length/2}" y="${pad.t}" width="${iw/data.length}" height="${ih}" fill="transparent" style="cursor:pointer" onmousemove='chtip(event,${JSON.stringify(String(d.label||"")+" · "+d.v+(d.suffix||""))})' onmouseout="chtipHide()"/>`;});
   return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto">${g}</svg>`;
 }
 function pbar(pct,color){return `<div class="pbar"><i style="width:${Math.max(0,Math.min(100,pct))}%;background:${color}"></i></div>`;}
@@ -370,6 +370,8 @@ function spark(vals,{w=110,h=30,color='#3f74b5',fill}={}){
 function pi(cls){return `<svg class="pi ${cls}" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 1.8c-3.4 0-8 1.7-8 5.1V21h16v-2.1c0-3.4-4.6-5.1-8-5.1Z"/></svg>`;}
 function sc(v,warn,bad,invert){if(invert)return v>=bad?'#dc4b4b':v>=warn?'#d98a2b':'#22a05f';return v<=bad?'#dc4b4b':v<=warn?'#d98a2b':'#22a05f';}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
+function chtip(e,txt){let t=document.getElementById('chtip');if(!t){t=document.createElement('div');t.id='chtip';document.body.appendChild(t);}t.textContent=txt;t.style.cssText='position:fixed;z-index:9999;background:#16233a;color:#fff;font-size:12px;font-weight:700;padding:5px 9px;border-radius:7px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.28);white-space:nowrap;transform:translate(-50%,-145%)';t.style.left=e.clientX+'px';t.style.top=e.clientY+'px';t.style.display='block';}
+function chtipHide(){const t=document.getElementById('chtip');if(t)t.style.display='none';}
 
 /* ============ SINGLE SOURCE OF TRUTH: DB ============ */
 // per-line: 인력(need/on/leave/edu) · 생산(target/actual/capa/end) · 세척(clElapsed h, clTransfer 0~1: 0동일,0.5제품전환,1색상+알러지) · 품질(defectPct) · 설비(oeeA,oeeP)
@@ -606,15 +608,15 @@ const CAPA_LINES=[["32104","직선","직선4호",21000,30000,1,2,1,0],["32105","
 const PLAN_SEED={"32113":80934,"32115":58000,"32116":85440,"32117":75000,"32118":78016,"32119":143032,"32120":127659,"32163":31404,"32202":33004,"32206":63012,"32207":66000,"32208":33866,"32209":70616,"32233":113812,"32234":72000,"32235":99420,"32236":155796,"32237":154292,"32238":97016,"32305":151800,"32306":171600,"32324":39600,"32325":57200,"32401":43080,"32403":54000,"32411":43080,"32415":54000,"32416":51604,"32417":104272,"32433":154812,"32434":154812,"32435":26400,"32436":104272,"32443":9800,"32446":54000,"32448":104208,"32903":90000,"32907":9200,"32911":64904,"32913":41220};
 
 /* ===== 주간계획 부하율(실 CAPA·표준인원 연동) ===== */
-let loadPlan=PLAN_SEED, loadDays=6, loadPlanName='33주 확정(내장 샘플)';
+let loadPlan=PLAN_SEED, loadDays=6, loadBase='c75', loadFilter=null, loadPlanName='33주 확정(내장 샘플)';
 function _lnum(v){v=String(v).replace(/[, ]/g,'');const m=v.match(/\d+/g);return m?+m[0]:0;}
-function loadCalc(plan,days){
-  days=days||6;
+function loadCalc(plan,days,base){
+  days=days||6; base=base||'c75';
   const rows=CAPA_LINES.map(a=>{const l={code:a[0],grp:a[1],name:a[2],c75:a[3],c105:a[4],needOP:a[5],needW:a[6],avOP:a[7],avW:a[8]};
-    const wk=plan[l.code]||0, wcap=l.c75*days, load=wcap?wk/wcap*100:0;
+    const cap=l[base]||l.c75, wk=plan[l.code]||0, wcap=cap*days, load=wcap?wk/wcap*100:0;
     const need=l.needOP+l.needW, avail=l.avOP+l.avW, needAdj=Math.round(need*load/100*10)/10;
-    return Object.assign(l,{wk,load:Math.round(load),need,avail,needAdj,gap:+(needAdj-avail).toFixed(1)});});
-  const Gm={};rows.forEach(r=>{const g=Gm[r.grp]||(Gm[r.grp]={wk:0,cap:0,need:0,avail:0,needAdj:0});g.wk+=r.wk;g.cap+=r.c75*days;g.need+=r.need;g.avail+=r.avail;g.needAdj+=r.needAdj;});
+    return Object.assign(l,{cap,wk,load:Math.round(load),need,avail,needAdj,gap:+(needAdj-avail).toFixed(1)});});
+  const Gm={};rows.forEach(r=>{const g=Gm[r.grp]||(Gm[r.grp]={wk:0,cap:0,need:0,avail:0,needAdj:0});g.wk+=r.wk;g.cap+=r.cap*days;g.need+=r.need;g.avail+=r.avail;g.needAdj+=r.needAdj;});
   const groups=Object.entries(Gm).map(([grp,v])=>({grp,load:v.cap?Math.round(v.wk/v.cap*100):0,need:v.need,avail:v.avail,needAdj:+v.needAdj.toFixed(1),gap:+(v.needAdj-v.avail).toFixed(1)})).filter(g=>g.need>0||g.wk>0).sort((a,b)=>b.load-a.load);
   return {rows,groups};
 }
@@ -622,27 +624,30 @@ function loadUpload(input){const f=input.files[0];if(!f)return;const rd=new File
   rd.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
     const QC=[5,8,11,14,17,20];const plan={};
     for(const r of aoa){const code=(String(r[1]||'').match(/\d{4,}/)||[])[0];if(!code)continue;if(!String(r[3]||'').trim())continue;const wk=QC.map(c=>_lnum(r[c])).reduce((a,b)=>a+b,0);plan[code]=(plan[code]||0)+wk;}
-    if(Object.keys(plan).length){loadPlan=plan;loadPlanName=f.name.replace(/\.[^.]+$/,'')+' ('+wb.SheetNames[0]+')';toast('주간계획 반영 — '+Object.keys(plan).length+'개 라인');if(cur==='labor')go('labor');}
+    if(Object.keys(plan).length){loadPlan=plan;loadFilter=null;loadPlanName=f.name.replace(/\.[^.]+$/,'')+' ('+wb.SheetNames[0]+')';toast('주간계획 반영 — '+Object.keys(plan).length+'개 라인');if(cur==='labor')go('labor');}
     else toast('인식 실패 — 리소스코드·수량 형식을 확인하세요');
   }catch(err){toast('읽기 오류: '+err.message);}};
   rd.readAsArrayBuffer(f);}
 function loadView(){
-  const R=loadCalc(loadPlan,loadDays), rows=R.rows, groups=R.groups;
+  const base=loadBase, R=loadCalc(loadPlan,loadDays,base), rows=R.rows, groups=R.groups;
   const active=rows.filter(r=>r.wk>0);
-  const totWk=active.reduce((a,r)=>a+r.wk,0), totCap=active.reduce((a,r)=>a+r.c75*loadDays,0), totLoad=totCap?Math.round(totWk/totCap*100):0;
+  const totWk=active.reduce((a,r)=>a+r.wk,0), totCap=active.reduce((a,r)=>a+r.cap*loadDays,0), totLoad=totCap?Math.round(totWk/totCap*100):0;
   const over=groups.filter(g=>g.load>=100);
   const netGap=+groups.reduce((a,g)=>a+g.gap,0).toFixed(1);
   const shortG=groups.filter(g=>g.gap>0.4).sort((a,b)=>b.gap-a.gap);
   const surpG=groups.filter(g=>g.gap<-0.4).map(g=>({...g})).sort((a,b)=>a.gap-b.gap);
   const gcol=v=>v>=100?'#dc2626':v>=90?'#d97706':v>=60?'#16a34a':'#3f74b5';
   const dayBtn=d=>`<button class="btn ${loadDays===d?'p':''}" style="padding:5px 10px" onclick="loadDays=${d};go('labor')">${d}일</button>`;
-  const gbars=groups.map(g=>`<div class="barrow" style="grid-template-columns:78px 1fr 52px;padding:7px 0"><div class="nm" style="font-size:12.5px">${g.grp}</div><div>${pbar(Math.min(100,g.load),gcol(g.load))}<div class="mini" style="margin-top:3px">필요 ${g.needAdj} / 가용 ${g.avail}명 · <span style="color:${g.gap>0?'#dc2626':'#16a34a'}">${g.gap>0?'+'+g.gap+' 부족':g.gap<0?g.gap+' 여유':'적정'}</span></div></div><div class="vv tnum" style="color:${gcol(g.load)};font-size:13px">${g.load}%</div></div>`).join('');
+  const baseBtn=(k,lab)=>`<button class="btn ${loadBase===k?'p':''}" style="padding:5px 10px" onclick="loadBase='${k}';go('labor')">${lab}</button>`;
+  const gbars=groups.map(g=>{const on=loadFilter===g.grp;return `<div class="barrow" style="grid-template-columns:78px 1fr 52px;padding:7px 6px;cursor:pointer;border-radius:8px;${on?'background:#eef3fc':''}" onclick="loadFilter=(loadFilter==='${g.grp}'?null:'${g.grp}');go('labor')"><div class="nm" style="font-size:12.5px">${g.grp}${on?' ▾':''}</div><div>${pbar(Math.min(100,g.load),gcol(g.load))}<div class="mini" style="margin-top:3px">필요 ${g.needAdj} / 가용 ${g.avail}명 · <span style="color:${g.gap>0?'#dc2626':'#16a34a'}">${g.gap>0?'+'+g.gap+' 부족':g.gap<0?g.gap+' 여유':'적정'}</span></div></div><div class="vv tnum" style="color:${gcol(g.load)};font-size:13px">${g.load}%</div></div>`;}).join('');
   let reco='';
   for(const s of shortG){let need=s.gap;for(const u of surpG){if(need<=0.4)break;if(u.gap>=-0.4)continue;const mv=Math.min(need,-u.gap);if(mv<0.4)continue;reco+=`<div class="reco"><div class="ic" data-ic="arrow"></div><div class="tx"><div class="r">${u.grp} → ${s.grp} ${Math.round(mv)||1}명 재배치</div><div class="s">${u.grp} 여유 ${(-u.gap).toFixed(0)}명 · ${s.grp} 부족 ${s.gap.toFixed(0)}명(부하 ${s.load}%)</div></div></div>`;u.gap+=mv;need-=mv;}}
   if(!reco)reco='<div class="reco"><div class="ic" data-ic="check"></div><div class="tx"><div class="r">그룹 간 재배치 불필요</div><div class="s">현재 인력 배치로 대응 가능</div></div></div>';
-  const tbl=active.sort((a,b)=>b.load-a.load).map(r=>`<tr><td style="text-align:left">${r.name}</td><td>${r.grp}</td><td>${r.wk.toLocaleString()}</td><td>${(r.c75*loadDays).toLocaleString()}</td><td style="color:${gcol(r.load)};font-weight:800">${r.load}%</td><td>${r.need}</td><td>${r.avail}</td><td>${r.needAdj}</td><td class="${r.gap>0?'neg':r.gap<0?'pos':'zero'}">${r.gap>0?'+'+r.gap:r.gap}</td></tr>`).join('');
+  const shown=active.filter(r=>!loadFilter||r.grp===loadFilter).sort((a,b)=>b.load-a.load);
+  const tbl=shown.map(r=>`<tr><td style="text-align:left">${r.name}</td><td>${r.grp}</td><td>${r.wk.toLocaleString()}</td><td>${(r.cap*loadDays).toLocaleString()}</td><td style="color:${gcol(r.load)};font-weight:800">${r.load}%</td><td>${r.need}</td><td>${r.avail}</td><td>${r.needAdj}</td><td class="${r.gap>0?'neg':r.gap<0?'pos':'zero'}">${r.gap>0?'+'+r.gap:r.gap}</td></tr>`).join('');
+  const filterChip=loadFilter?`<span class="tag t-blue" style="cursor:pointer" onclick="loadFilter=null;go('labor')">${loadFilter} 필터 ✕</span>`:'';
   return `
-  <div class="card" style="margin-bottom:14px;padding:13px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div class="chead">주간계획 부하율 · 필요인원</div><span class="tag t-blue">${loadPlanName}</span><span class="mini">호기 CAPA(7.5hr) × ${loadDays}일</span><span style="margin-left:auto;display:flex;gap:6px;align-items:center"><span class="mini">가동일수</span>${dayBtn(5)}${dayBtn(6)}<label class="btn" style="cursor:pointer" onclick="document.getElementById('loadFile').click()">↑ 주간계획 업로드</label><input id="loadFile" type="file" accept=".xlsx,.xls" style="display:none" onchange="loadUpload(this)"></span></div></div>
+  <div class="card" style="margin-bottom:14px;padding:13px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div class="chead">주간계획 부하율 · 필요인원</div><span class="tag t-blue">${loadPlanName}</span><span class="mini">호기 CAPA(${base==='c75'?'7.5hr 정규':'10.5hr 잔업'}) × ${loadDays}일</span><span style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="mini">기준</span>${baseBtn('c75','정규')}${baseBtn('c105','잔업')}<span class="mini" style="margin-left:6px">가동</span>${dayBtn(5)}${dayBtn(6)}<label class="btn" style="cursor:pointer" onclick="document.getElementById('loadFile').click()">↑ 주간계획 업로드</label><input id="loadFile" type="file" accept=".xlsx,.xls" style="display:none" onchange="loadUpload(this)"></span></div></div>
   <div class="kstrip">
     <div class="ki"><div class="l">전체 부하율</div><div class="v tnum" style="color:${gcol(totLoad)}">${totLoad}<small>%</small></div><div class="d muted">계획 ${(totWk/1000).toFixed(0)}천 ÷ CAPA</div></div>
     <div class="ki"><div class="l">과부하 그룹</div><div class="v tnum" style="color:${over.length?'#dc2626':'#16a34a'}">${over.length}<small>/${groups.length}</small></div><div class="d muted">${over.map(g=>g.grp).slice(0,3).join('·')||'없음'}</div></div>
@@ -650,10 +655,10 @@ function loadView(){
     <div class="ki"><div class="l">최대 과부하</div><div class="v tnum" style="font-size:16px">${groups[0]?groups[0].grp:'-'}</div><div class="d muted">${groups[0]?groups[0].load+'%':''}</div></div>
   </div>
   <div class="grid g2" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
-    <div class="card"><h3>그룹별 부하율 <span class="hint">100%↑ 잔업·증원 필요</span></h3>${gbars}</div>
+    <div class="card"><h3>그룹별 부하율 <span class="hint">클릭 → 라인 필터 · 100%↑ 잔업·증원</span></h3>${gbars}</div>
     <div class="card"><h3>AI 인력 재배치 추천 <span class="hint">여유 그룹 → 과부하 그룹</span></h3>${reco}</div>
   </div>
-  <div class="card"><h3>라인별 부하율 · 필요인원 <span class="hint">CAPA·표준인원 실데이터 연동</span></h3><div style="overflow-x:auto"><table class="tb"><thead><tr><th style="text-align:left">라인</th><th>그룹</th><th>주간계획</th><th>주CAPA</th><th>부하율</th><th>표준</th><th>가용</th><th>필요*</th><th>과부족</th></tr></thead><tbody>${tbl}</tbody></table></div><div class="mini" style="margin-top:6px">* 필요 = 표준인원 × 부하율(부하 반영). CAPA는 7.5hr 정규 기준 · 표준/가용 인원은 라인 인원표 기준. 부하율 100% 초과 = 잔업 또는 증원 필요.</div></div>`;
+  <div class="card"><h3>라인별 부하율 · 필요인원 ${filterChip}<span class="hint">CAPA·표준인원 실데이터 연동</span></h3><div style="overflow-x:auto"><table class="tb"><thead><tr><th style="text-align:left">라인</th><th>그룹</th><th>주간계획</th><th>주CAPA</th><th>부하율</th><th>표준</th><th>가용</th><th>필요*</th><th>과부족</th></tr></thead><tbody>${tbl}</tbody></table></div><div class="mini" style="margin-top:6px">* 필요 = 표준인원 × 부하율. CAPA 기준: ${base==='c75'?'7.5hr 정규':'10.5hr 잔업'} · 부하율 100%↑ = 잔업 또는 증원 필요.</div></div>`;
 }
 
 V.home=()=>{
@@ -682,11 +687,11 @@ V.home=()=>{
   const otiles=`<div class="otiles">${tiles.map(t=>`<div class="otile" onclick="go('${t.id}')"><div class="oh"><span class="ico ${tintOf(t.c)}">${svic(t.ic,18)}</span><span class="dot" style="background:${t.c}"></span></div><div class="on">${t.n}</div><div class="ov tnum">${t.v}</div></div>`).join('')}</div>`;
   const lineBars=myLines().map(l=>{const a=G.achieve(l),col=a>=80?'#16a34a':a>=65?'#d97706':'#dc2626';return `<div class="barrow" style="grid-template-columns:70px 1fr 44px;padding:8px 0"><div class="nm" style="font-size:12.5px">${l.key}</div><div>${pbar(a,col)}<div class="mini" style="margin-top:3px">부하 ${G.load(l)}% · 종료 ${l.end}</div></div><div class="vv tnum" style="color:${col};font-size:12.5px">${a}%</div></div>`;}).join('');
   const alerts=[
-    {ic:'thermometer',cls:DB.safety.wbgt>=28?'r':'a',r:`폭염 ${DB.safety.wbgt>=28?'경고':'주의'} · WBGT ${DB.safety.wbgt}℃`,s:'휴식·수분 조치 · 무재해 '+DB.safety.noAccident+'일',t:'09:28'},
-    {ic:'users',cls:'a',r:'인력 부족 예측',s:'피크 화요일 '+DB.forecast.reduce((m,d)=>Math.max(m,d.v),0)+'명 · 사전 배치 필요',t:'09:25'},
-    {ic:'droplet',cls:'a',r:worst.key+' 라인 세척 우선순위 1위',s:'세척 '+G.cleanScore(worst)+'점 · 완료 지연 예상',t:'09:22'},
+    {ic:'thermometer',cls:DB.safety.wbgt>=28?'r':'a',to:'safe',r:`폭염 ${DB.safety.wbgt>=28?'경고':'주의'} · WBGT ${DB.safety.wbgt}℃`,s:'휴식·수분 조치 · 무재해 '+DB.safety.noAccident+'일',t:'09:28'},
+    {ic:'users',cls:'a',to:'labor',r:'인력 부족 예측',s:'피크 화요일 '+DB.forecast.reduce((m,d)=>Math.max(m,d.v),0)+'명 · 사전 배치 필요',t:'09:25'},
+    {ic:'droplet',cls:'a',to:'clean',r:worst.key+' 라인 세척 우선순위 1위',s:'세척 '+G.cleanScore(worst)+'점 · 완료 지연 예상',t:'09:22'},
   ];
-  const alertCard=`<div class="card"><div class="chead" style="margin-bottom:6px">실시간 알림</div>${alerts.map(a=>`<div class="reco2"><span class="ico sm ${a.cls}">${svic(a.ic,15)}</span><div class="tx"><div class="r">${a.r}</div><div class="s">${a.s}</div></div><div class="tm tnum">${a.t}</div></div>`).join('')}</div>`;
+  const alertCard=`<div class="card"><div class="chead" style="margin-bottom:6px">실시간 알림</div>${alerts.filter(a=>ROLES[role].allow.includes(a.to)).map(a=>`<div class="reco2" style="cursor:pointer" onclick="go('${a.to}')"><span class="ico sm ${a.cls}">${svic(a.ic,15)}</span><div class="tx"><div class="r">${a.r}</div><div class="s">${a.s}</div></div><div class="tm tnum">${a.t}</div></div>`).join('')}</div>`;
   return `
   ${hero}
   ${otiles}
