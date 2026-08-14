@@ -330,7 +330,7 @@
         <button class="btn" id="bigBtn" onclick="toggleBig()" title="벽 모니터·전광판용 큰 화면">큰화면</button>
         <span class="src" id="srcTag">데이터: 데모</span>
         <div class="clock">
-          <div class="d">2025.05.10 (금) 09:30</div>
+          <div class="d" id="topDate">—</div>
           <div class="r"><span class="dot"></span> 자동 갱신 중</div>
         </div>
       </div>
@@ -1019,12 +1019,12 @@ V.report=()=>{
   const lowLines=myLines().filter(l=>G.achieve(l)<70).map(l=>l.key).join('·');
   return `
   <div class="grid g3" style="margin-bottom:14px">
-    ${[['일간 보고서','2025.05.10 (금)','📄','t-blue','생성 가능',"genReport('일간 보고서')"],['주간 보고서','5/05 ~ 5/10','🗂','t-blue','생성 가능',"genReport('주간 보고서')"],['월 마감 보고서','2025년 4월 · v4.0','📅','t-green','도구 열기',"document.getElementById('monthlyReport').scrollIntoView({behavior:'smooth'})"]].map(r=>`<a class="cardlink" onclick="${r[5]}"><div class="card"><div style="display:flex;gap:11px;align-items:center"><div style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#eef4fb;border:1px solid var(--line2)">${r[2]}</div><div><div style="font-weight:800">${r[0]}</div><div class="mini">${r[1]}</div></div></div><div style="margin-top:12px"><span class="tag ${r[3]}">${r[4]}</span></div></div></a>`).join('')}
+    ${[['일간 보고서',todayKR(),'📄','t-blue','생성 가능',"genReport('일간 보고서')"],['주간 보고서',weekKR(),'🗂','t-blue','생성 가능',"genReport('주간 보고서')"],['월 마감 보고서',prevMonthKR()+' · v4.0','📅','t-green','도구 열기',"document.getElementById('monthlyReport').scrollIntoView({behavior:'smooth'})"]].map(r=>`<a class="cardlink" onclick="${r[5]}"><div class="card"><div style="display:flex;gap:11px;align-items:center"><div style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#eef4fb;border:1px solid var(--line2)">${r[2]}</div><div><div style="font-weight:800">${r[0]}</div><div class="mini">${r[1]}</div></div></div><div style="margin-top:12px"><span class="tag ${r[3]}">${r[4]}</span></div></div></a>`).join('')}
   </div>
   <div class="card" id="monthlyReport" style="margin-bottom:14px"><h3>월 마감 자동 보고서 <span class="hint">엑셀 업로드 · 월마감·전월대비·이상치·임원보고 자동 생성 · v4.0</span><span style="margin-left:auto"><button class="btn" onclick="window.open(monthlyURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${monthlyURL()}" title="월 마감 자동 보고서" loading="lazy" style="height:74vh"></iframe></div>
   <div class="card"><h3>AI 자동 작성 — 일간 생산일보 <span class="hint">8개 Agent 데이터 자동 취합 · DB 실시간 반영</span><button class="btn" onclick="exportReport()">⬇ 내보내기</button></h3>
     <div class="report-doc">
-      <h4>AP 대전공장 생산일보 — 2025.05.10 (금)</h4>
+      <h4>AP 대전공장 생산일보 — ${todayKR()}</h4>
       <div class="kv">작성: ZEN Report Agent · 09:30 자동 생성 · 데이터원: ${dataSource}</div>
       <p><b>1. 생산 실적</b><br>전 라인 목표 ${(tp.t/1000).toFixed(0)}천개 대비 실적 ${(tp.a/1000).toFixed(0)}천개(달성률 ${tp.ach}%). ${topLines||'-'} 정상, ${lowLines||'없음'} 부진.</p>
       <p><b>2. 인력 현황</b><br>필요 ${headNeed()}명 대비 투입 ${headCur()}명(${headNeed()-headCur()}명 부족), 연차/결근 ${DB.work[1].n+DB.work[2].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p>
@@ -1326,7 +1326,7 @@ function dbToAOA(){
 }
 function exportXLSX(){const ws=XLSX.utils.aoa_to_sheet(dbToAOA());const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'라인데이터');XLSX.writeFile(wb,'ZEN_라인데이터_템플릿.xlsx');toast('엑셀 템플릿을 내려받았습니다');}
 function exportCSV(){const aoa=dbToAOA();const csv=aoa.map(r=>r.join(',')).join('\n');dl('ZEN_라인데이터.csv','﻿'+csv,'text/csv');toast('CSV를 내려받았습니다');}
-function exportReport(){const el=document.querySelector('.report-doc');dl('ZEN_생산일보_20250510.txt',el.innerText,'text/plain');toast('보고서를 내보냈습니다');}
+function exportReport(){const el=document.querySelector('.report-doc');dl('ZEN_생산일보_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.txt',el.innerText,'text/plain');toast('보고서를 내보냈습니다');}
 function dl(fn,content,mime){const b=new Blob([content],{type:mime});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=fn;a.click();URL.revokeObjectURL(u);}
 function genReport(t){go('report');toast(t+'를 생성했습니다 (DB 최신값 반영)');}
 
@@ -1405,10 +1405,16 @@ function doLogin(){
   document.getElementById('login').style.display='none';
   document.getElementById('app').classList.add('show');
   cur=(DB.plan&&ROLES[role].allow.includes('plan'))?'plan':'home';
-  buildNav();go(cur);applyBig();
+  buildNav();go(cur);applyBig();clockTick();
   document.getElementById('srcTag').textContent='데이터: '+dataSource;
   document.getElementById('srcTag').classList.toggle('live',dataSource!=='데모');
 }
+function _p2(n){return String(n).padStart(2,'0');}
+function todayKR(){const d=new Date(),wd=['일','월','화','수','목','금','토'][d.getDay()];return `${d.getFullYear()}.${_p2(d.getMonth()+1)}.${_p2(d.getDate())} (${wd})`;}
+function weekKR(){const e=new Date(),s=new Date(e.getTime()-6*864e5);return `${_p2(s.getMonth()+1)}/${_p2(s.getDate())} ~ ${_p2(e.getMonth()+1)}/${_p2(e.getDate())}`;}
+function prevMonthKR(){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-1);return `${d.getFullYear()}년 ${d.getMonth()+1}월`;}
+function clockTick(){const el=document.getElementById('topDate');if(!el)return;const d=new Date();el.textContent=`${todayKR()} ${_p2(d.getHours())}:${_p2(d.getMinutes())}`;}
+setInterval(clockTick,30000);
 let bigMode=false;
 function applyBig(){const st=document.querySelector('.stage');if(st)st.style.zoom=bigMode?'1.18':'';const bb=document.getElementById('bigBtn');if(bb)bb.classList.toggle('p',bigMode);}
 function toggleBig(){bigMode=!bigMode;applyBig();try{localStorage.setItem('zen_big',bigMode?'1':'0');}catch(e){}}
