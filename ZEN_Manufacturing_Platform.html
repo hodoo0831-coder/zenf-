@@ -844,21 +844,56 @@ V.qual=()=>{
   </div>`;
 };
 V.kpi=()=>{
-  const L=myLines();const oee=avgOEE();const tbl=L.map(l=>{const o=G.oee(l),col=sc(o,75,70);return `<tr><td>${l.key}</td><td>${l.oeeA}%</td><td>${l.oeeP}%</td><td>${G.oeeQ(l)}%</td><td style="color:${col}">${o}%</td><td><span class="sdot ${o>=80?'s-green':o>=70?'s-amber':'s-red'}"></span></td></tr>`;}).join('');
-  const bars=L.map(l=>({label:l.key,v:G.oee(l),color:G.oee(l)>=80?'#22a05f':G.oee(l)>=70?'#d98a2b':'#dc4b4b'}));
-  const worst=[...L].sort((a,b)=>G.oee(a)-G.oee(b)).slice(0,2).map(l=>l.key+' '+G.oee(l)+'%');
+  const L=myLines();const oee=avgOEE();const tp=totProd();const df=avgDefect();
+  const avgA=Math.round(L.reduce((a,l)=>a+l.oeeA,0)/L.length);
+  const avgP=Math.round(L.reduce((a,l)=>a+l.oeeP,0)/L.length);
+  const avgQ=+(L.reduce((a,l)=>a+(100-l.defect),0)/L.length).toFixed(1);
+  const totMH=L.reduce((a,l)=>a+l.on*8,0);
+  const upph=totMH?Math.round(tp.a/totMH):0;
+  const otH=DB.otTrend.reduce((a,b)=>a+b.v,0);
+  const AS={price:300,wage:12000,otMul:1.5}; // 가정: 개당 단가·시급·잔업배수
+  const missUnits=L.reduce((a,l)=>a+Math.max(0,l.target-l.actual),0);
+  const defUnits=L.reduce((a,l)=>a+Math.round(l.actual*l.defect/100),0);
+  const lossDef=defUnits*AS.price, lossOT=Math.round(otH*AS.wage*AS.otMul), lossOpp=missUnits*AS.price;
+  const laborCost=totMH*AS.wage, unitLabor=tp.a?Math.round(laborCost/tp.a):0;
+  const won=n=>n>=1e8?(n/1e8).toFixed(1)+'억':n>=1e4?Math.round(n/1e4).toLocaleString()+'만':n.toLocaleString();
+  const bars=L.map(l=>({label:l.key,v:G.oee(l),color:G.oee(l)>=80?'#16a34a':G.oee(l)>=70?'#d97706':'#dc2626'}));
+  const comp=(lab,v,c)=>`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span class="muted" style="font-weight:600">${lab}</span><span class="tnum" style="font-weight:800;color:${c}">${v}%</span></div>${pbar(v,c)}</div>`;
+  const lossrow=(lab,amt,c,desc)=>`<div class="barrow" style="grid-template-columns:1fr auto;padding:8px 0"><div><div class="nm" style="font-size:12.5px">${lab}</div><div class="mini">${desc}</div></div><div class="vv tnum" style="color:${c};font-size:14px">${won(amt)}<span style="font-size:10px;color:var(--muted)"> 원</span></div></div>`;
+  const tbl=L.map(l=>{const o=G.oee(l),col=o>=80?'#16a34a':o>=70?'#d97706':'#dc2626';const up=Math.round(l.actual/(l.on*8||1));const ld=Math.round(l.actual*l.defect/100)*AS.price;return `<tr><td>${l.key}</td><td>${G.achieve(l)}%</td><td>${l.oeeA}%</td><td>${l.oeeP}%</td><td>${(100-l.defect).toFixed(1)}%</td><td style="color:${col};font-weight:800">${o}%</td><td>${up}</td><td>${won(ld)}원</td></tr>`;}).join('');
   return `
-  <div class="grid g4" style="margin-bottom:14px">
-    <div class="kpi"><div class="ic" data-ic="gauge"></div><div class="lab">설비종합효율 OEE</div><div class="val ${oee>=80?'pos':''}">${oee}<small>%</small></div><div class="delta">가동률×성능×품질</div></div>
-    <div class="kpi"><div class="ic" data-ic="zap"></div><div class="lab">인시생산성 UPPH</div><div class="val">118<small>개/인·h</small></div><div class="delta pos">목표 대비 +6</div></div>
-    <div class="kpi"><div class="ic" data-ic="clock"></div><div class="lab">주간 잔업</div><div class="val" style="color:#ffcf5a">${DB.otTrend.reduce((a,b)=>a+b.v,0)}<small>h</small></div><div class="delta neg">전주 대비 +18h</div></div>
-    <div class="kpi"><div class="ic" data-ic="flask"></div><div class="lab">불량률</div><div class="val">${avgDefect()}<small>%</small></div><div class="delta neg">목표 1.5%</div></div>
+  <div class="kstrip">
+    <div class="ki"><div class="l">설비종합효율 OEE</div><div class="v tnum" style="color:${oee>=80?'var(--ok)':'var(--warn)'}">${oee}<small>%</small></div><div class="d muted">가동 ${avgA}·성능 ${avgP}·양품 ${avgQ}</div></div>
+    <div class="ki"><div class="l">인시생산성</div><div class="v tnum">${upph}<small>개/인·h</small></div><div class="d muted">${(tp.a/1000).toFixed(0)}천개 ÷ ${totMH}MH</div></div>
+    <div class="ki"><div class="l">계획 준수율</div><div class="v tnum" style="color:${tp.ach>=90?'var(--ok)':'var(--warn)'}">${tp.ach}<small>%</small></div><div class="d muted">실적/목표</div></div>
+    <div class="ki"><div class="l">불량률</div><div class="v tnum">${df}<small>%</small></div><div class="d muted">${Math.round(df*10000).toLocaleString()} PPM</div></div>
+    <div class="ki"><div class="l">인당 원단위</div><div class="v tnum">${unitLabor}<small>원/개</small></div><div class="d muted">인건비÷생산(가정)</div></div>
+    <div class="ki"><div class="l">무재해</div><div class="v tnum">${DB.safety.noAccident}<small>일</small></div><div class="d muted">목표 200</div></div>
   </div>
-  <div class="grid g2" style="grid-template-columns:1.2fr 1fr;margin-bottom:14px">
-    <div class="card"><h3>라인별 OEE <span class="hint">가동률×성능×품질</span></h3>${barsChart(bars,{max:100})}<div class="mini" style="text-align:center">개선 우선순위: ${worst.join(' · ')}</div></div>
-    <div class="card"><h3>요일별 잔업 추이 <span class="hint">시간</span></h3>${lineChart(DB.otTrend,{max:40,stroke:'#a855f7',fill:'#a855f722',colorAt:v=>v>=30?'#dc4b4b':'#a855f7'})}<div class="mini" style="text-align:center">금요일 잔업 집중</div></div>
+  <div class="grid g2" style="grid-template-columns:1.25fr 1fr;margin-bottom:14px">
+    <div class="card"><h3>OEE 구성 분해 <span class="hint">OEE = 가동률 × 성능 × 양품률</span></h3>
+      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+        <div style="text-align:center">${gauge(oee,{color:oee>=80?'#16a34a':'#d97706',size:118})}<div class="mini" style="margin-top:4px">종합 OEE</div></div>
+        <div style="flex:1;min-width:210px">${comp('가동률 Availability',avgA,'#3f74b5')}${comp('성능 Performance',avgP,'#14b8a6')}${comp('양품률 Quality',avgQ,'#16a34a')}<div class="mini" style="margin-top:6px">${avgA}% × ${avgP}% × ${avgQ}% ≈ <b style="color:var(--navy)">${oee}%</b></div></div>
+      </div>
+      <div style="margin-top:14px"><div class="chead" style="margin-bottom:8px">라인별 OEE</div>${barsChart(bars,{max:100})}</div>
+    </div>
+    <div class="card"><h3>원가 · LOSS 분석 <span class="hint">맨아워 기반 · 단가 가정</span></h3>
+      <div class="grid g2" style="gap:10px;margin-bottom:4px">
+        <div class="kpi" style="box-shadow:none;padding:12px"><div class="lab">총 인건비(가정)</div><div class="val" style="font-size:19px">${won(laborCost)}<small>원</small></div><div class="delta">MH ${totMH}×${AS.wage.toLocaleString()}</div></div>
+        <div class="kpi" style="box-shadow:none;padding:12px"><div class="lab">인당 원단위</div><div class="val" style="font-size:19px">${unitLabor}<small>원/개</small></div><div class="delta">인건비÷생산량</div></div>
+      </div>
+      ${lossrow('불량 발생손실',lossDef,'#dc2626','불량 '+defUnits.toLocaleString()+'개 × '+AS.price+'원')}
+      ${lossrow('잔업 초과 인건비',lossOT,'#d97706','잔업 '+otH+'h × '+AS.wage.toLocaleString()+'원 ×'+AS.otMul)}
+      ${lossrow('계획 미달 기회손실',lossOpp,'#8a99ad','미달 '+missUnits.toLocaleString()+'개 × '+AS.price+'원')}
+      <div class="reco warn" style="margin-top:8px"><div class="ic" data-ic="alert"></div><div class="tx"><div class="r">발생 LOSS ${won(lossDef+lossOT)}원 · 기회 LOSS ${won(lossOpp)}원</div><div class="s">단가·시급은 가정값입니다. 실단가 입력 시 자동 반영 예정.</div></div></div>
+    </div>
   </div>
-  <div class="card"><h3>라인별 KPI 상세 (OEE 구성)</h3><table class="tb"><thead><tr><th>라인</th><th>가동률</th><th>성능</th><th>품질</th><th>OEE</th><th>상태</th></tr></thead><tbody>${tbl}</tbody></table></div>`;
+  <div class="grid g2" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
+    <div class="card"><div class="chead" style="margin-bottom:10px">불량률 추이</div>${lineChart(DB.qualTrend,{max:3,stroke:'#dc2626',fill:'#dc262618',colorAt:v=>v>1.5?'#dc2626':'#16a34a'})}</div>
+    <div class="card"><div class="chead" style="margin-bottom:10px">요일별 잔업</div>${lineChart(DB.otTrend,{max:40,stroke:'#d97706',fill:'#d9770618',colorAt:v=>v>=30?'#dc2626':'#d97706'})}</div>
+  </div>
+  <div class="card"><h3>라인별 KPI 상세 <span class="hint">OEE 구성 · 인시생산성 · 불량손실</span></h3><table class="tb"><thead><tr><th>라인</th><th>달성률</th><th>가동</th><th>성능</th><th>양품</th><th>OEE</th><th>UPPH</th><th>불량손실</th></tr></thead><tbody>${tbl}</tbody></table></div>`;
 };
 V.report=()=>{
   const tp=totProd(),oee=avgOEE(),df=avgDefect();const orders=DB.stock.filter(s=>G.stock(s).need);
