@@ -107,6 +107,26 @@
   .otile .on{font-size:12px;color:var(--muted);font-weight:700;margin-top:12px}
   .otile .ov{font-size:21px;font-weight:800;color:var(--navy);margin-top:2px;letter-spacing:-.4px}
   .otile .dot{width:7px;height:7px;border-radius:50%}
+  /* ② AI 판단·추천 표준 밴드 */
+  .aiband{background:linear-gradient(180deg,#f4fbf7,#fff);border:1px solid #cfe8da;border-left:3px solid #22a05f;border-radius:13px;padding:14px 16px;margin-bottom:14px}
+  .aiband .ah{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--navy);flex-wrap:wrap}
+  .aiband .aspark{width:22px;height:22px;border-radius:7px;background:#22a05f;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+  .aiband .arule{margin-left:auto;font-size:11px;font-weight:800;color:#1c7a48;background:#dff0e6;border:1px solid #bfe3ce;padding:3px 10px;border-radius:20px}
+  .aiband .alead{font-size:13px;color:#38485f;margin:9px 0 12px;font-weight:600;line-height:1.5}
+  .aiband .arecos{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  @media(max-width:900px){.aiband .arecos{grid-template-columns:1fr}}
+  .aiband .arc{background:#fff;border:1px solid var(--hair);border-radius:9px;padding:9px 11px}
+  .aiband .arc.crit{border-left:3px solid #dc4b4b}.aiband .arc.warn{border-left:3px solid #d98a2b}.aiband .arc.ok{border-left:3px solid #22a05f}
+  .aiband .arc .r{font-size:12.5px;font-weight:700;color:var(--navy)}
+  .aiband .arc .s{font-size:11px;color:var(--muted);margin-top:2px}
+  /* ④ 상세 원장 접기 */
+  .ldgr{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:14px;background:#fff}
+  .ldgr .lgh{display:flex;align-items:center;gap:10px;padding:12px 15px;cursor:pointer;user-select:none}
+  .ldgr .lgh:hover{background:#fafbfd}
+  .ldgr .lgh .cv{font-size:13px;color:var(--muted2);font-weight:800;width:12px;flex:0 0 auto}
+  .ldgr .lgh .lt{font-size:13px;font-weight:700;color:var(--navy)}
+  .ldgr .lgh .ld{font-size:11px;color:var(--muted2);margin-top:1px}
+  .ldgr .lgb{padding:2px 15px 14px;border-top:1px solid var(--hair)}
   .aband{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
   .acard{background:#fff;border:1px solid var(--hair);border-left:3px solid var(--line2);border-radius:12px;padding:12px 15px;display:flex;gap:11px;align-items:center;cursor:pointer;transition:.15s;box-shadow:0 1px 2px rgba(18,32,58,.04)}
   .acard:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
@@ -380,6 +400,17 @@ function sc(v,warn,bad,invert){if(invert)return v>=bad?'#dc4b4b':v>=warn?'#d98a2
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
 function chtip(e,txt){let t=document.getElementById('chtip');if(!t){t=document.createElement('div');t.id='chtip';document.body.appendChild(t);}t.textContent=txt;t.style.cssText='position:fixed;z-index:9999;background:#16233a;color:#fff;font-size:12px;font-weight:700;padding:5px 9px;border-radius:7px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.28);white-space:nowrap;transform:translate(-50%,-145%)';t.style.left=e.clientX+'px';t.style.top=e.clientY+'px';t.style.display='block';}
 function chtipHide(){const t=document.getElementById('chtip');if(t)t.style.display='none';}
+/* ===== 표준 4단 — ② AI 판단·추천 (판단 기준 룰 노출) + ④ 상세 원장 접기 ===== */
+function aiBand(dom,rule,lead,recos){
+  const rc=(recos||[]).map(c=>`<div class="arc ${c.lv||'ok'}"><div class="r">${c.r}</div>${c.s?`<div class="s">${c.s}</div>`:''}</div>`).join('');
+  return `<div class="aiband"><div class="ah"><span class="aspark">✦</span> AI 판단 · ${dom}${rule?`<span class="arule">적용 기준 ${rule}</span>`:''}</div><div class="alead">${lead}</div><div class="arecos">${rc}</div></div>`;
+}
+let _ldgrN=0;
+function ledger(title,desc,inner,open){
+  const id='ldgr'+(_ldgrN++);
+  return `<div class="ldgr"><div class="lgh" onclick="toggleLedger('${id}')"><span class="cv" id="${id}c">${open?'▾':'▸'}</span><div><div class="lt">${title}</div><div class="ld">${desc}</div></div></div><div class="lgb" id="${id}" style="display:${open?'block':'none'}">${inner}</div></div>`;
+}
+function toggleLedger(id){const b=document.getElementById(id);if(!b)return;const c=document.getElementById(id+'c');const o=b.style.display!=='none';b.style.display=o?'none':'block';if(c)c.textContent=o?'▸':'▾';}
 
 /* ============ SINGLE SOURCE OF TRUTH: DB ============ */
 // per-line: 인력(need/on/leave/edu) · 생산(target/actual/capa/end) · 세척(clElapsed h, clTransfer 0~1: 0동일,0.5제품전환,1색상+알러지) · 품질(defectPct) · 설비(oeeA,oeeP)
@@ -439,7 +470,7 @@ const LIVE_SEED={ // 프로덕션 D1에서 읽은 실제 현재값 (배포 전 �
 let LIVE={apiBase:'',today:LIVE_SEED,brief:null,status:'demo',sys:'pbox',_tried:false};
 try{LIVE.apiBase=localStorage.getItem('zen_live_api')||'';}catch(e){}
 /* ===== 모듈 내부 탭 ===== */
-let vtab={prod:'status',labor:'status',safe:'status',report:'doc'};
+let vtab={prod:'status',labor:'status',safe:'status',report:'doc',planhub:'load',insight:'kpi'};
 function setVtab(v,t){vtab[v]=t;go(v);window.scrollTo({top:0});}
 function vtabsBar(view,tabs){const list=tabs.filter(t=>t.show!==false);const cur=list.some(t=>t.k===vtab[view])?vtab[view]:list[0].k;return `<div class="vtabs">${list.map(t=>`<button class="${cur===t.k?'on':''}" onclick="setVtab('${view}','${t.k}')">${t.label}</button>`).join('')}</div>`;}
 function vtabActive(view,tabs){const list=tabs.filter(t=>t.show!==false);return list.some(t=>t.k===vtab[view])?vtab[view]:list[0].k;}
@@ -468,7 +499,7 @@ const ICON={
   target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
   wrench:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2 2-2.6-.6-.6-2.6z"/>',
 };
-const NAV_ICON={home:'factory',prod:'activity',labor:'users',clean:'droplet',stock:'package',safe:'shield',qual:'flask',kpi:'gauge',report:'report',opl:'report',data:'db'};
+const NAV_ICON={home:'factory',planhub:'clock',prod:'activity',labor:'users',clean:'droplet',stock:'package',safe:'shield',qual:'flask',insight:'gauge',kpi:'gauge',report:'report',opl:'report',data:'db'};
 function svic(n,s){s=s||18;return '<svg class="sv" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(ICON[n]||'')+'</svg>';}
 function tintOf(c){return c==='#16a34a'?'g':c==='#d97706'?'a':c==='#dc2626'?'r':'n';}
 function hydrateIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(function(e){if(e.getAttribute('data-done'))return;e.innerHTML=svic(e.getAttribute('data-ic'),16);e.setAttribute('data-done','1');});}
@@ -594,19 +625,19 @@ function headCur(){return scoped()?myLines().reduce((a,l)=>a+G.cur(l),0):DB.head
 /* ============ AGENTS / ROLES ============ */
 const AGENTS=[
   {id:'home',name:'종합 상황판',icon:'🏭',sub:'AP 대전공장 · 실시간 종합 운영 현황'},
-  {id:'prod',name:'생산 Agent',icon:'📈',sub:'목표 · 실적 · CAPA · 예상 종료시간'},
+  {id:'planhub',name:'계획 Agent',icon:'🗓',sub:'주간계획 · 부하율·필요인원 · 지연오더'},
+  {id:'prod',name:'생산 Agent',icon:'📈',sub:'실시간 실적 · CAPA · P-BOX·오리콘'},
   {id:'labor',name:'인력 Agent',icon:'👥',sub:'출근 · 결원 · 대체인력 · 잔업 추천'},
   {id:'clean',name:'세척 Agent',icon:'🧼',sub:'세척 우선순위 자동 계산'},
   {id:'stock',name:'창고 Agent',icon:'📦',sub:'포장재 창고 적치 · 구역별 포화 · 자재 재고'},
   {id:'safe',name:'안전 Agent',icon:'🦺',sub:'TBM · 폭염 · 위험요인 추천'},
   {id:'qual',name:'품질 Agent',icon:'🔬',sub:'불량 추이 · 원인 분석'},
-  {id:'kpi',name:'KPI Agent',icon:'📊',sub:'효율 · 인시생산성 · 잔업 · 불량 분석'},
-  {id:'report',name:'Report Agent',icon:'📝',sub:'일 · 주 · 월간 보고서 자동 작성'},
+  {id:'insight',name:'분석·보고 Agent',icon:'📊',sub:'KPI·LOSS 분석 · 월마감 보고서'},
 ];
 const ROLES={
   field:{name:'현장',emoji:'🧑‍🏭',allow:['home','prod','clean','safe','safeapp']},
-  admin:{name:'관리자',emoji:'👔',allow:['home','prod','labor','clean','stock','safe','qual','plan','delay','data','opl','safeapp']},
-  center:{name:'센터',emoji:'🛰️',allow:['home','prod','labor','clean','stock','safe','qual','kpi','report','plan','delay','data','opl','safeapp']},
+  admin:{name:'관리자',emoji:'👔',allow:['home','planhub','prod','labor','clean','stock','safe','qual','data','opl','safeapp']},
+  center:{name:'센터',emoji:'🛰️',allow:['home','planhub','prod','labor','clean','stock','safe','qual','insight','data','opl','safeapp']},
 };
 let role='center';
 
@@ -709,50 +740,47 @@ V.home=()=>{
   <div class="card" style="margin-top:16px"><div class="chead" style="margin-bottom:12px">라인별 생산 달성률</div>${lineBars}</div>`;
 };
 V.prod=()=>{
-  const R=ROLES[role];
-  const tabs=[{k:'status',label:'실시간 현황'},{k:'plan',label:'주간계획',show:R.allow.includes('plan')},{k:'delay',label:'지연오더',show:R.allow.includes('delay')},{k:'pbox',label:'P-BOX·오리콘 실적'}];
+  const tabs=[{k:'status',label:'실시간 현황'},{k:'pbox',label:'P-BOX·오리콘 실적'}];
   const t=vtabActive('prod',tabs);
-  let body;
-  if(t==='plan')body=V.plan();
-  else if(t==='delay')body=V.delay();
-  else if(t==='pbox')body=renderLive();
-  else body=prodStatus();
-  return vtabsBar('prod',tabs)+body;
+  return vtabsBar('prod',tabs)+(t==='pbox'?renderLive():prodStatus());
+};
+V.planhub=()=>{
+  const tabs=[{k:'plan',label:'주간계획'},{k:'load',label:'부하율·필요인원'},{k:'delay',label:'지연오더'}];
+  const t=vtabActive('planhub',tabs);
+  return vtabsBar('planhub',tabs)+(t==='load'?loadView():t==='delay'?V.delay():V.plan());
+};
+V.insight=()=>{
+  const tabs=[{k:'kpi',label:'KPI·LOSS 분석'},{k:'report',label:'월마감 보고서'}];
+  const t=vtabActive('insight',tabs);
+  return vtabsBar('insight',tabs)+(t==='report'?V.report():V.kpi());
 };
 function prodStatus(){
   const L=myLines();const tp=totProd();const ends=L.map(l=>l.end).sort();
   const rows=L.map(l=>{const a=G.achieve(l),col=sc(a,70,60);return `<div class="barrow"><div class="nm">${l.key}</div><div>${pbar(a,col)}<div class="mini" style="margin-top:4px">CAPA 부하 ${G.load(l)}% · 예상종료 ${l.end}</div></div><div class="vv" style="color:${col}">${a}%</div></div>`;}).join('');
   const tbl=L.map(l=>{const a=G.achieve(l);return `<tr><td>${l.key}</td><td>${l.target.toLocaleString()}</td><td>${l.actual.toLocaleString()}</td><td style="color:${sc(a,70,60)}">${a}%</td><td>${G.load(l)}%</td><td>${l.end}</td></tr>`;}).join('');
   const trend=[{label:'07',v:14},{label:'08',v:22},{label:'09',v:26},{label:'10',v:25},{label:'11',v:24},{label:'12',v:12},{label:'13',v:23}];
-  let planCard='';
-  if(DB.plan){const wk=DB.plan.weeks[planWeek]||DB.plan.weeks[0];const gmax=Math.max(...wk.groups.map(g=>g.weekTotal));const gtot=wk.groups.reduce((a,g)=>a+g.weekTotal,0);
-    const gAct=planHasActual()?groupActual(wk):null;
-    const rows=wk.groups.slice(0,8).map(g=>{let tail=`<div class="vv">${g.weekTotal.toLocaleString()}</div>`,bar=pbar(g.weekTotal/gmax*100,'#3b82f6');
-      if(gAct){const av=gAct[g.name]||0,a=Math.round(av/g.weekTotal*100),col=a>=95?'#22a05f':a>=85?'#d98a2b':'#dc4b4b';
-        bar=`<div style="position:relative">${pbar(g.weekTotal/gmax*100,'#1c3350')}<div style="position:absolute;top:0;left:0;right:0">${pbar(av/gmax*100,col)}</div></div>`;
-        tail=`<div class="vv" style="color:${col}">${a}% <span class="mut2" style="font-weight:600">/${g.weekTotal.toLocaleString()}</span></div>`;}
-      return `<div class="barrow" style="grid-template-columns:150px 1fr 150px"><div class="nm">${g.name}</div><div>${bar}</div>${tail}</div>`;}).join('');
-    const note=planHasActual()?`실적 연동됨 — 막대=실적/계획, 우측=달성률. <a onclick="setVtab('prod','delay')" style="color:#3f74b5;cursor:pointer;font-weight:700">지연오더 보기 ›</a>`:'※ 계획(목표) 수량. 실적/달성률은 실적 파일 업로드 또는 <a onclick="go(\'data\')" style="color:#3f74b5;cursor:pointer;font-weight:700">데이터 관리</a>에서 시뮬레이션 시 자동 계산됩니다.';
-    planCard=`<div class="card" style="margin-bottom:14px"><h3>주간 생산계획 ${planHasActual()?'계획 대비 실적':'목표'} (라인군) <span class="hint">${wk.name} · 실 엑셀 연동 · 총 ${gtot.toLocaleString()}개</span><button class="btn" onclick="setVtab('prod','plan')">상세 ›</button></h3>${rows}<div class="mini" style="margin-top:8px">${note}</div></div>`;}
+  const behind=L.filter(l=>G.achieve(l)<70).sort((a,b)=>G.achieve(a)-G.achieve(b));
+  const over=L.filter(l=>G.load(l)>=100);
+  const recos=[];
+  if(behind.length)recos.push({lv:'crit',r:`${behind[0].key} 달성률 ${G.achieve(behind[0])}%`,s:`예상종료 ${behind[0].end} · 인력·설비 점검`});
+  if(over.length)recos.push({lv:'warn',r:`CAPA 초과 ${over.length}라인`,s:`${over.map(l=>l.key).join(', ')} · 잔업 검토`});
+  recos.push({lv:tp.ach>=80?'ok':'warn',r:`전체 달성률 ${tp.ach}%`,s:`실적 ${(tp.a/1000).toFixed(0)}천 / 목표 ${(tp.t/1000).toFixed(0)}천개`});
+  const aib=aiBand('생산','달성률 70% · CAPA 100%',`${behind.length?`<b>${behind.map(l=>l.key).join('·')}</b> 달성률 70% 미만 — 지연 위험.`:'전 라인 달성률 정상 범위.'} 최지연 종료 ${ends[ends.length-1]}${over.length?` · CAPA 초과 ${over.length}라인`:''}.`,recos);
   return `
-  ${planCard}
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic" data-ic="target"></div><div class="lab">금일 목표 수량</div><div class="val">${(tp.t/1000).toFixed(0)}<small>천개</small></div></div>
     <div class="kpi"><div class="ic" data-ic="check"></div><div class="lab">현재 실적</div><div class="val">${(tp.a/1000).toFixed(0)}<small>천개</small></div><div class="delta">달성률 ${tp.ach}%</div></div>
     <div class="kpi"><div class="ic" data-ic="gauge"></div><div class="lab">평균 CAPA 부하율</div><div class="val">${Math.round(DB.lines.reduce((a,l)=>a+G.load(l),0)/DB.lines.length)}<small>%</small></div></div>
     <div class="kpi"><div class="ic" data-ic="clock"></div><div class="lab">전 라인 예상 종료</div><div class="val">${ends[ends.length-1]}</div><div class="delta neg">최지연 라인 기준</div></div>
   </div>
-  <div class="grid g2" style="grid-template-columns:1.2fr 1fr;margin-bottom:14px">
+  ${aib}
+  <div class="grid g2" style="grid-template-columns:1.2fr 1fr">
     <div class="card"><h3>라인별 목표 대비 실적 <span class="hint">실적/목표</span></h3>${rows}</div>
     <div class="card"><h3>시간대별 생산 추이 <span class="hint">시간당 산출(천개)</span></h3>${lineChart(trend,{max:30,stroke:'#22a05f',fill:'#22a05f22',colorAt:()=>'#22a05f'})}<div class="mini" style="text-align:center">점심시간(12시) 감소 구간</div></div>
   </div>
-  <div class="card"><h3>라인별 생산 현황 상세</h3><table class="tb"><thead><tr><th>라인</th><th>목표</th><th>실적</th><th>달성률</th><th>CAPA 부하</th><th>예상 종료</th></tr></thead><tbody>${tbl}</tbody></table></div>`;
+  ${ledger('라인별 생산 현황 상세','목표·실적·달성률·CAPA 부하·예상종료 — '+L.length+'개 라인','<table class="tb"><thead><tr><th>라인</th><th>목표</th><th>실적</th><th>달성률</th><th>CAPA 부하</th><th>예상 종료</th></tr></thead><tbody>'+tbl+'</tbody></table>')}`;
 };
-V.labor=()=>{
-  const tabs=[{k:'status',label:'현황'},{k:'load',label:'부하율·필요인원'}];
-  const t=vtabActive('labor',tabs);
-  return vtabsBar('labor',tabs)+(t==='load'?loadView():laborStatus());
-};
+V.labor=()=>laborStatus();
 function laborStatus(){
   function people(l){let c=[];for(let i=0;i<l.on;i++)c.push(pi('on'));for(let i=0;i<l.leave;i++)c.push(pi('leave'));for(let i=0;i<l.edu;i++)c.push(pi('edu'));for(let i=0;i<Math.max(0,l.need-G.cur(l));i++)c.push(pi('empty'));return c.join('');}
   const L=myLines();
@@ -760,20 +788,21 @@ function laborStatus(){
   const tbl=L.map(l=>{const d=G.cur(l)-l.need;return `<tr><td>${l.key}</td><td>${l.need}</td><td>${G.cur(l)}</td><td class="${d<0?'neg':d>0?'pos':'zero'}">${d>0?'+'+d:d}</td><td><span class="sdot ${d<0?'s-red':'s-green'}"></span></td></tr>`;}).join('');
   const surplus=L.filter(l=>G.cur(l)-l.need>0).map(l=>l.key);
   const deficit=L.filter(l=>G.cur(l)-l.need<0);
+  const gap=headNeed()-headCur();
+  const recos=deficit.slice(0,2).map((l,i)=>({lv:i===0?'crit':'warn',r:`${surplus[i]||'여유 라인'} → ${l.key} 1명 이동`,s:`결원 ${l.need-G.cur(l)}명 중 1명 재배치`}));
+  recos.push({lv:'warn',r:`잔업 — 잔여 부족 ${Math.max(0,shortSum()-Math.min(2,surplus.length))}명`,s:'재배치 후 잔여분 잔업 (인건비 검토)'});
+  const aib=aiBand('인력','투입 < 필요',`부족 <b>${gap}명</b> — ${deficit.map(l=>l.key).join('·')||'없음'} 결원. ${surplus.length?`여유 ${surplus.join('·')}에서 재배치 우선`:'여유 라인 없음 · 잔업/증원 검토'}.`,recos);
   return `
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic" data-ic="users"></div><div class="lab">총 필요 인원</div><div class="val">${headNeed()}<small>명</small></div></div>
     <div class="kpi"><div class="ic" data-ic="users"></div><div class="lab">현재 투입</div><div class="val">${headCur()}<small>명</small></div></div>
-    <div class="kpi"><div class="ic" data-ic="alert"></div><div class="lab">부족 인원</div><div class="val neg">${headNeed()-headCur()}<small>명</small></div></div>
+    <div class="kpi"><div class="ic" data-ic="alert"></div><div class="lab">부족 인원</div><div class="val neg">${gap}<small>명</small></div></div>
     <div class="kpi"><div class="ic" data-ic="clock"></div><div class="lab">연차/결근</div><div class="val" style="color:#ffcf5a">${DB.work[1].n+DB.work[2].n}<small>명</small></div></div>
   </div>
+  ${aib}
   <div class="grid g2" style="grid-template-columns:1.3fr 1fr">
     <div class="card"><h3>공장 배치도 <span class="hint">라인별 실시간 인력</span></h3><div class="lines-grid">${boxes}</div></div>
-    <div class="card"><h3>AI 대체인력 · 잔업 추천</h3>
-      ${deficit.slice(0,2).map((l,i)=>`<div class="reco"><div class="ic" data-ic="arrow"></div><div class="tx"><div class="r">${surplus[i]||'FnC'} → ${l.key} 1명 이동</div><div class="s">여유 라인 인력으로 ${l.key} 결원 ${l.need-G.cur(l)}명 중 1명 충원</div></div></div>`).join('')}
-      <div class="reco warn"><div class="ic" data-ic="clock"></div><div class="tx"><div class="r">잔업 추천 — 잔여 부족 ${Math.max(0,shortSum()-Math.min(2,surplus.length))}명 대응</div><div class="s">여유 인력 재배치 후 잔여분 잔업으로 커버 (인건비 검토 필요)</div></div></div>
-      <div style="margin-top:6px"><h3 style="font-size:13px">라인별 인력 현황</h3><table class="tb"><thead><tr><th>구역</th><th>필요</th><th>현재</th><th>과부족</th><th>상태</th></tr></thead><tbody>${tbl}</tbody></table></div>
-    </div>
+    <div class="card"><h3>라인별 인력 현황 <span class="hint">필요 · 현재 · 과부족</span></h3><table class="tb"><thead><tr><th>구역</th><th>필요</th><th>현재</th><th>과부족</th><th>상태</th></tr></thead><tbody>${tbl}</tbody></table></div>
   </div>`;
 };
 V.clean=()=>{
@@ -782,20 +811,25 @@ V.clean=()=>{
     const reason=l.clTransfer>=1?'색상 전환(백→적)·세척주기 초과':l.clTransfer>=0.5?'제품 전환·잔류물 위험':l.clElapsed>=8?'세척주기 초과(기준 8h)':'동일 제품 연속 생산';
     return `<div class="it"><div class="rank ${i===0?'top':''}">${i+1}</div><div style="flex:1"><div style="font-weight:800">${l.key} 라인 <span class="chip" style="margin-left:6px">경과 ${l.clElapsed}h</span></div><div class="mini" style="margin-top:3px">${reason} · <span class="mut2">전환 ${tr} + 주기 ${cyc} + 부하 ${ld}</span></div></div><div style="text-align:right;min-width:70px"><div class="big" style="color:${col};font-size:20px">${r.s}</div><div class="mini">점</div></div></div>`;}).join('');
   const need=ranked.filter(r=>r.s>=75);
+  const top=ranked[0];const order=ranked.filter(r=>r.s>=50).map((r,i)=>`${i+1}.${r.l.key}`).join(' → ');
+  const aib=aiBand('세척','우선순위 75점',`${need.length?`<b>${top.l.key}</b> ${top.s}점 — ${top.l.clTransfer>=1?'색상전환+주기초과':'세척주기 초과'}로 즉시 세척 대상.`:'즉시 세척 대상 없음(전 라인 75점 미만).'} CIP 2기 병렬 시 오전 내 완료 가능.`,[
+    {lv:top.s>=75?'crit':'warn',r:`${top.l.key} 즉시 세척`,s:`${top.s}점 ≥ 75 임계`},
+    {lv:'warn',r:'CIP 2기 병렬 가동',s:'유휴 1기 투입 → 대기 단축'},
+    {lv:'ok',r:'권장 순서',s:order}]);
   return `
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic" data-ic="droplet"></div><div class="lab">세척 필요 라인</div><div class="val ${need.length?'neg':'pos'}">${need.length}<small>건</small></div><div class="delta">75점 이상</div></div>
-    <div class="kpi"><div class="ic" data-ic="alert"></div><div class="lab">최우선 세척</div><div class="val">${ranked[0].l.key}</div><div class="delta neg">점수 ${ranked[0].s}</div></div>
+    <div class="kpi"><div class="ic" data-ic="alert"></div><div class="lab">최우선 세척</div><div class="val">${top.l.key}</div><div class="delta neg">점수 ${top.s}</div></div>
     <div class="kpi"><div class="ic" data-ic="droplet"></div><div class="lab">CIP 가동</div><div class="val">1<small>/2기</small></div></div>
     <div class="kpi"><div class="ic" data-ic="clock"></div><div class="lab">평균 세척 소요</div><div class="val">42<small>분</small></div></div>
   </div>
+  ${aib}
   <div class="grid g2" style="grid-template-columns:1.4fr 1fr">
     <div class="card"><h3>세척 우선순위 자동 계산 <span class="hint">전환40 + 주기35 + 부하25</span></h3><div class="list">${rows}</div></div>
-    <div class="card"><h3>우선순위 산정식</h3>
+    <div class="card"><h3>우선순위 산정식 <span class="hint">코드화된 판단 기준</span></h3>
       <div class="reco"><div class="ic" data-ic="droplet"></div><div class="tx"><div class="r">제품/색상 전환 · 가중 40%</div><div class="s">동일 0 · 제품전환 0.5 · 색상+알러지 1.0</div></div></div>
       <div class="reco"><div class="ic" data-ic="clock"></div><div class="tx"><div class="r">세척주기 경과 · 가중 35%</div><div class="s">경과시간 ÷ 기준주기(8h), 최대 1.0</div></div></div>
       <div class="reco"><div class="ic" data-ic="flask"></div><div class="tx"><div class="r">생산부하/오염도 · 가중 25%</div><div class="s">실적 ÷ CAPA (누적 오염 proxy)</div></div></div>
-      <div class="reco warn"><div class="ic" data-ic="spark"></div><div class="tx"><div class="r">AI 권장 순서</div><div class="s">${ranked.filter(r=>r.s>=50).map((r,i)=>`${i+1}.${r.l.key}`).join(' → ')}. CIP 2기 병렬 시 오전 내 완료 가능</div></div></div>
     </div>
   </div>`;
 };
@@ -832,14 +866,22 @@ V.stock=()=>{
   }else{
     whSection=`<div class="card" style="margin-bottom:16px"><h3>창고 구역별 적치율 <span class="hint">주1회 점검</span></h3><p class="mini">구역별 적치 점검 엑셀을 <a onclick="go('data')" style="color:#3f74b5;cursor:pointer">데이터 관리</a>에서 업로드하세요.</p></div>`;
   }
+  const overN=DB.wh?((DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones.filter(z=>z.rate>=100).length):0;
+  const minDays=Math.min(...DB.stock.map(s=>G.stock(s).days));
+  const srecos=[];
+  if(orders.length)srecos.push({lv:'crit',r:`${orders[0].name} 즉시 발주 ${G.stock(orders[0]).qty}${orders[0].unit}`,s:`재고 ${G.stock(orders[0]).days}일 ≤ 재주문점`});
+  if(overN)srecos.push({lv:'warn',r:`적치 초과 ${overN}구역 재배치`,s:'CAPA 상향 또는 출하 우선'});
+  srecos.push({lv:minDays<=1.5?'crit':minDays<=3?'warn':'ok',r:`최단 재고 ${minDays}일`,s:orders.length?`${orders.length}종 발주 필요`:'전 자재 재주문점 이상'});
+  const aib=aiBand('창고','재주문점 · 적치율 100%',`${orders.length?`<b>${orders.map(s=>s.name).join('·')}</b> 재주문점 도달 — 즉시 발주.`:'긴급 발주 없음.'}${overN?` 적치 초과 ${overN}구역 — 재배치 필요.`:''}`,srecos);
   return `
-  ${whSection}
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic" data-ic="package"></div><div class="lab">부족 임박 자재</div><div class="val ${orders.length?'neg':'pos'}">${orders.length}<small>종</small></div></div>
-    <div class="kpi"><div class="ic" data-ic="alert"></div><div class="lab">최단 재고</div><div class="val">${Math.min(...DB.stock.map(s=>G.stock(s).days))}<small>일</small></div></div>
+    <div class="kpi"><div class="ic" data-ic="alert"></div><div class="lab">최단 재고</div><div class="val">${minDays}<small>일</small></div></div>
     <div class="kpi"><div class="ic" data-ic="factory"></div><div class="lab">${DB.wh?'창고 전체 적치율':'완제품 창고 포화'}</div><div class="val" style="color:${DB.wh?(whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0])>=100?'#dc4b4b':'#3f74b5'):sc(DB.warehouse[0].fill,80,90,true)}">${DB.wh?whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0]):DB.warehouse[0].fill}<small>%</small></div></div>
     <div class="kpi"><div class="ic" data-ic="package"></div><div class="lab">발주 추천</div><div class="val ${orders.length?'neg':''}">${orders.length}<small>건</small></div></div>
   </div>
+  ${aib}
+  ${whSection}
   <div class="grid g2" style="grid-template-columns:1.4fr 1fr">
     <div class="card"><h3>자재별 재고 소진 예측 <span class="hint">소진일수 = 재고 ÷ 일소비</span></h3>${rows}</div>
     <div class="card"><h3>AI 발주 추천 <span class="hint">발주량 = max(MOQ, 목표재고−현재고)</span></h3>
@@ -864,13 +906,19 @@ function safeStatus(){
   ];
   const tbmTime={'튜브':'07:05','치약충전':'07:08','일회용':'-','초격차':'07:02','HnB':'07:12','FnC':'07:06'};
   const tbm=myLines().map(l=>{const done=w.tbmDone.includes(l.key);return `<tr><td>${l.key}</td><td><span class="tag ${done?'t-green':'t-red'}">${done?'실시':'미실시'}</span></td><td>${tbmTime[l.key]||'-'}</td></tr>`;}).join('');
+  const undone=myLines().filter(l=>!w.tbmDone.includes(l.key)).map(l=>l.key);
+  const aib=aiBand('안전','TBM 100% · WBGT 28℃',`${undone.length?`<b>${undone.join('·')}</b> TBM 미실시 — 작업 전 완료 필요.`:'전 라인 TBM 완료.'} WBGT ${w.wbgt}℃ ${w.wbgt>=28?'경고 — 시간당 휴식·수분 조치':'정상 범위'}.`,[
+    {lv:undone.length?'crit':'ok',r:undone.length?`TBM 미실시 ${undone.length}라인`:'TBM 전 라인 완료',s:undone.join(',')||'실시율 100%'},
+    {lv:w.wbgt>=28?'warn':'ok',r:`폭염 ${w.wbgt>=31?'위험':w.wbgt>=28?'경고':'주의'}`,s:`WBGT ${w.wbgt}℃ ≥ 28 → 휴식·수분`},
+    {lv:'warn',r:'고위험 요인 점검',s:'튜브 협착 · 세척 미끄럼'}]);
   return `
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic" data-ic="thermometer"></div><div class="lab">폭염 지수 WBGT</div><div class="val" style="color:${sc(w.wbgt,28,31,true)}">${w.wbgt}<small>℃</small></div><div class="delta neg">${w.wbgt>=31?'위험':w.wbgt>=28?'경고':'주의'} 단계</div></div>
     <div class="kpi"><div class="ic" data-ic="shield"></div><div class="lab">무재해 일수</div><div class="val pos">${w.noAccident}<small>일</small></div><div class="delta">목표 200일</div></div>
-    <div class="kpi"><div class="ic" data-ic="report"></div><div class="lab">TBM 실시율</div><div class="val">${myLines().filter(l=>w.tbmDone.includes(l.key)).length}<small>/${myLines().length} 라인</small></div><div class="delta neg">${myLines().filter(l=>!w.tbmDone.includes(l.key)).map(l=>l.key).join(',')||'전 라인 완료'}</div></div>
+    <div class="kpi"><div class="ic" data-ic="report"></div><div class="lab">TBM 실시율</div><div class="val">${myLines().filter(l=>w.tbmDone.includes(l.key)).length}<small>/${myLines().length} 라인</small></div><div class="delta neg">${undone.join(',')||'전 라인 완료'}</div></div>
     <div class="kpi"><div class="ic" data-ic="alert"></div><div class="lab">위험요인</div><div class="val">4<small>건</small></div><div class="delta neg">고위험 ${w.wbgt>=28?1:0}건</div></div>
   </div>
+  ${aib}
   <div class="grid g2" style="grid-template-columns:1.2fr 1fr;margin-bottom:14px">
     <div class="card"><h3>위험요인 자동 추천 <span class="hint">라인·환경 종합</span></h3>${risks.map(r=>`<div class="reco ${r.c==='t-red'?'bad':r.c==='t-amber'?'warn':''}"><div class="ic">${r.c==='t-red'?svic('alert',16):r.c==='t-amber'?svic('alert',16):svic('check',16)}</div><div class="tx"><div class="r">${r.n} <span class="tag ${r.c}" style="margin-left:6px">${r.lv}</span></div><div class="s">${r.s}</div></div></div>`).join('')}</div>
     <div class="card"><h3>폭염 단계별 조치 <span class="hint">WBGT ${w.wbgt}℃</span></h3>
@@ -880,7 +928,7 @@ function safeStatus(){
       <div class="reco"><div class="ic" data-ic="bell"></div><div class="tx"><div class="r">TBM 폭염 특별교육</div><div class="s">온열질환 초기증상·응급조치 전파</div></div></div>
     </div>
   </div>
-  <div class="card"><h3>라인별 TBM(Tool Box Meeting) 실시 현황</h3><table class="tb"><thead><tr><th>라인</th><th>실시 여부</th><th>실시 시각</th></tr></thead><tbody>${tbm}</tbody></table></div>`;
+  ${ledger('라인별 TBM(Tool Box Meeting) 실시 현황','작업 전 안전점검 실시 여부·시각 — '+myLines().length+'개 라인','<table class="tb"><thead><tr><th>라인</th><th>실시 여부</th><th>실시 시각</th></tr></thead><tbody>'+tbm+'</tbody></table>')}`;
 };
 V.qual=()=>{
   const df=avgDefect();const worst=[...myLines()].sort((a,b)=>b.defect-a.defect)[0];
@@ -888,6 +936,10 @@ V.qual=()=>{
   const cols=['#dc4b4b','#d98a2b','#d98a2b','#3b82f6','#6d84a3'];
   const par=DB.paretoNames.map((n,i)=>{cum+=DB.paretoVals[i];const wd=DB.paretoVals[i]/maxC*100;return `<div class="barrow" style="grid-template-columns:96px 1fr 96px"><div class="nm">${n}</div><div>${pbar(wd,cols[i%cols.length])}</div><div class="vv mut2">${DB.paretoVals[i]}건 · 누적 ${Math.round(cum/totC*100)}%</div></div>`;}).join('');
   const lrows=myLines().map(l=>{const col=sc(l.defect,2.0,2.5,true);return `<tr><td>${l.key}</td><td style="color:${col}">${l.defect}%</td><td><span class="sdot ${l.defect>=2.5?'s-red':l.defect>=2.0?'s-amber':'s-green'}"></span></td></tr>`;}).join('');
+  const aib=aiBand('품질','불량률 1.5%',`평균 불량률 <b>${df}%</b> ${df>1.5?'— 목표 1.5% 초과.':'— 목표 이내.'} 최다 유형 ${DB.paretoNames[0]}(${Math.round(DB.paretoVals[0]/totC*100)}%) · 최다 라인 ${worst.key}(${worst.defect}%).`,[
+    {lv:'crit',r:`인쇄 불량 (${worst.key})`,s:'색상전환 후 판압 편차 · 세척+판압 재교정'},
+    {lv:'warn',r:'캡 체결 불량',s:'토크값 하한 근접 · 체결 토크 점검'},
+    {lv:'ok',r:'충전량 편차',s:'충전 노즐 정기 캘리브레이션'}]);
   return `
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic" data-ic="flask"></div><div class="lab">평균 불량률</div><div class="val" style="color:${df>1.5?'#ffcf5a':'#22a05f'}">${df}<small>%</small></div><div class="delta ${df>1.5?'neg':'pos'}">목표 1.5%</div></div>
@@ -895,18 +947,12 @@ V.qual=()=>{
     <div class="kpi"><div class="ic" data-ic="target"></div><div class="lab">최다 불량 유형</div><div class="val" style="font-size:19px">${DB.paretoNames[0]}</div><div class="delta neg">전체의 ${Math.round(DB.paretoVals[0]/totC*100)}%</div></div>
     <div class="kpi"><div class="ic" data-ic="alert"></div><div class="lab">불량 최다 라인</div><div class="val">${worst.key}</div><div class="delta neg">${worst.defect}%</div></div>
   </div>
-  <div class="grid g2" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
+  ${aib}
+  <div class="grid g2" style="grid-template-columns:1fr 1fr">
     <div class="card"><h3>불량률 추이 <span class="hint">최근 7일</span></h3>${lineChart(DB.qualTrend,{max:2.5,stroke:'#d98a2b',fill:'#d98a2b22',colorAt:v=>v>=2.0?'#dc4b4b':'#d98a2b'})}<div class="mini" style="text-align:center">목표 1.5% 초과 추이</div></div>
     <div class="card"><h3>불량 원인 분석 (파레토) <span class="hint">유형별 건수</span></h3>${par}<div class="mini" style="margin-top:8px">상위 2개 유형이 전체의 ${Math.round((DB.paretoVals[0]+DB.paretoVals[1])/totC*100)}% → 우선 개선</div></div>
   </div>
-  <div class="grid g2" style="grid-template-columns:1fr 1.4fr">
-    <div class="card"><h3>라인별 불량률</h3><table class="tb"><thead><tr><th>라인</th><th>불량률</th><th>상태</th></tr></thead><tbody>${lrows}</tbody></table></div>
-    <div class="card"><h3>AI 원인 분석 · 개선 제안</h3>
-      <div class="reco bad"><div class="ic" data-ic="report"></div><div class="tx"><div class="r">인쇄 불량 (${worst.key} 라인)</div><div class="s">색상 전환 후 판압 편차 추정 · 세척+판압 재교정 권장</div></div></div>
-      <div class="reco warn"><div class="ic" data-ic="wrench"></div><div class="tx"><div class="r">캡 체결 불량</div><div class="s">캡 토크값 하한 근접 · 체결 토크 설정 점검</div></div></div>
-      <div class="reco"><div class="ic" data-ic="gauge"></div><div class="tx"><div class="r">충전량 편차</div><div class="s">충전 노즐 편차 · 정기 캘리브레이션 반영</div></div></div>
-    </div>
-  </div>`;
+  ${ledger('라인별 불량률','라인별 불량률·상태 — '+myLines().length+'개 라인','<table class="tb"><thead><tr><th>라인</th><th>불량률</th><th>상태</th></tr></thead><tbody>'+lrows+'</tbody></table>')}`;
 };
 V.kpi=()=>{
   const L=myLines();const oee=avgOEE();const tp=totProd();const df=avgDefect();
@@ -926,6 +972,11 @@ V.kpi=()=>{
   const comp=(lab,v,c)=>`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span class="muted" style="font-weight:600">${lab}</span><span class="tnum" style="font-weight:800;color:${c}">${v}%</span></div>${pbar(v,c)}</div>`;
   const lossrow=(lab,amt,c,desc)=>`<div class="barrow" style="grid-template-columns:1fr auto;padding:8px 0"><div><div class="nm" style="font-size:12.5px">${lab}</div><div class="mini">${desc}</div></div><div class="vv tnum" style="color:${c};font-size:14px">${won(amt)}<span style="font-size:10px;color:var(--muted)"> 원</span></div></div>`;
   const tbl=L.map(l=>{const o=G.oee(l),col=o>=80?'#16a34a':o>=70?'#d97706':'#dc2626';const up=Math.round(l.actual/(l.on*8||1));const ld=Math.round(l.actual*l.defect/100)*AS.price;return `<tr><td>${l.key}</td><td>${G.achieve(l)}%</td><td>${l.oeeA}%</td><td>${l.oeeP}%</td><td>${(100-l.defect).toFixed(1)}%</td><td style="color:${col};font-weight:800">${o}%</td><td>${up}</td><td>${won(ld)}원</td></tr>`;}).join('');
+  const _mn=Math.min(avgA,avgP,avgQ);const _mnLab=_mn===avgP?'성능 Performance':_mn===avgA?'가동률 Availability':'양품률 Quality';
+  const aib=aiBand('분석·보고','OEE 80% · LOSS',`OEE <b>${oee}%</b> ${oee>=80?'양호':'개선 필요'} — 3요소 중 <b>${_mnLab} ${_mn}%</b>가 병목. 발생 LOSS ${won(lossDef+lossOT)}원 · 기회 LOSS ${won(lossOpp)}원.`,[
+    {lv:oee>=80?'ok':'crit',r:`${_mnLab} ${_mn}% 병목`,s:'OEE 3요소 최저 → 우선 개선'},
+    {lv:'warn',r:`불량손실 ${won(lossDef)}원`,s:`불량 ${defUnits.toLocaleString()}개 저감 우선`},
+    {lv:'warn',r:`잔업 초과 ${won(lossOT)}원`,s:`잔업 ${otH}h · 재배치로 절감`}]);
   return `
   <div class="kstrip">
     <div class="ki"><div class="l">설비종합효율 OEE</div><div class="v tnum" style="color:${oee>=80?'var(--ok)':'var(--warn)'}">${oee}<small>%</small></div><div class="d muted">가동 ${avgA}·성능 ${avgP}·양품 ${avgQ}</div></div>
@@ -935,6 +986,7 @@ V.kpi=()=>{
     <div class="ki"><div class="l">인당 원단위</div><div class="v tnum">${unitLabor}<small>원/개</small></div><div class="d muted">인건비÷생산(가정)</div></div>
     <div class="ki"><div class="l">무재해</div><div class="v tnum">${DB.safety.noAccident}<small>일</small></div><div class="d muted">목표 200</div></div>
   </div>
+  ${aib}
   <div class="grid g2" style="grid-template-columns:1.25fr 1fr;margin-bottom:14px">
     <div class="card"><h3>OEE 구성 분해 <span class="hint">OEE = 가동률 × 성능 × 양품률</span></h3>
       <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
@@ -958,7 +1010,7 @@ V.kpi=()=>{
     <div class="card"><div class="chead" style="margin-bottom:10px">불량률 추이</div>${lineChart(DB.qualTrend,{max:3,stroke:'#dc2626',fill:'#dc262618',colorAt:v=>v>1.5?'#dc2626':'#16a34a'})}</div>
     <div class="card"><div class="chead" style="margin-bottom:10px">요일별 잔업</div>${lineChart(DB.otTrend,{max:40,stroke:'#d97706',fill:'#d9770618',colorAt:v=>v>=30?'#dc2626':'#d97706'})}</div>
   </div>
-  <div class="card"><h3>라인별 KPI 상세 <span class="hint">OEE 구성 · 인시생산성 · 불량손실</span></h3><table class="tb"><thead><tr><th>라인</th><th>달성률</th><th>가동</th><th>성능</th><th>양품</th><th>OEE</th><th>UPPH</th><th>불량손실</th></tr></thead><tbody>${tbl}</tbody></table></div>`;
+  ${ledger('라인별 KPI 상세','OEE 구성 · 인시생산성(UPPH) · 불량손실 — '+L.length+'개 라인','<table class="tb"><thead><tr><th>라인</th><th>달성률</th><th>가동</th><th>성능</th><th>양품</th><th>OEE</th><th>UPPH</th><th>불량손실</th></tr></thead><tbody>'+tbl+'</tbody></table>')}`;
 };
 V.report=()=>{
   const tp=totProd(),oee=avgOEE(),df=avgDefect();const orders=DB.stock.filter(s=>G.stock(s).need);
@@ -1282,23 +1334,25 @@ let cur='home';
 const NAV_TOOLS={opl:{name:'OPL 교육자료',icon:'📄'},data:{name:'데이터 관리',icon:'🗄'}};
 const NAV_GROUPS=[
   {sec:'OVERVIEW',ids:['home']},
+  {sec:'계획 · PLAN',ids:['planhub']},
   {sec:'운영 · OPERATIONS',ids:['prod','labor','clean','stock']},
   {sec:'품질·안전 · QUALITY & EHS',ids:['qual','safe']},
-  {sec:'분석 · ANALYTICS',ids:['kpi','report']},
-  {sec:'관리 · ADMIN',ids:['opl','data']},
+  {sec:'분석 · INSIGHT',ids:['insight']},
+  {sec:'도구 · TOOLS',ids:['opl','data']},
 ];
 function buildNav(){
   const R=ROLES[role],allow=id=>R.allow.includes(id);
   const nm=id=>{const a=AGENTS.find(x=>x.id===id);return a?a.name:(NAV_TOOLS[id]||{}).name;};
   const ic=id=>{const a=AGENTS.find(x=>x.id===id);return a?a.icon:(NAV_TOOLS[id]||{}).icon;};
   const badges={
+    planhub:{t:'-'+(DB.headcount.need-DB.headcount.cur),c:'t-red'},
     prod:{t:totProd().ach+'%',c:totProd().ach>=80?'t-green':'t-amber'},
     labor:{t:'-'+(DB.headcount.need-DB.headcount.cur),c:'t-red'},
     clean:{t:''+DB.lines.filter(l=>G.cleanScore(l)>=75).length,c:'t-amber'},
     stock:{t:''+DB.stock.filter(s=>G.stock(s).need).length,c:'t-red'},
     safe:{t:DB.safety.wbgt>=28?'경고':'양호',c:DB.safety.wbgt>=28?'t-amber':'t-green'},
     qual:{t:avgDefect()+'%',c:avgDefect()>1.5?'t-amber':'t-green'},
-    kpi:{t:avgOEE()+'%',c:avgOEE()>=80?'t-green':'t-amber'},
+    insight:{t:avgOEE()+'%',c:avgOEE()>=80?'t-green':'t-amber'},
   };
   const link=id=>{const bd=badges[id]?`<span class="badge ${badges[id].c}">${badges[id].t}</span>`:'';
     return `<a data-id="${id}" class="${id===cur?'on':''}" onclick="go('${id}')"><span class="ic">${svic(NAV_ICON[id]||'activity',17)}</span><span>${nm(id)}</span>${bd}</a>`;};
@@ -1309,11 +1363,13 @@ function buildNav(){
     <div class="spacer"></div>
     <div class="user"><div class="av">${R.emoji}</div><div><div class="nm">홍길동 ${R.name}</div><div class="rl">${R.name} · ${scopeLabel()}</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
 }
+const GO_REDIR={plan:['planhub','plan'],delay:['planhub','delay'],load:['planhub','load'],kpi:['insight','kpi'],report:['insight','report']};
 function go(id){
+  if(GO_REDIR[id]){const[a,t]=GO_REDIR[id];vtab[a]=t;id=a;}
   if(!ROLES[role].allow.includes(id)&&!['data','safeapp'].includes(id))id='home';
   if(id==='data'&&!ROLES[role].allow.includes('data'))id='home';
   cur=id;
-  const meta=AGENTS.find(a=>a.id===id)||{name:{data:'데이터 관리',safeapp:'안전 관리 (ZENF)',plan:'생산계획 (주간)',delay:'지연오더',opl:'OPL 생성기'}[id],sub:{data:'엑셀/CSV 업로드 · 직접 편집으로 대시보드 구동',safeapp:'기존 안전 앱 통합 화면',plan:'주간 생산계획 엑셀 실데이터 · 리소스·오더·수량',delay:'계획 대비 실적 · 지연/미달 오더 분석',opl:'점검·이슈 내용 → 원포인트레슨(적발→준수기준+서명부) 자동 생성'}[id]};
+  const meta=AGENTS.find(a=>a.id===id)||{name:{data:'데이터 관리',safeapp:'안전 관리 (ZENF)',opl:'OPL 생성기'}[id],sub:{data:'엑셀/CSV 업로드 · 직접 편집으로 대시보드 구동',safeapp:'기존 안전 앱 통합 화면',opl:'점검·이슈 내용 → 원포인트레슨(적발→준수기준+서명부) 자동 생성'}[id]};
   document.getElementById('vTitle').textContent=meta.name;
   document.getElementById('vSub').textContent=meta.sub;
   let html=(V[id]||(()=>'<div class="card">준비 중</div>'))();
