@@ -6,9 +6,9 @@
 <title>인력 부족·여유 자동계산 · AP 대전 생산도급</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" media="print" onload="this.media='all'">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#EDF0F5;--card:#fff;--line:#D7DEE8;--grid:#E9EDF3;
@@ -231,6 +231,7 @@ function render(){
   document.getElementById('conc').innerHTML=conc;
 
   const loads=GK.map(loadG);
+  if(typeof Chart==='undefined'){return;} // Chart.js 미로드(오프라인 등) — 표·KPI는 그대로 표시
   if(chart)chart.destroy();
   const ref={id:'r',afterDatasetsDraw(c){const{ctx,chartArea:{left,right},scales:{y}}=c;const yy=y.getPixelForValue(1);ctx.save();ctx.strokeStyle=C.ink;ctx.lineWidth=1.6;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(right,yy);ctx.stroke();ctx.restore();}};
   chart=new Chart(document.getElementById('chart'),{type:'bar',
@@ -239,6 +240,7 @@ function render(){
       plugins:{legend:{display:false},tooltip:{bodyFont:{family:'Nanum Gothic'},callbacks:{label:x=>' 부하율 '+x.raw.toFixed(2)}}},
       scales:{y:{beginAtZero:true,grid:{color:'#E9EDF3'},ticks:{font:{family:'Nanum Gothic',size:11},color:'#6C788C'}},x:{grid:{display:false},ticks:{font:{family:'Nanum Gothic',size:12},color:'#3A4760'}}}}});
 }
+window.addEventListener('load',()=>{try{render();}catch(e){}}); // defer 스크립트(Chart) 로드 후 차트 재그림
 
 document.getElementById('growth').addEventListener('input',e=>{st.g=+e.target.value;set('g-val',(st.g>0?'+':'')+st.g+'%');document.querySelectorAll('#g-chips .chip').forEach(c=>c.classList.toggle('on',+c.dataset.g===st.g));render();});
 document.querySelectorAll('#g-chips .chip').forEach(c=>c.addEventListener('click',()=>{st.g=+c.dataset.g;document.getElementById('growth').value=st.g;set('g-val',(st.g>0?'+':'')+st.g+'%');document.querySelectorAll('#g-chips .chip').forEach(x=>x.classList.toggle('on',x===c));render();}));
