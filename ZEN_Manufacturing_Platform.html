@@ -780,7 +780,8 @@ function prodStatus(){
   </div>
   ${ledger('라인별 생산 현황 상세','목표·실적·달성률·CAPA 부하·예상종료 — '+L.length+'개 라인','<table class="tb"><thead><tr><th>라인</th><th>목표</th><th>실적</th><th>달성률</th><th>CAPA 부하</th><th>예상 종료</th></tr></thead><tbody>'+tbl+'</tbody></table>')}`;
 };
-V.labor=()=>laborStatus();
+V.labor=()=>laborStatus()+`
+  <div class="card" id="laborCalc" style="margin-top:14px;padding:12px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic('users',16)}</span> 인력 부족·여유 자동계산 <span class="hint">그룹별 주CAPA·정규인원·TO 실데이터 · 신장율 시뮬 · 계획표 업로드</span><span style="margin-left:auto"><button class="btn" onclick="window.open(laborURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${laborURL()}" title="인력 부족·여유 자동계산" style="height:1480px"></iframe></div>`;
 function laborStatus(){
   function people(l){let c=[];for(let i=0;i<l.on;i++)c.push(pi('on'));for(let i=0;i<l.leave;i++)c.push(pi('leave'));for(let i=0;i<l.edu;i++)c.push(pi('edu'));for(let i=0;i<Math.max(0,l.need-G.cur(l));i++)c.push(pi('empty'));return c.join('');}
   const L=myLines();
