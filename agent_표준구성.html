@@ -1,0 +1,149 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent 표준 구성</title>
+<style>
+  :root{--navy:#1f3050;--ink:#20304a;--muted:#5f6f86;--muted2:#7d8ba0;--line:#e4e9f0;--hair:#eef2f7;
+        --green:#22a05f;--greenbg:#e8f6ee;--amber:#d98a2b;--amberbg:#fbf1e2;--red:#dc4b4b;--redbg:#fbeaea;
+        --blue:#3f74b5;--bluebg:#eaf1fb;--bg:#eef1f5;--card:#fff;--accent:#2f6fed;
+        --shadow:0 1px 3px rgba(18,32,58,.07)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Malgun Gothic',sans-serif;line-height:1.45;padding:24px 22px 50px}
+  .wrap{max-width:1180px;margin:0 auto}
+  .brand{font-size:11px;letter-spacing:2.2px;font-weight:800;color:var(--green);text-transform:uppercase}
+  h1{font-size:22px;font-weight:800;margin:5px 0 3px;letter-spacing:-.3px}
+  .sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+  .stage{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:start}
+  @media(max-width:820px){.stage{grid-template-columns:1fr}}
+  /* left rail: schematic */
+  .rail{position:sticky;top:16px}
+  .z{border-radius:11px;padding:11px 12px;margin-bottom:9px;border:1px solid var(--line);background:#fff;box-shadow:var(--shadow)}
+  .z .zn{font-size:11px;font-weight:800;color:#fff;width:20px;height:20px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;margin-right:6px}
+  .z .zt{font-size:12.5px;font-weight:800;color:var(--navy)}
+  .z .zd{font-size:11px;color:var(--muted);margin-top:5px}
+  .z1 .zn{background:var(--navy)} .z2 .zn{background:var(--green)} .z3 .zn{background:var(--blue)} .z4 .zn{background:#8a99ad}
+  .z2{border-color:#bfe6cf;background:#f4fbf7}
+  /* right: mock agent screen */
+  .screen{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 4px 20px rgba(18,32,58,.08)}
+  .schead{display:flex;align-items:baseline;gap:9px;margin-bottom:4px;padding-bottom:12px;border-bottom:1px solid var(--hair)}
+  .schead .t{font-size:18px;font-weight:800;color:var(--navy)}
+  .schead .s{font-size:12px;color:var(--muted)}
+  .tag2{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:20px;background:var(--greenbg);color:var(--green)}
+  .band{position:relative;padding-left:12px;margin:14px 0}
+  .band::before{content:attr(data-z);position:absolute;left:-142px;top:0;width:120px;text-align:right;font-size:11px;font-weight:800;color:var(--muted2)}
+  @media(max-width:820px){.band::before{display:none}}
+  /* ① kpi strip */
+  .kstrip{display:flex;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .ki{flex:1;padding:11px 13px;border-left:1px solid var(--line)}
+  .ki:first-child{border-left:0}
+  .ki .l{font-size:11px;color:var(--muted);font-weight:700}
+  .ki .v{font-size:20px;font-weight:800;color:var(--navy);margin-top:2px}
+  .ki .v small{font-size:11px;color:var(--muted);font-weight:600}
+  .ki .d{font-size:10.5px;margin-top:1px;color:var(--muted2)}
+  /* ② AI band */
+  .ai{background:linear-gradient(180deg,#f4fbf7,#fff);border:1px solid #cfe8da;border-left:3px solid var(--green);border-radius:12px;padding:14px 16px}
+  .ai .h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--navy)}
+  .ai .spark{width:22px;height:22px;border-radius:7px;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:13px}
+  .ai .lead{font-size:13px;color:#38485f;margin:9px 0 12px;font-weight:600}
+  .ai .lead b{color:var(--red)}
+  .recos{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+  @media(max-width:700px){.recos{grid-template-columns:1fr}}
+  .reco{background:#fff;border:1px solid var(--hair);border-radius:9px;padding:9px 11px}
+  .reco .r{font-size:12.5px;font-weight:700;color:var(--navy)}
+  .reco .s{font-size:11px;color:var(--muted);margin-top:2px}
+  .reco.warn{border-left:3px solid var(--amber)} .reco.crit{border-left:3px solid var(--red)} .reco.ok{border-left:3px solid var(--green)}
+  /* ③ body */
+  .g2{display:grid;grid-template-columns:1.4fr 1fr;gap:12px}
+  @media(max-width:700px){.g2{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px}
+  .card h3{font-size:13px;margin:0 0 11px;font-weight:800;color:var(--navy);display:flex;align-items:center}
+  .card h3 .hint{font-size:10.5px;color:var(--muted2);font-weight:600;margin-left:auto}
+  .prow{display:grid;grid-template-columns:70px 1fr 44px;gap:9px;align-items:center;margin-bottom:9px}
+  .prow .nm{font-size:12.5px;font-weight:700;color:var(--navy)}
+  .prow .nm small{display:block;font-weight:500;color:var(--muted);font-size:10.5px}
+  .pbar{height:9px;background:#eef2f7;border-radius:5px;overflow:hidden}
+  .pbar i{display:block;height:100%;border-radius:5px}
+  .prow .vv{font-size:15px;font-weight:800;text-align:right}
+  .form .fr{display:flex;gap:9px;padding:8px 0;border-top:1px solid var(--hair)}
+  .form .fr:first-child{border-top:0}
+  .form .fr .fi{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:0 0 auto}
+  .form .fr .ft{font-size:12px;font-weight:700;color:var(--navy)}
+  .form .fr .fd{font-size:11px;color:var(--muted)}
+  /* ④ collapsed ledger */
+  .ledger{background:#fff;border:1px dashed #cdd6e2;border-radius:11px;padding:12px 15px;display:flex;align-items:center;gap:10px;color:var(--muted)}
+  .ledger .cv{font-size:14px;color:var(--muted2);font-weight:800}
+  .ledger .lt{font-size:13px;font-weight:700;color:#43536b}
+  .ledger .ld{font-size:11px;color:var(--muted2)}
+  .note{margin-top:18px;font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:11px;padding:13px 15px}
+  .note b{color:var(--navy)}
+</style></head><body><div class="wrap">
+<div class="brand">ZEN Manufacturing · Agent Layout</div>
+<h1>Agent 내부 표준 구성 — “표준 4단”</h1>
+<div class="sub">왼쪽이 모든 Agent가 공유하는 4단 뼈대, 오른쪽은 <b>세척 Agent</b>에 적용한 실제 모습 예시입니다.</div>
+
+<div class="stage">
+  <!-- LEFT: schematic -->
+  <div class="rail">
+    <div class="z z1"><span class="zn">1</span><span class="zt">요약 스트립</span><div class="zd">핵심 KPI 4~6칸 + 색 신호</div></div>
+    <div class="z z2"><span class="zn">2</span><span class="zt">AI 판단·추천</span><div class="zd">“지금 봐야 할 것” + 추천 조치 <b>(상단 고정)</b></div></div>
+    <div class="z z3"><span class="zn">3</span><span class="zt">본문</span><div class="zd">시각화 │ 근거 데이터</div></div>
+    <div class="z z4"><span class="zn">4</span><span class="zt">상세 원장</span><div class="zd">라인별 표 · 기본 접힘</div></div>
+  </div>
+
+  <!-- RIGHT: mock agent -->
+  <div class="screen">
+    <div class="schead"><span class="t">세척 Agent</span><span class="s">세척 우선순위 · CIP 운영</span><span style="margin-left:auto" class="tag2">현황</span></div>
+
+    <!-- ① -->
+    <div class="band" data-z="① 요약 스트립">
+      <div class="kstrip">
+        <div class="ki"><div class="l">세척 필요 라인</div><div class="v" style="color:var(--red)">3<small>건</small></div><div class="d">75점 이상</div></div>
+        <div class="ki"><div class="l">최우선 세척</div><div class="v">초격차</div><div class="d" style="color:var(--red)">점수 92</div></div>
+        <div class="ki"><div class="l">CIP 가동</div><div class="v">1<small>/2기</small></div><div class="d">2기 병렬 가능</div></div>
+        <div class="ki"><div class="l">평균 세척 소요</div><div class="v">42<small>분</small></div><div class="d">기준 45분</div></div>
+      </div>
+    </div>
+
+    <!-- ② -->
+    <div class="band" data-z="② AI 판단·추천">
+      <div class="ai">
+        <div class="h"><span class="spark">✦</span> AI 판단 — 세척</div>
+        <div class="lead">색상 전환(백→적) 발생한 <b>초격차 라인 즉시 세척</b> 필요. CIP 2기 병렬 가동 시 오전 내 3개 라인 완료 가능.</div>
+        <div class="recos">
+          <div class="reco crit"><div class="r">초격차 즉시 세척</div><div class="s">색상전환+주기초과 · 92점</div></div>
+          <div class="reco warn"><div class="r">CIP 2기 병렬 가동</div><div class="s">유휴 1기 투입 → 대기 -35분</div></div>
+          <div class="reco ok"><div class="r">권장 순서</div><div class="s">초격차→튜브→일회용</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ -->
+    <div class="band" data-z="③ 본문">
+      <div class="g2">
+        <div class="card"><h3>세척 우선순위 자동 계산 <span class="hint">전환40 + 주기35 + 부하25</span></h3>
+          <div class="prow"><div class="nm">초격차 <small>경과 9h</small></div><div class="pbar"><i style="width:92%;background:var(--red)"></i></div><div class="vv" style="color:var(--red)">92</div></div>
+          <div class="prow"><div class="nm">튜브 <small>경과 7h</small></div><div class="pbar"><i style="width:74%;background:var(--amber)"></i></div><div class="vv" style="color:var(--amber)">74</div></div>
+          <div class="prow"><div class="nm">일회용 <small>경과 6h</small></div><div class="pbar"><i style="width:61%;background:var(--amber)"></i></div><div class="vv" style="color:var(--amber)">61</div></div>
+          <div class="prow"><div class="nm">치약충전 <small>경과 4h</small></div><div class="pbar"><i style="width:38%;background:var(--blue)"></i></div><div class="vv" style="color:var(--blue)">38</div></div>
+        </div>
+        <div class="card"><h3>우선순위 산정 근거</h3>
+          <div class="form">
+            <div class="fr"><span class="fi" style="background:var(--blue)"></span><div><div class="ft">제품/색상 전환 · 40%</div><div class="fd">동일 0 · 제품 0.5 · 색상+알러지 1.0</div></div></div>
+            <div class="fr"><span class="fi" style="background:var(--amber)"></span><div><div class="ft">세척주기 경과 · 35%</div><div class="fd">경과 ÷ 기준주기(8h), 최대 1.0</div></div></div>
+            <div class="fr"><span class="fi" style="background:var(--green)"></span><div><div class="ft">생산부하/오염도 · 25%</div><div class="fd">실적 ÷ CAPA (누적 오염 proxy)</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ -->
+    <div class="band" data-z="④ 상세 원장">
+      <div class="ledger"><span class="cv">▸</span><div><div class="lt">라인별 세척 상세 원장 (6개 라인)</div><div class="ld">경과시간 · 전환유형 · 주기 · 부하 · 점수 — 클릭하여 펼침</div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <b>핵심은 ② AI 판단·추천을 모든 Agent 상단에 고정</b>하는 것 — 지금은 이 블록이 Agent마다 우측/좌측/본문 안에 흩어져 있습니다.
+  세척=우선순위, 인력=재배치, 창고=발주, 안전=위험요인, 품질=파레토 개선처럼 각 Agent의 “탐지 → 추천”이 항상 같은 자리에 옵니다.
+  홈의 관제형 뒤집기와 같은 문법이 Agent 안까지 이어져, 홈→Agent가 하나로 읽힙니다.
+</div>
+</div></body></html>
