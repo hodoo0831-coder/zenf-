@@ -453,7 +453,7 @@ const DEFAULT_DB={
     {key:'HnB',label:'HnB 라인',cls:'l-hnb', need:20,on:14,leave:1,edu:3, target:30000,actual:19500,capa:34000,end:'18:40', clElapsed:7.0,clTransfer:0.8, defect:1.6, oeeA:88,oeeP:85},
     {key:'FnC',label:'FnC 라인',cls:'l-fnc', need:14,on:14,leave:1,edu:0, target:28000,actual:23800,capa:30000,end:'16:40', clElapsed:0.4,clTransfer:0.0, defect:1.1, oeeA:94,oeeP:91},
   ],
-  work:[{lab:'정상 근무',n:76,color:'#22a05f'},{lab:'연차',n:8,color:'#d98a2b'},{lab:'휴무',n:3,color:'#dc4b4b'},{lab:'교육/출장',n:5,color:'#3b82f6'}],
+  work:[{lab:'정상 근무',n:76,color:'#22a05f'},{lab:'연차',n:11,color:'#d98a2b'},{lab:'교육/출장',n:5,color:'#3b82f6'}],
   headcount:{need:95,cur:88}, // 관제 집계(교육·이동대기 포함)
   stock:[
     {name:'튜브 원단',unit:'ROLL',onhand:38,dailyUse:32,lead:1,moq:200,targetDays:10},
@@ -855,7 +855,7 @@ function laborStatus(){
     <div class="kpi"><div class="ic" data-ic="users"></div><div class="lab">총 필요 인원</div><div class="val">${headNeed()}<small>명</small></div></div>
     <div class="kpi"><div class="ic" data-ic="users"></div><div class="lab">현재 투입</div><div class="val">${headCur()}<small>명</small></div></div>
     <div class="kpi"><div class="ic" data-ic="alert"></div><div class="lab">부족 인원</div><div class="val neg">${gap}<small>명</small></div></div>
-    <div class="kpi"><div class="ic" data-ic="clock"></div><div class="lab">연차</div><div class="val" style="color:#ffcf5a">${DB.work[1].n+DB.work[2].n}<small>명</small></div></div>
+    <div class="kpi"><div class="ic" data-ic="clock"></div><div class="lab">연차</div><div class="val" style="color:#ffcf5a">${DB.work[1].n}<small>명</small></div></div>
   </div>
   ${aib}
   <div class="grid g2" style="grid-template-columns:1.3fr 1fr">
@@ -1075,7 +1075,7 @@ V.report=()=>{
     ${[['일간 보고서',todayKR(),'📄','t-blue','생성 가능',"genReport('일간 보고서')"],['주간 보고서',weekKR(),'🗂','t-blue','생성 가능',"genReport('주간 보고서')"],['월 마감 보고서',prevMonthKR()+' · v4.0','📅','t-green','도구 열기',"document.getElementById('monthlyReport').scrollIntoView({behavior:'smooth'})"]].map(r=>`<a class="cardlink" onclick="${r[5]}"><div class="card"><div style="display:flex;gap:11px;align-items:center"><div style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#eef4fb;border:1px solid var(--line2)">${r[2]}</div><div><div style="font-weight:800">${r[0]}</div><div class="mini">${r[1]}</div></div></div><div style="margin-top:12px"><span class="tag ${r[3]}">${r[4]}</span></div></div></a>`).join('')}
   </div>
   <div class="card" id="monthlyReport" style="margin-bottom:14px"><h3>월 마감 자동 보고서 <span class="hint">엑셀 업로드 · 월마감·전월대비·이상치·임원보고 자동 생성 · v4.0</span><span style="margin-left:auto"><button class="btn" onclick="window.open(monthlyURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${monthlyURL()}" title="월 마감 자동 보고서" loading="lazy" style="height:74vh"></iframe></div>
-  ${ledger('일간 생산일보 (문서형)','8개 Agent 데이터 자동 취합 · 정식 문서 양식 — 클릭하여 펼침',`<div style="text-align:right;margin:2px 0 8px"><button class="btn" onclick="exportReport()">⬇ 내보내기</button></div><div class="report-doc"><h4>AP 대전공장 생산일보 — ${todayKR()}</h4><div class="kv">작성: ZEN Report Agent · 자동 생성 · 데이터원: ${dataSource}</div><p><b>1. 생산 실적</b><br>전 라인 목표 ${(tp.t/1000).toFixed(0)}천개 대비 실적 ${(tp.a/1000).toFixed(0)}천개(달성률 ${tp.ach}%). ${topLines||'-'} 정상, ${lowLines||'없음'} 부진.</p><p><b>2. 인력 현황</b><br>필요 ${headNeed()}명 대비 투입 ${headCur()}명(${headNeed()-headCur()}명 부족), 연차 ${DB.work[1].n+DB.work[2].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p><p><b>3. 품질</b><br>평균 불량률 ${df}%(목표 1.5%). 주요 원인 ${DB.paretoNames[0]}·${DB.paretoNames[1]}. 최다 라인 조치 진행.</p><p><b>4. 안전</b><br>WBGT ${DB.safety.wbgt}℃ 폭염 ${DB.safety.wbgt>=28?'경고':'주의'}. 휴식·수분 조치. 무재해 ${DB.safety.noAccident}일.</p><p><b>5. 자재/설비</b><br>${orders.length?orders.map(s=>s.name).join('·')+' 긴급 발주 요청':'자재 발주 이슈 없음'}. 완제품 창고 ${DB.warehouse[0].fill}% 포화. 전 라인 OEE ${oee}%.</p><ul><li><b>금일 조치:</b> 인력 재배치, 발주 ${orders.length}건, 세척 ${myLines().filter(l=>G.cleanScore(l)>=75).length}라인</li><li><b>익일 리스크:</b> 자재 미입고 시 라인 중단 · 폭염 지속</li></ul></div>`)}`;
+  ${ledger('일간 생산일보 (문서형)','8개 Agent 데이터 자동 취합 · 정식 문서 양식 — 클릭하여 펼침',`<div style="text-align:right;margin:2px 0 8px"><button class="btn" onclick="exportReport()">⬇ 내보내기</button></div><div class="report-doc"><h4>AP 대전공장 생산일보 — ${todayKR()}</h4><div class="kv">작성: ZEN Report Agent · 자동 생성 · 데이터원: ${dataSource}</div><p><b>1. 생산 실적</b><br>전 라인 목표 ${(tp.t/1000).toFixed(0)}천개 대비 실적 ${(tp.a/1000).toFixed(0)}천개(달성률 ${tp.ach}%). ${topLines||'-'} 정상, ${lowLines||'없음'} 부진.</p><p><b>2. 인력 현황</b><br>필요 ${headNeed()}명 대비 투입 ${headCur()}명(${headNeed()-headCur()}명 부족), 연차 ${DB.work[1].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p><p><b>3. 품질</b><br>평균 불량률 ${df}%(목표 1.5%). 주요 원인 ${DB.paretoNames[0]}·${DB.paretoNames[1]}. 최다 라인 조치 진행.</p><p><b>4. 안전</b><br>WBGT ${DB.safety.wbgt}℃ 폭염 ${DB.safety.wbgt>=28?'경고':'주의'}. 휴식·수분 조치. 무재해 ${DB.safety.noAccident}일.</p><p><b>5. 자재/설비</b><br>${orders.length?orders.map(s=>s.name).join('·')+' 긴급 발주 요청':'자재 발주 이슈 없음'}. 완제품 창고 ${DB.warehouse[0].fill}% 포화. 전 라인 OEE ${oee}%.</p><ul><li><b>금일 조치:</b> 인력 재배치, 발주 ${orders.length}건, 세척 ${myLines().filter(l=>G.cleanScore(l)>=75).length}라인</li><li><b>익일 리스크:</b> 자재 미입고 시 라인 중단 · 폭염 지속</li></ul></div>`)}`;
 };
 
 /* ============ DATA MANAGEMENT (실데이터 연동) ============ */
