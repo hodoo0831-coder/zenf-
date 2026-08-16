@@ -453,7 +453,7 @@ const DEFAULT_DB={
     {key:'HnB',label:'HnB 라인',cls:'l-hnb', need:20,on:14,leave:1,edu:3, target:30000,actual:19500,capa:34000,end:'18:40', clElapsed:7.0,clTransfer:0.8, defect:1.6, oeeA:88,oeeP:85},
     {key:'FnC',label:'FnC 라인',cls:'l-fnc', need:14,on:14,leave:1,edu:0, target:28000,actual:23800,capa:30000,end:'16:40', clElapsed:0.4,clTransfer:0.0, defect:1.1, oeeA:94,oeeP:91},
   ],
-  work:[{lab:'정상 근무',n:76,color:'#22a05f'},{lab:'연차',n:8,color:'#d98a2b'},{lab:'결근',n:3,color:'#dc4b4b'},{lab:'교육/출장',n:5,color:'#3b82f6'}],
+  work:[{lab:'정상 근무',n:76,color:'#22a05f'},{lab:'연차',n:8,color:'#d98a2b'},{lab:'휴무',n:3,color:'#dc4b4b'},{lab:'교육/출장',n:5,color:'#3b82f6'}],
   headcount:{need:95,cur:88}, // 관제 집계(교육·이동대기 포함)
   stock:[
     {name:'튜브 원단',unit:'ROLL',onhand:38,dailyUse:32,lead:1,moq:200,targetDays:10},
@@ -472,7 +472,7 @@ const DEFAULT_DB={
   forecast:[{label:'5/10(금)',v:3},{label:'5/11(토)',v:2},{label:'5/12(월)',v:4},{label:'5/13(화)',v:6},{label:'5/14(수)',v:5},{label:'5/15(목)',v:2},{label:'5/16(금)',v:1}],
   extSys:[ // 외부 연동 시스템(배포 URL) — 역할별(worker/admin) URL, 관련 Agent 화면에 임베드
     {id:'wash',name:'세척실 관리 시스템',icon:'🧼',agent:'clean',urls:{worker:'https://wash-worker.netlify.app/',admin:'https://wash-admin.netlify.app/'}},
-    {id:'orikon',name:'오리콘·피박스 세척 실적',icon:'📦',agent:['stock'],urls:{worker:'https://orikon-pbox-worker.netlify.app/',admin:'https://orikon-pbox-admin.netlify.app/'}},
+    {id:'orikon',name:'오리콘·피박스 세척 실적',icon:'📦',agent:[],urls:{worker:'https://orikon-pbox-worker.netlify.app/',admin:'https://orikon-pbox-admin.netlify.app/'}},
     {id:'heat',name:'온열질환 히트워치',icon:'🌡',agent:'safe',urls:{worker:'https://zenf-heat-watch-v4.netlify.app/',admin:'https://zenf-heat-watch-v4.netlify.app/'}},
     {id:'zenkeeper',name:'ZEN Keeper 안전관리',icon:'🦺',agent:'safe',urls:{worker:'https://zenkeeper.netlify.app/',admin:'https://zenkeeper.netlify.app/'}},
   ],
@@ -528,7 +528,7 @@ const ICON={
   target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
   wrench:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2 2-2.6-.6-.6-2.6z"/>',
 };
-const NAV_ICON={home:'factory',planhub:'clock',prod:'activity',labor:'users',clean:'droplet',stock:'package',safe:'shield',qual:'flask',insight:'gauge',kpi:'gauge',report:'report',opl:'report',data:'db'};
+const NAV_ICON={home:'factory',planhub:'clock',prod:'activity',labor:'users',clean:'droplet',stock:'package',orikonwash:'droplet',safe:'shield',qual:'flask',insight:'gauge',kpi:'gauge',report:'report',opl:'report',data:'db'};
 function svic(n,s){s=s||18;return '<svg class="sv" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(ICON[n]||'')+'</svg>';}
 function tintOf(c){return c==='#16a34a'?'g':c==='#d97706'?'a':c==='#dc2626'?'r':'n';}
 function hydrateIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(function(e){if(e.getAttribute('data-done'))return;e.innerHTML=svic(e.getAttribute('data-ic'),16);e.setAttribute('data-done','1');});}
@@ -686,15 +686,16 @@ const AGENTS=[
   {id:'prod',name:'생산 Agent',icon:'📈',sub:'실시간 실적 · CAPA · P-BOX·오리콘'},
   {id:'labor',name:'인력 Agent',icon:'👥',sub:'출근 · 결원 · 대체인력 · 잔업 추천'},
   {id:'clean',name:'세척 Agent',icon:'🧼',sub:'세척 우선순위 자동 계산'},
-  {id:'stock',name:'창고 Agent',icon:'📦',sub:'포장재 창고 적치 · 구역별 포화 · 오리콘·피박스 세척'},
+  {id:'stock',name:'창고 Agent',icon:'📦',sub:'포장재 창고 적치 · 구역별 포화율'},
+  {id:'orikonwash',name:'용기세척 Agent',icon:'📦',sub:'오리콘·P-BOX 세척 실적 · 생산성(MH·PLT)'},
   {id:'safe',name:'안전 Agent',icon:'🦺',sub:'TBM · 폭염 · 위험요인 추천'},
   {id:'qual',name:'품질 Agent',icon:'🔬',sub:'불량 추이 · 원인 분석'},
   {id:'insight',name:'분석·보고 Agent',icon:'📊',sub:'KPI·LOSS 분석 · 월마감 보고서'},
 ];
 const ROLES={
-  field:{name:'현장',emoji:'🧑‍🏭',allow:['home','prod','clean','safe','safeapp']},
-  admin:{name:'관리자',emoji:'👔',allow:['home','planhub','prod','labor','clean','stock','safe','qual','data','opl','safeapp']},
-  center:{name:'센터',emoji:'🛰️',allow:['home','planhub','prod','labor','clean','stock','safe','qual','insight','data','opl','safeapp']},
+  field:{name:'현장',emoji:'🧑‍🏭',allow:['home','prod','clean','orikonwash','safe','safeapp']},
+  admin:{name:'관리자',emoji:'👔',allow:['home','planhub','prod','labor','clean','stock','orikonwash','safe','qual','data','opl','safeapp']},
+  center:{name:'센터',emoji:'🛰️',allow:['home','planhub','prod','labor','clean','stock','orikonwash','safe','qual','insight','data','opl','safeapp']},
 };
 let role='center';
 
@@ -854,7 +855,7 @@ function laborStatus(){
     <div class="kpi"><div class="ic" data-ic="users"></div><div class="lab">총 필요 인원</div><div class="val">${headNeed()}<small>명</small></div></div>
     <div class="kpi"><div class="ic" data-ic="users"></div><div class="lab">현재 투입</div><div class="val">${headCur()}<small>명</small></div></div>
     <div class="kpi"><div class="ic" data-ic="alert"></div><div class="lab">부족 인원</div><div class="val neg">${gap}<small>명</small></div></div>
-    <div class="kpi"><div class="ic" data-ic="clock"></div><div class="lab">연차/결근</div><div class="val" style="color:#ffcf5a">${DB.work[1].n+DB.work[2].n}<small>명</small></div></div>
+    <div class="kpi"><div class="ic" data-ic="clock"></div><div class="lab">연차/휴무</div><div class="val" style="color:#ffcf5a">${DB.work[1].n+DB.work[2].n}<small>명</small></div></div>
   </div>
   ${aib}
   <div class="grid g2" style="grid-template-columns:1.3fr 1fr">
@@ -934,6 +935,10 @@ V.stock=()=>{
   ${aib}
   ${whSection}
   <div class="card" id="whAdmin" style="margin-top:14px;padding:12px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic('package',16)}</span> 포장재 창고 적치 관리 시스템 <span class="hint">구역·로케이션·적치율 · 엑셀 연동</span><span style="margin-left:auto"><button class="btn" onclick="window.open(whURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${whURL()}" title="포장재 창고 적치 관리 시스템" style="height:82vh"></iframe></div>`;
+};
+V.orikonwash=()=>{
+  const s=(DB.extSys||[]).find(x=>x.id==='orikon')||{};const url=sysUrl(s);
+  return `<div class="card" style="padding:12px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic('package',16)}</span> 오리콘·P-BOX 세척 실적 <span class="hint">현장 모바일 입력 → 실시간 집계 · MH·PLT·시간당 생산성 (${ROLES[role].name})</span><span style="margin-left:auto"><button class="btn" onclick="window.open('${(url||'').replace(/'/g,'%27')}','_blank')">↗ 새 창</button></span></h3>${url?`<iframe class="safe" src="${url.replace(/"/g,'&quot;')}" title="오리콘·P-BOX 세척 실적" loading="lazy"></iframe><div class="mini" style="margin-top:6px">비어 보이면 ‘새 창’으로 여세요.</div>`:'<p class="mini">연동 URL이 없습니다. 데이터 관리 → 외부 시스템에서 설정하세요.</p>'}</div>`;
 };
 V.safe=()=>{
   const nsys=(DB.extSys||[]).filter(s=>inAgent(s,'safe')).length;
@@ -1070,7 +1075,7 @@ V.report=()=>{
     ${[['일간 보고서',todayKR(),'📄','t-blue','생성 가능',"genReport('일간 보고서')"],['주간 보고서',weekKR(),'🗂','t-blue','생성 가능',"genReport('주간 보고서')"],['월 마감 보고서',prevMonthKR()+' · v4.0','📅','t-green','도구 열기',"document.getElementById('monthlyReport').scrollIntoView({behavior:'smooth'})"]].map(r=>`<a class="cardlink" onclick="${r[5]}"><div class="card"><div style="display:flex;gap:11px;align-items:center"><div style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#eef4fb;border:1px solid var(--line2)">${r[2]}</div><div><div style="font-weight:800">${r[0]}</div><div class="mini">${r[1]}</div></div></div><div style="margin-top:12px"><span class="tag ${r[3]}">${r[4]}</span></div></div></a>`).join('')}
   </div>
   <div class="card" id="monthlyReport" style="margin-bottom:14px"><h3>월 마감 자동 보고서 <span class="hint">엑셀 업로드 · 월마감·전월대비·이상치·임원보고 자동 생성 · v4.0</span><span style="margin-left:auto"><button class="btn" onclick="window.open(monthlyURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${monthlyURL()}" title="월 마감 자동 보고서" loading="lazy" style="height:74vh"></iframe></div>
-  ${ledger('일간 생산일보 (문서형)','8개 Agent 데이터 자동 취합 · 정식 문서 양식 — 클릭하여 펼침',`<div style="text-align:right;margin:2px 0 8px"><button class="btn" onclick="exportReport()">⬇ 내보내기</button></div><div class="report-doc"><h4>AP 대전공장 생산일보 — ${todayKR()}</h4><div class="kv">작성: ZEN Report Agent · 자동 생성 · 데이터원: ${dataSource}</div><p><b>1. 생산 실적</b><br>전 라인 목표 ${(tp.t/1000).toFixed(0)}천개 대비 실적 ${(tp.a/1000).toFixed(0)}천개(달성률 ${tp.ach}%). ${topLines||'-'} 정상, ${lowLines||'없음'} 부진.</p><p><b>2. 인력 현황</b><br>필요 ${headNeed()}명 대비 투입 ${headCur()}명(${headNeed()-headCur()}명 부족), 연차/결근 ${DB.work[1].n+DB.work[2].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p><p><b>3. 품질</b><br>평균 불량률 ${df}%(목표 1.5%). 주요 원인 ${DB.paretoNames[0]}·${DB.paretoNames[1]}. 최다 라인 조치 진행.</p><p><b>4. 안전</b><br>WBGT ${DB.safety.wbgt}℃ 폭염 ${DB.safety.wbgt>=28?'경고':'주의'}. 휴식·수분 조치. 무재해 ${DB.safety.noAccident}일.</p><p><b>5. 자재/설비</b><br>${orders.length?orders.map(s=>s.name).join('·')+' 긴급 발주 요청':'자재 발주 이슈 없음'}. 완제품 창고 ${DB.warehouse[0].fill}% 포화. 전 라인 OEE ${oee}%.</p><ul><li><b>금일 조치:</b> 인력 재배치, 발주 ${orders.length}건, 세척 ${myLines().filter(l=>G.cleanScore(l)>=75).length}라인</li><li><b>익일 리스크:</b> 자재 미입고 시 라인 중단 · 폭염 지속</li></ul></div>`)}`;
+  ${ledger('일간 생산일보 (문서형)','8개 Agent 데이터 자동 취합 · 정식 문서 양식 — 클릭하여 펼침',`<div style="text-align:right;margin:2px 0 8px"><button class="btn" onclick="exportReport()">⬇ 내보내기</button></div><div class="report-doc"><h4>AP 대전공장 생산일보 — ${todayKR()}</h4><div class="kv">작성: ZEN Report Agent · 자동 생성 · 데이터원: ${dataSource}</div><p><b>1. 생산 실적</b><br>전 라인 목표 ${(tp.t/1000).toFixed(0)}천개 대비 실적 ${(tp.a/1000).toFixed(0)}천개(달성률 ${tp.ach}%). ${topLines||'-'} 정상, ${lowLines||'없음'} 부진.</p><p><b>2. 인력 현황</b><br>필요 ${headNeed()}명 대비 투입 ${headCur()}명(${headNeed()-headCur()}명 부족), 연차/휴무 ${DB.work[1].n+DB.work[2].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p><p><b>3. 품질</b><br>평균 불량률 ${df}%(목표 1.5%). 주요 원인 ${DB.paretoNames[0]}·${DB.paretoNames[1]}. 최다 라인 조치 진행.</p><p><b>4. 안전</b><br>WBGT ${DB.safety.wbgt}℃ 폭염 ${DB.safety.wbgt>=28?'경고':'주의'}. 휴식·수분 조치. 무재해 ${DB.safety.noAccident}일.</p><p><b>5. 자재/설비</b><br>${orders.length?orders.map(s=>s.name).join('·')+' 긴급 발주 요청':'자재 발주 이슈 없음'}. 완제품 창고 ${DB.warehouse[0].fill}% 포화. 전 라인 OEE ${oee}%.</p><ul><li><b>금일 조치:</b> 인력 재배치, 발주 ${orders.length}건, 세척 ${myLines().filter(l=>G.cleanScore(l)>=75).length}라인</li><li><b>익일 리스크:</b> 자재 미입고 시 라인 중단 · 폭염 지속</li></ul></div>`)}`;
 };
 
 /* ============ DATA MANAGEMENT (실데이터 연동) ============ */
@@ -1372,7 +1377,7 @@ const NAV_TOOLS={opl:{name:'OPL 교육자료',icon:'📄'},data:{name:'데이터
 const NAV_GROUPS=[
   {sec:'OVERVIEW',ids:['home']},
   {sec:'계획 · PLAN',ids:['planhub']},
-  {sec:'운영 · OPERATIONS',ids:['prod','labor','clean','stock']},
+  {sec:'운영 · OPERATIONS',ids:['prod','labor','clean','stock','orikonwash']},
   {sec:'품질·안전 · QUALITY & EHS',ids:['qual','safe']},
   {sec:'분석 · INSIGHT',ids:['insight']},
   {sec:'도구 · TOOLS',ids:['opl','data']},
@@ -1469,12 +1474,11 @@ document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')
 // startup: restore saved data + default scope UI
 loadDB();
 fillScope('center');
-// 세션 복원 — 저장된 역할/스코프 있으면 로그인 화면 건너뛰고 바로 대시보드
-(function restoreSession(){try{const s=JSON.parse(localStorage.getItem('zen_session')||'null');if(!s||!ROLES[s.role])return;
+// 시작 시 항상 역할 선택 로그인 화면 표시 — 지난번 역할만 미리 선택해 편의 제공
+(function preselectRole(){try{const s=JSON.parse(localStorage.getItem('zen_session')||'null');if(!s||!ROLES[s.role])return;
   document.querySelectorAll('#roles button').forEach(x=>x.classList.toggle('on',x.dataset.role===s.role));
   fillScope(s.role);
   const sel=document.getElementById('scopeSel');if(s.scope&&[...sel.options].some(o=>o.value===s.scope))sel.value=s.scope;
-  doLogin();
 }catch(e){}})();
 </script>
 </body>
