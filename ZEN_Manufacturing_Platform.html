@@ -725,7 +725,7 @@ function loadView(){
     <div class="card"><h3>그룹별 부하율 <span class="hint">클릭 → 라인 필터 · 100%↑ 잔업·증원</span></h3>${gbars}</div>
     <div class="card"><h3>AI 인력 재배치 추천 <span class="hint">여유 그룹 → 과부하 그룹</span></h3>${reco}</div>
   </div>
-  <div class="card"><h3>라인별 부하율 · 필요인원 ${filterChip}<span class="hint">CAPA·표준인원 실데이터 연동</span></h3><div style="overflow-x:auto"><table class="tb"><thead><tr><th style="text-align:left">라인</th><th>그룹</th><th>주간계획</th><th>주CAPA</th><th>부하율</th><th>표준</th><th>가용</th><th>필요*</th><th>과부족</th></tr></thead><tbody>${tbl}</tbody></table></div><div class="mini" style="margin-top:6px">* 필요 = 표준인원 × 부하율. CAPA 기준: ${base==='c75'?'7.5hr 정규':'10.5hr 잔업'} · 부하율 100%↑ = 잔업 또는 증원 필요.</div></div>`;
+  ${ledger('라인별 부하율 · 필요인원','CAPA·표준인원 실데이터 연동 · '+shown.length+'개 라인 — 클릭하여 펼침','<div style="overflow-x:auto"><table class="tb"><thead><tr><th style="text-align:left">라인</th><th>그룹</th><th>주간계획</th><th>주CAPA</th><th>부하율</th><th>표준</th><th>가용</th><th>필요*</th><th>과부족</th></tr></thead><tbody>'+tbl+'</tbody></table></div><div class="mini" style="margin-top:6px">* 필요 = 표준인원 × 부하율. CAPA 기준: '+(base==='c75'?'7.5hr 정규':'10.5hr 잔업')+' · 부하율 100%↑ = 잔업 또는 증원 필요.</div>')}`;
 }
 
 V.home=()=>{
@@ -808,8 +808,7 @@ function prodStatus(){
   </div>
   ${ledger('라인별 생산 현황 상세','목표·실적·달성률·CAPA 부하·예상종료 — '+L.length+'개 라인','<table class="tb"><thead><tr><th>라인</th><th>목표</th><th>실적</th><th>달성률</th><th>CAPA 부하</th><th>예상 종료</th></tr></thead><tbody>'+tbl+'</tbody></table>')}`;
 };
-V.labor=()=>laborStatus()+`
-  <div class="card" id="laborCalc" style="margin-top:14px;padding:12px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic('users',16)}</span> 인력 부족·여유 자동계산 <span class="hint">그룹별 주CAPA·정규인원·TO 실데이터 · 신장율 시뮬 · 계획표 업로드</span><span style="margin-left:auto"><button class="btn" onclick="window.open(laborURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${laborURL()}" title="인력 부족·여유 자동계산" style="height:1480px"></iframe></div>`;
+V.labor=()=>laborStatus()+ledger('인력 부하율·필요 T/O 계산기 (그룹별)','주CAPA·정규인원·보유 TO 108 · 신장율 시뮬 · 계획표 업로드 — 클릭하여 펼침','<div style="text-align:right;margin:2px 0 8px"><button class="btn" onclick="window.open(laborURL(),\'_blank\')">↗ 새 창</button></div><iframe class="safe" src="'+laborURL()+'" title="인력 부족·여유 자동계산" style="height:1480px"></iframe>');
 function laborStatus(){
   function people(l){let c=[];for(let i=0;i<l.on;i++)c.push(pi('on'));for(let i=0;i<l.leave;i++)c.push(pi('leave'));for(let i=0;i<l.edu;i++)c.push(pi('edu'));for(let i=0;i<Math.max(0,l.need-G.cur(l));i++)c.push(pi('empty'));return c.join('');}
   const L=myLines();
@@ -1055,19 +1054,7 @@ V.report=()=>{
     ${[['일간 보고서',todayKR(),'📄','t-blue','생성 가능',"genReport('일간 보고서')"],['주간 보고서',weekKR(),'🗂','t-blue','생성 가능',"genReport('주간 보고서')"],['월 마감 보고서',prevMonthKR()+' · v4.0','📅','t-green','도구 열기',"document.getElementById('monthlyReport').scrollIntoView({behavior:'smooth'})"]].map(r=>`<a class="cardlink" onclick="${r[5]}"><div class="card"><div style="display:flex;gap:11px;align-items:center"><div style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#eef4fb;border:1px solid var(--line2)">${r[2]}</div><div><div style="font-weight:800">${r[0]}</div><div class="mini">${r[1]}</div></div></div><div style="margin-top:12px"><span class="tag ${r[3]}">${r[4]}</span></div></div></a>`).join('')}
   </div>
   <div class="card" id="monthlyReport" style="margin-bottom:14px"><h3>월 마감 자동 보고서 <span class="hint">엑셀 업로드 · 월마감·전월대비·이상치·임원보고 자동 생성 · v4.0</span><span style="margin-left:auto"><button class="btn" onclick="window.open(monthlyURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${monthlyURL()}" title="월 마감 자동 보고서" loading="lazy" style="height:74vh"></iframe></div>
-  <div class="card"><h3>AI 자동 작성 — 일간 생산일보 <span class="hint">8개 Agent 데이터 자동 취합 · DB 실시간 반영</span><button class="btn" onclick="exportReport()">⬇ 내보내기</button></h3>
-    <div class="report-doc">
-      <h4>AP 대전공장 생산일보 — ${todayKR()}</h4>
-      <div class="kv">작성: ZEN Report Agent · 09:30 자동 생성 · 데이터원: ${dataSource}</div>
-      <p><b>1. 생산 실적</b><br>전 라인 목표 ${(tp.t/1000).toFixed(0)}천개 대비 실적 ${(tp.a/1000).toFixed(0)}천개(달성률 ${tp.ach}%). ${topLines||'-'} 정상, ${lowLines||'없음'} 부진.</p>
-      <p><b>2. 인력 현황</b><br>필요 ${headNeed()}명 대비 투입 ${headCur()}명(${headNeed()-headCur()}명 부족), 연차/결근 ${DB.work[1].n+DB.work[2].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p>
-      <p><b>3. 품질</b><br>평균 불량률 ${df}%(목표 1.5%). 주요 원인 ${DB.paretoNames[0]}·${DB.paretoNames[1]}. 최다 라인 조치 진행.</p>
-      <p><b>4. 안전</b><br>WBGT ${DB.safety.wbgt}℃ 폭염 ${DB.safety.wbgt>=28?'경고':'주의'}. 휴식·수분 조치. 무재해 ${DB.safety.noAccident}일.</p>
-      <p><b>5. 자재/설비</b><br>${orders.length?orders.map(s=>s.name).join('·')+' 긴급 발주 요청':'자재 발주 이슈 없음'}. 완제품 창고 ${DB.warehouse[0].fill}% 포화. 전 라인 OEE ${oee}%.</p>
-      <ul><li><b>금일 조치:</b> 인력 재배치, 발주 ${orders.length}건, 세척 ${myLines().filter(l=>G.cleanScore(l)>=75).length}라인</li>
-      <li><b>익일 리스크:</b> 자재 미입고 시 라인 중단 · 폭염 지속</li></ul>
-    </div>
-  </div>`;
+  ${ledger('일간 생산일보 (문서형)','8개 Agent 데이터 자동 취합 · 정식 문서 양식 — 클릭하여 펼침',`<div style="text-align:right;margin:2px 0 8px"><button class="btn" onclick="exportReport()">⬇ 내보내기</button></div><div class="report-doc"><h4>AP 대전공장 생산일보 — ${todayKR()}</h4><div class="kv">작성: ZEN Report Agent · 자동 생성 · 데이터원: ${dataSource}</div><p><b>1. 생산 실적</b><br>전 라인 목표 ${(tp.t/1000).toFixed(0)}천개 대비 실적 ${(tp.a/1000).toFixed(0)}천개(달성률 ${tp.ach}%). ${topLines||'-'} 정상, ${lowLines||'없음'} 부진.</p><p><b>2. 인력 현황</b><br>필요 ${headNeed()}명 대비 투입 ${headCur()}명(${headNeed()-headCur()}명 부족), 연차/결근 ${DB.work[1].n+DB.work[2].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p><p><b>3. 품질</b><br>평균 불량률 ${df}%(목표 1.5%). 주요 원인 ${DB.paretoNames[0]}·${DB.paretoNames[1]}. 최다 라인 조치 진행.</p><p><b>4. 안전</b><br>WBGT ${DB.safety.wbgt}℃ 폭염 ${DB.safety.wbgt>=28?'경고':'주의'}. 휴식·수분 조치. 무재해 ${DB.safety.noAccident}일.</p><p><b>5. 자재/설비</b><br>${orders.length?orders.map(s=>s.name).join('·')+' 긴급 발주 요청':'자재 발주 이슈 없음'}. 완제품 창고 ${DB.warehouse[0].fill}% 포화. 전 라인 OEE ${oee}%.</p><ul><li><b>금일 조치:</b> 인력 재배치, 발주 ${orders.length}건, 세척 ${myLines().filter(l=>G.cleanScore(l)>=75).length}라인</li><li><b>익일 리스크:</b> 자재 미입고 시 라인 중단 · 폭염 지속</li></ul></div>`)}`;
 };
 
 /* ============ DATA MANAGEMENT (실데이터 연동) ============ */
