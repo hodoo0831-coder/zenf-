@@ -53,6 +53,10 @@
   .nav .user .av{width:30px;height:30px;border-radius:9px;background:#2f5c88;display:flex;align-items:center;justify-content:center;font-size:15px}
   .nav .user .nm{font-weight:800}.nav .user .rl{color:#9fb6d1;font-size:11px}
   .nav .user .out{margin-left:auto;color:#9fb6d1;cursor:pointer;font-size:15px}
+  .nav .roleswitch{display:flex;gap:4px;margin-top:7px}
+  .nav .rchip{font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;background:#20406097;border:1px solid #33547a;color:#bcd0e8;cursor:pointer;transition:.12s}
+  .nav .rchip:hover{border-color:#4f7fb0}
+  .nav .rchip.on{background:#2f5c88;border-color:#5a8ab8;color:#fff}
 
   .stage{padding:20px 24px 32px;min-width:0}
   .bar{display:flex;align-items:center;gap:16px;margin-bottom:18px}
@@ -468,7 +472,7 @@ const DEFAULT_DB={
   forecast:[{label:'5/10(금)',v:3},{label:'5/11(토)',v:2},{label:'5/12(월)',v:4},{label:'5/13(화)',v:6},{label:'5/14(수)',v:5},{label:'5/15(목)',v:2},{label:'5/16(금)',v:1}],
   extSys:[ // 외부 연동 시스템(배포 URL) — 역할별(worker/admin) URL, 관련 Agent 화면에 임베드
     {id:'wash',name:'세척실 관리 시스템',icon:'🧼',agent:'clean',urls:{worker:'https://wash-worker.netlify.app/',admin:'https://wash-admin.netlify.app/'}},
-    {id:'orikon',name:'오리콘·피박스 시스템',icon:'📦',agent:['clean'],urls:{worker:'https://orikon-pbox-worker.netlify.app/',admin:'https://orikon-pbox-admin.netlify.app/'}},
+    {id:'orikon',name:'오리콘·피박스 세척 실적',icon:'📦',agent:['stock'],urls:{worker:'https://orikon-pbox-worker.netlify.app/',admin:'https://orikon-pbox-admin.netlify.app/'}},
     {id:'heat',name:'온열질환 히트워치',icon:'🌡',agent:'safe',urls:{worker:'https://zenf-heat-watch-v4.netlify.app/',admin:'https://zenf-heat-watch-v4.netlify.app/'}},
     {id:'zenkeeper',name:'ZEN Keeper 안전관리',icon:'🦺',agent:'safe',urls:{worker:'https://zenkeeper.netlify.app/',admin:'https://zenkeeper.netlify.app/'}},
   ],
@@ -682,7 +686,7 @@ const AGENTS=[
   {id:'prod',name:'생산 Agent',icon:'📈',sub:'실시간 실적 · CAPA · P-BOX·오리콘'},
   {id:'labor',name:'인력 Agent',icon:'👥',sub:'출근 · 결원 · 대체인력 · 잔업 추천'},
   {id:'clean',name:'세척 Agent',icon:'🧼',sub:'세척 우선순위 자동 계산'},
-  {id:'stock',name:'창고 Agent',icon:'📦',sub:'포장재 창고 적치 · 구역별 포화 · 자재 재고'},
+  {id:'stock',name:'창고 Agent',icon:'📦',sub:'포장재 창고 적치 · 구역별 포화 · 오리콘·피박스 세척'},
   {id:'safe',name:'안전 Agent',icon:'🦺',sub:'TBM · 폭염 · 위험요인 추천'},
   {id:'qual',name:'품질 Agent',icon:'🔬',sub:'불량 추이 · 원인 분석'},
   {id:'insight',name:'분석·보고 Agent',icon:'📊',sub:'KPI·LOSS 분석 · 월마감 보고서'},
@@ -920,28 +924,15 @@ V.stock=()=>{
     whSection=`<div class="card" style="margin-bottom:16px"><h3>창고 구역별 적치율 <span class="hint">주1회 점검</span></h3><p class="mini">구역별 적치 점검 엑셀을 <a onclick="go('data')" style="color:#3f74b5;cursor:pointer">데이터 관리</a>에서 업로드하세요.</p></div>`;
   }
   const overN=DB.wh?((DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones.filter(z=>z.rate>=100).length):0;
-  const minDays=Math.min(...DB.stock.map(s=>G.stock(s).days));
+  const trAll=DB.wh?whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0]):null;
   const srecos=[];
-  if(orders.length)srecos.push({lv:'crit',r:`${orders[0].name} 즉시 발주 ${G.stock(orders[0]).qty}${orders[0].unit}`,s:`재고 ${G.stock(orders[0]).days}일 ≤ 재주문점`});
-  if(overN)srecos.push({lv:'warn',r:`적치 초과 ${overN}구역 재배치`,s:'CAPA 상향 또는 출하 우선'});
-  srecos.push({lv:minDays<=1.5?'crit':minDays<=3?'warn':'ok',r:`최단 재고 ${minDays}일`,s:orders.length?`${orders.length}종 발주 필요`:'전 자재 재주문점 이상'});
-  const aib=aiBand('창고','재주문점 · 적치율 100%',`${orders.length?`<b>${orders.map(s=>s.name).join('·')}</b> 재주문점 도달 — 즉시 발주.`:'긴급 발주 없음.'}${overN?` 적치 초과 ${overN}구역 — 재배치 필요.`:''}`,srecos);
+  if(overN)srecos.push({lv:'crit',r:`적치 초과 ${overN}구역 재배치`,s:'CAPA 상향 또는 출하 우선 조정'});
+  srecos.push({lv:(trAll>=100)?'crit':(trAll>=90)?'warn':'ok',r:`전체 적치율 ${trAll!=null?trAll+'%':'-'}`,s:overN?'초과 구역 우선 조정':'적정 범위'});
+  srecos.push({lv:'ok',r:'출하·재배치 조정',s:'초과 구역 우선 출하로 여유 확보'});
+  const aib=aiBand('창고','적치율 100%',`${overN?`적치 <b>초과 ${overN}구역</b> — 재배치·출하 우선.`:'전 구역 적치 적정.'} 전체 적치율 ${trAll!=null?trAll+'%':'-'}.`,srecos);
   return `
-  <div class="grid g4" style="margin-bottom:14px">
-    <div class="kpi"><div class="ic" data-ic="package"></div><div class="lab">부족 임박 자재</div><div class="val ${orders.length?'neg':'pos'}">${orders.length}<small>종</small></div></div>
-    <div class="kpi"><div class="ic" data-ic="alert"></div><div class="lab">최단 재고</div><div class="val">${minDays}<small>일</small></div></div>
-    <div class="kpi"><div class="ic" data-ic="factory"></div><div class="lab">${DB.wh?'창고 전체 적치율':'완제품 창고 포화'}</div><div class="val" style="color:${DB.wh?(whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0])>=100?'#dc4b4b':'#3f74b5'):sc(DB.warehouse[0].fill,80,90,true)}">${DB.wh?whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0]):DB.warehouse[0].fill}<small>%</small></div></div>
-    <div class="kpi"><div class="ic" data-ic="package"></div><div class="lab">발주 추천</div><div class="val ${orders.length?'neg':''}">${orders.length}<small>건</small></div></div>
-  </div>
   ${aib}
   ${whSection}
-  <div class="grid g2" style="grid-template-columns:1.4fr 1fr">
-    <div class="card"><h3>자재별 재고 소진 예측 <span class="hint">소진일수 = 재고 ÷ 일소비</span></h3>${rows}</div>
-    <div class="card"><h3>AI 발주 추천 <span class="hint">발주량 = max(MOQ, 목표재고−현재고)</span></h3>
-      ${orders.length?orders.map(s=>{const c=G.stock(s);return `<div class="reco bad"><div class="ic" data-ic="package"></div><div class="tx"><div class="r">${s.name} · 즉시 발주 ${c.qty}${s.unit}</div><div class="s">재고 ${c.days}일 ≤ 재주문점 · 리드타임 ${s.lead}일 · MOQ ${s.moq}</div></div></div>`;}).join(''):'<div class="reco"><div class="ic" data-ic="check"></div><div class="tx"><div class="r">긴급 발주 없음</div><div class="s">전 자재 재주문점 이상</div></div></div>'}
-      <div class="reco warn"><div class="ic" data-ic="truck"></div><div class="tx"><div class="r">출하·재배치 조정</div><div class="s">${DB.wh?('CAPA 초과 구역 '+(DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones.filter(z=>z.rate>=100).length+'곳 우선 조정'):'완제품 창고 '+DB.warehouse[0].fill+'% · 오후 출하 우선'}</div></div></div>
-    </div>
-  </div>
   <div class="card" id="whAdmin" style="margin-top:14px;padding:12px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic('package',16)}</span> 포장재 창고 적치 관리 시스템 <span class="hint">구역·로케이션·적치율 · 엑셀 연동</span><span style="margin-left:auto"><button class="btn" onclick="window.open(whURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${whURL()}" title="포장재 창고 적치 관리 시스템" style="height:82vh"></iframe></div>`;
 };
 V.safe=()=>{
@@ -1395,7 +1386,7 @@ function buildNav(){
     prod:{t:totProd().ach+'%',c:totProd().ach>=80?'t-green':'t-amber'},
     labor:{t:'-'+(DB.headcount.need-DB.headcount.cur),c:'t-red'},
     clean:{t:''+DB.lines.filter(l=>G.cleanScore(l)>=75).length,c:'t-amber'},
-    stock:{t:''+DB.stock.filter(s=>G.stock(s).need).length,c:'t-red'},
+    stock:(()=>{const o=DB.wh?((DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones.filter(z=>z.rate>=100).length):0;return{t:''+o,c:o?'t-red':'t-green'};})(),
     safe:{t:DB.safety.wbgt>=28?'경고':'양호',c:DB.safety.wbgt>=28?'t-amber':'t-green'},
     qual:{t:avgDefect()+'%',c:avgDefect()>1.5?'t-amber':'t-green'},
     insight:{t:avgOEE()+'%',c:avgOEE()>=80?'t-green':'t-amber'},
@@ -1407,7 +1398,7 @@ function buildNav(){
     <div class="logo"><div class="t"><span>ZEN</span> Manufacturing</div><div class="s">Platform · AP 대전공장</div></div>
     ${body}
     <div class="spacer"></div>
-    <div class="user"><div class="av">${R.emoji}</div><div><div class="nm">홍길동 ${R.name}</div><div class="rl">${R.name} · ${scopeLabel()}</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
+    <div class="user"><div class="av">${R.emoji}</div><div style="flex:1;min-width:0"><div class="nm">홍길동 ${R.name}</div><div class="rl">${scopeLabel()}</div><div class="roleswitch">${['field','admin','center'].map(k=>`<span class="rchip ${role===k?'on':''}" onclick="switchRole('${k}')">${ROLES[k].name}</span>`).join('')}</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
 }
 const GO_REDIR={plan:['planhub','plan'],delay:['planhub','delay'],load:['planhub','load'],kpi:['insight','kpi'],report:['insight','report']};
 function go(id){
@@ -1468,6 +1459,11 @@ function toggleBig(){bigMode=!bigMode;applyBig();try{localStorage.setItem('zen_b
 function toggleNav(){const n=document.getElementById('nav'),s=document.getElementById('navScrim');const open=!n.classList.contains('open');n.classList.toggle('open',open);s.classList.toggle('on',open);}
 function closeNav(){const n=document.getElementById('nav');if(n)n.classList.remove('open');const s=document.getElementById('navScrim');if(s)s.classList.remove('on');}
 try{bigMode=localStorage.getItem('zen_big')==='1';}catch(e){}
+function switchRole(r){if(!ROLES[r]||r===role)return;role=r;
+  if(r==='field'){const first=DEFAULT_DB.lines[0].key;scope=[first];scopeName=first+' 라인';}
+  else{scope=null;scopeName='전체';}
+  try{localStorage.setItem('zen_session',JSON.stringify({role,scope:r==='field'?scope[0]:'전체'}));}catch(e){}
+  const c=ROLES[role].allow.includes(cur)?cur:'home';buildNav();go(c);toast(ROLES[r].name+' 화면으로 전환');}
 function logout(){try{localStorage.removeItem('zen_session');}catch(e){}document.getElementById('app').classList.remove('show');document.getElementById('login').style.display='flex';}
 document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 // startup: restore saved data + default scope UI
