@@ -331,7 +331,7 @@
     <label id="scopeLbl">담당 구역</label>
     <select id="scopeSel" style="width:100%;border:1px solid var(--line2);background:#0b1a2e;color:var(--ink);border-radius:11px;padding:12px 13px;font-size:14px"></select>
     <label>사번 / 비밀번호</label>
-    <input id="pw" type="password" placeholder="데모: 아무 값이나 입력 후 로그인" value="1234">
+    <input id="pw" type="password" placeholder="비밀번호" value="1234">
     <button class="go" onclick="doLogin()">로그인</button>
   </div>
 </div>
@@ -349,7 +349,7 @@
       </div>
       <div class="right">
         <button class="btn" id="bigBtn" onclick="toggleBig()" title="벽 모니터·전광판용 큰 화면">큰화면</button>
-        <span class="src" id="srcTag">데이터: 데모</span>
+        <span class="src" id="srcTag">데이터: 기준값</span>
         <div class="clock">
           <div class="d" id="topDate">—</div>
           <div class="r"><span class="dot"></span> 자동 갱신 중</div>
@@ -477,7 +477,7 @@ const DEFAULT_DB={
 };
 const AGENTNAME={clean:'세척 Agent',safe:'안전 Agent',stock:'재고 Agent',prod:'생산 Agent',labor:'인력 Agent',qual:'품질 Agent'};
 let DB=JSON.parse(JSON.stringify(DEFAULT_DB));
-let dataSource='데모';
+let dataSource='기준값';
 
 /* ===== 통합 라이브(P-BOX·오리콘) — 프로덕션 D1(work_records) 연동 ===== */
 const LIVE_SEED={ // 프로덕션 D1에서 읽은 실제 현재값 (배포 전 표시용 스냅샷)
@@ -574,8 +574,8 @@ async function liveRefresh(){
   }catch(e){LIVE.status='error';LIVE.brief=localBrief(LIVE.today);}
   if(cur==='home')go('home');
 }
-function liveSetApi(){const el=document.getElementById('liveApi');LIVE.apiBase=(el&&el.value||'').trim();try{localStorage.setItem('zen_live_api',LIVE.apiBase);}catch(e){}LIVE._tried=true;toast(LIVE.apiBase?'라이브 서버 연결 시도…':'연결 해제(데모)');liveRefresh();}
-function liveDisconnect(){LIVE.apiBase='';try{localStorage.removeItem('zen_live_api');}catch(e){}LIVE.status='demo';LIVE.brief=localBrief(LIVE.today);toast('라이브 연결 해제(데모 스냅샷)');if(cur==='home')go('home');}
+function liveSetApi(){const el=document.getElementById('liveApi');LIVE.apiBase=(el&&el.value||'').trim();try{localStorage.setItem('zen_live_api',LIVE.apiBase);}catch(e){}LIVE._tried=true;toast(LIVE.apiBase?'라이브 서버 연결 시도…':'연결 해제(기준값)');liveRefresh();}
+function liveDisconnect(){LIVE.apiBase='';try{localStorage.removeItem('zen_live_api');}catch(e){}LIVE.status='demo';LIVE.brief=localBrief(LIVE.today);toast('라이브 연결 해제(기준 스냅샷)');if(cur==='home')go('home');}
 function liveSys(s){LIVE.sys=s;if(cur==='home')go('home');}
 function copyBrief(){const t=(LIVE.brief&&LIVE.brief.kakao)||localBrief(LIVE.today).kakao;if(navigator.clipboard)navigator.clipboard.writeText(t);toast('카톡 보고문을 복사했습니다');}
 function liveConnectPrompt(){const e=document.getElementById('liveConn');if(e)e.scrollIntoView({behavior:'smooth'});}
@@ -584,7 +584,7 @@ function renderLive(){
   const d=LIVE.today||LIVE_SEED,k=d.kpi||{};
   const sys=(LIVE.sys==='orikon')?'orikon':'pbox';
   const c=k[sys]||k.pbox||{};
-  const badge=LIVE.status==='live'?'<span class="tag t-green">● LIVE</span>':LIVE.status==='loading'?'<span class="tag t-amber">연결 중…</span>':LIVE.status==='error'?'<span class="tag t-red">연결 실패·데모</span>':'<span class="tag t-blue">실데이터 스냅샷</span>';
+  const badge=LIVE.status==='live'?'<span class="tag t-green">● LIVE</span>':LIVE.status==='loading'?'<span class="tag t-amber">연결 중…</span>':LIVE.status==='error'?'<span class="tag t-red">연결 실패·기준</span>':'<span class="tag t-blue">실데이터 스냅샷</span>';
   const tab=(id,label)=>`<button class="btn ${sys===id?'p':''}" style="padding:5px 11px" onclick="liveSys('${id}')">${label}</button>`;
   const kt=`<div class="grid g4" style="margin-bottom:10px">
     <div class="kpi"><div class="ic" data-ic="package"></div><div class="lab">총 작업량</div><div class="val">${fmtN(c.totalPLT)}<small> PLT</small></div><div class="delta">${(c.totalEA||0).toLocaleString()} EA</div></div>
@@ -617,7 +617,7 @@ function renderLive(){
   </div>
   <div class="card" id="liveConn" style="margin-top:14px"><h3>라이브 연결 <span class="hint">통합 API 배포 주소를 붙이면 실시간 전환</span></h3>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="liveApi" type="text" value="${(LIVE.apiBase||'').replace(/"/g,'&quot;')}" placeholder="https://zen-integration-api.○○○.workers.dev" style="flex:1;min-width:240px;border:1px solid var(--line2);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit"><button class="btn p" onclick="liveSetApi()">연결</button><button class="btn" onclick="liveDisconnect()">해제</button></div>
-    <div class="mini" style="margin-top:6px">현재: <b>${LIVE.status==='live'?'실시간 연결됨 ✓':LIVE.apiBase?'연결 실패 — 데모 스냅샷 표시':'미연결 — 실데이터 스냅샷 표시'}</b> · 배포: <code>integration/</code> 폴더에서 <code>wrangler deploy</code> → 나온 주소를 여기 붙이기</div>
+    <div class="mini" style="margin-top:6px">현재: <b>${LIVE.status==='live'?'실시간 연결됨 ✓':LIVE.apiBase?'연결 실패 — 기준 스냅샷 표시':'미연결 — 실데이터 스냅샷 표시'}</b> · 배포: <code>integration/</code> 폴더에서 <code>wrangler deploy</code> → 나온 주소를 여기 붙이기</div>
   </div>`;
 }
 
@@ -761,7 +761,7 @@ V.home=()=>{
   const whRate=DB.wh?whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0]):null;
   const hm=(lab,val,vals,col)=>`<div class="m"><div class="ml">${lab}</div><div class="mv tnum">${val}</div><div class="sp">${spark(vals,{color:col,w:104,h:24})}</div></div>`;
   const hero=`<div class="hero">
-    <div class="hl"><div class="k">AI Live Control</div><div class="t">실시간 통합 운영 현황</div><div class="s">AP 대전공장 · 가동 6/6 라인 · ${dataSource==='데모'?'데모 데이터':'실데이터 '+dataSource}</div></div>
+    <div class="hl"><div class="k">AI Live Control</div><div class="t">실시간 통합 운영 현황</div><div class="s">AP 대전공장 · 가동 6/6 라인 · ${dataSource==='기준값'?'기준 데이터':'실데이터 '+dataSource}</div></div>
     <div class="hm">
       ${hm('생산 달성률',tp.ach+'<small>%</small>',[68,71,70,74,72,73,tp.ach],'#7fe0b0')}
       ${hm('OEE',oee+'<small>%</small>',[79,81,80,82,81,80,oee],'#7fe0b0')}
@@ -1105,7 +1105,7 @@ V.data=()=>{
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
         <button class="btn p" onclick="exportXLSX()">⬇ 엑셀 템플릿</button>
         <button class="btn" onclick="exportCSV()">⬇ CSV</button>
-        <button class="btn" onclick="resetDB()">↺ 데모값 복원</button>
+        <button class="btn" onclick="resetDB()">↺ 기준값 복원</button>
       </div>
     </div>
     <div class="card"><h3>③ 실적 연동 <span class="hint">계획 대비 달성률</span></h3>
@@ -1313,9 +1313,9 @@ V.opl=()=>`<div class="card" id="oplGen" style="padding:12px"><h3>OPL 원포인�
 V.safeapp=()=>`<div class="card" style="padding:12px"><h3>안전 관리 (ZEN Keeper) <span class="hint">배포본 연동 · zenkeeper.netlify.app</span><span style="margin-left:auto;display:flex;gap:8px"><button class="btn" onclick="window.open('https://zenkeeper.netlify.app/','_blank')">↗ 새 창</button><button class="btn" onclick="window.open('ZENF_Safety_App_v65.html','_blank')">로컬본</button></span></h3><iframe class="safe" src="https://zenkeeper.netlify.app/" title="ZEN Keeper" loading="lazy"></iframe><div class="mini" style="margin-top:6px">비어 보이면 ‘새 창’으로 여세요.</div></div>`;
 
 /* ============ DATA OPS ============ */
-function rerender(){go(cur);buildNav();document.getElementById('srcTag').textContent='데이터: '+dataSource;document.getElementById('srcTag').classList.toggle('live',dataSource!=='데모');}
-function editLine(i,k,v){DB.lines[i][k]=(v===''||isNaN(+v))?0:+v; if(dataSource==='데모')dataSource='수동 편집'; saveDB(); go(cur); document.getElementById('srcTag').textContent='데이터: '+dataSource; }
-function resetDB(){DB=JSON.parse(JSON.stringify(DEFAULT_DB));dataSource='데모';planWeek=0;try{localStorage.removeItem(LS_KEY);}catch(e){}toast('데모값으로 복원했습니다 (저장 데이터 삭제)');rerender();}
+function rerender(){go(cur);buildNav();document.getElementById('srcTag').textContent='데이터: '+dataSource;document.getElementById('srcTag').classList.toggle('live',dataSource!=='기준값');}
+function editLine(i,k,v){DB.lines[i][k]=(v===''||isNaN(+v))?0:+v; if(dataSource==='기준값')dataSource='수동 편집'; saveDB(); go(cur); document.getElementById('srcTag').textContent='데이터: '+dataSource; }
+function resetDB(){DB=JSON.parse(JSON.stringify(DEFAULT_DB));dataSource='기준값';planWeek=0;try{localStorage.removeItem(LS_KEY);}catch(e){}toast('기준값으로 복원했습니다 (저장 데이터 삭제)');rerender();}
 const IMPORT_MAP={'라인':'key','필요':'need','출근':'on','연차':'leave','교육':'edu','목표':'target','실적':'actual','capa':'capa','CAPA':'capa','불량%':'defect','불량':'defect','세척경과h':'clElapsed','세척경과':'clElapsed','전환0~1':'clTransfer','전환':'clTransfer'};
 function applyRows(rows){
   // rows: array of objects keyed by header
@@ -1453,7 +1453,7 @@ function doLogin(){
   cur=(DB.plan&&ROLES[role].allow.includes('plan'))?'plan':'home';
   buildNav();go(cur);applyBig();clockTick();
   document.getElementById('srcTag').textContent='데이터: '+dataSource;
-  document.getElementById('srcTag').classList.toggle('live',dataSource!=='데모');
+  document.getElementById('srcTag').classList.toggle('live',dataSource!=='기준값');
   try{localStorage.setItem('zen_session',JSON.stringify({role,scope:document.getElementById('scopeSel').value}));}catch(e){}
 }
 function _p2(n){return String(n).padStart(2,'0');}
