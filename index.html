@@ -711,6 +711,7 @@ function loadDB(){try{const s=localStorage.getItem(LS_KEY);if(s){const o=JSON.pa
     dataSource=o.dataSource||'저장됨';return true;}}}catch(e){}return false;}
 /* ===== 외부 연동 시스템 (배포 URL · 역할별 + 현장/관리자 토글) ===== */
 let sysView={}; // {시스템id: 'worker'|'admin'} — 역할 기본값 위에 사용자 토글 오버라이드
+var sysForcePreview=false; // 녹화 전용: 외부 배포 화면 대신 대표 미리보기 표시(샌드박스 네트워크 차단 회피)
 function sysVar(s){return sysView[s.id]||(role==='field'?'worker':'admin');}
 function sysUrl(s){const u=s.urls||{};const v=sysVar(s);return v==='worker'?(u.worker||u.admin||''):(u.admin||u.worker||'');}
 function sysVariant(s){return sysVar(s)==='worker'?'현장(작업자)용':'관리자용';}
@@ -727,15 +728,27 @@ function sysPreview(s){
   const tile=(t,v,c)=>`<div class="spv-t"><div class="l">${t}</div><div class="v">${v}</div><i style="background:${c}"></i></div>`;
   const kpi=(t,v,d,c)=>`<div class="spv-k"><div class="l">${t}</div><div class="v">${v}</div><div class="d" style="color:${c}">${d}</div></div>`;
   const bar=(n,p,c)=>`<div class="spv-b"><span>${n}</span><div class="tr"><i style="width:${p}%;background:${c}"></i></div><b>${p}%</b></div>`;
+  // 시스템별 대표 콘텐츠
+  const P=s.id==='wash'?{
+    sub:'세척 완료 후 라인·용기 단위로 실적 입력',
+    tiles:[tile('용기 세척','640 EA','#1f6feb'),tile('라인 CIP','8 라인','#12b886'),tile('세척 완료','92%','#8a63d2'),tile('금일 누계','1,050 EA','#f59f00')],
+    kpis:[kpi('금일 세척','8/8 라인','▲ 완료','#39b98a'),kpi('완료율','92%','▲ 목표 상회','#39b98a'),kpi('지연','1 라인','주의','#d98a2b')],
+    cap:'라인별 세척 완료율',bars:[bar('튜브',96,'#12b886'),bar('치약충전',88,'#1f6feb'),bar('일회용',72,'#f59f00')]
+  }:{
+    sub:'작업 직후 대형 터치 버튼으로 실적을 바로 입력',
+    tiles:[tile('오리콘 세척','720 EA','#1f6feb'),tile('P-BOX 세척','480 EA','#12b886'),tile('분류·수리','3.2 MH','#8a63d2'),tile('금일 누계','1,200 EA','#f59f00')],
+    kpis:[kpi('금일 세척','1,200 PLT','▲ +6%','#39b98a'),kpi('생산성','0.28 PLT/MH','▲ 평균 상회','#39b98a'),kpi('지연','2건','주의','#d98a2b')],
+    cap:'작업자별 실적 달성률',bars:[bar('홍길동',96,'#12b886'),bar('김철수',88,'#1f6feb'),bar('이동동',72,'#f59f00')]
+  };
   const body=w?`
-    <div class="spv-h"><span class="spv-badge w">현장(작업자)용 · 예시</span><span class="spv-nm">${nm}</span></div>
-    <div class="spv-sub">작업 직후 대형 터치 버튼으로 실적을 바로 입력</div>
-    <div class="spv-grid2">${tile('오리콘 세척','720 EA','#1f6feb')}${tile('P-BOX 세척','480 EA','#12b886')}${tile('분류·수리','3.2 MH','#8a63d2')}${tile('금일 누계','1,200 EA','#f59f00')}</div>
+    <div class="spv-h"><span class="spv-badge w">현장(작업자)용</span><span class="spv-nm">${nm}</span></div>
+    <div class="spv-sub">${P.sub}</div>
+    <div class="spv-grid2">${P.tiles.join('')}</div>
     <div class="spv-act"><div class="save">＋ 실적 저장</div><div class="ph">사진 첨부</div></div>`:`
-    <div class="spv-h"><span class="spv-badge a">관리자용 · 예시</span><span class="spv-nm">${nm}</span></div>
+    <div class="spv-h"><span class="spv-badge a">관리자용</span><span class="spv-nm">${nm}</span></div>
     <div class="spv-sub">현장 입력이 실시간 집계 · 생산성·지연을 한눈에</div>
-    <div class="spv-grid3">${kpi('금일 세척','1,200 PLT','▲ +6%','#39b98a')}${kpi('생산성','0.28 PLT/MH','▲ 평균 상회','#39b98a')}${kpi('지연','2건','주의','#d98a2b')}</div>
-    <div class="spv-cap">작업자별 실적 달성률</div>${bar('홍길동',96,'#12b886')}${bar('김철수',88,'#1f6feb')}${bar('이동동',72,'#f59f00')}`;
+    <div class="spv-grid3">${P.kpis.join('')}</div>
+    <div class="spv-cap">${P.cap}</div>${P.bars.join('')}`;
   return `<div class="spv ${w?'w':'a'}">${body}</div>`;
 }
 function renderSysLinks(agentId){
@@ -752,12 +765,12 @@ function sysCard(s){
   if(internal) return `<div class="card" style="margin-top:14px;padding:13px">${head('실연동 · 내장 앱 · 오프라인 동작',true)}<iframe class="safe" src="${src.replace(/"/g,'&quot;')}" title="${s.name}" style="height:78vh"></iframe></div>`;
   // 1) URL 없음 — 미연결
   if(!url) return `<div class="card" style="margin-top:14px">${head('미연결')}<p class="mini">연동 URL이 없습니다. <a onclick="go('data')" style="color:#7fb8ff;cursor:pointer">데이터 관리 → 연동 시스템</a>에서 등록하세요.</p></div>`;
-  // 2) 예시(미배포) URL — 준비 슬롯 + 대표 미리보기
-  if(isExampleUrl(url)) return `<div class="card" style="margin-top:14px;padding:13px">${head(v+' · 준비 슬롯')}
+  // 2) 녹화 전용 — 실배포 대신 대표 미리보기(샌드박스 네트워크 차단 회피)
+  if(sysForcePreview) return `<div class="card" style="margin-top:14px;padding:13px">${head(v+' · 미리보기')}
     ${sysPreview(s)}
-    <div class="syshint"><b>미리보기(예시)</b> — 실제 배포된 URL을 연결하면 이 자리에 시스템이 실시간 임베드됩니다. <a onclick="go('data')" style="color:#7fb8ff;cursor:pointer">데이터 관리 → 연동 시스템</a>에서 등록.</div></div>`;
-  // 3) 실제 URL — 임베드
-  return `<div class="card" style="margin-top:14px;padding:13px">${head(v)}<iframe class="safe" src="${url.replace(/"/g,'&quot;')}" title="${s.name}" style="height:64vh" loading="lazy"></iframe><div class="mini" style="margin-top:6px">비어 보이면 ‘새 창’으로 여세요.</div></div>`;
+    <div class="syshint"><b>실배포 연결</b> · <span style="word-break:break-all">${url}</span> — 실기기/브라우저에서 이 자리에 실시간 임베드됩니다.</div></div>`;
+  // 3) 실배포 URL — 실시간 임베드
+  return `<div class="card" style="margin-top:14px;padding:13px">${head(v+' · 실배포',true)}<iframe class="safe" src="${url.replace(/"/g,'&quot;')}" title="${s.name}" style="height:64vh" loading="lazy"></iframe><div class="mini" style="margin-top:6px">현장/관리자 토글로 배포 화면을 전환합니다. 비어 보이면 ‘↗ 새 창’.</div></div>`;
 }
 function setSysUrl(id,which,url){const s=(DB.extSys||[]).find(x=>x.id===id);if(!s)return;s.urls=s.urls||{};s.urls[which]=(url||'').trim();saveDB();toast(s.name+' '+(which==='worker'?'작업자용':'관리자용')+(s.urls[which]?' URL 저장됨':' 해제'));}
 
