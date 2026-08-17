@@ -760,9 +760,10 @@ function sysIco(s){return svic(({wash:'droplet',orikon:'package',heat:'thermomet
 function sysCard(s){
   const url=sysUrl(s),v=sysVariant(s),ic=sysIco(s),internal=isInternal(url),src=sysResolve(url);
   const openUrl=(src||'').replace(/'/g,'%27');
-  const head=(state,ok)=>`<h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${ic}</span> ${s.name} <span class="hint"${ok?' style="color:#3f9d6b"':''}>${ok?'● ':'외부 연동 · '}${state}</span><span style="margin-left:auto;display:flex;align-items:center">${sysToggle(s)}${url?`<button class="btn" onclick="window.open('${openUrl}','_blank')">↗ 새 창</button>`:''}</span></h3>`;
-  // 0) 내장 앱(오프라인 실연동) — 실제로 렌더되는 연결 화면
-  if(internal) return `<div class="card" style="margin-top:14px;padding:13px">${head('실연동 · 내장 앱 · 오프라인 동작',true)}<iframe class="safe" src="${src.replace(/"/g,'&quot;')}" title="${s.name}" style="height:78vh"></iframe></div>`;
+  const liveKey=internal?url.replace('internal:',''):'';
+  const head=(state,ok,extra)=>`<h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${ic}</span> ${s.name} <span class="hint"${ok?' style="color:#3f9d6b"':''}>${ok?'● ':'외부 연동 · '}${state}</span><span style="margin-left:auto;display:flex;gap:6px;align-items:center">${sysToggle(s)}${extra||''}${url&&!internal?`<button class="btn" onclick="window.open('${openUrl}','_blank')">↗ 새 창</button>`:''}</span></h3>`;
+  // 0) 내장 앱(오프라인 실연동) + 실배포 링크 — 둘 다 노출
+  if(internal) return `<div class="card" style="margin-top:14px;padding:13px">${head('실연동(내장) · 오프라인 동작',true,liveBtn(liveKey)+`<button class="btn" onclick="window.open('${src.replace(/'/g,'%27')}','_blank')">↗ 새 창</button>`)}<iframe class="safe" src="${src.replace(/"/g,'&quot;')}" title="${s.name}" style="height:78vh"></iframe></div>`;
   // 1) URL 없음 — 미연결
   if(!url) return `<div class="card" style="margin-top:14px">${head('미연결')}<p class="mini">연동 URL이 없습니다. <a onclick="go('data')" style="color:#7fb8ff;cursor:pointer">데이터 관리 → 연동 시스템</a>에서 등록하세요.</p></div>`;
   // 2) 녹화 전용 — 실배포 대신 대표 미리보기(샌드박스 네트워크 차단 회피)
@@ -1110,7 +1111,7 @@ V.stock=()=>{
   ${aib}
   ${whLayout()}
   ${whSection}
-  <div class="card" id="whAdmin" style="margin-top:14px;padding:12px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic('package',16)}</span> 포장재 창고 적치 관리 시스템 <span class="hint" style="color:#3f9d6b">● 실연동 · 내장 도구 · 오프라인 동작</span><span style="margin-left:auto"><button class="btn" onclick="window.open(whURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${whURL()}" title="포장재 창고 적치 관리 시스템" style="height:82vh"></iframe></div>`;
+  <div class="card" id="whAdmin" style="margin-top:14px;padding:12px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic('package',16)}</span> 포장재 창고 적치 관리 시스템 <span class="hint" style="color:#3f9d6b">● 실연동(내장) · 오프라인 동작</span><span style="margin-left:auto;display:flex;gap:6px">${liveBtn('wh')}<button class="btn" onclick="window.open(whURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${whURL()}" title="포장재 창고 적치 관리 시스템" style="height:82vh"></iframe></div>`;
 };
 V.orikonwash=()=>{
   const s=(DB.extSys||[]).find(x=>x.id==='orikon');
@@ -1251,7 +1252,7 @@ V.report=()=>{
   <div class="grid g3" style="margin-bottom:14px">
     ${[['일간 보고서',todayKR(),'📄','t-blue','생성 가능',"genReport('일간 보고서')"],['주간 보고서',weekKR(),'🗂','t-blue','생성 가능',"genReport('주간 보고서')"],['월 마감 보고서',prevMonthKR()+' · v4.0','📅','t-green','도구 열기',"document.getElementById('monthlyReport').scrollIntoView({behavior:'smooth'})"]].map(r=>`<a class="cardlink" onclick="${r[5]}"><div class="card"><div style="display:flex;gap:11px;align-items:center"><div style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#eef4fb;border:1px solid var(--line2)">${r[2]}</div><div><div style="font-weight:800">${r[0]}</div><div class="mini">${r[1]}</div></div></div><div style="margin-top:12px"><span class="tag ${r[3]}">${r[4]}</span></div></div></a>`).join('')}
   </div>
-  <div class="card" id="monthlyReport" style="margin-bottom:14px"><h3>월 마감 자동 보고서 <span class="hint">엑셀 업로드 · 월마감·전월대비·이상치·임원보고 자동 생성 · v4.0</span><span style="margin-left:auto"><button class="btn" onclick="window.open(monthlyURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${monthlyURL()}" title="월 마감 자동 보고서" loading="lazy" style="height:74vh"></iframe></div>
+  <div class="card" id="monthlyReport" style="margin-bottom:14px"><h3>월 마감 자동 보고서 <span class="hint" style="color:#3f9d6b">● 실연동(내장) · 오프라인 동작 · 엑셀 업로드→임원보고 자동 생성</span><span style="margin-left:auto;display:flex;gap:6px">${liveBtn('monthly')}<button class="btn" onclick="window.open(monthlyURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${monthlyURL()}" title="월 마감 자동 보고서" loading="lazy" style="height:74vh"></iframe></div>
   ${ledger('일간 생산일보 (문서형)','8개 Agent 데이터 자동 취합 · 정식 문서 양식 — 클릭하여 펼침',`<div style="text-align:right;margin:2px 0 8px"><button class="btn" onclick="exportReport()">⬇ 내보내기</button></div><div class="report-doc"><h4>AP 대전공장 생산일보 — ${todayKR()}</h4><div class="kv">작성: ZEN Report Agent · 자동 생성 · 데이터원: ${dataSource}</div><p><b>1. 생산 실적</b><br>전 라인 목표 ${(tp.t/1000).toFixed(0)}천개 대비 실적 ${(tp.a/1000).toFixed(0)}천개(달성률 ${tp.ach}%). ${topLines||'-'} 정상, ${lowLines||'없음'} 부진.</p><p><b>2. 인력 현황</b><br>필요 ${headNeed()}명 대비 투입 ${headCur()}명(${headNeed()-headCur()}명 부족), 연차 ${DB.work[1].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p><p><b>3. 품질</b><br>평균 불량률 ${df}%(목표 1.5%). 주요 원인 ${DB.paretoNames[0]}·${DB.paretoNames[1]}. 최다 라인 조치 진행.</p><p><b>4. 안전</b><br>WBGT ${DB.safety.wbgt}℃ 폭염 ${DB.safety.wbgt>=28?'경고':'주의'}. 휴식·수분 조치. 무재해 ${DB.safety.noAccident}일.</p><p><b>5. 자재/설비</b><br>${orders.length?orders.map(s=>s.name).join('·')+' 긴급 발주 요청':'자재 발주 이슈 없음'}. 완제품 창고 ${DB.warehouse[0].fill}% 포화. 전 라인 OEE ${oee}%.</p><ul><li><b>금일 조치:</b> 인력 재배치, 발주 ${orders.length}건, 세척 ${myLines().filter(l=>G.cleanScore(l)>=75).length}라인</li><li><b>익일 리스크:</b> 자재 미입고 시 라인 중단 · 폭염 지속</li></ul></div>`)}`;
 };
 
@@ -1486,6 +1487,9 @@ const SAFE_DOC="PCFkb2N0eXBlIGh0bWw+CjxodG1sIGxhbmc9ImtvIj4KPGhlYWQ+CjxtZXRhIGNo
 /* 내장 앱 스킴 — internal:<key> → 실제 blob URL (오프라인 동작) */
 function sysResolve(u){if(u==='internal:safe')return safeAppURL();if(u==='internal:wh')return whURL();return u;}
 function isInternal(u){return typeof u==='string'&&u.indexOf('internal:')===0;}
+/* 내장 실연동 시스템의 실제 배포 주소 — '내장(오프라인) + 실배포' 둘 다 노출 */
+const LIVE_URL={safe:'https://zenkeeper.netlify.app/',wh:'https://wh-stack.netlify.app/index.html',monthly:'https://scintillating-dolphin-1f9abd.netlify.app/'};
+function liveBtn(key){const u=LIVE_URL[key];return u?`<button class="btn" onclick="window.open('${u}','_blank')" title="${u}">↗ 실배포</button>`:'';}
 V.opl=()=>`<div class="card" id="oplGen" style="padding:12px"><h3>OPL 원포인트레슨 자동생성 <span class="hint">점검·이슈 붙여넣기 → 적발(NG)→준수기준(OK) 카드 + 교육 서명부 · 인쇄/PDF</span><span style="margin-left:auto"><button class="btn" onclick="window.open(oplURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${oplURL()}" title="OPL 생성기" style="height:80vh"></iframe><div class="mini" style="margin-top:6px">점검 내용 붙여넣기 → 자동 생성 · 사진 업로드 후 PDF/인쇄.</div></div>`;
 V.safeapp=()=>`<div class="card" style="padding:12px"><h3>안전 관리 (ZEN Keeper) <span class="hint">배포본 연동 · zenkeeper.netlify.app</span><span style="margin-left:auto;display:flex;gap:8px"><button class="btn" onclick="window.open('https://zenkeeper.netlify.app/','_blank')">↗ 새 창</button><button class="btn" onclick="window.open('ZENF_Safety_App_v65.html','_blank')">로컬본</button></span></h3><iframe class="safe" src="https://zenkeeper.netlify.app/" title="ZEN Keeper" loading="lazy"></iframe><div class="mini" style="margin-top:6px">비어 보이면 ‘새 창’으로 여세요.</div></div>`;
 
