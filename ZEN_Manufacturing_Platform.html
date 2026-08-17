@@ -800,6 +800,7 @@ function headCur(){return scoped()?myLines().reduce((a,l)=>a+G.cur(l),0):DB.head
 /* ============ AGENTS / ROLES ============ */
 const AGENTS=[
   {id:'home',name:'종합 상황판',icon:'🏭',sub:'AP 대전공장 · 실시간 종합 운영 현황'},
+  {id:'judge',name:'AI 판단 센터',icon:'🧠',sub:'전 Agent 자동 판단 통합 · 실측→기준→판단→권장 조치'},
   {id:'planhub',name:'계획 Agent',icon:'🗓',sub:'주간계획 · 부하율·필요인원 · 지연오더'},
   {id:'prod',name:'생산 Agent',icon:'📈',sub:'실시간 실적 · CAPA · P-BOX·오리콘'},
   {id:'labor',name:'인력 Agent',icon:'👥',sub:'출근 · 결원 · 대체인력 · 잔업 추천'},
@@ -812,8 +813,8 @@ const AGENTS=[
 ];
 const ROLES={
   field:{name:'현장',emoji:'🧑‍🏭',allow:['home','prod','clean','orikonwash','safe','safeapp']},
-  admin:{name:'관리자',emoji:'👔',allow:['home','planhub','prod','labor','clean','stock','orikonwash','safe','qual','data','opl','safeapp']},
-  center:{name:'센터',emoji:'🛰️',allow:['home','planhub','prod','labor','clean','stock','orikonwash','safe','qual','insight','data','opl','safeapp']},
+  admin:{name:'관리자',emoji:'👔',allow:['home','judge','planhub','prod','labor','clean','stock','orikonwash','safe','qual','data','opl','safeapp']},
+  center:{name:'센터',emoji:'🛰️',allow:['home','judge','planhub','prod','labor','clean','stock','orikonwash','safe','qual','insight','data','opl','safeapp']},
 };
 let role='center';
 
@@ -937,6 +938,51 @@ V.planhub=()=>{
   const tabs=[{k:'plan',label:'주간계획'},{k:'load',label:'부하율·필요인원'},{k:'delay',label:'지연오더'}];
   const t=vtabActive('planhub',tabs);
   return vtabsBar('planhub',tabs)+(t==='load'?loadView():t==='delay'?V.delay():V.plan());
+};
+/* ===== AI 판단 센터 — 전 Agent 자동 판단 통합(실측→기준→판단→조치) ===== */
+function collectJudgments(){
+  const J=[], L=myLines(), w=DB.safety;
+  const peak=DB.forecast.reduce((m,d)=>d.v>m.v?d:m,DB.forecast[0]);
+  const gap=headNeed()-headCur();
+  J.push({area:'인력',ic:'users',lv:gap>0?'warn':'ok',r:`익일 인력 ${gap>0?'부족 −'+gap+'명':'충족'}`,s:`피크 ${peak.label} ${peak.v}명 · 부하율 초과 그룹 사전 배치`,rule:'부하율 > 100%',act:gap>0?'여유 라인 재배치 + 잔업 배정':'현 배치 유지'});
+  const behind=L.filter(l=>G.achieve(l)<70);
+  J.push({area:'생산',ic:'activity',lv:behind.length?'crit':'ok',r:`지연 위험 오더 ${behind.length}건`,s:behind.length?behind.map(l=>l.key+' '+G.achieve(l)+'%').join(' · '):'전 라인 정상 진척',rule:'달성률 < 70%',act:behind.length?'우선순위 재조정 · 투입 강화':'모니터링'});
+  J.push({area:'안전',ic:'thermometer',lv:w.wbgt>=31?'crit':w.wbgt>=28?'warn':'ok',r:`폭염 ${w.wbgt>=31?'위험':w.wbgt>=28?'경고':'주의'} · WBGT ${w.wbgt}℃`,s:`기온 ${w.temp}℃ 습도 ${w.humid}% · 무재해 ${w.noAccident}일`,rule:'WBGT ≥ 28℃',act:w.wbgt>=28?'시간당 휴식·수분 · 옥외작업 단축':'정상 운영'});
+  const worst=[...L].sort((a,b)=>G.cleanScore(b)-G.cleanScore(a))[0];
+  J.push({area:'세척',ic:'droplet',lv:G.cleanScore(worst)>=75?'warn':'ok',r:`${worst.key} 세척 우선순위 1위`,s:`우선순위 ${G.cleanScore(worst)}점 · 전환·주기·부하 가중 반영`,rule:'우선순위 ≥ 75점',act:'CIP 병렬 투입 · 완료 지연 방지'});
+  const zones=(DB.wh?(DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones:DEFAULT_WH_ZONES).map(z=>({name:z.name,rate:z.rate!=null?z.rate:Math.round(z.count/z.capa*100)}));
+  const gr=whGrowth(), over=zones.filter(z=>z.rate>=100), satPred=zones.filter(z=>z.rate<100&&Math.round(z.rate*(1+gr))>=100);
+  J.push({area:'창고',ic:'package',lv:over.length?'crit':satPred.length?'warn':'ok',r:`적치 초과 ${over.length}구역 · 익주 포화 예측 ${satPred.length}구역`,s:over.length?over.slice(0,3).map(z=>z.name.replace(/\[.*?\]/g,'').trim()+' '+z.rate+'%').join(' · '):'전 구역 여유',rule:'적치율 ≥ 100% / 예측 ≥ 100%',act:over.length?'초과분 여유 구역 재배치·출하 우선':'현 배치 유지'});
+  const df=avgDefect();
+  J.push({area:'품질',ic:'flask',lv:df>1.5?'warn':'ok',r:`불량률 ${df}%`,s:`목표 1.5% ${df>1.5?'초과':'이내'} · 주요 원인 ${(DB.paretoNames&&DB.paretoNames[0])||'-'}`,rule:'불량률 > 1.5%',act:df>1.5?'최다 라인 원인 조치':'현 수준 유지'});
+  return J;
+}
+let judgeFilter='전체';
+V.judge=()=>{
+  const J=collectJudgments();
+  const crit=J.filter(x=>x.lv==='crit').length, act=J.filter(x=>x.lv!=='ok').length;
+  const areas=['전체',...Array.from(new Set(J.map(x=>x.area)))];
+  const cf=judgeFilter;
+  const chips=areas.map(a=>`<button class="btn ${a===cf?'p':''}" style="padding:6px 12px" onclick="judgeFilter='${a}';go('judge')">${a}</button>`).join(' ');
+  const list=J.filter(x=>cf==='전체'||x.area===cf);
+  const cards=list.map(x=>`<div class="pred ${x.lv}"><div class="ph"><span class="ico sm ${x.lv==='crit'?'r':x.lv==='warn'?'a':''}">${svic(x.ic,15)}</span><span class="pr">${x.r}</span><span style="margin-left:auto;font-size:10.5px;font-weight:800;color:var(--muted);border:1px solid var(--line2);border-radius:20px;padding:2px 9px">${x.area}</span></div><div class="ps">${x.s}</div><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:9px;align-items:center"><span class="prule">적용 기준 ${x.rule}</span><span style="font-size:11.5px;color:var(--muted)">→ 권장 <b style="color:var(--ink)">${x.act}</b></span></div></div>`).join('');
+  return `
+  <div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,#16283f,#0e1a2e);border:none;color:#fff">
+    <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <div><div style="font-size:11px;letter-spacing:2.5px;color:#8fd8b9;font-weight:800">AI DECISION CENTER</div>
+        <div style="font-size:21px;font-weight:800;margin-top:5px">실측 → 기준 대조 → 판단 → 권장 조치</div>
+        <div style="font-size:12.5px;color:#a6bad8;margin-top:5px">전 Agent의 자동 판단을 <b style="color:#cfe0f2">코드화된 기준</b>으로 한곳에 · 감사 가능</div></div>
+      <div style="margin-left:auto;display:flex;gap:30px">
+        <div><div class="tnum" style="font-size:28px;font-weight:800">${J.length}</div><div style="font-size:11px;color:#a6bad8">오늘 자동 판단</div></div>
+        <div><div class="tnum" style="font-size:28px;font-weight:800;color:#ffd08a">${act}</div><div style="font-size:11px;color:#a6bad8">조치 권고</div></div>
+        <div><div class="tnum" style="font-size:28px;font-weight:800;color:#ff9d9d">${crit}</div><div style="font-size:11px;color:#a6bad8">긴급</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card"><h3>판단 로그 <span class="hint">코드화된 기준으로 자동 판단 · 권장 조치까지</span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">${chips}</span></h3>
+    <div class="predgrid">${cards}</div>
+    <div class="mini" style="margin-top:11px">※ 모든 판단은 <b>실측 데이터 + 코드화된 기준(룰)</b>으로 산출됩니다. 사람은 '데이터 취합'이 아니라 '조치'에 집중합니다.</div>
+  </div>`;
 };
 V.insight=()=>{
   const tabs=[{k:'kpi',label:'KPI·LOSS 분석'},{k:'report',label:'월마감 보고서'}];
@@ -1575,7 +1621,7 @@ function genReport(t){go('report');toast(t+'를 생성했습니다 (DB 최신값
 let cur='home';
 const NAV_TOOLS={opl:{name:'OPL 교육자료',icon:'📄'},data:{name:'데이터 관리',icon:'🗄'}};
 const NAV_GROUPS=[
-  {sec:'OVERVIEW',ids:['home']},
+  {sec:'OVERVIEW',ids:['home','judge']},
   {sec:'계획 · PLAN',ids:['planhub']},
   {sec:'운영 · OPERATIONS',ids:['prod','labor','clean','stock','orikonwash']},
   {sec:'품질·안전 · QUALITY & EHS',ids:['qual','safe']},
@@ -1587,6 +1633,7 @@ function buildNav(){
   const nm=id=>{const a=AGENTS.find(x=>x.id===id);return a?a.name:(NAV_TOOLS[id]||{}).name;};
   const ic=id=>{const a=AGENTS.find(x=>x.id===id);return a?a.icon:(NAV_TOOLS[id]||{}).icon;};
   const badges={
+    judge:(()=>{const J=collectJudgments(),n=J.filter(x=>x.lv!=='ok').length,c=J.filter(x=>x.lv==='crit').length;return{t:''+n,c:c?'t-red':n?'t-amber':'t-green'};})(),
     planhub:{t:'-'+(DB.headcount.need-DB.headcount.cur),c:'t-red'},
     prod:{t:totProd().ach+'%',c:totProd().ach>=80?'t-green':'t-amber'},
     labor:{t:'-'+(DB.headcount.need-DB.headcount.cur),c:'t-red'},
