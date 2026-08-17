@@ -225,7 +225,8 @@ nav.tabs{position:fixed; left:0; right:0; bottom:0; z-index:30}
 .tally-detail{padding:2px 0 10px 28px}
 .tally-detail .dr{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); font-weight:700; padding:4px 0; border-bottom:1px dashed #eef1ef}
 .tally-detail .dr:last-child{border-bottom:0}
-.scr-mascot{width:78px; height:auto; flex:0 0 auto; margin:-4px -2px 0 0; filter:drop-shadow(0 3px 7px rgba(34,46,55,.14))}
+.mascot-av{width:58px; height:58px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:2px solid #fff; box-shadow:0 3px 9px rgba(34,46,55,.16); background:linear-gradient(160deg,#eef4f8,#dde7ef); margin-top:-2px}
+.scr-mascot{width:80px; height:auto; display:block; margin:-3px 0 0 -11px}
 .empty-mascot{width:96px; height:auto; display:block; margin:0 auto 6px}
 .cele{position:fixed; inset:0; z-index:120; display:none; align-items:center; justify-content:center; background:rgba(20,32,26,.46); backdrop-filter:blur(2px); padding:24px}
 .cele.show{display:flex}
@@ -446,7 +447,7 @@ nav.tabs{position:fixed; left:0; right:0; bottom:0; z-index:30}
         <div class="eyebrow" id="ckEyebrow">작업 전 점검</div>
         <h2 class="t" style="margin-bottom:0">10초 셀프 체크리스트</h2>
         <div class="scr-meta" id="ckMeta"></div>
-      </div><img class="scr-mascot" id="ckMascot" data-m="rule" alt=""></div>
+      </div><span class="mascot-av"><img class="scr-mascot" id="ckMascot" data-m="rule" alt=""></span></div>
       <div style="height:14px"></div>
       <div class="heropick" id="heroPick"></div>
       <section class="card">
@@ -475,7 +476,7 @@ nav.tabs{position:fixed; left:0; right:0; bottom:0; z-index:30}
         <div class="eyebrow">작업 전 안전미팅 · TBM</div>
         <h2 class="t" style="margin-bottom:0">오늘 TBM</h2>
         <div class="scr-meta" id="tbmMeta"></div>
-      </div><img class="scr-mascot" id="tbmMascot" data-m="rule" alt=""></div>
+      </div><span class="mascot-av"><img class="scr-mascot" id="tbmMascot" data-m="rule" alt=""></span></div>
       <div style="height:14px"></div>
       <section class="card">
         <label class="fld">공정명</label>
@@ -525,7 +526,7 @@ nav.tabs{position:fixed; left:0; right:0; bottom:0; z-index:30}
         <h2 class="t" style="margin-bottom:6px">현장 개선 요청</h2>
         <p class="sub" style="margin-bottom:0">발견 즉시 신고가 사고를 막습니다.</p>
         <div class="scr-meta"><span class="mchip">사진 3장까지</span><span class="mchip">노션 자동 등록</span></div>
-      </div><img class="scr-mascot" id="rpMascot" data-m="warn" alt=""></div>
+      </div><span class="mascot-av"><img class="scr-mascot" id="rpMascot" data-m="warn" alt=""></span></div>
       <div style="height:14px"></div>
       <section class="card">
         <label class="fld">신고자 <span style="font-weight:600; color:var(--muted)">(이름)</span></label>
