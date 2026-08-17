@@ -653,16 +653,21 @@ function loadDB(){try{const s=localStorage.getItem(LS_KEY);if(s){const o=JSON.pa
     /* 코드에 새로 추가된 연동 시스템(예: ZEN Keeper)을 저장데이터에도 채움 */
     DEFAULT_DB.extSys.forEach(d=>{if(!DB.extSys.find(s=>s.id===d.id))DB.extSys.push(JSON.parse(JSON.stringify(d)));});
     dataSource=o.dataSource||'저장됨';return true;}}}catch(e){}return false;}
-/* ===== 외부 연동 시스템 (배포 URL · 역할별) ===== */
-function sysUrl(s){const u=s.urls||{};return role==='field'?(u.worker||u.admin||''):(u.admin||u.worker||'');}
-function sysVariant(s){const u=s.urls||{};if(role==='field')return u.worker?'작업자용':(u.admin?'관리자용':'');return u.admin?'관리자용':(u.worker?'작업자용':'');}
+/* ===== 외부 연동 시스템 (배포 URL · 역할별 + 현장/관리자 토글) ===== */
+let sysView={}; // {시스템id: 'worker'|'admin'} — 역할 기본값 위에 사용자 토글 오버라이드
+function sysVar(s){return sysView[s.id]||(role==='field'?'worker':'admin');}
+function sysUrl(s){const u=s.urls||{};const v=sysVar(s);return v==='worker'?(u.worker||u.admin||''):(u.admin||u.worker||'');}
+function sysVariant(s){return sysVar(s)==='worker'?'현장(작업자)용':'관리자용';}
+function setSysView(id,v){sysView[id]=v;go(cur);}
+function sysToggle(s){const u=s.urls||{};if(!(u.worker&&u.admin&&u.worker!==u.admin))return '';const v=sysVar(s);
+  return `<span style="display:inline-flex;gap:5px;margin-right:8px"><button class="btn ${v==='worker'?'p':''}" style="padding:5px 11px" onclick="setSysView('${s.id}','worker')">현장용</button><button class="btn ${v==='admin'?'p':''}" style="padding:5px 11px" onclick="setSysView('${s.id}','admin')">관리자용</button></span>`;}
 function inAgent(s,agentId){return Array.isArray(s.agent)?s.agent.includes(agentId):s.agent===agentId;}
 function renderSysLinks(agentId){
   const list=(DB.extSys||[]).filter(s=>inAgent(s,agentId));
   if(!list.length)return '';
   return `<div>`+list.map(s=>{const url=sysUrl(s);
     if(url){const v=sysVariant(s);
-      return `<div class="card" style="margin-top:14px;padding:13px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic(({wash:'droplet',orikon:'package',heat:'thermometer'})[s.id]||'factory',16)}</span> ${s.name} <span class="hint">외부 연동 · ${v} (${ROLES[role].name})</span><span style="margin-left:auto"><button class="btn" onclick="window.open('${url.replace(/'/g,'%27')}','_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${url.replace(/"/g,'&quot;')}" title="${s.name}" style="height:64vh" loading="lazy"></iframe><div class="mini" style="margin-top:6px">비어 보이면 ‘새 창’으로 여세요.</div></div>`;}
+      return `<div class="card" style="margin-top:14px;padding:13px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic(({wash:'droplet',orikon:'package',heat:'thermometer'})[s.id]||'factory',16)}</span> ${s.name} <span class="hint">외부 연동 · ${v}</span><span style="margin-left:auto;display:flex;align-items:center">${sysToggle(s)}<button class="btn" onclick="window.open('${url.replace(/'/g,'%27')}','_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${url.replace(/"/g,'&quot;')}" title="${s.name}" style="height:64vh" loading="lazy"></iframe><div class="mini" style="margin-top:6px">비어 보이면 ‘새 창’으로 여세요.</div></div>`;}
     return `<div class="card" style="margin-top:14px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic(({wash:'droplet',orikon:'package',heat:'thermometer'})[s.id]||'factory',16)}</span> ${s.name} <span class="hint">외부 연동 · 미연결</span></h3><p class="mini">연동 URL이 없습니다. <a onclick="go('data')" style="color:#7fb8ff;cursor:pointer">데이터 관리 → 연동 시스템</a>에서 등록하세요.</p></div>`;
   }).join('')+`</div>`;
 }
@@ -962,7 +967,7 @@ V.stock=()=>{
 };
 V.orikonwash=()=>{
   const s=(DB.extSys||[]).find(x=>x.id==='orikon')||{};const url=sysUrl(s);
-  return `<div class="card" style="padding:12px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic('package',16)}</span> 오리콘·P-BOX 간접작업 실적 <span class="hint">세척·분류·수리 등 · 현장 모바일 입력 → 실시간 집계 · MH·PLT·생산성 (${ROLES[role].name})</span><span style="margin-left:auto"><button class="btn" onclick="window.open('${(url||'').replace(/'/g,'%27')}','_blank')">↗ 새 창</button></span></h3>${url?`<iframe class="safe" src="${url.replace(/"/g,'&quot;')}" title="오리콘·P-BOX 세척 실적" loading="lazy"></iframe><div class="mini" style="margin-top:6px">비어 보이면 ‘새 창’으로 여세요.</div>`:'<p class="mini">연동 URL이 없습니다. 데이터 관리 → 외부 시스템에서 설정하세요.</p>'}</div>`;
+  return `<div class="card" style="padding:12px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic('package',16)}</span> 오리콘·P-BOX 간접작업 실적 <span class="hint">세척·분류·수리 등 · ${sysVariant(s)}</span><span style="margin-left:auto;display:flex;align-items:center">${sysToggle(s)}<button class="btn" onclick="window.open('${(url||'').replace(/'/g,'%27')}','_blank')">↗ 새 창</button></span></h3>${url?`<iframe class="safe" src="${url.replace(/"/g,'&quot;')}" title="오리콘·P-BOX 세척 실적" loading="lazy"></iframe><div class="mini" style="margin-top:6px">비어 보이면 ‘새 창’으로 여세요.</div>`:'<p class="mini">연동 URL이 없습니다. 데이터 관리 → 외부 시스템에서 설정하세요.</p>'}</div>`;
 };
 V.safe=()=>{
   const nsys=(DB.extSys||[]).filter(s=>inAgent(s,'safe')).length;
