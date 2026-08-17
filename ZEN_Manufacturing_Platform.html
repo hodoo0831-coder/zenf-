@@ -551,17 +551,17 @@ let DB=JSON.parse(JSON.stringify(DEFAULT_DB));
 let dataSource='기준값';
 
 /* ===== 통합 라이브(P-BOX·오리콘) — 프로덕션 D1(work_records) 연동 ===== */
-const LIVE_SEED={ // 프로덕션 D1에서 읽은 실제 현재값 (배포 전 표시용 스냅샷)
-  asOf:'2026-08-10T09:30:00',
+const LIVE_SEED={ // 프로덕션 D1(data.work_records) 실측 — 2026-08-07 ~ 08-14 · 14건
+  asOf:'2026-08-14T18:50:00',
   kpi:{
-    pbox:{records:5,totalPLT:20,totalEA:1800,totalMH:90,days:2,pltPerMH:0.22,eaPerMH:20,dailyAvgPLT:10,
-      byPart:{'박스':19,'커버':1}, byType:{'세척':20},
-      workers:[{name:'홍길동',mh:45,plt:13,ea:1170,pltPerMH:0.29},{name:'김철수',mh:27,plt:5,ea:450,pltPerMH:0.19},{name:'이동동',mh:18,plt:2,ea:180,pltPerMH:0.11}]},
-    orikon:{records:2,totalPLT:6,totalEA:720,totalMH:27,days:2,pltPerMH:0.22,eaPerMH:27,dailyAvgPLT:3,
+    pbox:{records:12,totalPLT:59,totalEA:5310,totalMH:180.9,days:6,pltPerMH:0.33,eaPerMH:29.4,dailyAvgPLT:9.8,
+      byPart:{'박스':58,'커버':1}, byType:{'세척':59},
+      workers:[{name:'홍길동',mh:45,plt:13,ea:1170,pltPerMH:0.29},{name:'정철훈',mh:42.8,plt:18,ea:1620,pltPerMH:0.42},{name:'박지연',mh:30.8,plt:14.5,ea:1305,pltPerMH:0.47},{name:'김철수',mh:27,plt:5,ea:450,pltPerMH:0.19},{name:'이동동',mh:18,plt:2,ea:180,pltPerMH:0.11}]},
+    orikon:{records:2,totalPLT:6,totalEA:720,totalMH:27,days:2,pltPerMH:0.22,eaPerMH:26.7,dailyAvgPLT:3,
       byPart:{}, byType:{'세척':6},
       workers:[{name:'김철수',mh:9,plt:3,ea:360,pltPerMH:0.33},{name:'이동동',mh:9,plt:1.5,ea:180,pltPerMH:0.17},{name:'홍길동',mh:9,plt:1.5,ea:180,pltPerMH:0.17}]},
   },
-  alerts:[{level:'warn',title:'P-BOX 생산성 편차',detail:'이동동 0.11 PLT/MH (평균 0.22)'}],
+  alerts:[{level:'warn',title:'P-BOX 생산성 편차',detail:'이동동 0.11 PLT/MH (평균 0.33 대비 ▼66%)'}],
 };
 let LIVE={apiBase:'',today:LIVE_SEED,brief:null,status:'demo',sys:'pbox',_tried:false};
 try{LIVE.apiBase=localStorage.getItem('zen_live_api')||'';}catch(e){}
@@ -739,12 +739,12 @@ function sysPreview(s){
     note:'경험 의존 배차 → 데이터 기반 전환 · 추천 순위는 현장 수정 가능하고 변경사유를 저장해 추천 로직을 지속 학습'
   }:{
     wsub:'작업 직후 대형 터치 버튼 — 유형·수량·시간 즉시 등록 (오리콘/P-BOX)',
-    tiles:[tile('오리콘 세척','720 EA','#1f6feb'),tile('P-BOX 세척','480 EA','#12b886'),tile('분류·수리·간지','3.2 MH','#8a63d2'),tile('금일 누계','1,200 EA','#f59f00')],
-    asub:'5초 주기 다기기 자동 집계 · 공동작업 분배·단위 환산 · 이상치 경보',
-    kpis:[kpi('MH 생산성','0.22','PLT/MH','#39b98a'),kpi('집계 주기','5초','다기기 자동','#5ab0ff'),kpi('이상치','1건','생산성 편차','#d98a2b')],
-    cap:'작업자별 생산성 (PLT/MH · 이상치 자동 감지)',
-    bars:[bar('홍길동 0.29',96,'#12b886'),bar('김철수 0.19',85,'#1f6feb'),bar('이동동 0.11',50,'#dc4b4b')],
-    note:'수기 실적관리 제거 → 생산성 가시화 · 기준 생산성 대비 편차 자동 경보 — 이동동 0.11 PLT/MH (평균 0.22 대비 ▼50%)'
+    tiles:[tile('P-BOX 세척','5,310 EA','#1f6feb'),tile('오리콘 세척','720 EA','#12b886'),tile('총 투입','207.9 MH','#8a63d2'),tile('누계 (8/7~14 실측)','65 PLT','#f59f00')],
+    asub:'5초 주기 다기기 자동 집계 · 공동작업 분배·단위 환산 · 이상치 경보 — D1 실측 8/7~8/14',
+    kpis:[kpi('MH 생산성','0.33','PLT/MH (P-BOX)','#39b98a'),kpi('집계 주기','5초','다기기 자동','#5ab0ff'),kpi('이상치','1건','생산성 편차','#d98a2b')],
+    cap:'작업자별 생산성 (PLT/MH · 공동작업 자동 분배 · 실측)',
+    bars:[bar('박지연 0.47',100,'#12b886'),bar('정철훈 0.42',89,'#1f6feb'),bar('이동동 0.11',23,'#dc4b4b')],
+    note:'수기 실적관리 제거 → 생산성 가시화 · 기준 대비 편차 자동 경보 — 이동동 0.11 PLT/MH (평균 0.33 대비 ▼66%) · 프로덕션 D1 실데이터'
   };
   const body=w?`
     <div class="spv-h"><span class="spv-badge w">현장(작업자)용</span><span class="spv-nm">${nm}</span></div>
@@ -1083,12 +1083,14 @@ V.clean=()=>{
   </div>`;
 };
 /* 기준값(데모) 창고 구역 — 실 엑셀 업로드 시 DB.wh로 자동 대체 */
+/* 실측 — 프로덕션 D1(wh-stack.stock) 2026-08-12 점검분 */
 const DEFAULT_WH_ZONES=[
-  {name:'임가공[천막]',count:150,capa:120},{name:'1층 종이상자',count:200,capa:200},
-  {name:'1층 튜브',count:180,capa:180},{name:'J동 공작반 2층',count:74,capa:85},
-  {name:'OC동 적치구역',count:200,capa:250},{name:'지하 A구역',count:78,capa:100},
-  {name:'L동 박스창고',count:329,capa:481},{name:'제칭량·저장실',count:60,capa:100},
-  {name:'HnB동 1층',count:96,capa:150},{name:'수질관리실',count:40,capa:120},
+  {name:'HnB동 1층',count:762,capa:627},{name:'J동 공작반 2층',count:100,capa:85},
+  {name:'1층 튜브',count:78,capa:72},{name:'OC동 적치구역',count:214,capa:208},
+  {name:'임가공[천막]',count:149,capa:148},{name:'L동 박스창고',count:481,capa:481},
+  {name:'1층 종이상자',count:136,capa:136},{name:'FnC동 튜브',count:240,capa:242},
+  {name:'제칭량·저장실',count:11,capa:12},{name:'FnC동 염모제',count:140,capa:155},
+  {name:'지하 B구역',count:31,capa:37},{name:'지하 A구역',count:89,capa:136},
 ];
 function whGrowth(){ // 익주 예측 성장률 — 실데이터면 전체 적치율 주간 추세, 없으면 기준 +6%
   if(DB.wh&&DB.wh.weeks.length>=2){const a=whTotRate(DB.wh.weeks[0]),b=whTotRate(DB.wh.weeks[1]);if(b)return Math.max(-.1,Math.min(.2,(a-b)/b));}
@@ -1160,8 +1162,9 @@ V.stock=()=>{
   }else{
     whSection=`<div class="card" style="margin-bottom:16px"><h3>창고 구역별 적치율 <span class="hint">주1회 점검</span></h3><p class="mini">구역별 적치 점검 엑셀을 <a onclick="go('data')" style="color:#3f74b5;cursor:pointer">데이터 관리</a>에서 업로드하세요.</p></div>`;
   }
-  const overN=DB.wh?((DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones.filter(z=>z.rate>=100).length):0;
-  const trAll=DB.wh?whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0]):null;
+  const _zs=DB.wh?(DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones.map(z=>({rate:z.rate!=null?z.rate:Math.round(z.count/z.capa*100),count:z.count,capa:z.capa})):DEFAULT_WH_ZONES.map(z=>({rate:Math.round(z.count/z.capa*100),count:z.count,capa:z.capa}));
+  const overN=_zs.filter(z=>z.rate>=100).length;
+  const trAll=Math.round(_zs.reduce((a,z)=>a+z.count,0)/_zs.reduce((a,z)=>a+z.capa,0)*100);
   const srecos=[];
   if(overN)srecos.push({lv:'crit',r:`적치 초과 ${overN}구역 재배치`,s:'CAPA 상향 또는 출하 우선 조정'});
   srecos.push({lv:(trAll>=100)?'crit':(trAll>=90)?'warn':'ok',r:`전체 적치율 ${trAll!=null?trAll+'%':'-'}`,s:overN?'초과 구역 우선 조정':'적정 범위'});
