@@ -749,7 +749,11 @@ function sysPreview(s){
     <div class="spv-sub">현장 입력이 실시간 집계 · 생산성·지연을 한눈에</div>
     <div class="spv-grid3">${P.kpis.join('')}</div>
     <div class="spv-cap">${P.cap}</div>${P.bars.join('')}`;
-  return `<div class="spv ${w?'w':'a'}">${body}</div>`;
+  const flow=`<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.09);display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:700;color:#8fb4d6">
+    <span style="background:#12b886;color:#04110b;padding:3px 9px;border-radius:20px">현장 입력</span><span style="color:#5f7d9c">→</span>
+    <span style="background:rgba(255,255,255,.06);padding:3px 9px;border-radius:20px;color:#cfe3ff">플랫폼 자동 집계</span><span style="color:#5f7d9c">→</span>
+    <span style="background:rgba(90,176,255,.16);padding:3px 9px;border-radius:20px;color:#9ff0cf">생산 Agent · AI 판단 센터 반영</span></div>`;
+  return `<div class="spv ${w?'w':'a'}">${body}${flow}</div>`;
 }
 function renderSysLinks(agentId){
   const list=(DB.extSys||[]).filter(s=>inAgent(s,agentId));
@@ -955,6 +959,9 @@ function collectJudgments(){
   J.push({area:'창고',ic:'package',lv:over.length?'crit':satPred.length?'warn':'ok',r:`적치 초과 ${over.length}구역 · 익주 포화 예측 ${satPred.length}구역`,s:over.length?over.slice(0,3).map(z=>z.name.replace(/\[.*?\]/g,'').trim()+' '+z.rate+'%').join(' · '):'전 구역 여유',rule:'적치율 ≥ 100% / 예측 ≥ 100%',act:over.length?'초과분 여유 구역 재배치·출하 우선':'현 배치 유지'});
   const df=avgDefect();
   J.push({area:'품질',ic:'flask',lv:df>1.5?'warn':'ok',r:`불량률 ${df}%`,s:`목표 1.5% ${df>1.5?'초과':'이내'} · 주요 원인 ${(DB.paretoNames&&DB.paretoNames[0])||'-'}`,rule:'불량률 > 1.5%',act:df>1.5?'최다 라인 원인 조치':'현 수준 유지'});
+  const pb=LIVE_SEED.kpi.pbox, low=pb.workers.reduce((m,x)=>x.pltPerMH<m.pltPerMH?x:m,pb.workers[0]);
+  const dev=Math.round((1-low.pltPerMH/pb.pltPerMH)*100);
+  J.push({area:'간접작업',ic:'package',lv:dev>=40?'warn':'ok',r:`P-BOX·오리콘 생산성 편차 ${dev>=40?'감지':'정상'}`,s:`${low.name} ${low.pltPerMH} PLT/MH · 평균 ${pb.pltPerMH} 대비 ▼${dev}% (현장 앱 실적 자동 집계)`,rule:'작업자 생산성 편차 > 40%',act:dev>=40?'저생산성 작업자 재배치·표준작업 교육':'현 배치 유지'});
   return J;
 }
 let judgeFilter='전체';
