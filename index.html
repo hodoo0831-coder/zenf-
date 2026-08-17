@@ -538,8 +538,8 @@ const DEFAULT_DB={
   otTrend:[{label:'월',v:22},{label:'화',v:28},{label:'수',v:31},{label:'목',v:26},{label:'금',v:35}],
   forecast:[{label:'5/10(금)',v:3},{label:'5/11(토)',v:2},{label:'5/12(월)',v:4},{label:'5/13(화)',v:6},{label:'5/14(수)',v:5},{label:'5/15(목)',v:2},{label:'5/16(금)',v:1}],
   extSys:[ // 외부 연동 시스템(배포 URL) — 역할별(worker/admin) URL, 관련 Agent 화면에 임베드
-    {id:'wash',name:'세척실 관리 시스템',icon:'🧼',agent:'clean',urls:{worker:'https://wash-worker.netlify.app/',admin:'https://wash-admin.netlify.app/'}},
-    {id:'orikon',name:'오리콘·피박스 세척 실적',icon:'📦',agent:[],urls:{worker:'https://orikon-pbox-worker.netlify.app/',admin:'https://orikon-pbox-admin.netlify.app/'}},
+    {id:'wash',name:'세척실 작업 우선순위 자동 추천 시스템',icon:'🧼',agent:'clean',urls:{worker:'https://wash-worker.netlify.app/',admin:'https://wash-admin.netlify.app/'}},
+    {id:'orikon',name:'오리콘·P-BOX 작업실적 통합관리 시스템',icon:'📦',agent:[],urls:{worker:'https://orikon-pbox-worker.netlify.app/',admin:'https://orikon-pbox-admin.netlify.app/'}},
     {id:'heat',name:'젠프 히트워치 (옥외 체감온도·KOSHA)',icon:'🌡',agent:'safe',urls:{worker:'internal:heat',admin:'internal:heat'}},
     {id:'zenkeeper',name:'ZEN Keeper 안전관리 (제니엘 4대 실천)',icon:'🦺',agent:'safe',urls:{worker:'internal:safe',admin:'internal:safe'}},
   ],
@@ -728,27 +728,34 @@ function sysPreview(s){
   const tile=(t,v,c)=>`<div class="spv-t"><div class="l">${t}</div><div class="v">${v}</div><i style="background:${c}"></i></div>`;
   const kpi=(t,v,d,c)=>`<div class="spv-k"><div class="l">${t}</div><div class="v">${v}</div><div class="d" style="color:${c}">${d}</div></div>`;
   const bar=(n,p,c)=>`<div class="spv-b"><span>${n}</span><div class="tr"><i style="width:${p}%;background:${c}"></i></div><b>${p}%</b></div>`;
-  // 시스템별 대표 콘텐츠
+  // 시스템별 대표 콘텐츠 (기획서 정체성 반영)
   const P=s.id==='wash'?{
-    sub:'세척 완료 후 라인·용기 단위로 실적 입력',
-    tiles:[tile('용기 세척','640 EA','#1f6feb'),tile('라인 CIP','8 라인','#12b886'),tile('세척 완료','92%','#8a63d2'),tile('금일 누계','1,050 EA','#f59f00')],
-    kpis:[kpi('금일 세척','8/8 라인','▲ 완료','#39b98a'),kpi('완료율','92%','▲ 목표 상회','#39b98a'),kpi('지연','1 라인','주의','#d98a2b')],
-    cap:'라인별 세척 완료율',bars:[bar('튜브',96,'#12b886'),bar('치약충전',88,'#1f6feb'),bar('일회용',72,'#f59f00')]
+    wsub:'대기 설비·생산 종료·세척시간·긴급도·가용인원 입력 → 추천 순위 확인',
+    tiles:[tile('세척 대기','4 설비','#1f6feb'),tile('최우선','튜브 성형','#dc4b4b'),tile('예상 완료','15:40','#12b886'),tile('긴급','1 건','#f59f00')],
+    asub:'점수 기반 순서·예상 완료시간 자동 추천 · 현장 수정 가능(사유 기록)',
+    kpis:[kpi('자동판단 정확도','95%','목표','#39b98a'),kpi('세척 대기','4 설비','실시간','#5ab0ff'),kpi('지연위험','1 건','주의','#d98a2b')],
+    cap:'점수 기반 우선순위 (긴급도·여유시간·가용인원)',
+    bars:[bar('1위 튜브 성형',89,'#dc4b4b'),bar('2위 치약충전',76,'#f59f00'),bar('3위 일회용',64,'#1f6feb')],
+    note:'경험 의존 배차 → 데이터 기반 전환 · 추천 순위는 현장 수정 가능하고 변경사유를 저장해 추천 로직을 지속 학습'
   }:{
-    sub:'작업 직후 대형 터치 버튼으로 실적을 바로 입력',
-    tiles:[tile('오리콘 세척','720 EA','#1f6feb'),tile('P-BOX 세척','480 EA','#12b886'),tile('분류·수리','3.2 MH','#8a63d2'),tile('금일 누계','1,200 EA','#f59f00')],
-    kpis:[kpi('금일 세척','1,200 PLT','▲ +6%','#39b98a'),kpi('생산성','0.28 PLT/MH','▲ 평균 상회','#39b98a'),kpi('지연','2건','주의','#d98a2b')],
-    cap:'작업자별 실적 달성률',bars:[bar('홍길동',96,'#12b886'),bar('김철수',88,'#1f6feb'),bar('이동동',72,'#f59f00')]
+    wsub:'작업 직후 대형 터치 버튼 — 유형·수량·시간 즉시 등록 (오리콘/P-BOX)',
+    tiles:[tile('오리콘 세척','720 EA','#1f6feb'),tile('P-BOX 세척','480 EA','#12b886'),tile('분류·수리·간지','3.2 MH','#8a63d2'),tile('금일 누계','1,200 EA','#f59f00')],
+    asub:'5초 주기 다기기 자동 집계 · 공동작업 분배·단위 환산 · 이상치 경보',
+    kpis:[kpi('MH 생산성','0.22','PLT/MH','#39b98a'),kpi('집계 주기','5초','다기기 자동','#5ab0ff'),kpi('이상치','1건','생산성 편차','#d98a2b')],
+    cap:'작업자별 생산성 (PLT/MH · 이상치 자동 감지)',
+    bars:[bar('홍길동 0.29',96,'#12b886'),bar('김철수 0.19',85,'#1f6feb'),bar('이동동 0.11',50,'#dc4b4b')],
+    note:'수기 실적관리 제거 → 생산성 가시화 · 기준 생산성 대비 편차 자동 경보 — 이동동 0.11 PLT/MH (평균 0.22 대비 ▼50%)'
   };
   const body=w?`
     <div class="spv-h"><span class="spv-badge w">현장(작업자)용</span><span class="spv-nm">${nm}</span></div>
-    <div class="spv-sub">${P.sub}</div>
+    <div class="spv-sub">${P.wsub}</div>
     <div class="spv-grid2">${P.tiles.join('')}</div>
     <div class="spv-act"><div class="save">＋ 실적 저장</div><div class="ph">사진 첨부</div></div>`:`
     <div class="spv-h"><span class="spv-badge a">관리자용</span><span class="spv-nm">${nm}</span></div>
-    <div class="spv-sub">현장 입력이 실시간 집계 · 생산성·지연을 한눈에</div>
+    <div class="spv-sub">${P.asub}</div>
     <div class="spv-grid3">${P.kpis.join('')}</div>
-    <div class="spv-cap">${P.cap}</div>${P.bars.join('')}`;
+    <div class="spv-cap">${P.cap}</div>${P.bars.join('')}
+    <div class="mini" style="margin-top:10px;color:#8fb4d6;line-height:1.5">${P.note}</div>`;
   const flow=`<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.09);display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:700;color:#8fb4d6">
     <span style="background:#12b886;color:#04110b;padding:3px 9px;border-radius:20px">현장 입력</span><span style="color:#5f7d9c">→</span>
     <span style="background:rgba(255,255,255,.06);padding:3px 9px;border-radius:20px;color:#cfe3ff">플랫폼 자동 집계</span><span style="color:#5f7d9c">→</span>
@@ -808,9 +815,9 @@ const AGENTS=[
   {id:'planhub',name:'계획 Agent',icon:'🗓',sub:'주간계획 · 부하율·필요인원 · 지연오더'},
   {id:'prod',name:'생산 Agent',icon:'📈',sub:'실시간 실적 · CAPA · P-BOX·오리콘'},
   {id:'labor',name:'인력 Agent',icon:'👥',sub:'출근 · 결원 · 대체인력 · 잔업 추천'},
-  {id:'clean',name:'세척 Agent',icon:'🧼',sub:'세척 우선순위 자동 계산'},
+  {id:'clean',name:'세척 Agent',icon:'🧼',sub:'세척실 작업 우선순위 자동 추천 (긴급도·여유시간·가용인원 점수화)'},
   {id:'stock',name:'창고 Agent',icon:'📦',sub:'포장재 창고 적치 · 구역별 포화율'},
-  {id:'orikonwash',name:'간접작업 Agent',icon:'📦',sub:'오리콘·P-BOX 세척·분류·수리 등 간접작업 실적 · 생산성(MH·PLT)'},
+  {id:'orikonwash',name:'간접작업 Agent',icon:'📦',sub:'오리콘·P-BOX 작업실적 통합관리 · 5초 자동집계 · MH 생산성·이상치'},
   {id:'safe',name:'안전 Agent',icon:'🦺',sub:'TBM · 폭염 · 위험요인 추천'},
   {id:'qual',name:'품질 Agent',icon:'🔬',sub:'불량 추이 · 원인 분석'},
   {id:'insight',name:'분석·보고 Agent',icon:'📊',sub:'KPI·LOSS 분석 · 월마감 보고서'},
