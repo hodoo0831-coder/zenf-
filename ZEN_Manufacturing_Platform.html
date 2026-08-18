@@ -1651,11 +1651,8 @@ function genReport(t){go('report');toast(t+'를 생성했습니다 (DB 최신값
 let cur='home';
 const NAV_TOOLS={opl:{name:'OPL 교육자료',icon:'📄'},data:{name:'데이터 관리',icon:'🗄'}};
 const NAV_GROUPS=[
-  {sec:'OVERVIEW',ids:['home','judge']},
-  {sec:'계획 · PLAN',ids:['planhub']},
-  {sec:'운영 · OPERATIONS',ids:['prod','labor','clean','stock','orikonwash']},
-  {sec:'품질·안전 · QUALITY & EHS',ids:['qual','safe']},
-  {sec:'분석 · INSIGHT',ids:['insight']},
+  {sec:'홈 · OVERVIEW',ids:['home','judge']},
+  {sec:'AI AGENTS',ids:['planhub','prod','labor','clean','stock','orikonwash','qual','safe','insight']},
   {sec:'도구 · TOOLS',ids:['opl','data']},
 ];
 function buildNav(){
