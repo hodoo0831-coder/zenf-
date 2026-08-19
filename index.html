@@ -34,7 +34,10 @@
   .roles button{border:1px solid #345677;background:#1d3a58;color:#eaf1fb;border-radius:13px;padding:12px 4px;cursor:pointer;font-weight:700;font-size:13px;transition:.14s}
   .roles button .e{display:block;font-size:20px;margin-bottom:4px}
   .roles button.on{border-color:#7fc3ad;background:#255079;box-shadow:0 0 0 2px #7fc3ad33}
-  .login input,.login select{width:100%;border:1px solid #345677;background:#15304c;color:#eaf1fb;border-radius:13px;padding:12px 13px;font-size:14px}
+  .login input,.login select{width:100%;border:1.5px solid #4a76a8;background:#1b3a5c;color:#ffffff;border-radius:13px;padding:13px 14px;font-size:15px;font-weight:700}
+  .login select{appearance:none;-webkit-appearance:none;padding-right:40px;cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%238fc6ff' stroke-width='2.2' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 14px center}
+  .login select optgroup{background:#12283f;color:#8fc6ff;font-weight:800}
+  .login select option{background:#12283f;color:#fff;font-weight:600}
   .login .go{width:100%;margin-top:18px;border:none;border-radius:13px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;color:#12263c;background:linear-gradient(180deg,#63d7a2,#33bd86)}
   .login .go:hover{filter:brightness(1.05)}
   .login .note{text-align:center;color:#7f97b4;font-size:11px;margin-top:14px}
@@ -400,7 +403,7 @@
       <button data-role="center" class="on"><span class="e">🛰️</span>센터</button>
     </div>
     <label id="scopeLbl">담당 구역</label>
-    <select id="scopeSel" style="width:100%;border:1px solid var(--line2);background:#0b1a2e;color:var(--ink);border-radius:11px;padding:12px 13px;font-size:14px"></select>
+    <select id="scopeSel"></select>
     <label>사번 / 비밀번호</label>
     <input id="pw" type="password" placeholder="비밀번호" value="1234">
     <button class="go" onclick="doLogin()">로그인</button>
@@ -674,26 +677,27 @@ function renderLive(){
   return `<div class="grid g2" style="grid-template-columns:1.45fr 1fr;margin-top:14px">
     <div class="card"><h3>P-BOX · 오리콘 통합 실적 ${badge}<span style="margin-left:auto;display:flex;gap:6px">${tab('pbox','P-BOX')}${tab('orikon','오리콘')}</span></h3>
       ${kt}
-      <div class="grid g2" style="grid-template-columns:1.35fr 1fr">
-        <div><h3 style="font-size:12.5px">작업자별 실적 <span class="hint">공동작업 인원분배</span></h3><table class="tb"><thead><tr><th>작업자</th><th>MH</th><th>PLT</th><th>EA</th><th>PLT/MH</th></tr></thead><tbody>${wk}</tbody></table></div>
-        <div><h3 style="font-size:12.5px">부위·유형별 (PLT)</h3>${partBars||'<div class="mini">부위 구분 없음</div>'}${(partBars&&typeBars)?'<div style="height:8px"></div>':''}${typeBars}</div>
-      </div>
+      <div style="margin-top:4px"><h3 style="font-size:12.5px">부위·유형별 (PLT)</h3><div class="grid g2" style="grid-template-columns:1fr 1fr;gap:14px"><div>${partBars||'<div class="mini">부위 구분 없음</div>'}</div><div>${typeBars}</div></div></div>
+      <details class="zfold" style="margin-top:9px"><summary>작업자별 실적 · 공동작업 인원분배 상세</summary>
+        <table class="tb" style="margin-top:8px"><thead><tr><th>작업자</th><th>MH</th><th>PLT</th><th>EA</th><th>PLT/MH</th></tr></thead><tbody>${wk}</tbody></table>
+      </details>
     </div>
     <div class="card"><h3>AI 통합 브리핑 <span class="hint">${modelTag}</span><button class="btn" onclick="liveRefresh()">새로고침</button></h3>
       <div class="reco" style="margin-bottom:10px"><div class="ic" style="color:var(--accent)" data-ic="spark"></div><div class="tx"><div class="r">${(b.oneLine||'').replace(/</g,'&lt;')}</div><div class="s">데이터원: ${LIVE.status==='live'?'실시간 D1(work_records)':'실데이터 스냅샷'} · ${((d.asOf)||'').slice(0,16).replace('T',' ')}</div></div></div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600">카톡 보고문</div>
-      <pre style="white-space:pre-wrap;background:#f4f7fb;border:1px solid var(--line2);border-radius:9px;padding:11px;font-size:12.5px;line-height:1.55;font-family:inherit;margin:0">${(b.kakao||'').replace(/</g,'&lt;')}</pre>
-      <div style="display:flex;gap:8px;margin-top:8px"><button class="btn p" onclick="copyBrief()">보고문 복사</button><button class="btn" onclick="liveConnectPrompt()">라이브 연결</button></div>
+      <details class="zfold"><summary>카톡 보고문 미리보기</summary>
+      <pre style="white-space:pre-wrap;background:#f4f7fb;border:1px solid var(--line2);border-radius:9px;padding:11px;font-size:12.5px;line-height:1.55;font-family:inherit;margin:8px 0 0">${(b.kakao||'').replace(/</g,'&lt;')}</pre>
+      </details>
+      <div style="display:flex;gap:8px;margin-top:10px"><button class="btn p" onclick="copyBrief()">보고문 복사</button><button class="btn" onclick="liveConnectPrompt()">라이브 연결</button></div>
     </div>
   </div>
-  <div class="card" id="liveConn" style="margin-top:14px"><h3>라이브 연결 <span class="hint">통합 API 배포 주소를 붙이면 실시간 전환</span></h3>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="liveApi" type="text" value="${(LIVE.apiBase||'').replace(/"/g,'&quot;')}" placeholder="https://zen-integration-api.○○○.workers.dev" style="flex:1;min-width:240px;border:1px solid var(--line2);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit"><button class="btn p" onclick="liveSetApi()">연결</button><button class="btn" onclick="liveDisconnect()">해제</button></div>
-    <div class="mini" style="margin-top:6px">현재: <b>${LIVE.status==='live'?'실시간 연결됨 ✓':LIVE.apiBase?'연결 실패 — 기준 스냅샷 표시':'미연결 — 실데이터 스냅샷 표시'}</b> · 배포: <code>integration/</code> 폴더에서 <code>wrangler deploy</code> → 나온 주소를 여기 붙이기</div>
-  </div>`;
+  <details class="zfold card" id="liveConn" style="margin-top:14px;padding:12px 16px"><summary>라이브 연결 설정 — 통합 API 주소를 붙이면 실시간 전환 <b style="color:${LIVE.status==='live'?'#22a05f':'var(--muted)'}">(${LIVE.status==='live'?'연결됨 ✓':'미연결 · 스냅샷'})</b></summary>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><input id="liveApi" type="text" value="${(LIVE.apiBase||'').replace(/"/g,'&quot;')}" placeholder="https://zen-integration-api.○○○.workers.dev" style="flex:1;min-width:240px;border:1px solid var(--line2);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit"><button class="btn p" onclick="liveSetApi()">연결</button><button class="btn" onclick="liveDisconnect()">해제</button></div>
+    <div class="mini" style="margin-top:6px">배포: <code>integration/</code> 폴더에서 <code>wrangler deploy</code> → 나온 주소를 여기 붙이기</div>
+  </details>`;
 }
 
 /* ===== 역할 스코프(담당 라인/구역) ===== */
-const ZONES={'구강케어':['튜브','치약충전','일회용'],'헤어·바디':['초격차','HnB','FnC']};
+const ZONES={'Oral Care':['튜브','치약충전','일회용','초격차'],'HnB':['HnB'],'FnC':['FnC']};
 let scope=null; // null=전체
 let scopeName='전체';
 function myLines(){ if(!scope||!scope.length) return DB.lines; const f=DB.lines.filter(l=>scope.includes(l.key)); return f.length?f:DB.lines; }
@@ -1705,10 +1709,11 @@ function setupDrop(){const d=document.getElementById('drop');if(!d)return;
 function fillScope(r){
   const sel=document.getElementById('scopeSel'),lbl=document.getElementById('scopeLbl');
   let opts=[];
-  if(r==='field'){lbl.textContent='담당 라인 (현장)';opts=DEFAULT_DB.lines.map(l=>({v:l.key,t:l.key+' 라인'}));}
-  else if(r==='admin'){lbl.textContent='담당 구역 (관리자)';opts=[{v:'전체',t:'전체 라인'}].concat(Object.keys(ZONES).map(z=>({v:z,t:z+' ('+ZONES[z].join('·')+')'})));}
-  else{lbl.textContent='운영 범위 (센터)';opts=[{v:'전체',t:'전체 라인 (종합 상황판 · 전권)'}];}
-  sel.innerHTML=opts.map(o=>`<option value="${o.v}">${o.t}</option>`).join('');
+  if(r==='field'){lbl.textContent='담당 라인 (현장) — 사업부별';
+    sel.innerHTML=Object.keys(ZONES).map(z=>`<optgroup label="◼ ${z}">`+ZONES[z].map(k=>`<option value="${k}">${z} · ${k} 라인</option>`).join('')+`</optgroup>`).join('');}
+  else if(r==='admin'){lbl.textContent='담당 사업부 (관리자)';
+    sel.innerHTML=[`<option value="전체">전체 사업부 (HnB · FnC · Oral Care)</option>`].concat(Object.keys(ZONES).map(z=>`<option value="${z}">${z} (${ZONES[z].join('·')})</option>`)).join('');}
+  else{lbl.textContent='운영 범위 (센터)';sel.innerHTML=`<option value="전체">전체 라인 (종합 상황판 · 전권)</option>`;}
   sel.disabled=(r==='center');
 }
 document.querySelectorAll('#roles button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#roles button').forEach(x=>x.classList.remove('on'));b.classList.add('on');fillScope(b.dataset.role);});
@@ -1776,6 +1781,12 @@ fillScope('center');
   animation:lgAur 14s ease-in-out infinite alternate}
 @keyframes lgAur{0%{transform:translate(-3%,-2%) scale(1.06) rotate(-2deg)}100%{transform:translate(3%,3%) scale(1.14) rotate(2deg)}}
 .login .box{position:relative;z-index:1}
+/* ── 접기(상세 보기) ── */
+.zfold summary{cursor:pointer;font-size:12.5px;font-weight:800;color:#3f74b5;user-select:none;list-style:none;display:flex;align-items:center;gap:7px;padding:4px 0}
+.zfold summary::-webkit-details-marker{display:none}
+.zfold summary::before{content:'▸';font-size:11px;transition:transform .18s;color:#7fa6c8}
+.zfold[open] summary::before{transform:rotate(90deg)}
+.zfold summary:hover{color:#1f6feb}
 /* ── 가시성: 숫자 크게 · 대비 강화 · 텍스트 정돈 ── */
 .kpi .val{font-size:31px}
 .kpi .lab{font-size:12.5px;font-weight:700}
