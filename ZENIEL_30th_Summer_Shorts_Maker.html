@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ZENIEL 30th SUMMER MOMENTS · 쇼츠 영상 제작기</title>
+<meta name="theme-color" content="#1e88e5">
+<style>
+  :root{
+    --sky:#38b6ff; --sky2:#7fd8ff; --blue:#1e88e5; --blue-d:#0b62c4; --navy:#0d3b66;
+    --ink:#14283d; --muted:#5b7591; --muted2:#8aa3bd;
+    --bg:#eef7ff; --card:#ffffff; --line:#d5e6f7; --line2:#bcd8f2;
+    --yellow:#ffe066; --amber:#f59e0b; --green:#22c55e; --red:#ef4444;
+    --shadow:0 8px 26px rgba(13,59,102,.10);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(900px 520px at 84% -8%, #b9e6ff88 0%, transparent 62%),
+      radial-gradient(760px 460px at 6% 104%, #cdeaff88 0%, transparent 58%),
+      var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:1420px;margin:0 auto;padding:18px 20px 40px}
+
+  /* ===== Header ===== */
+  header.top{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:6px 4px 14px}
+  .brand .logo{font-size:22px;font-weight:800;letter-spacing:.2px}
+  .brand .logo b{color:var(--blue-d)}
+  .brand .logo span{color:var(--ink)}
+  .brand .sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+  .title{flex:1;text-align:center;font-size:26px;font-weight:800;letter-spacing:.5px;color:var(--navy);min-width:260px}
+  .title small{display:block;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:0;margin-top:4px}
+  .dday{border:1px solid var(--line2);background:#fff;border-radius:12px;padding:9px 14px;text-align:right;box-shadow:var(--shadow)}
+  .dday .l{font-size:11.5px;color:var(--muted);font-weight:700}
+  .dday .v{font-size:18px;font-weight:800;color:var(--blue-d);margin-top:2px}
+
+  /* ===== Tabs ===== */
+  nav.tabs{display:flex;gap:8px;margin:4px 0 18px;flex-wrap:wrap}
+  .tab{border:1px solid var(--line2);background:#fff;color:var(--muted);padding:11px 18px;border-radius:12px;
+       font-size:14px;font-weight:700;cursor:pointer;transition:.15s}
+  .tab:hover{border-color:var(--sky);color:var(--blue-d)}
+  .tab.on{background:linear-gradient(180deg,var(--blue),var(--blue-d));border-color:var(--blue-d);color:#fff;box-shadow:var(--shadow)}
+  section.page{display:none}
+  section.page.on{display:block}
+
+  /* ===== Cards ===== */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px}
+  .card h3{margin:0 0 4px;font-size:16.5px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px}
+  .card .desc{color:var(--muted);font-size:13px;margin:0 0 14px;line-height:1.6}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px}
+  .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+  @media(max-width:980px){.grid2{grid-template-columns:1fr}}
+
+  .badge{display:inline-block;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px;
+    background:#e7f4ff;color:var(--blue-d);border:1px solid var(--line2)}
+  .badge.y{background:#fff7d6;color:#8a6100;border-color:#f2e0a0}
+  .badge.g{background:#e6f9ef;color:#15803d;border-color:#bce9d0}
+  .badge.r{background:#ffeaea;color:#b91c1c;border-color:#f5c7c7}
+
+  table.sb{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  table.sb th,table.sb td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+  table.sb th{background:#f2f9ff;color:var(--navy);font-weight:800;font-size:12.5px}
+  table.sb td.t{white-space:nowrap;font-weight:800;color:var(--blue-d);width:74px}
+  table.sb td.c{color:var(--ink);font-weight:600}
+
+  ul.tips{margin:10px 0 0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.85}
+  ul.tips b{color:var(--ink)}
+
+  /* ===== Studio ===== */
+  .studio{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+  @media(max-width:1080px){.studio{grid-template-columns:1fr}}
+
+  .drop{border:2px dashed var(--line2);border-radius:14px;background:#f7fbff;padding:26px 18px;text-align:center;cursor:pointer;transition:.15s}
+  .drop:hover,.drop.over{border-color:var(--sky);background:#eef7ff}
+  .drop .ic{font-size:30px}
+  .drop .m{font-weight:800;margin-top:8px;font-size:14.5px}
+  .drop .s{color:var(--muted);font-size:12.5px;margin-top:5px;line-height:1.6}
+
+  .cliplist{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+  .clip{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:12px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#fbfdff}
+  .clip .th{width:76px;height:100px;border-radius:9px;overflow:hidden;background:#dceaf7;display:flex;align-items:center;justify-content:center;position:relative}
+  .clip .th img,.clip .th video{width:100%;height:100%;object-fit:cover}
+  .clip .th .kind{position:absolute;left:4px;top:4px;font-size:10px;font-weight:800;background:#0b62c4d9;color:#fff;padding:2px 6px;border-radius:6px}
+  .clip .body{display:flex;flex-direction:column;gap:7px;min-width:0}
+  .clip .nm{font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .clip .row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .clip .ops{display:flex;flex-direction:column;gap:5px;justify-content:center}
+  .iconbtn{border:1px solid var(--line2);background:#fff;border-radius:8px;width:30px;height:26px;cursor:pointer;font-size:12px;font-weight:800;color:var(--muted)}
+  .iconbtn:hover{border-color:var(--blue);color:var(--blue-d)}
+  .iconbtn.del:hover{border-color:var(--red);color:var(--red)}
+
+  input[type=text],input[type=number],select,textarea{
+    border:1px solid var(--line2);background:#fff;border-radius:9px;padding:8px 10px;font-size:13px;color:var(--ink);
+    font-family:inherit;outline:none;transition:.15s;min-width:0}
+  input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{border-color:var(--sky);box-shadow:0 0 0 3px #38b6ff26}
+  input.cap{flex:1;min-width:120px}
+  input.dur{width:74px}
+  label.lab{font-size:12px;font-weight:800;color:var(--muted);display:block;margin:12px 0 6px}
+  .fld{display:flex;gap:8px;align-items:center}
+  .fld input[type=text]{flex:1}
+
+  .btn{border:1px solid var(--line2);background:#fff;color:var(--ink);padding:11px 16px;border-radius:11px;
+       font-size:13.5px;font-weight:800;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center;transition:.15s}
+  .btn:hover{border-color:var(--blue);color:var(--blue-d)}
+  .btn.p{background:linear-gradient(180deg,var(--blue),var(--blue-d));border-color:var(--blue-d);color:#fff}
+  .btn.p:hover{filter:brightness(1.06);color:#fff}
+  .btn.rec{background:linear-gradient(180deg,#ff6b6b,#d92d2d);border-color:#c02626;color:#fff}
+  .btn.rec:hover{filter:brightness(1.06);color:#fff}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.wide{width:100%}
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+  .stage{position:sticky;top:14px}
+  .phone{width:100%;max-width:330px;margin:0 auto;background:#0d3b66;border-radius:26px;padding:10px;box-shadow:0 14px 40px rgba(13,59,102,.28)}
+  #cv{width:100%;height:auto;display:block;border-radius:18px;background:#0b3358}
+  .meter{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:#fbfdff}
+  .meter .top{display:flex;justify-content:space-between;align-items:baseline}
+  .meter .lab{font-size:12px;font-weight:800;color:var(--muted)}
+  .meter .val{font-size:20px;font-weight:800}
+  .bar{height:8px;border-radius:6px;background:#e3eefa;margin-top:8px;overflow:hidden;position:relative}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sky2),var(--blue));width:0;transition:width .2s}
+  .bar .zone{position:absolute;top:0;bottom:0;background:#22c55e22;border-left:1px dashed #22c55e88;border-right:1px dashed #22c55e88}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.6}
+
+  .out{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fbfdff;display:none}
+  .out.on{display:block}
+  .out video{width:100%;border-radius:10px;background:#000;display:block}
+
+  .note{border-left:3px solid var(--sky);background:#f2f9ff;border-radius:0 10px 10px 0;padding:11px 14px;font-size:12.8px;color:var(--muted);line-height:1.75;margin-top:12px}
+  .note b{color:var(--ink)}
+  .warn{border-left-color:var(--amber);background:#fff9ec}
+
+  ol.chk{margin:6px 0 0;padding-left:0;list-style:none;font-size:13.5px}
+  ol.chk li{display:flex;gap:10px;align-items:flex-start;padding:10px 2px;border-bottom:1px dashed var(--line)}
+  ol.chk li:last-child{border-bottom:0}
+  ol.chk input{width:18px;height:18px;margin-top:1px;accent-color:var(--blue)}
+  ol.chk span{line-height:1.6}
+  ol.chk b{color:var(--navy)}
+
+  pre.mail{background:#f7fbff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.75;
+    white-space:pre-wrap;word-break:break-word;font-family:inherit;color:var(--ink);margin:10px 0 0}
+  .kv{display:grid;grid-template-columns:110px 1fr;gap:8px 14px;font-size:13.5px;line-height:1.7}
+  .kv .k{color:var(--muted);font-weight:800}
+  .kv .v{font-weight:700}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;
+    padding:12px 20px;border-radius:12px;font-size:13.5px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo"><b>ZENIEL</b> <span>30th</span></div>
+      <div class="sub">제니엘그룹 창립 30주년 기념 사내 공모전</div>
+    </div>
+    <div class="title">
+      30th SUMMER MOMENTS · 쇼츠 영상 제작기
+      <small>세로 9:16 · 10~20초 · mp4 — 기획부터 파일 저장까지 한 화면에서</small>
+    </div>
+    <div class="dday">
+      <div class="l">접수 마감 2026.08.31(월)</div>
+      <div class="v" id="dday">D-</div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab on" data-p="plan">1 · 기획 &amp; 스토리보드</button>
+    <button class="tab" data-p="make">2 · 영상 만들기</button>
+    <button class="tab" data-p="send">3 · 제출 체크리스트</button>
+  </nav>
+
+  <!-- ============ TAB 1 : PLAN ============ -->
+  <section class="page on" id="p-plan">
+
+    <div class="card">
+      <h3>공모 요강 요약</h3>
+      <p class="desc">포스터 기준 핵심 조건입니다. 아래 조건을 하나라도 벗어나면 심사 전에 걸러질 수 있으니 제작 전에 먼저 확인하세요.</p>
+      <div class="grid3">
+        <div>
+          <div class="kv">
+            <div class="k">주제</div><div class="v">창립 30주년을 축하하는 나만의 여름 이야기</div>
+            <div class="k">응모 대상</div><div class="v">제니엘그룹 전 임직원 (1인 1작품)</div>
+            <div class="k">응모 기간</div><div class="v">7/2(목) ~ 8/31(월)</div>
+          </div>
+        </div>
+        <div>
+          <div class="kv">
+            <div class="k">영상 분량</div><div class="v">10초 ~ 20초 이내</div>
+            <div class="k">화면 비율</div><div class="v">세로 9:16 권장 (1080×1920)</div>
+            <div class="k">형식</div><div class="v">mp4</div>
+            <div class="k">제출처</div><div class="v">ylpark@zeniel.co.kr</div>
+          </div>
+        </div>
+        <div>
+          <div class="kv">
+            <div class="k">심사 기간</div><div class="v">9/1(화) ~ 9/4(금) <span class="badge">전략기획팀 1차 심사 후 온라인 게시</span></div>
+            <div class="k">결과 발표</div><div class="v">9/7(월)</div>
+            <div class="k">시상</div><div class="v">최우수 1명 30만원 · 우수 2명 20만원<br>아이디어 2명 10만원 · 장려 2명 5만원</div>
+          </div>
+        </div>
+      </div>
+      <div class="note warn"><b>온라인 게시 + 사내 투표</b>가 예정되어 있습니다. 즉 “처음 3초에 눈길을 끌고, 끝에 30주년 축하 메시지가 분명히 남는” 구성이 표를 가장 많이 받습니다. 아래 3가지 구성안은 모두 그 원칙으로 짰습니다.</div>
+    </div>
+
+    <div class="grid3">
+
+      <div class="card">
+        <h3>구성안 A <span class="badge g">가장 무난 · 추천</span></h3>
+        <p class="desc"><b>“나의 여름 3컷”</b> — 휴가 사진 3~4장만 있으면 완성. 리듬감 있는 컷 전환 + 마지막 축하 메시지.</p>
+        <table class="sb">
+          <tr><th>시간</th><th>화면</th><th>자막</th></tr>
+          <tr><td class="t">0~2초</td><td class="c">타이틀 카드 (물결 배경)</td><td>2026 제니엘그룹<br>30th SUMMER MOMENTS</td></tr>
+          <tr><td class="t">2~6초</td><td class="c">바다 / 하늘 넓은 컷</td><td>올여름, 나는 여기 있었다</td></tr>
+          <tr><td class="t">6~10초</td><td class="c">음식·발끝·물놀이 등 가까운 컷</td><td>제대로 쉬어본 하루</td></tr>
+          <tr><td class="t">10~14초</td><td class="c">인물 / 뒷모습 / 노을</td><td>충전 완료!</td></tr>
+          <tr><td class="t">14~17초</td><td class="c">아웃트로 카드</td><td>제니엘그룹 창립 30주년을<br>축하합니다 · OO팀 OOO</td></tr>
+        </table>
+        <ul class="tips">
+          <li><b>총 17초</b> — 10~20초 조건 안에서 가장 안정적인 길이</li>
+          <li>컷당 4초를 넘기지 마세요. 넘어가면 지루해집니다</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>구성안 B <span class="badge y">아이디어상 노림</span></h3>
+        <p class="desc"><b>“30이 숨어 있는 여름”</b> — 30이라는 숫자를 여름 풍경 속에서 찾아 이어 붙이는 컨셉. 아이디어상 겨냥.</p>
+        <table class="sb">
+          <tr><th>시간</th><th>화면</th><th>자막</th></tr>
+          <tr><td class="t">0~2초</td><td class="c">손가락으로 3·0 만드는 클로즈업</td><td>서른, 찾았다</td></tr>
+          <tr><td class="t">2~5초</td><td class="c">파라솔 30개 / 계단 30칸 / 30도 온도계</td><td>오늘 기온 30도</td></tr>
+          <tr><td class="t">5~9초</td><td class="c">수박 30조각, 커피잔, 영수증 등</td><td>어디에나 30이 있었다</td></tr>
+          <tr><td class="t">9~13초</td><td class="c">모래 위에 30 쓰기 → 파도</td><td>제니엘의 30년처럼</td></tr>
+          <tr><td class="t">13~16초</td><td class="c">아웃트로 카드</td><td>30주년 축하합니다 · OO팀 OOO</td></tr>
+        </table>
+        <ul class="tips">
+          <li>모든 컷에 <b>30</b> 요소가 하나씩 들어가는 게 핵심</li>
+          <li>휴대폰 사진만으로도 충분히 만들 수 있습니다</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>구성안 C <span class="badge">감성 · 스토리</span></h3>
+        <p class="desc"><b>“출근길 → 휴가 → 다시 출근”</b> — 일상과 휴가의 대비. 마지막 한 줄로 회사 축하 메시지를 자연스럽게 얹습니다.</p>
+        <table class="sb">
+          <tr><th>시간</th><th>화면</th><th>자막</th></tr>
+          <tr><td class="t">0~3초</td><td class="c">사무실 / 모니터 / 커피</td><td>7월의 나</td></tr>
+          <tr><td class="t">3~7초</td><td class="c">기차·비행기·도로 (이동 컷)</td><td>그리고 떠났다</td></tr>
+          <tr><td class="t">7~12초</td><td class="c">바다·계곡·숙소 (가장 좋은 컷)</td><td>이 순간을 위해 버텼다</td></tr>
+          <tr><td class="t">12~15초</td><td class="c">웃는 얼굴 / 밝은 사무실 복귀</td><td>다시, 잘 해볼게요</td></tr>
+          <tr><td class="t">15~18초</td><td class="c">아웃트로 카드</td><td>서른 살 제니엘, 축하합니다</td></tr>
+        </table>
+        <ul class="tips">
+          <li>대비(對比)가 강할수록 좋습니다 — 어두운 컷 → 밝은 컷</li>
+          <li>얼굴이 나오면 공감도가 확실히 올라갑니다</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>촬영 · 편집 실무 팁</h3>
+      <div class="grid3">
+        <ul class="tips">
+          <li><b>무조건 세로로</b> 촬영하세요. 가로 영상은 9:16으로 넣으면 위아래가 잘리거나 여백이 생깁니다</li>
+          <li><b>한 컷 3~5초</b>씩 넉넉히 찍어두면 편집이 쉬워집니다</li>
+          <li>움직일 땐 <b>천천히 한 방향</b>으로만. 흔들리면 눈이 피곤합니다</li>
+        </ul>
+        <ul class="tips">
+          <li>자막은 <b>한 줄 12자 이내</b>, 화면 아래 1/3 지점에 두면 잘 읽힙니다</li>
+          <li>첫 컷에 가장 좋은 그림을 배치하세요 — <b>3초 안에 승부</b></li>
+          <li>역광은 피하고, 해 지기 1시간 전 빛이 가장 예쁩니다</li>
+        </ul>
+        <ul class="tips">
+          <li><b>타인의 얼굴</b>이 크게 나오면 미리 동의를 받으세요</li>
+          <li>배경음악은 <b>저작권 free</b>만 사용 (유튜브 오디오 보관함 등)</li>
+          <li>상표·브랜드 로고가 크게 잡히지 않게 주의</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 2 : MAKE ============ -->
+  <section class="page" id="p-make">
+    <div class="studio">
+
+      <!-- LEFT : editor -->
+      <div>
+        <div class="card">
+          <h3>① 사진 · 영상 넣기</h3>
+          <p class="desc">휴대폰에서 찍은 사진(jpg/png)과 짧은 영상(mp4/mov)을 그대로 올리면 됩니다. 순서대로 이어붙여 하나의 세로 영상이 됩니다.</p>
+
+          <div class="drop" id="drop">
+            <div class="ic">🏖️</div>
+            <div class="m">여기를 눌러 파일 선택 · 또는 끌어다 놓기</div>
+            <div class="s">사진 3~5장 또는 짧은 영상 2~3개를 권장합니다<br>모든 처리는 이 브라우저 안에서만 이루어지며 어디에도 업로드되지 않습니다</div>
+            <input type="file" id="file" accept="image/*,video/*" multiple hidden>
+          </div>
+
+          <div class="btnrow">
+            <button class="btn" id="btnSample">🎨 샘플로 먼저 체험해보기</button>
+            <button class="btn" id="btnClear">🗑 전체 비우기</button>
+          </div>
+
+          <div class="cliplist" id="clips"></div>
+        </div>
+
+        <div class="card">
+          <h3>② 타이틀 · 엔딩 · 스타일</h3>
+          <p class="desc">앞뒤 카드는 심사에서 “주제를 지켰는지” 보여주는 부분입니다. 엔딩에 소속·이름을 꼭 남기세요.</p>
+
+          <div class="grid2">
+            <div>
+              <label class="lab"><input type="checkbox" id="introOn" checked> 오프닝 타이틀 카드 사용</label>
+              <div class="fld" style="margin-bottom:8px"><input type="text" id="introL1" value="2026 제니엘그룹" placeholder="윗줄"></div>
+              <div class="fld"><input type="text" id="introL2" value="30th SUMMER MOMENTS" placeholder="아랫줄"></div>
+              <label class="lab">오프닝 길이(초)</label>
+              <input type="number" id="introDur" value="2" min="0.5" max="5" step="0.5">
+            </div>
+            <div>
+              <label class="lab"><input type="checkbox" id="outroOn" checked> 엔딩 카드 사용</label>
+              <div class="fld" style="margin-bottom:8px"><input type="text" id="outroL1" value="창립 30주년을 축하합니다" placeholder="축하 메시지"></div>
+              <div class="fld"><input type="text" id="outroL2" value="OO사업부 OO팀 홍길동" placeholder="소속 · 이름"></div>
+              <label class="lab">엔딩 길이(초)</label>
+              <input type="number" id="outroDur" value="3" min="0.5" max="5" step="0.5">
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:6px">
+            <div>
+              <label class="lab">템플릿 색감</label>
+              <select id="tpl" style="width:100%">
+                <option value="splash">스플래시 블루 (포스터와 동일 톤)</option>
+                <option value="sunset">선셋 오렌지 (노을 · 감성)</option>
+                <option value="film">필름 블랙 (시네마틱)</option>
+              </select>
+            </div>
+            <div>
+              <label class="lab">배경음악 (선택 · 저작권 free만)</label>
+              <div class="fld">
+                <input type="file" id="bgm" accept="audio/*" style="font-size:12px">
+                <button class="iconbtn del" id="bgmClear" title="음악 제거">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="note warn"><b>음악 주의</b> — 가요·팝 등 상용 음원은 사내 게시 시 저작권 문제가 될 수 있습니다. 유튜브 오디오 보관함, 브금대통령 등 <b>사용 허가된 음원</b>만 넣으세요. 음악 없이 자막만으로도 충분히 완성도 있습니다.</div>
+        </div>
+      </div>
+
+      <!-- RIGHT : stage -->
+      <div class="stage">
+        <div class="card" style="padding:16px">
+          <h3>③ 미리보기 &amp; 저장</h3>
+          <div class="phone"><canvas id="cv" width="1080" height="1920"></canvas></div>
+
+          <div class="meter">
+            <div class="top">
+              <div class="lab">전체 길이</div>
+              <div class="val" id="totalV">0.0초</div>
+            </div>
+            <div class="bar"><i id="totalBar"></i><div class="zone" style="left:40%;width:40%"></div></div>
+            <div class="hint" id="totalHint">초록 구간(10~20초)이 공모 기준입니다.</div>
+          </div>
+
+          <div class="btnrow">
+            <button class="btn p wide" id="btnPlay">▶ 미리보기 재생</button>
+          </div>
+          <div class="btnrow">
+            <button class="btn rec wide" id="btnRec">⏺ 영상 파일로 저장하기</button>
+          </div>
+          <div class="hint" id="recHint">저장 버튼을 누르면 영상 길이만큼 실시간으로 녹화됩니다. 녹화 중에는 이 탭을 그대로 두세요.</div>
+
+          <div class="out" id="out">
+            <video id="outv" controls playsinline></video>
+            <div class="btnrow">
+              <a class="btn p wide" id="dl" download>⬇ 파일 다운로드</a>
+            </div>
+            <div class="hint" id="dlHint"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 3 : SEND ============ -->
+  <section class="page" id="p-send">
+    <div class="grid2">
+      <div class="card">
+        <h3>제출 전 최종 체크리스트</h3>
+        <p class="desc">하나씩 눌러가며 확인하세요. 형식 미달로 탈락하는 경우가 가장 아깝습니다.</p>
+        <ol class="chk">
+          <li><input type="checkbox"><span><b>길이 10~20초</b> — 재생해서 직접 재어봤다</span></li>
+          <li><input type="checkbox"><span><b>mp4 형식</b> — 파일 확장자가 .mp4다</span></li>
+          <li><input type="checkbox"><span><b>세로 9:16</b> — 휴대폰에서 꽉 차게 재생된다</span></li>
+          <li><input type="checkbox"><span><b>주제 반영</b> — 창립 30주년 축하 메시지가 화면에 보인다</span></li>
+          <li><input type="checkbox"><span><b>본인 확인</b> — 소속·이름이 영상 또는 메일에 있다</span></li>
+          <li><input type="checkbox"><span><b>1인 1작품</b> — 중복 제출이 아니다</span></li>
+          <li><input type="checkbox"><span><b>저작권</b> — 음악·폰트·이미지가 사용 허가된 것이다</span></li>
+          <li><input type="checkbox"><span><b>초상권</b> — 등장하는 동료·가족의 동의를 받았다</span></li>
+          <li><input type="checkbox"><span><b>휴대폰 재생 확인</b> — 실제 폰으로 열어 소리·화질을 확인했다</span></li>
+          <li><input type="checkbox"><span><b>기한</b> — 2026년 8월 31일(월) 이내에 발송한다</span></li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>제출 메일 양식</h3>
+        <p class="desc">아래 내용을 복사해 <b>ylpark@zeniel.co.kr</b> 로 보내면서 mp4 파일을 첨부하세요. 용량이 크면 사내 메일 대신 웹하드/드라이브 링크를 함께 적어주세요.</p>
+        <pre class="mail" id="mailBody">받는 사람 : ylpark@zeniel.co.kr
+제목 : [30th SUMMER MOMENTS 응모] OO사업부 OO팀 홍길동
+
+안녕하세요, OO사업부 OO팀 홍길동입니다.
+제니엘그룹 창립 30주년 기념 '30th SUMMER MOMENTS' 쇼츠 영상 공모전에 응모합니다.
+
+· 성명 / 소속 : 홍길동 / OO사업부 OO팀
+· 연락처 : 010-0000-0000
+· 작품 제목 : 나의 여름 3컷
+· 영상 길이 : 17초
+· 형식 / 비율 : mp4 / 9:16 세로
+· 한 줄 소개 : 올여름 휴가에서 찾은 서른 번째 여름을 담았습니다.
+
+· 사용 음원 : 저작권 free 음원 (출처 : 유튜브 오디오 보관함)
+· 촬영 동의 : 영상에 등장하는 인물의 게시 동의를 받았습니다.
+
+첨부 : summer_moments_홍길동.mp4
+
+감사합니다.</pre>
+        <div class="btnrow">
+          <button class="btn p" id="copyMail">📋 메일 양식 복사</button>
+        </div>
+        <div class="note"><b>파일명 추천</b> — <code>30th_summer_홍길동_OO팀.mp4</code> 처럼 이름을 넣어두면 담당자가 정리하기 쉽고, 심사에서 누락될 확률이 줄어듭니다.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>일정</h3>
+      <table class="sb">
+        <tr><th>단계</th><th>일자</th><th>내용</th></tr>
+        <tr><td class="c">응모</td><td class="c">2026.07.02(목) ~ 08.31(월)</td><td>ylpark@zeniel.co.kr 로 mp4 전송</td></tr>
+        <tr><td class="c">심사</td><td class="c">09.01(화) ~ 09.04(금)</td><td>전략기획팀 1차 심사 후 온라인 게시 · 투표</td></tr>
+        <tr><td class="c">발표</td><td class="c">09.07(월)</td><td>결과 발표 (시상 일자는 별도 공지 예정)</td></tr>
+      </table>
+    </div>
+  </section>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= 공통 ================= */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const toastEl = $('#toast');
+let toastT = null;
+function toast(msg){
+  toastEl.textContent = msg; toastEl.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(()=>toastEl.classList.remove('on'), 2200);
+}
+
+/* D-day */
+(function(){
+  const end = new Date(2026,7,31,23,59,59);
+  const d = Math.ceil((end - new Date())/86400000);
+  $('#dday').textContent = d > 0 ? ('D-' + d) : (d === 0 ? 'D-DAY' : '접수 마감');
+})();
+
+/* 탭 */
+$$('.tab').forEach(t=>t.addEventListener('click',()=>{
+  $$('.tab').forEach(x=>x.classList.remove('on'));
+  $$('.page').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on'); $('#p-'+t.dataset.p).classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+}));
+
+$('#copyMail').addEventListener('click', async ()=>{
+  try{ await navigator.clipboard.writeText($('#mailBody').textContent); toast('메일 양식을 복사했습니다'); }
+  catch(e){ toast('복사 실패 — 직접 드래그해 복사해주세요'); }
+});
+
+/* ================= 렌더 엔진 ================= */
+const W = 1080, H = 1920, FPS = 30, FADE = 0.35;
+const cv = $('#cv'), ctx = cv.getContext('2d');
+const FONT = '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+
+const TEMPLATES = {
+  splash:{ bg:['#8fdcff','#1173cf'], ink:'#ffffff', accent:'#ffe066', chip:'rgba(7,44,86,.55)', sub:'#dff2ff' },
+  sunset:{ bg:['#ffd08a','#e8543f'], ink:'#ffffff', accent:'#fff2c2', chip:'rgba(92,26,10,.5)',  sub:'#ffeede' },
+  film:  { bg:['#242424','#000000'], ink:'#ffffff', accent:'#7fd8ff', chip:'rgba(0,0,0,.6)',     sub:'#cfd8e3' }
+};
+
+const S = {
+  clips: [],
+  intro: { on:true, l1:'2026 제니엘그룹', l2:'30th SUMMER MOMENTS', dur:2 },
+  outro: { on:true, l1:'창립 30주년을 축하합니다', l2:'OO사업부 OO팀 홍길동', dur:3 },
+  tpl: 'splash',
+  bgmEl: null
+};
+let TL = { segs:[], total:0 };
+let uid = 0;
+
+function buildTL(){
+  const segs = [];
+  if (S.intro.on) segs.push({ kind:'intro', dur:+S.intro.dur || 2 });
+  S.clips.forEach(c => segs.push({ kind:'media', dur:+c.dur || 3, clip:c }));
+  if (S.outro.on) segs.push({ kind:'outro', dur:+S.outro.dur || 3 });
+  let t = 0;
+  segs.forEach(s => { s.start = t; t += s.dur; s.end = t; });
+  TL = { segs, total:t };
+  return TL;
+}
+
+/* ---- 그리기 유틸 ---- */
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+}
+function wrapText(text, font, maxW){
+  ctx.font = font;
+  const out = []; let line = '';
+  for (const ch of String(text)){
+    if (ch === '\n'){ out.push(line); line=''; continue; }
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxW && line){ out.push(line); line = (ch===' '?'':ch); }
+    else line = test;
+  }
+  if (line) out.push(line);
+  return out;
+}
+const ease = p => p<0 ? 0 : p>1 ? 1 : 1-Math.pow(1-p,3);
+
+function drawBG(tp){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, tp.bg[0]); g.addColorStop(1, tp.bg[1]);
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+}
+function drawMedia(clip, p, alpha){
+  const el = clip.el; if(!el) return;
+  const w = el.videoWidth || el.naturalWidth || el.width;
+  const h = el.videoHeight || el.naturalHeight || el.height;
+  if(!w || !h) return;
+  const q = Math.min(1, Math.max(0, p));
+  let zoom = 1.02, dx0 = 0;
+  if (clip.motion === 'in')  zoom = 1.02 + 0.11*q;
+  if (clip.motion === 'out') zoom = 1.13 - 0.11*q;
+  if (clip.motion === 'pan'){ zoom = 1.12; dx0 = (q-0.5)*90; }
+  const sc = Math.max(W/w, H/h) * zoom;
+  const dw = w*sc, dh = h*sc;
+  ctx.globalAlpha = alpha;
+  try{ ctx.drawImage(el, (W-dw)/2 + dx0, (H-dh)/2, dw, dh); }catch(e){}
+  ctx.globalAlpha = 1;
+}
+function drawCaption(text, tp, alpha){
+  if(!text) return;
+  ctx.save();
+  const font = '800 62px ' + FONT;
+  const lines = wrapText(text, font, W-200);
+  const lh = 82, padX = 44, padY = 28;
+  let maxW = 0; lines.forEach(l => maxW = Math.max(maxW, ctx.measureText(l).width));
+  const boxW = Math.min(W-100, maxW + padX*2);
+  const boxH = lines.length*lh + padY*2 - 18;
+  const x = (W-boxW)/2, y = H - 470 - boxH;
+
+  ctx.globalAlpha = alpha;
+  const sh = ctx.createLinearGradient(0, y-140, 0, H);
+  sh.addColorStop(0,'rgba(0,0,0,0)'); sh.addColorStop(1,'rgba(0,0,0,.42)');
+  ctx.fillStyle = sh; ctx.fillRect(0, y-140, W, H-(y-140));
+
+  ctx.fillStyle = tp.chip; roundRect(x,y,boxW,boxH,26); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 2; ctx.stroke();
+
+  ctx.font = font; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 2;
+  lines.forEach((l,i) => ctx.fillText(l, W/2, y+padY+i*lh));
+  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+function drawWave(tp, ph){
+  ctx.save();
+  ctx.globalAlpha = .35; ctx.fillStyle = tp.ink;
+  for (let k=0;k<3;k++){
+    ctx.beginPath();
+    const yBase = H*0.72 + k*70;
+    ctx.moveTo(0,yBase);
+    for (let x=0;x<=W;x+=20) ctx.lineTo(x, yBase + Math.sin((x/W)*Math.PI*3 + ph + k)*22);
+    ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
+    ctx.globalAlpha = .10 - k*0.025;
+    ctx.fill();
+  }
+  ctx.restore();
+}
+function drawBadge30(tp, cy, sc, alpha){
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.translate(W/2, cy); ctx.scale(sc,sc);
+  ctx.beginPath(); ctx.arc(0,0,132,0,Math.PI*2);
+  ctx.fillStyle = tp.accent; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 6; ctx.stroke();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#0d3b66'; ctx.font = '900 96px ' + FONT;
+  ctx.fillText('30', 0, -12);
+  ctx.font = '800 30px ' + FONT; ctx.fillText('YEARS', 0, 62);
+  ctx.restore();
+}
+function drawIntro(lt, dur, tp){
+  drawWave(tp, lt*1.6);
+  const a = ease(lt/0.5), sc = 0.9 + 0.1*ease(lt/0.6);
+  drawBadge30(tp, H*0.34, sc, a);
+  const a2 = ease((lt-0.25)/0.55), up = (1-a2)*26;
+  ctx.save(); ctx.globalAlpha = a2; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(0,0,0,.28)'; ctx.shadowBlur=14; ctx.shadowOffsetY=3;
+  ctx.fillStyle = tp.sub; ctx.font = '800 54px ' + FONT;
+  ctx.fillText(S.intro.l1 || '', W/2, H*0.52 + up);
+  ctx.fillStyle = tp.ink; 
+  const l2 = S.intro.l2 || '';
+  const f2 = l2.length > 18 ? '900 76px ' : '900 92px ';
+  wrapText(l2, f2+FONT, W-140).forEach((l,i)=>{
+    ctx.font = f2+FONT;
+    ctx.fillText(l, W/2, H*0.62 + i*104 + up);
+  });
+  ctx.restore();
+}
+function drawOutro(lt, dur, tp){
+  drawWave(tp, 2 + lt*1.2);
+  const a = ease(lt/0.5);
+  drawBadge30(tp, H*0.33, 0.92 + 0.08*a, a);
+  const a2 = ease((lt-0.3)/0.6);
+  ctx.save(); ctx.globalAlpha = a2; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(0,0,0,.28)'; ctx.shadowBlur=14; ctx.shadowOffsetY=3;
+  ctx.fillStyle = tp.ink; 
+  let y = H*0.53;
+  wrapText(S.outro.l1 || '', '900 70px '+FONT, W-160).forEach(l=>{
+    ctx.font = '900 70px '+FONT; ctx.fillText(l, W/2, y); y += 96;
+  });
+  ctx.globalAlpha = a2*0.95; ctx.fillStyle = tp.sub; ctx.font = '800 46px '+FONT;
+  ctx.fillText(S.outro.l2 || '', W/2, y + 26);
+  ctx.restore();
+}
+function drawFrame(t){
+  const tp = TEMPLATES[S.tpl];
+  drawBG(tp);
+  const segs = TL.segs;
+  if (!segs.length){
+    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font = '800 52px '+FONT;
+    ctx.fillText('사진이나 영상을 넣어주세요', W/2, H/2 - 30);
+    ctx.font = '700 38px '+FONT; ctx.globalAlpha=.8;
+    ctx.fillText('왼쪽에서 파일을 추가하면', W/2, H/2 + 50);
+    ctx.fillText('여기에 미리보기가 나타납니다', W/2, H/2 + 108);
+    ctx.globalAlpha=1;
+    return;
+  }
+  let i = segs.findIndex(s => t >= s.start && t < s.end);
+  if (i < 0) i = segs.length - 1;
+  const s = segs[i], lt = Math.max(0, t - s.start);
+
+  if (s.kind === 'media'){
+    drawMedia(s.clip, lt/s.dur, 1);
+    const pr = segs[i-1];
+    if (pr && pr.kind === 'media' && lt < FADE) drawMedia(pr.clip, 1, 1 - lt/FADE);
+    drawCaption(s.clip.cap, tp, ease(lt/0.4) * (lt > s.dur-0.3 ? Math.max(0,(s.dur-lt)/0.3) : 1));
+  } else if (s.kind === 'intro'){
+    drawIntro(lt, s.dur, tp);
+  } else {
+    drawOutro(lt, s.dur, tp);
+  }
+
+  /* 상시 워터마크 */
+  ctx.save();
+  ctx.globalAlpha = .92; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=8;
+  ctx.fillStyle = '#fff'; ctx.font = '800 30px '+FONT;
+  ctx.fillText('ZENIEL  30th  SUMMER  MOMENTS', W/2, H-96);
+  ctx.restore();
+
+  /* 진행 바 */
+  const p = TL.total ? Math.min(1, t/TL.total) : 0;
+  ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.fillRect(0,0,W,8);
+  ctx.fillStyle = TEMPLATES[S.tpl].accent; ctx.fillRect(0,0,W*p,8);
+}
+
+/* ---- 재생 / 녹화 ---- */
+let playing = false, raf = 0, stopCB = null;
+function resetMedia(){
+  S.clips.forEach(c => { if (c.type === 'video' && c.el){ try{ c.el.pause(); c.el.currentTime = 0; }catch(e){} } });
+}
+function play(onEnd){
+  if (playing) return;
+  buildTL();
+  if (!TL.total){ toast('먼저 사진이나 영상을 넣어주세요'); return; }
+  playing = true; resetMedia();
+  const t0 = performance.now();
+  let lastSeg = -1;
+  if (S.bgmEl){ try{ S.bgmEl.currentTime = 0; S.bgmEl.play(); }catch(e){} }
+
+  const loop = () => {
+    const t = (performance.now() - t0)/1000;
+    let i = TL.segs.findIndex(s => t >= s.start && t < s.end);
+    if (i < 0) i = TL.segs.length - 1;
+    if (i !== lastSeg){
+      const prev = TL.segs[lastSeg];
+      if (prev && prev.kind === 'media' && prev.clip.type === 'video'){ try{ prev.clip.el.pause(); }catch(e){} }
+      const cur = TL.segs[i];
+      if (cur && cur.kind === 'media' && cur.clip.type === 'video'){
+        try{ cur.clip.el.currentTime = 0; cur.clip.el.play(); }catch(e){}
+      }
+      lastSeg = i;
+    }
+    drawFrame(Math.min(t, TL.total - 0.001));
+    if (t >= TL.total){
+      playing = false; resetMedia();
+      if (S.bgmEl){ try{ S.bgmEl.pause(); }catch(e){} }
+      drawFrame(TL.total - 0.001);
+      if (onEnd) onEnd();
+      if (stopCB){ const f = stopCB; stopCB = null; f(); }
+      return;
+    }
+    raf = requestAnimationFrame(loop);
+  };
+  raf = requestAnimationFrame(loop);
+}
+
+function pickMime(){
+  const cands = [
+    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+    'video/mp4;codecs=avc1.42E01E',
+    'video/mp4',
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm'
+  ];
+  for (const m of cands){
+    try{ if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; }catch(e){}
+  }
+  return '';
+}
+
+let audioCtx = null, audioDest = null, audioSrc = null;
+function audioTrack(){
+  if (!S.bgmEl) return null;
+  try{
+    if (!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioDest = audioCtx.createMediaStreamDestination();
+    }
+    if (!audioSrc){
+      audioSrc = audioCtx.createMediaElementSource(S.bgmEl);
+      audioSrc.connect(audioDest);
+      audioSrc.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioDest.stream.getAudioTracks()[0] || null;
+  }catch(e){ return null; }
+}
+
+async function sniffCodec(blob){
+  try{
+    const buf = new Uint8Array(await blob.slice(0, 131072).arrayBuffer());
+    let str = '';
+    for (let i=0;i<buf.length;i++) str += String.fromCharCode(buf[i]);
+    if (str.indexOf('avcC') >= 0 || str.indexOf('avc1') >= 0) return 'h264';
+    if (str.indexOf('hvc1') >= 0 || str.indexOf('hev1') >= 0) return 'hevc';
+    if (str.indexOf('vp09') >= 0 || str.indexOf('V_VP9') >= 0) return 'vp9';
+    if (str.indexOf('vp08') >= 0 || str.indexOf('V_VP8') >= 0) return 'vp8';
+    if (str.indexOf('av01') >= 0) return 'av1';
+  }catch(e){}
+  return '확인 불가';
+}
+
+function record(){
+  buildTL();
+  if (!TL.total){ toast('먼저 사진이나 영상을 넣어주세요'); return; }
+  if (!window.MediaRecorder || !cv.captureStream){
+    toast('이 브라우저는 저장 기능을 지원하지 않습니다. Chrome 또는 Safari 최신 버전을 사용하세요');
+    return;
+  }
+  const mime = pickMime();
+  const vStream = cv.captureStream(FPS);
+  const tracks = vStream.getVideoTracks();
+  const at = audioTrack(); if (at) tracks.push(at);
+  const stream = new MediaStream(tracks);
+
+  let rec;
+  try{
+    rec = new MediaRecorder(stream, mime ? { mimeType:mime, videoBitsPerSecond: 8000000 } : { videoBitsPerSecond: 8000000 });
+  }catch(e){
+    try{ rec = new MediaRecorder(stream); }catch(e2){ toast('녹화를 시작할 수 없습니다'); return; }
+  }
+
+  const chunks = [];
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop = async () => {
+    const type = rec.mimeType || mime || 'video/webm';
+    const isMp4 = type.indexOf('mp4') >= 0;
+    const blob = new Blob(chunks, { type });
+    const url = URL.createObjectURL(blob);
+    $('#outv').src = url;
+    const a = $('#dl');
+    a.href = url;
+    a.download = '30th_summer_moments.' + (isMp4 ? 'mp4' : 'webm');
+    $('#out').classList.add('on');
+
+    const mb = (blob.size/1048576).toFixed(1);
+    const codec = await sniffCodec(blob);
+    let msg;
+    if (isMp4 && codec === 'h264'){
+      msg = '✅ <b>mp4 (H.264)</b> 로 저장되었습니다 — 공모 조건 그대로입니다. (' + mb + 'MB)<br>다운로드 후 휴대폰에서 한 번 재생해보고 제출하세요.';
+    } else if (isMp4){
+      msg = '⚠ 확장자는 mp4지만 내부 코덱이 <b>' + (codec === 'vp9' ? 'VP9' : codec) + '</b> 입니다. 일부 재생기에서 안 열릴 수 있습니다.<br>' +
+            '<b>공식 Chrome</b>(크로미움 계열 아님) 또는 <b>Safari</b>에서 다시 저장하면 H.264 mp4로 나옵니다. 그래도 같다면 무료 변환(예: CloudConvert)으로 H.264 mp4로 바꿔 제출하세요. (' + mb + 'MB)';
+    } else {
+      msg = '⚠ 이 브라우저는 mp4 녹화를 지원하지 않아 <b>webm</b>으로 저장됩니다. 공모 조건은 mp4이므로 <b>최신 Chrome</b> 또는 <b>Safari</b>에서 다시 저장하거나, webm→mp4 무료 변환(예: CloudConvert)을 거쳐 제출하세요. (' + mb + 'MB)';
+    }
+    const v = $('#outv');
+    v.onloadedmetadata = () => {
+      const d = v.duration;
+      if (isFinite(d) && d > 0){
+        const ok = d >= 10 && d <= 20;
+        $('#dlHint').innerHTML = msg + '<br><b>실제 길이 ' + d.toFixed(1) + '초</b> — ' +
+          (ok ? '공모 기준 10~20초를 만족합니다.' : '⚠ 10~20초 범위를 벗어났습니다. 컷 길이를 조정해 다시 저장하세요.');
+      }
+    };
+    $('#dlHint').innerHTML = msg;
+    $('#btnRec').disabled = false; $('#btnPlay').disabled = false;
+    $('#btnRec').textContent = '⏺ 영상 파일로 저장하기';
+    $('#recHint').textContent = '저장이 끝났습니다. 아래에서 확인 후 다운로드하세요.';
+    toast('영상 저장 완료!');
+    $('#out').scrollIntoView({ behavior:'smooth', block:'nearest' });
+  };
+
+  $('#btnRec').disabled = true; $('#btnPlay').disabled = true;
+  $('#btnRec').textContent = '⏺ 녹화 중…';
+  $('#recHint').textContent = '녹화 중입니다 (' + TL.total.toFixed(1) + '초). 이 탭을 그대로 두세요.';
+  $('#out').classList.remove('on');
+
+  rec.start(200);
+  stopCB = () => setTimeout(()=>{ try{ rec.stop(); }catch(e){} }, 250);
+  play();
+}
+
+/* ================= 클립 관리 ================= */
+function addFiles(files){
+  const list = Array.from(files || []);
+  if (!list.length) return;
+  let pending = 0, added = 0;
+  list.forEach(f => {
+    const isVid = f.type.indexOf('video') === 0;
+    const isImg = f.type.indexOf('image') === 0;
+    if (!isVid && !isImg) return;
+    const url = URL.createObjectURL(f);
+    const clip = { id:++uid, name:f.name, type:isVid?'video':'image', url, cap:'', dur:3.5, motion:'in', el:null };
+    pending++;
+    if (isVid){
+      const v = document.createElement('video');
+      v.src = url; v.muted = true; v.playsInline = true; v.preload = 'auto';
+      v.onloadedmetadata = () => {
+        clip.el = v;
+        clip.dur = Math.max(1.5, Math.min(5, Math.round((v.duration||3.5)*10)/10));
+        clip.motion = 'none';
+        if (--pending === 0) render();
+      };
+      v.onerror = () => { if (--pending === 0) render(); };
+    } else {
+      const im = new Image();
+      im.src = url;
+      im.onload  = () => { clip.el = im; if (--pending === 0) render(); };
+      im.onerror = () => { if (--pending === 0) render(); };
+    }
+    S.clips.push(clip); added++;
+  });
+  if (added) toast(added + '개를 추가했습니다');
+  render();
+}
+
+function sampleClips(){
+  const palettes = [
+    [['#7fd8ff','#0d6fc4'],'바다'],
+    [['#ffd28a','#ef6b4d'],'노을'],
+    [['#b7f5d8','#12a06a'],'숲'],
+  ];
+  palettes.forEach((p,i) => {
+    const c = document.createElement('canvas'); c.width = 1080; c.height = 1920;
+    const g2 = c.getContext('2d');
+    const gr = g2.createLinearGradient(0,0,900,1920);
+    gr.addColorStop(0,p[0][0]); gr.addColorStop(1,p[0][1]);
+    g2.fillStyle = gr; g2.fillRect(0,0,1080,1920);
+    g2.globalAlpha = .18; g2.fillStyle = '#fff';
+    for (let k=0;k<9;k++){ g2.beginPath(); g2.arc(120+ (k*137)%900, 260 + (k*311)%1400, 60+ (k*37)%110, 0, Math.PI*2); g2.fill(); }
+    g2.globalAlpha = 1; g2.textAlign='center'; g2.fillStyle='rgba(255,255,255,.85)';
+    g2.font = '900 120px sans-serif'; g2.fillText('SAMPLE '+(i+1), 540, 980);
+    const im = new Image();
+    im.onload = () => render();
+    im.src = c.toDataURL('image/jpeg', .9);
+    S.clips.push({ id:++uid, name:'샘플 이미지 ' + p[1], type:'image', url:im.src, cap:['올여름, 나는 여기 있었다','제대로 쉬어본 하루','충전 완료!'][i], dur:3.5, motion:['in','pan','out'][i], el:im });
+  });
+  render(); toast('샘플 3장을 넣었습니다 — 미리보기를 눌러보세요');
+}
+
+function move(id, d){
+  const i = S.clips.findIndex(c => c.id === id);
+  const j = i + d;
+  if (i < 0 || j < 0 || j >= S.clips.length) return;
+  const t = S.clips[i]; S.clips[i] = S.clips[j]; S.clips[j] = t;
+  render();
+}
+function del(id){
+  const i = S.clips.findIndex(c => c.id === id);
+  if (i >= 0){ try{ URL.revokeObjectURL(S.clips[i].url); }catch(e){} S.clips.splice(i,1); render(); }
+}
+
+function renderList(){
+  const box = $('#clips'); box.innerHTML = '';
+  S.clips.forEach((c, idx) => {
+    const el = document.createElement('div'); el.className = 'clip';
+    el.innerHTML =
+      '<div class="th"><span class="kind">' + (c.type === 'video' ? '영상' : '사진') + '</span></div>' +
+      '<div class="body">' +
+        '<div class="nm">' + (idx+1) + '. ' + c.name.replace(/[<>&]/g,'') + '</div>' +
+        '<div class="row"><input type="text" class="cap" placeholder="이 컷의 자막 (12자 이내 권장)"></div>' +
+        '<div class="row">' +
+          '<input type="number" class="dur" min="1" max="8" step="0.5"> <span style="font-size:12px;color:var(--muted);font-weight:700">초</span>' +
+          '<select class="mot" style="font-size:12px">' +
+            '<option value="in">천천히 확대</option>' +
+            '<option value="out">천천히 축소</option>' +
+            '<option value="pan">좌우 이동</option>' +
+            '<option value="none">움직임 없음</option>' +
+          '</select>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ops">' +
+        '<button class="iconbtn up" title="위로">▲</button>' +
+        '<button class="iconbtn dn" title="아래로">▼</button>' +
+        '<button class="iconbtn del" title="삭제">✕</button>' +
+      '</div>';
+    const th = el.querySelector('.th');
+    if (c.type === 'image'){ const i2 = document.createElement('img'); i2.src = c.url; th.appendChild(i2); }
+    else { const v2 = document.createElement('video'); v2.src = c.url; v2.muted = true; th.appendChild(v2); }
+    const cap = el.querySelector('.cap'); cap.value = c.cap;
+    cap.addEventListener('input', e => { c.cap = e.target.value; drawFrame(midOf(c)); });
+    const du = el.querySelector('.dur'); du.value = c.dur;
+    du.addEventListener('input', e => { c.dur = Math.max(1, Math.min(8, +e.target.value || 3)); updateMeter(); });
+    const mo = el.querySelector('.mot'); mo.value = c.motion;
+    mo.addEventListener('change', e => { c.motion = e.target.value; drawFrame(midOf(c)); });
+    el.querySelector('.up').addEventListener('click', () => move(c.id,-1));
+    el.querySelector('.dn').addEventListener('click', () => move(c.id, 1));
+    el.querySelector('.del').addEventListener('click', () => del(c.id));
+    box.appendChild(el);
+  });
+}
+function midOf(clip){
+  buildTL();
+  const s = TL.segs.find(x => x.kind === 'media' && x.clip === clip);
+  return s ? s.start + s.dur*0.55 : 0;
+}
+function updateMeter(){
+  buildTL();
+  const t = TL.total;
+  $('#totalV').textContent = t.toFixed(1) + '초';
+  $('#totalBar').style.width = Math.min(100, (t/25)*100) + '%';
+  const ok = t >= 10 && t <= 20;
+  $('#totalV').style.color = t === 0 ? 'var(--muted)' : ok ? 'var(--green)' : 'var(--red)';
+  $('#totalHint').innerHTML = t === 0
+    ? '초록 구간(10~20초)이 공모 기준입니다.'
+    : ok ? '✅ 공모 기준(10~20초)을 만족합니다.'
+    : (t < 10 ? '⚠ 10초 미만입니다. 컷을 추가하거나 길이를 늘리세요.' : '⚠ 20초를 넘었습니다. 컷을 줄이거나 길이를 줄이세요.');
+}
+function render(){
+  renderList(); updateMeter();
+  if (!playing) drawFrame(TL.segs.length ? Math.min(0.9, TL.total*0.3) : 0);
+}
+
+/* ================= 입력 바인딩 ================= */
+$('#drop').addEventListener('click', () => $('#file').click());
+$('#file').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+['dragenter','dragover'].forEach(ev => $('#drop').addEventListener(ev, e => { e.preventDefault(); $('#drop').classList.add('over'); }));
+['dragleave','drop'].forEach(ev => $('#drop').addEventListener(ev, e => { e.preventDefault(); $('#drop').classList.remove('over'); }));
+$('#drop').addEventListener('drop', e => { if (e.dataTransfer) addFiles(e.dataTransfer.files); });
+
+$('#btnSample').addEventListener('click', sampleClips);
+$('#btnClear').addEventListener('click', () => {
+  S.clips.forEach(c => { try{ URL.revokeObjectURL(c.url); }catch(e){} });
+  S.clips = []; render(); toast('모두 비웠습니다');
+});
+
+function bindTxt(id, fn){ const e = $(id); e.addEventListener('input', () => { fn(e.value); if(!playing) drawFrame(preferFrame()); }); }
+function preferFrame(){ buildTL(); return TL.segs.length ? Math.min(0.9, TL.total*0.3) : 0; }
+
+bindTxt('#introL1', v => S.intro.l1 = v);
+bindTxt('#introL2', v => S.intro.l2 = v);
+bindTxt('#outroL1', v => S.outro.l1 = v);
+bindTxt('#outroL2', v => S.outro.l2 = v);
+$('#introDur').addEventListener('input', e => { S.intro.dur = Math.max(0.5, Math.min(5, +e.target.value || 2)); updateMeter(); });
+$('#outroDur').addEventListener('input', e => { S.outro.dur = Math.max(0.5, Math.min(5, +e.target.value || 3)); updateMeter(); });
+$('#introOn').addEventListener('change', e => { S.intro.on = e.target.checked; render(); });
+$('#outroOn').addEventListener('change', e => { S.outro.on = e.target.checked; render(); });
+$('#tpl').addEventListener('change', e => { S.tpl = e.target.value; if(!playing) drawFrame(preferFrame()); });
+
+$('#bgm').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const a = new Audio(URL.createObjectURL(f));
+  a.loop = false; a.crossOrigin = 'anonymous';
+  S.bgmEl = a; audioSrc = null;
+  toast('배경음악을 넣었습니다 — 저작권을 꼭 확인하세요');
+});
+$('#bgmClear').addEventListener('click', () => { S.bgmEl = null; audioSrc = null; $('#bgm').value = ''; toast('배경음악을 제거했습니다'); });
+
+$('#btnPlay').addEventListener('click', () => play());
+$('#btnRec').addEventListener('click', record);
+
+/* 초기 렌더 */
+render();
+})();
+</script>
+</body>
+</html>
