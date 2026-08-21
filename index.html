@@ -7,10 +7,10 @@
 <meta name="theme-color" content="#0a1626">
 <style>
   :root{
-    --bg:#eef2f7;--bg2:#e6ecf4;--panel:#ffffff;--panel2:#ffffff;
-    --line:#e6ebf2;--line2:#d3dde9;--ink:#1f3a5c;--muted:#54657e;--muted2:#7d8ba0;
-    --blue:#3f74b5;--navy:#1e3a5f;--green:#22a05f;--red:#dc4b4b;--amber:#d98a2b;--purple:#a855f7;--teal:#14b8a6;
-    --shadow:0 3px 12px rgba(30,58,95,.08);--radius:16px;
+    --bg:#f4f7fb;--bg2:#eef3f9;--panel:#ffffff;--panel2:#f2f6fc;
+    --line:#e2e9f3;--line2:#d8e2ee;--ink:#1b2736;--muted:#5f7288;--muted2:#8d9db4;
+    --blue:#4f8fe8;--navy:#1b2736;--green:#2aa864;--red:#e04a3f;--amber:#e39412;--purple:#a855f7;--teal:#14b8a6;
+    --shadow:0 1px 3px rgba(27,39,54,.06);--radius:14px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
@@ -141,7 +141,7 @@
   .kstrip .ki .v{font-size:19px;font-weight:800;color:var(--navy);margin-top:3px}.kstrip .ki .v small{font-size:11px;color:var(--muted);font-weight:600}
   .kstrip .ki .d{font-size:10.5px;margin-top:1px}
   /* ===== 절제된 프리미엄 디자인 시스템 ===== */
-  :root{--accent:#1c8a4e;--tint:#e9f5ee;--hair:#e9eef5;--ok:#16a34a;--warn:#d97706;--bad:#dc2626}
+  :root{--accent:#2aa864;--tint:#eef8f2;--hair:#e9eef5;--ok:#16a34a;--warn:#d97706;--bad:#dc2626}
   .tnum{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
   .sv{display:block}
   .ico{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;background:var(--tint);color:var(--accent);border:1px solid var(--hair);flex:0 0 auto}
@@ -857,7 +857,7 @@ function loadUpload(input){const f=input.files[0];if(!f)return;const rd=new File
   rd.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
     const QC=[5,8,11,14,17,20];const plan={};
     for(const r of aoa){const code=(String(r[1]||'').match(/\d{4,}/)||[])[0];if(!code)continue;if(!String(r[3]||'').trim())continue;const wk=QC.map(c=>_lnum(r[c])).reduce((a,b)=>a+b,0);plan[code]=(plan[code]||0)+wk;}
-    if(Object.keys(plan).length){loadPlan=plan;loadFilter=null;loadPlanName=f.name.replace(/\.[^.]+$/,'')+' ('+wb.SheetNames[0]+')';toast('주간계획 반영 — '+Object.keys(plan).length+'개 라인');if(cur==='labor')go('labor');}
+    if(Object.keys(plan).length){loadPlan=plan;loadFilter=null;loadPlanName=f.name.replace(/\.[^.]+$/,'')+' ('+wb.SheetNames[0]+')';toast('주간계획 반영 — '+Object.keys(plan).length+'개 라인 · 예측 재계산됨');go(cur);}
     else toast('인식 실패 — 리소스코드·수량 형식을 확인하세요');
   }catch(err){toast('읽기 오류: '+err.message);}};
   rd.readAsArrayBuffer(f);}
@@ -930,7 +930,10 @@ V.home=()=>{
   const fc=DB.forecast,peak=fc.reduce((m,d)=>d.v>m.v?d:m,fc[0]);
   const behind=myLines().filter(l=>G.achieve(l)<65);
   const preds=[
-    {ic:'users',lv:'warn',r:`익일 인력 부족 예측 −${peak.v}명`,s:`피크 ${peak.label} · 부하율 초과 그룹 사전 배치 필요`,rule:'부하율 > 100%'},
+    {ic:'users',lv:(()=>{const R=loadCalc(loadPlan,loadDays,loadBase);return R.groups.some(g=>g.gap>0.4)?'warn':'ok';})(),
+     r:(()=>{const R=loadCalc(loadPlan,loadDays,loadBase);const t=+R.groups.filter(g=>g.gap>0.4).reduce((a,g)=>a+g.gap,0).toFixed(1);return t>0?`익주 인력 부족 예측 −${t}명`:'익주 인력 충족 예측';})(),
+     s:(()=>{const R=loadCalc(loadPlan,loadDays,loadBase);const sg=R.groups.filter(g=>g.gap>0.4);return `${loadPlanName} 실계산 · ${sg.length?'과부하 '+sg.map(g=>g.grp).join('·'):'전 그룹 여유'}`;})(),
+     rule:'계획량 ÷ 주CAPA > 100%'},
     {ic:'clock',lv:behind.length?'warn':'ok',r:`지연 위험 오더 ${behind.length}건`,s:behind.length?`${behind.map(l=>l.key).join('·')} 진척 미달 → 사전 조정`:'현재 지연 위험 없음',rule:'달성률 < 70%'},
     {ic:'thermometer',lv:DB.safety.wbgt>=28?'crit':'ok',r:`폭염 ${DB.safety.wbgt>=28?'지속 예상':'안정'} · WBGT ${DB.safety.wbgt}℃`,s:'추세 상승 → 시간당 휴식·수분 사전 통보',rule:'WBGT ≥ 28℃'},
     {ic:'droplet',lv:'warn',r:`${worst.key} 세척 완료 지연 예상`,s:`우선순위 ${G.cleanScore(worst)}점 · CIP 2기 병렬 권장`,rule:'우선순위 ≥ 75점'},
@@ -959,9 +962,13 @@ V.planhub=()=>{
 /* ===== AI 판단 센터 — 전 Agent 자동 판단 통합(실측→기준→판단→조치) ===== */
 function collectJudgments(){
   const J=[], L=myLines(), w=DB.safety;
-  const peak=DB.forecast.reduce((m,d)=>d.v>m.v?d:m,DB.forecast[0]);
-  const gap=headNeed()-headCur();
-  J.push({area:'인력',ic:'users',lv:gap>0?'warn':'ok',r:`익일 인력 ${gap>0?'부족 −'+gap+'명':'충족'}`,s:`피크 ${peak.label} ${peak.v}명 · 부하율 초과 그룹 사전 배치`,rule:'부하율 > 100%',act:gap>0?'여유 라인 재배치 + 잔업 배정':'현 배치 유지'});
+  const _LR=loadCalc(loadPlan,loadDays,loadBase);
+  const _short=_LR.groups.filter(g=>g.gap>0.4), _surp=_LR.groups.filter(g=>g.gap<-0.4);
+  const _tot=+_short.reduce((a,g)=>a+g.gap,0).toFixed(1);
+  J.push({area:'인력',ic:'users',lv:_tot>0?'warn':'ok',r:`익주 인력 ${_tot>0?'부족 −'+_tot+'명':'충족'}`,
+    s:`${loadPlanName} 실계산 · ${_short.length?'과부하 '+_short.map(g=>g.grp+' +'+g.gap).join('·'):'전 그룹 여유'}`,
+    rule:'부하율 = 계획량 ÷ 주CAPA > 100%',
+    act:_tot>0?(_surp.length?`${_surp[0].grp} 여유 ${Math.abs(_surp[0].gap)}명 → ${_short[0].grp} 재배치`:'잔업·단기인력 검토'):'현 배치 유지'});
   const behind=L.filter(l=>G.achieve(l)<70);
   J.push({area:'생산',ic:'activity',lv:behind.length?'crit':'ok',r:`지연 위험 오더 ${behind.length}건`,s:behind.length?behind.map(l=>l.key+' '+G.achieve(l)+'%').join(' · '):'전 라인 정상 진척',rule:'달성률 < 70%',act:behind.length?'우선순위 재조정 · 투입 강화':'모니터링'});
   J.push({area:'안전',ic:'thermometer',lv:w.wbgt>=31?'crit':w.wbgt>=28?'warn':'ok',r:`폭염 ${w.wbgt>=31?'위험':w.wbgt>=28?'경고':'주의'} · WBGT ${w.wbgt}℃`,s:`기온 ${w.temp}℃ 습도 ${w.humid}% · 무재해 ${w.noAccident}일`,rule:'WBGT ≥ 28℃',act:w.wbgt>=28?'시간당 휴식·수분 · 옥외작업 단축':'정상 운영'});
@@ -1666,15 +1673,8 @@ function buildNav(){
   const nm=id=>{const a=AGENTS.find(x=>x.id===id);return a?a.name:(NAV_TOOLS[id]||{}).name;};
   const ic=id=>{const a=AGENTS.find(x=>x.id===id);return a?a.icon:(NAV_TOOLS[id]||{}).icon;};
   const badges={
-    judge:(()=>{const J=collectJudgments(),n=J.filter(x=>x.lv!=='ok').length,c=J.filter(x=>x.lv==='crit').length;return{t:''+n,c:c?'t-red':n?'t-amber':'t-green'};})(),
-    planhub:{t:'-'+(DB.headcount.need-DB.headcount.cur),c:'t-red'},
-    prod:{t:totProd().ach+'%',c:totProd().ach>=80?'t-green':'t-amber'},
-    labor:{t:'-'+(DB.headcount.need-DB.headcount.cur),c:'t-red'},
-    clean:{t:''+DB.lines.filter(l=>G.cleanScore(l)>=75).length,c:'t-amber'},
-    stock:(()=>{const o=DB.wh?((DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones.filter(z=>z.rate>=100).length):0;return{t:''+o,c:o?'t-red':'t-green'};})(),
-    safe:{t:DB.safety.wbgt>=28?'경고':'양호',c:DB.safety.wbgt>=28?'t-amber':'t-green'},
-    qual:{t:avgDefect()+'%',c:avgDefect()>1.5?'t-amber':'t-green'},
-    insight:{t:avgOEE()+'%',c:avgOEE()>=80?'t-green':'t-amber'},
+    judge:(()=>{const J=collectJudgments(),c=J.filter(x=>x.lv==='crit').length;return c?{t:''+c,c:'t-red'}:null;})(),
+    safe:DB.safety.wbgt>=28?{t:'경고',c:'t-amber'}:null,
   };
   const link=id=>{const bd=badges[id]?`<span class="badge ${badges[id].c}">${badges[id].t}</span>`:'';
     return `<a data-id="${id}" class="${id===cur?'on':''}" onclick="go('${id}')"><span class="ic">${svic(NAV_ICON[id]||'activity',17)}</span><span>${nm(id)}</span>${bd}</a>`;};
@@ -1712,9 +1712,9 @@ function fillScope(r){
   const sel=document.getElementById('scopeSel'),lbl=document.getElementById('scopeLbl');
   let opts=[];
   if(r==='field'){lbl.textContent='담당 사업부 (현장)';
-    sel.innerHTML=Object.keys(ZONES).map(z=>`<option value="${z}">${z} (${ZONES[z].join('·')})</option>`).join('');}
+    sel.innerHTML=Object.keys(ZONES).map(z=>`<option value="${z}">${z}</option>`).join('');}
   else if(r==='admin'){lbl.textContent='담당 사업부 (관리자)';
-    sel.innerHTML=[`<option value="전체">전체 사업부 (HnB · FnC · Oral Care)</option>`].concat(Object.keys(ZONES).map(z=>`<option value="${z}">${z} (${ZONES[z].join('·')})</option>`)).join('');}
+    sel.innerHTML=[`<option value="전체">전체 사업부</option>`].concat(Object.keys(ZONES).map(z=>`<option value="${z}">${z}</option>`)).join('');}
   else{lbl.textContent='운영 범위 (센터)';sel.innerHTML=`<option value="전체">전체 라인 (종합 상황판 · 전권)</option>`;}
   sel.disabled=(r==='center');
 }
@@ -1801,6 +1801,53 @@ fillScope('center');
 #vSub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:880px;display:block}
 .card h3 .hint{max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
 .mini{opacity:.8}
+
+/* ══════════ 창고 스킨: 라이트·플랫·모던 ══════════ */
+body{font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif !important}
+/* 사이드바 라이트 */
+.nav{background:#ffffff !important;border-right:1px solid var(--line) !important}
+.nav .logo .t{color:#1b2736 !important}.nav .logo .t span{color:#2aa864 !important}
+.nav .logo .s{color:#8d9db4 !important}
+.nav .sec{color:#8d9db4 !important}
+.nav a{color:#44566e !important}
+.nav a:hover{background:#f2f6fc !important;transform:none !important}
+.nav a.on{background:#eef8f2 !important;border:1px solid #cdeeda !important;color:#177a4b !important;box-shadow:none !important}
+.nav a .ic{opacity:.75}
+/* 하단 사용자 카드 라이트 */
+.nav .user{background:#f2f6fc !important;border:1px solid var(--line) !important;color:#1b2736 !important}
+.nav .user .nm{color:#1b2736 !important}.nav .user .rl{color:#8d9db4 !important}
+.nav .user .rolebtns button,.nav .user button{background:#ffffff !important;border:1px solid var(--line2) !important;color:#44566e !important}
+.nav .user button.on{background:#eef8f2 !important;border-color:#2aa864 !important;color:#177a4b !important}
+.nav .user .av{background:#eef8f2 !important;border:1px solid #cdeeda !important}
+/* 로그인 라이트 */
+.login{background:#f4f7fb !important}
+.login::before{display:none !important}
+.login .box{background:#ffffff !important;border:1px solid var(--line) !important;box-shadow:0 12px 40px rgba(27,39,54,.10) !important}
+.login .brand{color:#1b2736 !important}.login .brand span{color:#2aa864 !important}
+.login .tagline{color:#5f7288 !important}
+.login .thesis{background:#eef8f2 !important;color:#177a4b !important;border:1px solid #cdeeda !important}
+.login .caps{color:#8d9db4 !important}
+.login label{color:#5f7288 !important}
+.roles button{background:#f7fafc !important;border:1px solid var(--line2) !important;color:#44566e !important}
+.roles button.on{background:#eef8f2 !important;border-color:#2aa864 !important;color:#177a4b !important;box-shadow:0 0 0 2px #2aa86422 !important}
+.login input,.login select{background:#ffffff !important;border:1.5px solid var(--line2) !important;color:#1b2736 !important;font-weight:600 !important}
+.login select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%235f7288' stroke-width='2.2' fill='none' stroke-linecap='round'/></svg>") !important;background-repeat:no-repeat !important;background-position:right 14px center !important}
+.login select option,.login select optgroup{background:#fff !important;color:#1b2736 !important}
+#pwErr{color:#e04a3f !important}
+.login .note{color:#8d9db4 !important}
+/* 히어로: 라이트 카드 + 그린 포인트 */
+.hero{background:#ffffff !important;border:1px solid var(--line) !important;box-shadow:var(--shadow) !important;color:#1b2736 !important}
+.hero::before,.hero::after{display:none !important}
+.hero .hbrand{color:#2aa864 !important}
+.hero .htitle{color:#1b2736 !important}
+.hero .hsub{color:#5f7288 !important}
+.hero .hsub b{color:#177a4b !important}
+.hero .m .ml{color:#8d9db4 !important}
+.hero .m .mv{color:#1b2736 !important}
+/* 카드·KPI 플랫화 */
+.card,.kpi{box-shadow:var(--shadow) !important}
+.card:hover{box-shadow:0 4px 14px rgba(27,39,54,.09) !important}
+.kpi:hover{box-shadow:0 4px 14px rgba(27,39,54,.10) !important}
 </style>
 <script>
 /* KPI 숫자 카운트업 — 뷰 렌더 시 자동 */
