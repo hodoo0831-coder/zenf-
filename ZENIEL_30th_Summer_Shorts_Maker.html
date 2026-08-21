@@ -1139,14 +1139,20 @@ function drawFrame(t){
       drawCaption(s.clip.cap, tp, ca);
     }
   } else if (s.kind === 'intro'){
-    const first = S.clips.find(c => c.type === 'proc');
-    if (tp.cine && first) PROC[first.scene](0.15, t);
+    const first = S.clips[0];
+    if (tp.cine && first){
+      if (first.type === 'proc') PROC[first.scene](0.15, t);
+      else drawMedia(first, 0.15, 1);
+    }
     drawIntro(lt, s.dur, tp);
     drawFilm(t);
     if (tp.cine) drawLetterbox();
   } else {
-    const last = [].concat(S.clips).reverse().find(c => c.type === 'proc');
-    if (tp.cine && last) PROC[last.scene](0.85, t);
+    const last = S.clips[S.clips.length-1];
+    if (tp.cine && last){
+      if (last.type === 'proc') PROC[last.scene](0.85, t);
+      else drawMedia(last, 0.85, 1);
+    }
     drawOutro(lt, s.dur, tp);
     drawFilm(t);
     if (tp.cine) drawLetterbox();
