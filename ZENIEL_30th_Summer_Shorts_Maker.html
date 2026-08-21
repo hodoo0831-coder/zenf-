@@ -324,6 +324,7 @@
           </div>
 
           <div class="btnrow">
+            <button class="btn p" id="btnCine">🎬 실사풍 시네마 배경 4컷 넣기</button>
             <button class="btn" id="btnSample">🎨 샘플로 먼저 체험해보기</button>
             <button class="btn" id="btnClear">🗑 전체 비우기</button>
           </div>
@@ -586,6 +587,12 @@ function drawBG(tp){
   ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
 }
 function drawMedia(clip, p, alpha){
+  if (clip.type === 'proc'){
+    ctx.save(); ctx.globalAlpha = alpha;
+    PROC[clip.scene](Math.min(1,Math.max(0,p)), NOW);
+    ctx.restore();
+    return;
+  }
   const el = clip.el; if(!el) return;
   const w = el.videoWidth || el.naturalWidth || el.width;
   const h = el.videoHeight || el.naturalHeight || el.height;
@@ -694,7 +701,7 @@ function drawBadge30(tp, cy, sc, alpha){
   ctx.restore();
 }
 function drawIntro(lt, dur, tp){
-  drawWave(tp, lt*1.6);
+  if (!tp.cine) drawWave(tp, lt*1.6);
   const a = ease(lt/0.5), sc = 0.9 + 0.1*ease(lt/0.6);
   drawBadge30(tp, H*0.34, sc, a);
   const a2 = ease((lt-0.25)/0.55), up = (1-a2)*26;
@@ -712,7 +719,7 @@ function drawIntro(lt, dur, tp){
   ctx.restore();
 }
 function drawOutro(lt, dur, tp){
-  drawWave(tp, 2 + lt*1.2);
+  if (!tp.cine) drawWave(tp, 2 + lt*1.2);
   const a = ease(lt/0.5);
   drawBadge30(tp, H*0.33, 0.92 + 0.08*a, a);
   const a2 = ease((lt-0.3)/0.6);
@@ -727,6 +734,322 @@ function drawOutro(lt, dur, tp){
   ctx.fillText(S.outro.l2 || '', W/2, y + 26);
   ctx.restore();
 }
+/* ================= 절차적 실사풍 배경 =================
+   사물을 그리는 대신 카메라에 실제로 찍히는 현상을 시뮬레이션한다.
+   윤슬 · 보케 · 블룸 · 아웃포커스 · 색수차 · 헤일레이션.            */
+let NOW = 0;
+const OFF = {};
+function off(key,w,h){
+  let c = OFF[key];
+  if (!c) c = OFF[key] = document.createElement('canvas');
+  if (c.width !== w || c.height !== h){ c.width = w; c.height = h; }
+  return c;
+}
+function prng(seed){ let s = seed>>>0; return () => { s = (s*1664525 + 1013904223)>>>0; return s/4294967296; }; }
+
+const NOISE = {};
+function noiseTex(seed,w,h){
+  const k = seed+'_'+w+'x'+h;
+  if (NOISE[k]) return NOISE[k];
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'), im = x.createImageData(w,h), r = prng(seed);
+  for (let i=0;i<im.data.length;i+=4){
+    const v = r()*255;
+    im.data[i] = im.data[i+1] = im.data[i+2] = v; im.data[i+3] = 255;
+  }
+  x.putImageData(im,0,0);
+  return (NOISE[k] = c);
+}
+/* 오프스크린 레이어를 블러 + 합성으로 얹는다 (블러 연산 1회) */
+function blit(c, blurPx, mode, alpha){
+  ctx.save();
+  ctx.globalCompositeOperation = mode || 'lighter';
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  if (blurPx) ctx.filter = 'blur(' + blurPx + 'px)';
+  ctx.drawImage(c, 0, 0, W, H);
+  ctx.filter = 'none';
+  ctx.restore();
+}
+/* 수면 윤슬 — 수평선에서 카메라 쪽으로 원근이 살아 있게 */
+function surfaceGlitter(seed, count, hzR, cxR, spread, sizeBase, t){
+  const w = 540, h = 960;
+  const c = off('sg'+seed, w, h), x = c.getContext('2d');
+  x.clearRect(0,0,w,h);
+  x.globalCompositeOperation = 'lighter';
+  x.fillStyle = '#fff6de';
+  const hz = h*hzR, cx = w*cxR;
+  const r = prng(seed);
+  for (let i=0;i<count;i++){
+    const u  = Math.pow(r(), 1.9);                 // 0=수평선, 1=카메라 앞
+    const lat = (r()-0.5);
+    const y  = hz + (h-hz)*u;
+    const x0 = cx + lat*w*spread*(0.18 + u*1.9);
+    if (x0 < -40 || x0 > w+40) continue;
+    const ph = r()*6.283, sp = 1.1 + r()*3.6, jit = r();
+    // 기둥 중심에서 멀수록 어두워진다
+    const fall = Math.max(0, 1 - Math.abs(lat)*1.75);
+    let a = Math.sin(t*sp + ph)*0.5 + 0.5;
+    a = a*a*a * (0.25 + fall*0.95);
+    if (a < 0.035) continue;
+    const sc = sizeBase*(0.22 + u*2.4)*(0.55 + jit*0.95);
+    x.globalAlpha = Math.min(1, a);
+    x.beginPath();
+    x.ellipse(x0, y + Math.sin(t*0.7 + ph)*(1+u*4), sc*(1.7+u*1.2), sc*0.5, 0, 0, 6.3);
+    x.fill();
+  }
+  return c;
+}
+/* 잔물결 — 수면에 가로로 눕는 미세한 선 */
+function ripples(seed, count, hzR, t){
+  const w = 540, h = 960;
+  const c = off('rp'+seed, w, h), x = c.getContext('2d');
+  x.clearRect(0,0,w,h);
+  x.globalCompositeOperation = 'lighter';
+  x.strokeStyle = 'rgba(255,255,255,.5)'; x.lineCap='round';
+  const hz = h*hzR, r = prng(seed);
+  for (let i=0;i<count;i++){
+    const u = Math.pow(r(), 1.8);
+    const y = hz + (h-hz)*u + Math.sin(t*0.9 + i)*1.5*u;
+    const len = (12 + r()*70)*(0.3 + u*2.0);
+    const x0 = r()*w;
+    x.globalAlpha = (0.05 + r()*0.16)*(0.35 + u*0.8);
+    x.lineWidth = 0.7 + u*2.4;
+    x.beginPath(); x.moveTo(x0,y); x.lineTo(x0+len,y); x.stroke();
+  }
+  return c;
+}
+/* 큰 보케 원 */
+function bokehLayer(seed, count, minR, maxR, t, speed){
+  const w = 540, h = 960;
+  const c = off('bk'+seed, w, h), x = c.getContext('2d');
+  x.clearRect(0,0,w,h);
+  x.globalCompositeOperation = 'lighter';
+  const r = prng(seed);
+  for (let i=0;i<count;i++){
+    const rad = minR + r()*(maxR-minR);
+    const x0 = r()*w, y0 = r()*h, ph = r()*6.283, vx = 0.4 + r()*0.9;
+    const bx = ((x0 + t*speed*vx) % (w + rad*2) + (w + rad*2)) % (w + rad*2) - rad;
+    const by = y0 - t*speed*0.35 + Math.sin(t*0.5 + ph)*10;
+    const yy = ((by % (h + rad*2)) + (h + rad*2)) % (h + rad*2) - rad;
+    const a = 0.10 + (Math.sin(t*0.8 + ph)*0.5 + 0.5)*0.22;
+    const g = x.createRadialGradient(bx,yy,rad*0.05,bx,yy,rad);
+    g.addColorStop(0,   'rgba(255,238,205,' + (a*0.75) + ')');
+    g.addColorStop(0.72,'rgba(255,226,180,' + (a*0.55) + ')');
+    g.addColorStop(0.93,'rgba(255,248,225,' + (a*1.00) + ')');
+    g.addColorStop(1,   'rgba(255,240,210,0)');
+    x.fillStyle = g;
+    x.beginPath(); x.arc(bx,yy,rad,0,6.3); x.fill();
+  }
+  return c;
+}
+/* 태양 + 블룸 + 아나모픽 스트릭 */
+function sunGlow(cx, cy, coreR, warm, inten){
+  const k = inten == null ? 1 : inten;
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  const g = ctx.createRadialGradient(cx,cy,coreR*0.2,cx,cy,coreR*7.5);
+  g.addColorStop(0,   'rgba(255,252,238,' + (1*k) + ')');
+  g.addColorStop(0.08,'rgba(255,246,215,' + (.95*k) + ')');
+  g.addColorStop(0.22, warm ? 'rgba(255,190,120,' + (.55*k) + ')' : 'rgba(255,225,170,' + (.5*k) + ')');
+  g.addColorStop(1,   'rgba(255,180,110,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx,cy,coreR*7.5,0,6.3); ctx.fill();
+  ctx.fillStyle = 'rgba(255,253,244,' + (.98*k) + ')';
+  ctx.beginPath(); ctx.arc(cx,cy,coreR,0,6.3); ctx.fill();
+  ctx.filter = 'blur(14px)';
+  const st = ctx.createLinearGradient(cx-W,cy,cx+W,cy);
+  st.addColorStop(0,'rgba(255,215,160,0)');
+  st.addColorStop(.5,'rgba(255,240,205,' + (.42*k) + ')');
+  st.addColorStop(1,'rgba(255,215,160,0)');
+  ctx.fillStyle = st; ctx.fillRect(0, cy-9, W, 18);
+  ctx.filter = 'none';
+  ctx.restore();
+}
+/* 구름 — 노이즈 2옥타브를 블러해서 유기적인 형태로 */
+function clouds(t, alpha, y0, y1){
+  const c = off('cl', 128, 220), x = c.getContext('2d');
+  x.clearRect(0,0,128,220);
+  x.globalCompositeOperation = 'source-over';
+  x.globalAlpha = 1;
+  x.drawImage(noiseTex(7311,64,110), (t*3)%64 - 64, 0, 128, 220);
+  x.drawImage(noiseTex(7311,64,110), (t*3)%64,      0, 128, 220);
+  x.globalCompositeOperation = 'multiply';
+  x.drawImage(noiseTex(913,24,42), (t*1.1)%24 - 24, 10, 128, 220);
+  x.drawImage(noiseTex(913,24,42), (t*1.1)%24,      10, 128, 220);
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = alpha;
+  ctx.filter = 'blur(26px)';
+  ctx.drawImage(c, 0, y0, W, y1-y0);
+  ctx.filter = 'none';
+  ctx.restore();
+}
+/* 색수차 — 하이라이트에 미세한 RGB 분리 */
+function chroma(){
+  const c = off('ca', 270, 480), x = c.getContext('2d');
+  x.clearRect(0,0,270,480);
+  x.drawImage(cv, 0,0, 270,480);
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha = .10; ctx.filter = 'blur(3px)';
+  ctx.drawImage(c, -3, 0, W, H);
+  ctx.drawImage(c,  3, 0, W, H);
+  ctx.filter = 'none';
+  ctx.restore();
+}
+
+const PROC = {
+  /* 1. 한낮 바다 — 수평선 역광, 윤슬 기둥 */
+  glitter: function(p, t){
+    const HZ = H*0.30;
+    let g = ctx.createLinearGradient(0,0,0,HZ);
+    g.addColorStop(0,'#2273a6'); g.addColorStop(.5,'#5aa8cd'); g.addColorStop(1,'#a4d3e6');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,HZ);
+    sunGlow(W*0.56, HZ-205, 34, false, .42);
+    // 수평선 헤이즈
+    ctx.save(); ctx.globalCompositeOperation='screen'; ctx.filter='blur(30px)';
+    ctx.fillStyle='rgba(226,244,252,.30)'; ctx.fillRect(0,HZ-12,W,18);
+    ctx.filter='none'; ctx.restore();
+    // 수면
+    let s2 = ctx.createLinearGradient(0,HZ,0,H);
+    s2.addColorStop(0,'#2e7fa6'); s2.addColorStop(.30,'#1c6d99'); s2.addColorStop(1,'#062f4c');
+    ctx.fillStyle = s2; ctx.fillRect(0,HZ,W,H-HZ);
+    blit(ripples(21, 900, 0.30, t), 1.2, 'lighter', .55);
+    blit(surfaceGlitter(101, 900, 0.30, 0.56, 0.55, 1.5, t), 0.9, 'lighter', .95);
+    blit(surfaceGlitter(202, 260, 0.30, 0.56, 0.75, 3.4, t), 5,   'lighter', .75);
+    blit(surfaceGlitter(303,  60, 0.34, 0.56, 1.10, 9.0, t), 20,  'lighter', .55);
+    // 근경 아웃포커스
+    ctx.save(); ctx.globalAlpha=.42; ctx.filter='blur(34px)';
+    const ng = ctx.createLinearGradient(0,H-330,0,H);
+    ng.addColorStop(0,'rgba(6,42,68,0)'); ng.addColorStop(1,'rgba(6,42,68,.92)');
+    ctx.fillStyle = ng; ctx.fillRect(0,H-330,W,330);
+    ctx.filter='none'; ctx.restore();
+    chroma();
+  },
+  /* 2. 오후 보케 — 아웃포커스된 반짝임 */
+  bokeh: function(p, t){
+    const g = ctx.createLinearGradient(0,0,W*0.5,H);
+    g.addColorStop(0,'#d98b4e'); g.addColorStop(.38,'#a4492f');
+    g.addColorStop(.74,'#54222c'); g.addColorStop(1,'#1d0f1c');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+    blit(bokehLayer(511, 18, 44, 130, t, 9),  8,  'lighter', .60);
+    blit(bokehLayer(622,  8, 110, 240, t, 5), 24, 'lighter', .40);
+    blit(surfaceGlitter(733, 220, 0.05, 0.5, 1.2, 2.0, t), 3, 'lighter', .30);
+    // 광원 방향 헤일레이션
+    ctx.save(); ctx.globalCompositeOperation='screen'; ctx.filter='blur(90px)';
+    const hg = ctx.createRadialGradient(W*0.30,H*0.24,10,W*0.30,H*0.24,W*0.85);
+    hg.addColorStop(0,'rgba(255,214,150,.55)'); hg.addColorStop(1,'rgba(255,190,120,0)');
+    ctx.fillStyle=hg; ctx.fillRect(0,0,W,H); ctx.filter='none'; ctx.restore();
+    chroma();
+  },
+  /* 3. 노을 — 하늘 그라데이션 + 구름 + 반사 기둥 */
+  sunset: function(p, t){
+    const HZ = H*0.615;
+    const g = ctx.createLinearGradient(0,0,0,HZ);
+    g.addColorStop(0,'#241a4d'); g.addColorStop(.26,'#7a3f76');
+    g.addColorStop(.55,'#e0644f'); g.addColorStop(.80,'#ff9b52'); g.addColorStop(1,'#ffd189');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,HZ);
+    clouds(t, .30, H*0.06, H*0.55);
+    sunGlow(W*0.5, HZ-30, 68, true);
+    const sg = ctx.createLinearGradient(0,HZ,0,H);
+    sg.addColorStop(0,'#b8613f'); sg.addColorStop(.28,'#6d3d55'); sg.addColorStop(1,'#160f28');
+    ctx.fillStyle = sg; ctx.fillRect(0,HZ,W,H-HZ);
+    ctx.save(); ctx.beginPath(); ctx.rect(0,HZ,W,H-HZ); ctx.clip();
+    blit(ripples(31, 700, 0.615, t), 1.4, 'lighter', .40);
+    blit(surfaceGlitter(844, 700, 0.615, 0.5, 0.42, 2.0, t), 1.2, 'lighter', .95);
+    blit(surfaceGlitter(955, 180, 0.615, 0.5, 0.62, 4.6, t), 7,   'lighter', .70);
+    blit(surfaceGlitter(966,  40, 0.68,  0.5, 0.95, 11,  t), 22,  'lighter', .45);
+    ctx.restore();
+    chroma();
+  },
+  /* 4. 물가 — 밀려드는 물결과 젖은 모래, 얕은 심도 */
+  shore: function(p, t){
+    // 멀리 아웃포커스된 바다
+    const seaH = H*0.19;
+    const sea = ctx.createLinearGradient(0,0,0,seaH);
+    sea.addColorStop(0,'#2f86ad'); sea.addColorStop(1,'#79bccb');
+    ctx.fillStyle = sea; ctx.fillRect(0,0,W,seaH);
+    ctx.save(); ctx.filter='blur(26px)';
+    ctx.fillStyle='rgba(255,255,255,.55)'; ctx.fillRect(0,seaH-18,W,30);
+    ctx.filter='none'; ctx.restore();
+
+    // 모래 — 젖은 곳에서 마른 곳으로 이어지는 한 장의 그라데이션
+    const sd = ctx.createLinearGradient(0,seaH-20,0,H);
+    sd.addColorStop(0,'#a98a5c'); sd.addColorStop(.16,'#c8a877');
+    sd.addColorStop(.42,'#ddc192'); sd.addColorStop(.75,'#e6cb9d'); sd.addColorStop(1,'#c2a06a');
+    ctx.fillStyle = sd; ctx.fillRect(0,seaH-20,W,H-seaH+20);
+    // 결이 고운 모래 알갱이
+    ctx.save(); ctx.globalCompositeOperation='overlay';
+    ctx.globalAlpha=.13; ctx.filter='blur(.6px)';
+    ctx.drawImage(noiseTex(4242,620,1100), 0, seaH-20, W, H-seaH+20);
+    ctx.globalAlpha=.10; ctx.filter='blur(9px)';
+    ctx.drawImage(noiseTex(818,90,160), 0, seaH-20, W, H-seaH+20);
+    ctx.filter='none'; ctx.restore();
+
+    // 젖은 면 — 어둡고 반질한 띠
+    ctx.save();
+    const wet = ctx.createLinearGradient(0,seaH,0,H*0.56);
+    wet.addColorStop(0,'rgba(70,58,42,.42)'); wet.addColorStop(.65,'rgba(90,74,52,.22)');
+    wet.addColorStop(1,'rgba(120,100,70,0)');
+    ctx.fillStyle = wet; ctx.fillRect(0,seaH,W,H*0.56-seaH);
+    ctx.globalCompositeOperation='screen'; ctx.filter='blur(46px)'; ctx.globalAlpha=.30;
+    const sheen = ctx.createLinearGradient(0,seaH,0,H*0.46);
+    sheen.addColorStop(0,'rgba(255,246,224,.9)'); sheen.addColorStop(1,'rgba(255,246,224,0)');
+    ctx.fillStyle = sheen; ctx.fillRect(0,seaH,W,H*0.46-seaH);
+    ctx.filter='none'; ctx.restore();
+
+    // 파도 가장자리 — 얇은 포말 레이스 두 겹
+    const edge = (yBase, amp, freq, phase, lw, blurPx, alpha, sheetA) => {
+      const c = off('ed'+Math.round(yBase), 540, 300), x = c.getContext('2d');
+      x.clearRect(0,0,540,300);
+      const yy = px => 150 + Math.sin(px/freq + phase)*amp + Math.sin(px/(freq*0.31) - phase*1.3)*amp*0.34;
+      // 물이 덮은 면
+      x.fillStyle = 'rgba(186,214,214,' + sheetA + ')';
+      x.beginPath(); x.moveTo(0,yy(0));
+      for (let px=0; px<=540; px+=6) x.lineTo(px, yy(px));
+      x.lineTo(540,0); x.lineTo(0,0); x.closePath(); x.fill();
+      // 포말 선
+      x.strokeStyle = 'rgba(255,255,255,.95)'; x.lineWidth = lw; x.lineCap='round';
+      x.beginPath();
+      for (let px=0; px<=540; px+=6){ const v = yy(px); if (px===0) x.moveTo(px,v); else x.lineTo(px,v); }
+      x.stroke();
+      // 흩어진 거품
+      const r = prng(Math.round(yBase)+7);
+      x.fillStyle = 'rgba(255,255,255,.8)';
+      for (let i=0;i<90;i++){
+        const px = r()*540, off2 = (r()-0.5)*26;
+        x.globalAlpha = .25 + r()*0.5;
+        x.beginPath(); x.arc(px, yy(px)+off2, 1.2 + r()*3.4, 0, 6.3); x.fill();
+      }
+      ctx.save();
+      ctx.filter = 'blur(' + blurPx + 'px)';
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(c, 0, yBase-150, W, 300);
+      ctx.filter='none'; ctx.restore();
+    };
+    edge(H*0.30 + Math.sin(t*0.5)*30,      13, 46, t*1.5,      7,  4,  .95, .34);
+    edge(H*0.56 + Math.sin(t*0.42+2.1)*44, 20, 60, t*1.2+1.4, 12, 17,  .70, .26);
+
+    // 젖은 면 스페큘러
+    ctx.save(); ctx.beginPath(); ctx.rect(0,seaH,W,H*0.42); ctx.clip();
+    blit(surfaceGlitter(77, 220, 0.05, 0.5, 1.25, 2.2, t), 2.5, 'lighter', .40);
+    ctx.restore();
+
+    // 근경 아웃포커스
+    ctx.save(); ctx.globalAlpha=.62; ctx.filter='blur(42px)';
+    const ng = ctx.createLinearGradient(0,H-430,0,H);
+    ng.addColorStop(0,'rgba(178,146,96,0)'); ng.addColorStop(1,'rgba(158,126,80,.95)');
+    ctx.fillStyle = ng; ctx.fillRect(0,H-430,W,430);
+    ctx.filter='none'; ctx.restore();
+    chroma();
+  }
+};
+const PROC_PRESET = [
+  ['glitter','한낮 바다 · 윤슬',       '올여름, 나는 여기 있었다'],
+  ['shore',  '모래와 파도 · 얕은 심도', '제대로 쉬어본 하루'],
+  ['bokeh',  '오후 보케 · 아웃포커스',  '파도처럼, 서른 번째 여름'],
+  ['sunset', '노을 · 수면 반사',        '충전 완료!']
+];
+
 /* ---- 필름 질감 (그레인 · 비네팅 · 색보정 · 손떨림) ---- */
 let grainTile = null;
 function makeGrain(){
@@ -770,6 +1093,7 @@ function drawFilm(t){
 }
 
 function drawFrame(t){
+  NOW = t;
   const tp = TEMPLATES[S.tpl];
   drawBG(tp);
   const segs = TL.segs;
@@ -804,10 +1128,14 @@ function drawFrame(t){
       drawCaption(s.clip.cap, tp, ca);
     }
   } else if (s.kind === 'intro'){
+    const first = S.clips.find(c => c.type === 'proc');
+    if (tp.cine && first) PROC[first.scene](0.15, t);
     drawIntro(lt, s.dur, tp);
     drawFilm(t);
     if (tp.cine) drawLetterbox();
   } else {
+    const last = [].concat(S.clips).reverse().find(c => c.type === 'proc');
+    if (tp.cine && last) PROC[last.scene](0.85, t);
     drawOutro(lt, s.dur, tp);
     drawFilm(t);
     if (tp.cine) drawLetterbox();
@@ -1061,7 +1389,7 @@ function renderList(){
   S.clips.forEach((c, idx) => {
     const el = document.createElement('div'); el.className = 'clip';
     el.innerHTML =
-      '<div class="th"><span class="kind">' + (c.type === 'video' ? '영상' : '사진') + '</span></div>' +
+      '<div class="th"><span class="kind">' + (c.type === 'video' ? '영상' : c.type === 'proc' ? '생성' : '사진') + '</span></div>' +
       '<div class="body">' +
         '<div class="nm">' + (idx+1) + '. ' + c.name.replace(/[<>&]/g,'') + '</div>' +
         '<div class="row"><input type="text" class="cap" placeholder="이 컷의 자막 (12자 이내 권장)"></div>' +
@@ -1085,7 +1413,8 @@ function renderList(){
         '<button class="iconbtn del" title="삭제">✕</button>' +
       '</div>';
     const th = el.querySelector('.th');
-    if (c.type === 'image'){ const i2 = document.createElement('img'); i2.src = c.url; th.appendChild(i2); }
+    if (c.type === 'proc'){ th.style.background = c.thumb || '#0d3b66'; }
+    else if (c.type === 'image'){ const i2 = document.createElement('img'); i2.src = c.url; th.appendChild(i2); }
     else { const v2 = document.createElement('video'); v2.src = c.url; v2.muted = true; th.appendChild(v2); }
     const cap = el.querySelector('.cap'); cap.value = c.cap;
     cap.addEventListener('input', e => { c.cap = e.target.value; drawFrame(midOf(c)); });
@@ -1137,6 +1466,20 @@ $('#file').addEventListener('change', e => { addFiles(e.target.files); e.target.
 ['dragleave','drop'].forEach(ev => $('#drop').addEventListener(ev, e => { e.preventDefault(); $('#drop').classList.remove('over'); }));
 $('#drop').addEventListener('drop', e => { if (e.dataTransfer) addFiles(e.dataTransfer.files); });
 
+function cineClips(){
+  S.clips.forEach(c => { if (c.url) { try{ URL.revokeObjectURL(c.url); }catch(e){} } });
+  S.clips = [];
+  const TH = { glitter:'linear-gradient(180deg,#63b3d4,#052a42)', shore:'linear-gradient(180deg,#2e93b8,#b1905c)',
+               bokeh:'linear-gradient(180deg,#f0a35a,#2a1526)',  sunset:'linear-gradient(180deg,#7a3f76,#1d1733)' };
+  PROC_PRESET.forEach((d,i) => {
+    S.clips.push({ id:++uid, name:d[1], type:'proc', scene:d[0], url:'', cap:d[2],
+                   dur:3.2, start:0, motion:'none', thumb:TH[d[0]], el:null });
+  });
+  S.tpl = 'cinema'; $('#tpl').value = 'cinema';
+  render();
+  toast('실사풍 배경 4컷을 넣었습니다 — 미리보기를 눌러보세요');
+}
+$('#btnCine').addEventListener('click', cineClips);
 $('#btnSample').addEventListener('click', sampleClips);
 $('#btnClear').addEventListener('click', () => {
   S.clips.forEach(c => { try{ URL.revokeObjectURL(c.url); }catch(e){} });
