@@ -737,7 +737,7 @@ function cardScrim(tp){
 function drawIntro(lt, dur, tp){
   if (!tp.cine) drawWave(tp, lt*1.6); else cardScrim(tp);
   const a = ease(lt/0.5), sc = 0.9 + 0.1*ease(lt/0.6);
-  drawBadge30(tp, H*0.34, sc, a);
+  if (S.intro.badge !== false) drawBadge30(tp, H*0.34, sc, a);
   const a2 = ease((lt-0.25)/0.55), up = (1-a2)*26;
   ctx.save(); ctx.globalAlpha = a2; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.shadowColor='rgba(0,0,0,.28)'; ctx.shadowBlur=14; ctx.shadowOffsetY=3;
@@ -755,7 +755,7 @@ function drawIntro(lt, dur, tp){
 function drawOutro(lt, dur, tp){
   if (!tp.cine) drawWave(tp, 2 + lt*1.2); else cardScrim(tp);
   const a = ease(lt/0.5);
-  drawBadge30(tp, H*0.33, 0.92 + 0.08*a, a);
+  if (S.outro.badge !== false) drawBadge30(tp, H*0.33, 0.92 + 0.08*a, a);
   const a2 = ease((lt-0.3)/0.6);
   ctx.save(); ctx.globalAlpha = a2; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.shadowColor='rgba(0,0,0,.28)'; ctx.shadowBlur=14; ctx.shadowOffsetY=3;
