@@ -1022,6 +1022,16 @@ $('#btnRec').addEventListener('click', record);
 
 /* 초기 렌더 */
 render();
+
+/* 외부 자동화(프레임 단위 렌더링·테스트)용 훅 — 일반 사용에는 영향 없음 */
+window.ZENShorts = {
+  state: S,
+  timeline: () => TL,
+  build: buildTL,
+  drawAt: t => drawFrame(t),
+  refresh: render,
+  canvas: cv
+};
 })();
 </script>
 </body>
