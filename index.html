@@ -1191,8 +1191,7 @@ V.stock=()=>{
 };
 V.orikonwash=()=>{
   const s=(DB.extSys||[]).find(x=>x.id==='orikon');
-  if(!s)return '<div class="card"><p class="mini">간접작업 연동 시스템이 설정되지 않았습니다.</p></div>';
-  return sysCard(s);
+  return renderLive()+(s?sysCard(s):'');
 };
 V.safe=()=>{
   const nsys=(DB.extSys||[]).filter(s=>inAgent(s,'safe')).length;
