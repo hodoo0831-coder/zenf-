@@ -526,7 +526,15 @@ $('#copyMail').addEventListener('click', async ()=>{
 
 /* ================= 렌더 엔진 ================= */
 const W = 1080, H = 1920, FPS = 30, FADE = 0.35;
-const cv = $('#cv'), ctx = cv.getContext('2d');
+const cv = $('#cv');
+let ctx = cv.getContext('2d');
+let TGT = cv;
+/* 절차적 장면을 오프스크린에 그릴 때 렌더 타깃을 잠시 바꾼다 */
+function withTarget(canvas, fn){
+  const pc = ctx, pt = TGT;
+  ctx = canvas.getContext('2d'); TGT = canvas;
+  try { fn(); } finally { ctx = pc; TGT = pt; }
+}
 const FONT = '"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
 
 const TEMPLATES = {
@@ -593,10 +601,19 @@ function drawMedia(clip, p, alpha){
     if (clip.motion === 'in')  z = 1.00 + 0.09*q;
     if (clip.motion === 'out') z = 1.09 - 0.09*q;
     if (clip.motion === 'pan'){ z = 1.07; dx = (q-0.5)*70; }
-    ctx.save(); ctx.globalAlpha = alpha;
-    ctx.translate(W/2 + dx, H/2); ctx.scale(z, z); ctx.translate(-W/2, -H/2);
-    PROC[clip.scene](q, NOW);
-    ctx.restore();
+    const paint = () => {
+      ctx.save();
+      ctx.translate(W/2 + dx, H/2); ctx.scale(z, z); ctx.translate(-W/2, -H/2);
+      PROC[clip.scene](q, NOW);
+      ctx.restore();
+    };
+    if (alpha >= 0.999){ paint(); return; }
+    /* 반투명으로 겹쳐 그리면 장면 내부의 lighter·screen 합성이 뒤 화면과
+       섞여 이중노출이 된다. 오프스크린에 불투명하게 완성한 뒤 합성한다. */
+    const c = off('xfade', W, H);
+    c.getContext('2d').clearRect(0,0,W,H);
+    withTarget(c, paint);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.drawImage(c, 0, 0); ctx.restore();
     return;
   }
   const el = clip.el; if(!el) return;
@@ -904,7 +921,7 @@ function clouds(t, alpha, y0, y1){
 function chroma(){
   const c = off('ca', 270, 480), x = c.getContext('2d');
   x.clearRect(0,0,270,480);
-  x.drawImage(cv, 0,0, 270,480);
+  x.drawImage(TGT, 0,0, 270,480);
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   ctx.globalAlpha = .10; ctx.filter = 'blur(3px)';
@@ -1133,7 +1150,12 @@ function drawFrame(t){
     ctx.save(); ctx.translate(sh[0], sh[1]);
     drawMedia(s.clip, lt/s.dur, 1);
     const pr = segs[i-1];
-    if (pr && pr.kind === 'media' && lt < FADE) drawMedia(pr.clip, 1, 1 - lt/FADE);
+    if (pr && pr.kind === 'media'){
+      /* 절차적 장면끼리는 수평선 높이가 달라 길게 겹치면 지평선이 두 개로
+         보인다. 어느 한쪽이라도 생성 배경이면 전환을 짧게 끊는다. */
+      const fd = (s.clip.type === 'proc' || pr.clip.type === 'proc') ? 0.16 : FADE;
+      if (lt < fd) drawMedia(pr.clip, 1, 1 - lt/fd);
+    }
     ctx.restore();
     drawFilm(t);
     const ca = ease(lt/0.4) * (lt > s.dur-0.3 ? Math.max(0,(s.dur-lt)/0.3) : 1);
