@@ -588,8 +588,14 @@ function drawBG(tp){
 }
 function drawMedia(clip, p, alpha){
   if (clip.type === 'proc'){
+    const q = Math.min(1, Math.max(0, p));
+    let z = 1, dx = 0;
+    if (clip.motion === 'in')  z = 1.00 + 0.09*q;
+    if (clip.motion === 'out') z = 1.09 - 0.09*q;
+    if (clip.motion === 'pan'){ z = 1.07; dx = (q-0.5)*70; }
     ctx.save(); ctx.globalAlpha = alpha;
-    PROC[clip.scene](Math.min(1,Math.max(0,p)), NOW);
+    ctx.translate(W/2 + dx, H/2); ctx.scale(z, z); ctx.translate(-W/2, -H/2);
+    PROC[clip.scene](q, NOW);
     ctx.restore();
     return;
   }
@@ -640,8 +646,8 @@ function drawLetterbox(){
   ctx.fillRect(0,0,W,74); ctx.fillRect(0,H-74,W,74);
   ctx.restore();
 }
-function drawTopBar(tp, alpha){
-  const txt = S.topbar; if(!txt) return;
+function drawTopBar(tp, alpha, override){
+  const txt = override || S.topbar; if(!txt) return;
   const font = '800 34px ' + FONT;
   ctx.save(); ctx.globalAlpha = alpha;
   ctx.font = font; ctx.textAlign='left'; ctx.textBaseline='middle';
@@ -1133,7 +1139,7 @@ function drawFrame(t){
     const ca = ease(lt/0.4) * (lt > s.dur-0.3 ? Math.max(0,(s.dur-lt)/0.3) : 1);
     if (tp.cine){
       drawCaptionCine(s.clip.cap, tp, ca, lt/0.7);
-      drawTopBar(tp, ease(lt/0.5)*0.96);
+      drawTopBar(tp, ease(lt/0.5)*0.96, s.clip.top);
       drawLetterbox();
     } else {
       drawCaption(s.clip.cap, tp, ca);
