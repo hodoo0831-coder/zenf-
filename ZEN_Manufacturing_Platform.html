@@ -405,8 +405,10 @@
     <label id="scopeLbl">담당 구역</label>
     <select id="scopeSel"></select>
     <label>사번 / 비밀번호</label>
-    <input id="pw" type="password" placeholder="비밀번호" value="1234">
+    <input id="pw" type="password" inputmode="numeric" maxlength="8" placeholder="접속 비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="pwErr" style="display:none;color:#ff8f8f;font-size:12px;font-weight:700;margin-top:7px">비밀번호가 올바르지 않습니다. 관리자에게 문의하세요.</div>
     <button class="go" onclick="doLogin()">로그인</button>
+    <div class="note" style="margin-top:10px">🔒 사내 인증 — 접속 기록은 감사 로그에 저장됩니다</div>
   </div>
 </div>
 
@@ -1709,18 +1711,22 @@ function setupDrop(){const d=document.getElementById('drop');if(!d)return;
 function fillScope(r){
   const sel=document.getElementById('scopeSel'),lbl=document.getElementById('scopeLbl');
   let opts=[];
-  if(r==='field'){lbl.textContent='담당 라인 (현장) — 사업부별';
-    sel.innerHTML=Object.keys(ZONES).map(z=>`<optgroup label="◼ ${z}">`+ZONES[z].map(k=>`<option value="${k}">${z} · ${k} 라인</option>`).join('')+`</optgroup>`).join('');}
+  if(r==='field'){lbl.textContent='담당 사업부 (현장)';
+    sel.innerHTML=Object.keys(ZONES).map(z=>`<option value="${z}">${z} (${ZONES[z].join('·')})</option>`).join('');}
   else if(r==='admin'){lbl.textContent='담당 사업부 (관리자)';
     sel.innerHTML=[`<option value="전체">전체 사업부 (HnB · FnC · Oral Care)</option>`].concat(Object.keys(ZONES).map(z=>`<option value="${z}">${z} (${ZONES[z].join('·')})</option>`)).join('');}
   else{lbl.textContent='운영 범위 (센터)';sel.innerHTML=`<option value="전체">전체 라인 (종합 상황판 · 전권)</option>`;}
   sel.disabled=(r==='center');
 }
 document.querySelectorAll('#roles button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#roles button').forEach(x=>x.classList.remove('on'));b.classList.add('on');fillScope(b.dataset.role);});
+const ACCESS_PIN='1996';
 function doLogin(){
+  const pwEl=document.getElementById('pw'),pwErr=document.getElementById('pwErr');
+  if(pwEl&&pwEl.value!==ACCESS_PIN){if(pwErr)pwErr.style.display='block';if(pwEl){pwEl.value='';pwEl.focus();}return;}
+  if(pwErr)pwErr.style.display='none';
   role=document.querySelector('#roles button.on').dataset.role;
   const v=document.getElementById('scopeSel').value;
-  if(role==='field'){scope=[v];scopeName=v+' 라인';}
+  if(role==='field'){scope=(ZONES[v]?ZONES[v].slice():[v]);scopeName=v;}
   else if(role==='admin'){if(v==='전체'){scope=null;scopeName='전체';}else{scope=ZONES[v]||null;scopeName=v;}}
   else{scope=null;scopeName='전체';}
   document.getElementById('login').style.display='none';
