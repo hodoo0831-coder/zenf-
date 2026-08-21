@@ -1,0 +1,4 @@
+# 에이전트 스킬 설치물 (npx skills add ... 로 언제든 재설치)
+.agents/
+.claude/
+skills-lock.json
