@@ -3,189 +3,209 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>오리콘·P-BOX 작업실적 통합관리 시스템</title>
+<title>P-BOX 관리자 대시보드 · ZENIEL × AMOREPACIFIC</title>
 <style>
-:root{--bg:#f4f7fb;--card:#ffffff;--line:#e2e9f3;--ink:#1b2736;--sub:#66788f;--green:#2aa864;--tint:#eef8f2;--red:#dc4b4b;--amber:#e8940a;--blue:#2f7fd6;--purple:#8a63d2}
+:root{--navy:#1d3a5f;--navy2:#16304f;--ink:#1d3a5f;--sub:#7b8ba1;--bg:#eef1f5;--line:#e3e8ef;--blue:#2f6db3;--red:#d64545;--orange:#e8940a;--green:#3d9a5f;--lblue:#5b9bd5}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:'Pretendard',-apple-system,'Malgun Gothic','Noto Sans KR',sans-serif;min-height:100vh}
-.top{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:14px}
-.top .logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#2aa864,#1c7d49);display:flex;align-items:center;justify-content:center;font-size:19px}
-.top h1{font-size:18px;font-weight:800}
-.top .co{font-size:12px;color:var(--sub);font-weight:600;margin-top:2px}
-.live{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--green);background:var(--tint);border:1px solid #cdeeda;border-radius:20px;padding:6px 13px;margin-left:8px}
-.live i{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pl 1.6s infinite}
-@keyframes pl{0%,100%{box-shadow:0 0 0 0 rgba(42,168,100,.5)}55%{box-shadow:0 0 0 7px rgba(42,168,100,0)}}
-.tabs{margin-left:auto;display:flex;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:4px}
-.tabs button{border:0;background:transparent;color:var(--sub);font-weight:800;font-size:14px;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:inherit}
-.tabs button.on{background:var(--ink);color:#fff}
-.wrap{max-width:1280px;margin:0 auto;padding:24px 28px 40px}
 .view{display:none}.view.on{display:block}
-/* ---------- 현장용 ---------- */
-.field{display:flex;gap:28px;align-items:flex-start;justify-content:center}
-.phone{width:400px;background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:0 18px 50px rgba(27,39,54,.10);overflow:hidden;flex-shrink:0}
-.phone .phead{background:linear-gradient(135deg,#2aa864,#1c7d49);color:#fff;padding:16px 20px}
-.phone .phead .t{font-size:16.5px;font-weight:800}
-.phone .phead .s{font-size:12px;opacity:.9;margin-top:3px;font-weight:600}
-.pbody{padding:18px 18px 22px}
-.plabel{font-size:12.5px;font-weight:800;color:var(--sub);margin:14px 2px 8px}
-.plabel:first-child{margin-top:0}
-.worktype{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.worktype button{border:1.5px solid var(--line);background:#fff;border-radius:15px;padding:20px 10px;cursor:pointer;font-family:inherit;text-align:center}
-.worktype button .em{font-size:28px}
-.worktype button .nm{font-size:16px;font-weight:900;margin-top:6px;color:var(--ink)}
-.worktype button.on{border-color:var(--green);background:var(--tint)}
-.worktype button.on .nm{color:#1c7d49}
-.qty{display:flex;align-items:center;gap:10px}
-.qty button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:13px;padding:15px 8px;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;color:var(--ink)}
-.qty .num{flex:1.4;text-align:center;font-size:30px;font-weight:900;letter-spacing:-1px}
-.qty .num small{font-size:14px;color:var(--sub);font-weight:800}
-.joint{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:13px;padding:13px 15px;background:#fff}
-.joint.on{border-color:var(--purple);background:#f6f2fd}
-.joint .jt{font-size:14.5px;font-weight:800}
-.joint .js{font-size:12px;color:var(--sub);font-weight:600;margin-top:2px}
-.joint .sw{margin-left:auto;width:46px;height:26px;border-radius:20px;background:var(--purple);position:relative}
-.joint .sw::after{content:'';position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff}
-.bigbtn{width:100%;margin-top:18px;border:0;background:linear-gradient(135deg,#2aa864,#1c7d49);color:#fff;font-size:18px;font-weight:900;border-radius:15px;padding:18px;cursor:pointer;font-family:inherit;box-shadow:0 10px 26px rgba(42,168,100,.32)}
-.saved{margin-top:12px;background:var(--tint);border:1px solid #cdeeda;border-radius:11px;padding:10px 13px;font-size:13px;font-weight:700;color:#1c7d49;display:none}
-.saved.on{display:block}
-.queue{flex:1;max-width:560px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;box-shadow:0 4px 18px rgba(27,39,54,.05)}
-.card h3{font-size:15.5px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:14px}
-.card h3 .hint{font-size:12px;color:var(--sub);font-weight:600;margin-left:auto}
-.qitem{display:flex;align-items:center;gap:13px;padding:11px 4px;border-bottom:1px solid var(--line)}
-.qitem:last-child{border-bottom:0}
-.qitem .ic{width:40px;height:40px;border-radius:11px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:19px}
-.qitem .nm{font-weight:800;font-size:15px}
-.qitem .mt{font-size:12.5px;color:var(--sub);font-weight:600;margin-top:2px}
-.tag{margin-left:auto;font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:20px;white-space:nowrap}
-.tag.g{background:var(--tint);color:#1c7d49}.tag.b{background:#eaf2fd;color:var(--blue)}.tag.p{background:#f6f2fd;color:var(--purple)}
-/* ---------- 관리자용 ---------- */
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
-.kpi{background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px 19px;box-shadow:0 4px 16px rgba(27,39,54,.05)}
-.kpi .l{font-size:12.5px;color:var(--sub);font-weight:700}
-.kpi .v{font-size:31px;font-weight:900;margin-top:6px;letter-spacing:-.5px}
-.kpi .v small{font-size:15px;font-weight:800;color:var(--sub);margin-left:2px}
-.kpi .d{font-size:12px;font-weight:700;margin-top:4px}
-.grid2{display:grid;grid-template-columns:1.45fr 1fr;gap:16px;align-items:start}
-.wbar{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line)}
-.wbar:last-child{border-bottom:0}
-.wbar .nm{width:118px;font-weight:800;font-size:14.5px;flex-shrink:0}
-.wbar .nm small{display:block;font-size:11.5px;color:var(--sub);font-weight:700}
-.wbar .tr{flex:1;height:11px;border-radius:6px;background:var(--bg);overflow:hidden}
-.wbar .tr i{display:block;height:100%;border-radius:6px}
-.wbar .val{width:96px;text-align:right;font-weight:900;font-size:15px;flex-shrink:0}
-.wbar .val small{font-size:11px;color:var(--sub);font-weight:700}
-.alert{margin-top:14px;border:1px solid #f3c4c4;background:#fdf0f0;border-radius:12px;padding:13px 16px;display:flex;gap:11px;align-items:flex-start}
-.alert .em{font-size:19px}
-.alert .tt{font-size:13.5px;font-weight:800;color:var(--red)}
-.alert .tx{font-size:12.5px;color:#8f5050;font-weight:600;margin-top:3px;line-height:1.5}
-.share .si{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line);font-size:13.5px;font-weight:700}
-.share .si:last-child{border-bottom:0}
-.share .si .who{color:var(--sub);font-weight:600;font-size:12.5px;margin-left:auto;text-align:right}
-.share .half{font-size:11.5px;font-weight:800;background:#f6f2fd;color:var(--purple);border-radius:6px;padding:3px 8px}
-.flow{margin-top:18px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12.5px;font-weight:800}
-.flow span{padding:6px 13px;border-radius:20px}
-.flow .f1{background:var(--ink);color:#fff}.flow .ar{color:#a9b8c9;background:none;padding:0}
-.flow .f2{background:#fff;border:1px solid var(--line);color:var(--ink)}
-.flow .f3{background:var(--tint);border:1px solid #cdeeda;color:#1c7d49}
+/* ═══ 시스템 선택 홈 (실제 앱 첫 화면) ═══ */
+#vHome{min-height:100vh;background:linear-gradient(160deg,#1d3a5f 0%,#16304f 55%,#122843 100%);padding:44px 0 60px}
+.hwrap{max-width:640px;margin:0 auto;padding:0 26px}
+.adm{display:flex;justify-content:flex-end}
+.adm span{border:1px solid rgba(232,164,42,.75);color:#e8b34a;font-weight:800;font-size:13px;letter-spacing:.12em;border-radius:24px;padding:9px 22px}
+.hbrand{text-align:center;color:#9db4d0;letter-spacing:.28em;font-size:13px;font-weight:700;margin-top:34px}
+.htitle{text-align:center;color:#fff;font-size:38px;font-weight:900;margin-top:14px}
+.hsub{text-align:center;color:#9db4d0;font-size:15px;font-weight:600;margin-top:10px}
+.syscard{margin-top:34px;border:1px solid rgba(255,255,255,.16);border-radius:26px;background:rgba(255,255,255,.045);padding:38px 30px 26px;position:relative;cursor:pointer}
+.syscard .arrow{position:absolute;right:28px;top:28px;color:#8fa8c6;font-size:20px}
+.syscard .icon{text-align:center;font-size:52px}
+.syscard .nm{text-align:center;color:#fff;font-size:27px;font-weight:900;margin-top:14px}
+.syscard .ds{text-align:center;color:#9db4d0;font-size:14.5px;font-weight:600;margin-top:8px}
+.syscard .ft{border-top:1px dashed rgba(255,255,255,.22);margin-top:24px;padding-top:16px;display:flex;justify-content:center;gap:52px}
+.syscard .ft div{text-align:center;color:#8fa8c6;font-size:11.5px;font-weight:700;letter-spacing:.14em}
+.syscard .ft div b{display:block;font-size:21px;margin-top:6px}
+.hfoot{text-align:center;color:#7b93b3;font-size:13px;font-weight:600;letter-spacing:.18em;margin-top:44px}
+.hfoot::before{content:'';display:block;width:56px;height:1px;background:rgba(255,255,255,.25);margin:0 auto 18px}
+/* ═══ P-BOX 대시보드 (실제 앱) ═══ */
+#vDash{padding:22px 0 50px}
+.dwrap{max-width:880px;margin:0 auto;padding:0 24px}
+.hero{background:linear-gradient(150deg,#1d3a5f,#16304f);border-radius:24px;color:#fff;padding:30px 32px;box-shadow:0 14px 34px rgba(22,48,79,.28)}
+.hero .t{font-size:27px;font-weight:900}
+.hero .s{color:#b9cbe2;font-size:14.5px;font-weight:600;margin-top:9px;letter-spacing:.06em}
+.hero .meta{margin-top:20px;font-size:15px;color:#dce8f5}
+.hero .meta b{margin-left:8px;font-size:18px;color:#fff}
+.hero .meta .k{color:#8fa8c6;letter-spacing:.14em;font-size:12.5px;font-weight:700}
+.cloud{margin-top:16px;background:linear-gradient(150deg,#1d3a5f,#16304f);border-radius:24px;color:#fff;padding:26px 32px}
+.cloud .k{color:#b9cbe2;font-size:14px;font-weight:700;letter-spacing:.1em}
+.cloud .t{font-size:29px;font-weight:900;color:#6fd394;margin-top:8px}
+.cloud .d{color:#c6d6e8;font-size:14px;font-weight:600;margin-top:10px;line-height:1.55}
+.cloud .btns{display:flex;gap:12px;margin-top:18px}
+.cloud .btns .b1{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#dce8f5;border-radius:12px;padding:12px 22px;font-weight:800;font-size:14.5px}
+.cloud .btns .b2{background:#e8940a;color:#fff;border-radius:12px;padding:12px 24px;font-weight:800;font-size:14.5px}
+.card{background:#fff;border-radius:20px;padding:22px 26px;margin-top:16px;box-shadow:0 4px 16px rgba(29,58,95,.06)}
+.filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter .lb{font-weight:800;font-size:15.5px}
+.filter .chip{border:1.5px solid var(--line);border-radius:12px;padding:10px 20px;font-weight:800;font-size:14.5px;color:var(--sub)}
+.filter .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.filter .stat{width:100%;display:flex;align-items:center;justify-content:center;gap:14px;margin-top:14px;font-size:14px;color:var(--sub);font-weight:600}
+.filter .live{background:#e7f4ec;color:#2e7d4f;border-radius:20px;padding:7px 15px;font-weight:800;font-size:13px}
+.filter .live::before{content:'●';color:#3d9a5f;margin-right:6px;font-size:10px}
+.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.kpi{background:#fff;border-radius:18px;padding:20px 22px;box-shadow:0 4px 16px rgba(29,58,95,.06);border-left:5px solid var(--blue)}
+.kpi.r{border-left-color:var(--red)}.kpi.b2{border-left-color:var(--lblue)}.kpi.o{border-left-color:var(--orange)}.kpi.g{border-left-color:var(--green)}
+.kpi .l{color:#5d7189;font-size:14px;font-weight:700}
+.kpi .v{font-size:36px;font-weight:900;margin-top:8px;letter-spacing:-1px}
+.kpi .v small{font-size:16px;font-weight:800;color:var(--sub);margin-left:4px;letter-spacing:0}
+.kpi .d{color:var(--sub);font-size:13.5px;font-weight:600;margin-top:5px}
+.card h3{font-size:18px;font-weight:900;display:flex;align-items:center;gap:9px}
+.card h3 .hint{margin-left:auto;font-size:12.5px;color:var(--sub);font-weight:600}
+table{width:100%;border-collapse:collapse;margin-top:16px}
+th{background:#eef3f9;color:#3d557a;font-size:13.5px;font-weight:800;padding:12px 10px;text-align:right}
+th:first-child{text-align:left;border-radius:8px 0 0 8px}th:last-child{border-radius:0 8px 8px 0}
+td{padding:14px 10px;text-align:right;font-weight:800;font-size:16px;border-bottom:1px solid #edf1f6}
+td:first-child{text-align:left}
+td .wname{font-weight:800;font-size:16px}
+td .wbar{height:5px;width:74px;background:#e8edf4;border-radius:3px;margin-top:7px;overflow:hidden}
+td .wbar i{display:block;height:100%;background:linear-gradient(90deg,#2f6db3,#1d3a5f);border-radius:3px}
+tr.sum td{background:#dcebf8;border-bottom:0;font-size:16.5px}
+tr.sum td:first-child{background:#5b9bd5;color:#fff;border-radius:8px 0 0 8px;font-weight:900}
+tr.sum td:last-child{border-radius:0 8px 8px 0}
+td.bad{color:var(--red)}
+.tnote{text-align:center;color:var(--sub);font-size:13px;font-weight:600;margin-top:13px}
+.mtx th{text-align:center}.mtx td{text-align:center}
+.mtx td:first-child,.mtx th:first-child{text-align:center;font-weight:900}
+.insgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.ins{border-radius:16px;padding:22px 16px;text-align:center;border:1.5px solid}
+.ins .em{font-size:30px}
+.ins .l{font-size:13.5px;font-weight:700;color:#5d7189;margin-top:9px;letter-spacing:.06em}
+.ins .v{font-size:23px;font-weight:900;margin-top:6px}
+.ins .d{font-size:13px;color:var(--sub);font-weight:600;margin-top:5px}
+.ins.y{background:#fdf7e3;border-color:#f2d98c}.ins.b{background:#e8f1fa;border-color:#bcd6ee}
+.ins.g{background:#ecf7ee;border-color:#bfe3c8}.ins.gr{background:#f2f4f7;border-color:#dde3ea}
+.sechead{display:flex;align-items:center;gap:10px;margin:26px 2px 0;padding-bottom:12px;border-bottom:2.5px solid var(--navy)}
+.sechead .em{font-size:22px}
+.sechead .t{font-size:19px;font-weight:900}
+.sechead .s{color:var(--sub);font-size:13.5px;font-weight:600}
+.alert{background:#fdecec;border:1.5px solid #f0b9b9;border-radius:14px;padding:17px 20px;margin-top:16px;display:flex;gap:12px;align-items:flex-start}
+.alert .em{font-size:22px}
+.alert .tt{font-weight:900;color:var(--red);font-size:15.5px}
+.alert .tx{color:#9c5757;font-size:13.5px;font-weight:600;margin-top:5px;line-height:1.55}
+.tag{display:inline-block;background:#e5f3e8;color:#2e7d4f;font-size:12px;font-weight:800;border-radius:7px;padding:3px 10px;margin-top:4px}
+td .dt{font-weight:800;font-size:15px;color:var(--ink)}
+td .dts{display:block;color:var(--sub);font-size:12.5px;font-weight:600;margin-top:3px}
+td .hh{display:block;background:#e8f1fa;color:#2f6db3;border-radius:7px;font-size:12px;font-weight:800;padding:3px 8px;margin-top:4px}
 </style>
 </head>
 <body>
-<div class="top">
-  <div class="logo">📦</div>
-  <div><h1>오리콘·P-BOX 작업실적 통합관리</h1><div class="co">제니엘 제조사업부 · 간접작업 실적 — D1 실측 8/7~8/14</div></div>
-  <div class="live"><i></i>5초 주기 자동집계</div>
-  <div class="tabs"><button id="tbW" class="on" onclick="setTab('worker')">현장용</button><button id="tbA" onclick="setTab('admin')">관리자용</button></div>
+<!-- ═══ 시스템 선택 (실제 앱 홈) ═══ -->
+<div class="view on" id="vHome">
+  <div class="hwrap">
+    <div class="adm"><span>◆ ADMIN</span></div>
+    <div class="hbrand">ZENIEL × AMOREPACIFIC DAEJEON</div>
+    <div class="htitle">관리자 대시보드</div>
+    <div class="hsub">분석할 시스템을 선택하세요</div>
+    <div class="syscard" onclick="setView('dash')">
+      <span class="arrow">→</span>
+      <div class="icon">🧊<span style="font-size:26px">📊</span></div>
+      <div class="nm">오리콘 박스</div>
+      <div class="ds">세척 · 분류 · 수리 실적 분석</div>
+      <div class="ft"><div>CHART<b>📊</b></div><div>MATRIX<b>📋</b></div><div>EXPORT<b>📤</b></div></div>
+    </div>
+    <div class="syscard" onclick="setView('dash')">
+      <span class="arrow">→</span>
+      <div class="icon">📦<span style="font-size:26px">📊</span></div>
+      <div class="nm">P-BOX</div>
+      <div class="ds">세척 · 간지 실적 분석</div>
+      <div class="ft"><div>CHART<b>📊</b></div><div>MATRIX<b>📋</b></div><div>EXPORT<b>📤</b></div></div>
+    </div>
+    <div class="hfoot">Developed by LEE MIN AH</div>
+  </div>
 </div>
 
-<div class="wrap">
-  <!-- 현장용 -->
-  <div class="view on" id="vWorker">
-    <div class="field">
-      <div class="phone">
-        <div class="phead"><div class="t">실적 입력</div><div class="s">작업 직후, 대형 터치 버튼으로 10초 등록</div></div>
-        <div class="pbody">
-          <div class="plabel">작업 유형</div>
-          <div class="worktype">
-            <button class="on"><div class="em">📦</div><div class="nm">P-BOX 세척</div></button>
-            <button><div class="em">🧺</div><div class="nm">오리콘 세척</div></button>
-          </div>
-          <div class="plabel">수량 (EA)</div>
-          <div class="qty">
-            <button>−10</button>
-            <div class="num">240<small> EA</small></div>
-            <button>＋10</button><button>＋50</button>
-          </div>
-          <div class="plabel">공동작업</div>
-          <div class="joint on">
-            <div><div class="jt">2인 공동작업</div><div class="js">박지연 · 정철훈 — 실적 자동 분배</div></div>
-            <div class="sw"></div>
-          </div>
-          <button class="bigbtn" onclick="document.getElementById('savedMsg').classList.add('on')">＋ 실적 저장</button>
-          <div class="saved" id="savedMsg">✓ 저장됨 — 5초 후 전 기기 대시보드 자동 집계</div>
-        </div>
-      </div>
-      <div class="queue">
-        <div class="card">
-          <h3>🕐 오늘 입력 이력 <span class="hint">기기 3대 동시 집계</span></h3>
-          <div class="qitem"><div class="ic">📦</div><div><div class="nm">P-BOX 세척 240 EA</div><div class="mt">13:05 · 2인 공동 → 각 120 EA 자동 분배</div></div><span class="tag p">공동 분배</span></div>
-          <div class="qitem"><div class="ic">📦</div><div><div class="nm">P-BOX 세척 510 EA</div><div class="mt">11:32 · 박지연 · 1.6 MH</div></div><span class="tag g">집계 완료</span></div>
-          <div class="qitem"><div class="ic">🧺</div><div><div class="nm">오리콘 세척 180 EA</div><div class="mt">10:14 · 정철훈 · 0.9 MH</div></div><span class="tag g">집계 완료</span></div>
-          <div class="qitem"><div class="ic">📦</div><div><div class="nm">P-BOX 세척 330 EA</div><div class="mt">09:20 · 이동동 · 2.4 MH</div></div><span class="tag b">편차 검토</span></div>
-        </div>
-        <div class="flow"><span class="f1">현장 입력</span><span class="ar">→</span><span class="f2">5초 자동 집계 · 분배</span><span class="ar">→</span><span class="f3">플랫폼 · AI 판단 센터 반영</span></div>
+<!-- ═══ P-BOX 관리자 대시보드 (실제 앱 · D1 실측) ═══ -->
+<div class="view" id="vDash">
+  <div class="dwrap">
+    <div class="hero">
+      <div class="t">📊 P-BOX 관리자 대시보드</div>
+      <div class="s">ZENIEL × AMOREPACIFIC DAEJEON · Developed by LEE MIN AH</div>
+      <div class="meta"><span class="k">DATE</span><b>2026-08-22 (금)</b></div>
+      <div class="meta" style="margin-top:8px"><span class="k">RECORDS</span><b>22건 · D1 실측</b></div>
+    </div>
+    <div class="cloud">
+      <div class="k">☁️ Cloud 실시간 연동</div>
+      <div class="t">☁️ 실시간 연결</div>
+      <div class="d">작업자가 폰으로 입력하면 자동으로 여기에 반영됩니다 · 5초마다 자동 갱신</div>
+      <div class="btns"><span class="b1">🔄 새로고침</span><span class="b2">📥 다운로드 ▾</span></div>
+    </div>
+    <div class="card filter">
+      <span class="lb">📅 기간:</span>
+      <span class="chip on">전체</span><span class="chip">이번달</span><span class="chip">이번주</span><span class="chip">오늘</span>
+      <div class="stat">전체 기간 · 22건 <span class="live">5초마다 자동 갱신</span></div>
+    </div>
+    <div class="kgrid" id="kpis">
+      <div class="kpi"><div class="l">총 작업량</div><div class="v">123.5<small>PLT</small></div><div class="d">11,295 EA · 8/7~8/21</div></div>
+      <div class="kpi r"><div class="l">맨아워 (MH)</div><div class="v">341.9<small>MH</small></div><div class="d">공동작업 인원수 분배</div></div>
+      <div class="kpi b2"><div class="l">작업 일수</div><div class="v">10<small>일</small></div><div class="d">일평균 12.4 PLT</div></div>
+      <div class="kpi o"><div class="l">시간당 생산성</div><div class="v">0.36<small>PLT/MH</small></div><div class="d">33 EA/MH</div></div>
+    </div>
+    <div class="card" id="workers">
+      <h3>👥 작업자별 상세 <span class="hint">개인 분배 기준 · D1 실측</span></h3>
+      <table>
+        <tr><th>작업자</th><th>근무시간(MH)</th><th>작업량(PLT)</th><th>EA</th><th>PLT/MH</th></tr>
+        <tr><td><span class="wname">이호선</span><div class="wbar"><i style="width:100%"></i></div></td><td>54.4</td><td>29.5</td><td>2,655</td><td>0.54</td></tr>
+        <tr><td><span class="wname">정철훈</span><div class="wbar"><i style="width:89%"></i></div></td><td>91.8</td><td>44.5</td><td>4,005</td><td>0.48</td></tr>
+        <tr><td><span class="wname">박지연</span><div class="wbar"><i style="width:87%"></i></div></td><td>30.8</td><td>14.5</td><td>1,305</td><td>0.47</td></tr>
+        <tr><td><span class="wname">홍길동</span><div class="wbar"><i style="width:44%"></i></div></td><td>72.0</td><td>17.0</td><td>1,530</td><td>0.24</td></tr>
+        <tr><td><span class="wname" style="color:var(--red)">이동동</span><div class="wbar"><i style="width:20%;background:#d64545"></i></div></td><td>18.0</td><td>2.0</td><td>180</td><td class="bad">0.11</td></tr>
+        <tr class="sum"><td>합계</td><td>341.9</td><td>123.5</td><td>11,295</td><td>0.36</td></tr>
+      </table>
+      <div class="tnote">공동 작업은 인원수로 분배 · MH = 개인 근무시간</div>
+    </div>
+    <div class="card">
+      <h3>📋 부위 × 작업유형 매트릭스</h3>
+      <table class="mtx">
+        <tr><th></th><th>세척</th><th>간지</th><th>합계</th></tr>
+        <tr><td>박스</td><td>117.5</td><td>0.0</td><td>117.5</td></tr>
+        <tr><td>커버</td><td>0.0</td><td>0.0</td><td>0.0</td></tr>
+        <tr class="sum"><td>합계</td><td>117.5</td><td>0.0</td><td>117.5</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>💡 운영 인사이트</h3>
+      <div class="insgrid">
+        <div class="ins y"><div class="em">🏆</div><div class="l">최고 효율</div><div class="v">박스-세척</div><div class="d">0.54 PLT/MH · 이호선</div></div>
+        <div class="ins b"><div class="em">📦</div><div class="l">박스 비중</div><div class="v">0 : 100</div><div class="d">커버 : 박스</div></div>
+        <div class="ins g"><div class="em">⏱</div><div class="l">일평균</div><div class="v">12.4</div><div class="d">PLT / 일</div></div>
+        <div class="ins gr"><div class="em">⚙️</div><div class="l">평균 근무</div><div class="v">9.0</div><div class="d">시간 / 회</div></div>
       </div>
     </div>
-  </div>
-
-  <!-- 관리자용 -->
-  <div class="view" id="vAdmin">
-    <div class="kpis">
-      <div class="kpi"><div class="l">P-BOX 세척 누계</div><div class="v">5,310<small>EA</small></div><div class="d" style="color:#1c7d49">59 PLT · 가동 1주차 실측</div></div>
-      <div class="kpi"><div class="l">오리콘 세척 누계</div><div class="v">720<small>EA</small></div><div class="d" style="color:var(--blue)">6 PLT 환산</div></div>
-      <div class="kpi"><div class="l">총 투입</div><div class="v">207.9<small>MH</small></div><div class="d" style="color:var(--purple)">공동작업 자동 분배 포함</div></div>
-      <div class="kpi"><div class="l">MH 생산성 (P-BOX)</div><div class="v">0.33<small>PLT/MH</small></div><div class="d" style="color:var(--amber)">이상치 1건 자동 경보</div></div>
-    </div>
-    <div class="grid2">
-      <div class="card" id="prodCard">
-        <h3>👷 작업자별 생산성 <span class="hint">PLT/MH · 5초 주기 갱신 · D1 실측</span></h3>
-        <div class="wbar"><div class="nm">박지연<small>P-BOX 24 PLT</small></div><div class="tr"><i style="width:100%;background:#12b886"></i></div><div class="val">0.47<small> PLT/MH</small></div></div>
-        <div class="wbar"><div class="nm">정철훈<small>P-BOX 21 PLT</small></div><div class="tr"><i style="width:89%;background:#2aa864"></i></div><div class="val">0.42<small> PLT/MH</small></div></div>
-        <div class="wbar"><div class="nm">김성훈<small>오리콘 6 PLT</small></div><div class="tr"><i style="width:66%;background:#7bc98a"></i></div><div class="val">0.31<small> PLT/MH</small></div></div>
-        <div class="wbar"><div class="nm">이동동<small>P-BOX 8 PLT</small></div><div class="tr"><i style="width:23%;background:#dc4b4b"></i></div><div class="val" style="color:var(--red)">0.11<small> PLT/MH</small></div></div>
-        <div class="alert" id="anomaly">
-          <div class="em">🚨</div>
-          <div><div class="tt">이상치 자동 경보 — 이동동 0.11 PLT/MH</div>
-          <div class="tx">평균 0.33 대비 <b>▼66%</b> 편차 자동 감지 → AI 판단 센터로 상신 · 원인 확인(신규 투입/설비 대기) 권장</div></div>
-        </div>
-      </div>
-      <div>
-        <div class="card share" id="shareCard">
-          <h3>🤝 공동작업 자동 분배 <span class="hint">단위 환산 포함</span></h3>
-          <div class="si">📦 P-BOX 240 EA <span class="half">2인 · 50:50</span><span class="who">박지연 120 · 정철훈 120</span></div>
-          <div class="si">🧺 오리콘 360 EA <span class="half">2인 · 50:50</span><span class="who">각 180 EA · 0.45 MH</span></div>
-          <div class="si">📦 P-BOX 450 EA <span class="half">3인 · ⅓</span><span class="who">각 150 EA 분배</span></div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <h3>⚡ 집계 현황</h3>
-          <div style="font-size:13.5px;line-height:2.1;font-weight:700;color:var(--sub)">
-            집계 주기 <b style="color:var(--ink)">5초 · 다기기 동시</b><br>
-            마지막 갱신 <b style="color:#1c7d49">방금 전</b><br>
-            수기 전표·엑셀 취합 <b style="color:var(--red)">0건</b> — 전량 자동<br>
-            판단 센터 상신 <b style="color:var(--ink)">이상치 1 · 생산성 리포트 자동</b>
-          </div>
-        </div>
+    <div class="sechead"><span class="em">⚠️</span><span class="t">이상치 탐지</span><span class="s">평균에서 벗어난 날 · 작업자 자동 알림</span></div>
+    <div class="card" id="anomaly" style="margin-top:14px">
+      <h3 style="font-size:16.5px">자동 감지된 이상 패턴</h3>
+      <div class="alert">
+        <span class="em">🚨</span>
+        <div><div class="tt">이동동 · 0.11 PLT/MH — 평균 0.36 대비 ▼69%</div>
+        <div class="tx">생산성 편차 자동 감지 → 플랫폼 AI 판단 센터 상신 · 원인 확인(신규 투입 / 설비 대기) 권장</div></div>
       </div>
     </div>
-    <div class="flow"><span class="f1">수기 전표</span><span class="ar">→</span><span class="f2">모바일 입력 · 5초 자동집계</span><span class="ar">→</span><span class="f3">MH 생산성 · 이상치 자동 판단</span></div>
+    <div class="card" id="records">
+      <h3>📋 작업 기록 (최신순) <span class="hint">D1 work_records 실측</span></h3>
+      <table>
+        <tr><th>등록 일시</th><th>작업자</th><th>인원</th><th>구분</th><th>PLT</th><th>EA</th><th>MH</th></tr>
+        <tr><td><span class="dt">2026-08-21</span><span class="dts">13:51</span></td><td>정철훈+이호선</td><td>2명</td><td>박스<span class="tag">세척</span></td><td>6.0</td><td>540</td><td>11.0</td></tr>
+        <tr><td><span class="dt">2026-08-20</span><span class="dts">13:56</span></td><td>정철훈+이호선</td><td>2명</td><td>박스<span class="tag">세척</span></td><td>7.0</td><td>630</td><td>15.0</td></tr>
+        <tr><td><span class="dt">2026-08-20</span><span class="dts">00:49</span></td><td>정철훈+이호선</td><td>2명</td><td>박스<span class="tag">세척</span></td><td>10.0</td><td>900</td><td>22.0</td></tr>
+        <tr><td><span class="dt">2026-08-19</span><span class="dts">09:50</span></td><td>홍길동</td><td>1명</td><td>박스<span class="tag">세척</span></td><td>1.5</td><td>135</td><td>9.0</td></tr>
+        <tr><td><span class="dt">2026-08-18</span><span class="dts">12:20</span></td><td>정철훈+이호선</td><td>2명</td><td>박스<span class="tag">세척</span></td><td>15.0</td><td>1,350</td><td>25.0</td></tr>
+      </table>
+    </div>
   </div>
 </div>
 <script>
-function setTab(v){
-  document.getElementById('vWorker').classList.toggle('on',v==='worker');
-  document.getElementById('vAdmin').classList.toggle('on',v==='admin');
-  document.getElementById('tbW').classList.toggle('on',v==='worker');
-  document.getElementById('tbA').classList.toggle('on',v==='admin');
+function setView(v){
+  document.getElementById('vHome').classList.toggle('on',v==='home');
+  document.getElementById('vDash').classList.toggle('on',v==='dash');
   window.scrollTo(0,0);
 }
 </script>
