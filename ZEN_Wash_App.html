@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>세척실 작업 우선순위 자동 추천 시스템</title>
+<style>
+:root{--bg:#f4f7fb;--card:#ffffff;--line:#e2e9f3;--ink:#1b2736;--sub:#66788f;--green:#2aa864;--tint:#eef8f2;--red:#dc4b4b;--amber:#e8940a;--blue:#2f7fd6}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:'Pretendard',-apple-system,'Malgun Gothic','Noto Sans KR',sans-serif;min-height:100vh}
+.top{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:14px}
+.top .logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#2aa864,#1c7d49);display:flex;align-items:center;justify-content:center;font-size:19px}
+.top h1{font-size:18px;font-weight:800}
+.top .co{font-size:12px;color:var(--sub);font-weight:600;margin-top:2px}
+.live{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--green);background:var(--tint);border:1px solid #cdeeda;border-radius:20px;padding:6px 13px;margin-left:8px}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pl 1.6s infinite}
+@keyframes pl{0%,100%{box-shadow:0 0 0 0 rgba(42,168,100,.5)}55%{box-shadow:0 0 0 7px rgba(42,168,100,0)}}
+.tabs{margin-left:auto;display:flex;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:4px}
+.tabs button{border:0;background:transparent;color:var(--sub);font-weight:800;font-size:14px;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:inherit}
+.tabs button.on{background:var(--ink);color:#fff}
+.wrap{max-width:1280px;margin:0 auto;padding:24px 28px 40px}
+.view{display:none}.view.on{display:block}
+/* ---------- 현장용 ---------- */
+.field{display:flex;gap:28px;align-items:flex-start;justify-content:center}
+.phone{width:400px;background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:0 18px 50px rgba(27,39,54,.10);overflow:hidden;flex-shrink:0}
+.phone .phead{background:linear-gradient(135deg,#2aa864,#1c7d49);color:#fff;padding:16px 20px}
+.phone .phead .t{font-size:16.5px;font-weight:800}
+.phone .phead .s{font-size:12px;opacity:.9;margin-top:3px;font-weight:600}
+.pbody{padding:18px 18px 22px}
+.plabel{font-size:12.5px;font-weight:800;color:var(--sub);margin:14px 2px 8px;letter-spacing:.02em}
+.plabel:first-child{margin-top:0}
+.mchips{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.mchips button{border:1.5px solid var(--line);background:#fff;border-radius:13px;padding:15px 10px;font-size:15px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit}
+.mchips button.on{border-color:var(--green);background:var(--tint);color:#1c7d49}
+.row2{display:flex;gap:9px}
+.row2 .cell{flex:1;border:1.5px solid var(--line);border-radius:13px;padding:12px 14px;background:#fff}
+.cell .cl{font-size:11.5px;color:var(--sub);font-weight:700}
+.cell .cv{font-size:19px;font-weight:800;margin-top:3px}
+.urg{display:flex;gap:9px}
+.urg button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:13px;padding:13px;font-size:14.5px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--sub)}
+.urg .u1.on{border-color:var(--green);background:var(--tint);color:#1c7d49}
+.urg .u2.on{border-color:var(--red);background:#fdf0f0;color:var(--red)}
+.bigbtn{width:100%;margin-top:18px;border:0;background:linear-gradient(135deg,#2aa864,#1c7d49);color:#fff;font-size:18px;font-weight:900;border-radius:15px;padding:18px;cursor:pointer;font-family:inherit;box-shadow:0 10px 26px rgba(42,168,100,.32)}
+.saved{margin-top:12px;background:var(--tint);border:1px solid #cdeeda;border-radius:11px;padding:10px 13px;font-size:13px;font-weight:700;color:#1c7d49;display:none}
+.saved.on{display:block}
+.queue{flex:1;max-width:560px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;box-shadow:0 4px 18px rgba(27,39,54,.05)}
+.card h3{font-size:15.5px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.card h3 .hint{font-size:12px;color:var(--sub);font-weight:600;margin-left:auto}
+.qitem{display:flex;align-items:center;gap:13px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.qitem:last-child{border-bottom:0}
+.qitem .ic{width:40px;height:40px;border-radius:11px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:19px}
+.qitem .nm{font-weight:800;font-size:15px}
+.qitem .mt{font-size:12.5px;color:var(--sub);font-weight:600;margin-top:2px}
+.tag{margin-left:auto;font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:20px}
+.tag.r{background:#fdf0f0;color:var(--red)}.tag.a{background:#fdf6e8;color:var(--amber)}.tag.g{background:var(--tint);color:#1c7d49}
+/* ---------- 관리자용 ---------- */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:15px;padding:17px 19px;box-shadow:0 4px 16px rgba(27,39,54,.05)}
+.kpi .l{font-size:12.5px;color:var(--sub);font-weight:700}
+.kpi .v{font-size:31px;font-weight:900;margin-top:6px;letter-spacing:-.5px}
+.kpi .v small{font-size:15px;font-weight:800;color:var(--sub);margin-left:2px}
+.kpi .d{font-size:12px;font-weight:700;margin-top:4px}
+.grid2{display:grid;grid-template-columns:1.45fr 1fr;gap:16px;align-items:start}
+.rank{display:flex;align-items:center;gap:14px;padding:13px 6px;border-bottom:1px solid var(--line)}
+.rank:last-child{border-bottom:0}
+.rank .no{width:34px;height:34px;border-radius:10px;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rank.r1 .no{background:#fdf0f0;color:var(--red)}.rank.r2 .no{background:#fdf6e8;color:var(--amber)}
+.rank.r3 .no{background:var(--tint);color:#1c7d49}.rank.r4 .no{background:var(--bg);color:var(--sub)}
+.rank .body{flex:1;min-width:0}
+.rank .nm{font-weight:800;font-size:15.5px;display:flex;align-items:center;gap:9px}
+.rank .nm .eta{font-size:12px;color:var(--sub);font-weight:700;margin-left:auto}
+.sbar{margin-top:7px;height:9px;border-radius:5px;background:var(--bg);overflow:hidden;display:flex}
+.sbar i{height:100%}
+.sbar .c1{background:#dc4b4b}.sbar .c2{background:#e8940a}.sbar .c3{background:#2f7fd6}
+.rank .brk{font-size:11.5px;color:var(--sub);font-weight:600;margin-top:5px}
+.rank .sc{font-size:22px;font-weight:900;flex-shrink:0;width:52px;text-align:right}
+.legend{display:flex;gap:14px;font-size:12px;font-weight:700;color:var(--sub);margin:4px 2px 10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.learn .li{display:flex;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line);font-size:13px;line-height:1.5}
+.learn .li:last-child{border-bottom:0}
+.learn .li .dt{color:var(--sub);font-weight:700;white-space:nowrap;font-size:12px;margin-top:2px}
+.learn .li b{color:#1c7d49}
+.learn .badge{display:inline-block;font-size:11px;font-weight:800;background:var(--tint);color:#1c7d49;border-radius:6px;padding:2px 8px;margin-left:6px}
+.flow{margin-top:18px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12.5px;font-weight:800}
+.flow span{padding:6px 13px;border-radius:20px}
+.flow .f1{background:var(--ink);color:#fff}.flow .ar{color:#a9b8c9;background:none;padding:0}
+.flow .f2{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.flow .f3{background:var(--tint);border:1px solid #cdeeda;color:#1c7d49}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo">🧼</div>
+  <div><h1>세척실 작업 우선순위 자동 추천</h1><div class="co">제니엘 제조사업부 · AP 대전공장 세척실</div></div>
+  <div class="live"><i></i>자동판단 95% 가동중</div>
+  <div class="tabs"><button id="tbW" class="on" onclick="setTab('worker')">현장용</button><button id="tbA" onclick="setTab('admin')">관리자용</button></div>
+</div>
+
+<div class="wrap">
+  <!-- 현장용 -->
+  <div class="view on" id="vWorker">
+    <div class="field">
+      <div class="phone">
+        <div class="phead"><div class="t">세척 대기 등록</div><div class="s">생산 종료 직후, 30초면 끝납니다</div></div>
+        <div class="pbody">
+          <div class="plabel">설비 선택</div>
+          <div class="mchips">
+            <button class="on">튜브 성형</button><button>치약충전 2호</button>
+            <button>일회용 라인</button><button>멀티 성형</button>
+          </div>
+          <div class="plabel">생산 정보</div>
+          <div class="row2">
+            <div class="cell"><div class="cl">생산 종료</div><div class="cv">13:20</div></div>
+            <div class="cell"><div class="cl">제품 전환</div><div class="cv">치약→선크림</div></div>
+          </div>
+          <div class="plabel">긴급도 · 가용 인원</div>
+          <div class="urg">
+            <button class="u1">일반</button><button class="u2 on">긴급</button>
+            <button class="u1" style="pointer-events:none">인원 3명</button>
+          </div>
+          <button class="bigbtn" onclick="document.getElementById('savedMsg').classList.add('on')">＋ 대기 등록</button>
+          <div class="saved" id="savedMsg">✓ 등록됨 — 점수 계산 후 추천 순위에 즉시 반영</div>
+        </div>
+      </div>
+      <div class="queue">
+        <div class="card">
+          <h3>🕐 현재 세척 대기 <span class="hint">실시간 · 4 설비</span></h3>
+          <div class="qitem"><div class="ic">🔴</div><div><div class="nm">튜브 성형</div><div class="mt">치약→선크림 전환 · 경과 32h · 13:20 종료</div></div><span class="tag r">긴급</span></div>
+          <div class="qitem"><div class="ic">🟠</div><div><div class="nm">치약충전 2호</div><div class="mt">동일 제품군 · 경과 26h · 12:40 종료</div></div><span class="tag a">대기</span></div>
+          <div class="qitem"><div class="ic">🟢</div><div><div class="nm">일회용 라인</div><div class="mt">색상 전환 없음 · 경과 18h · 11:10 종료</div></div><span class="tag g">대기</span></div>
+          <div class="qitem"><div class="ic">🟢</div><div><div class="nm">멀티 성형</div><div class="mt">경과 9h · 익일 생산 여유</div></div><span class="tag g">여유</span></div>
+        </div>
+        <div class="flow"><span class="f1">현장 입력</span><span class="ar">→</span><span class="f2">점수 계산 · 순위 추천</span><span class="ar">→</span><span class="f3">플랫폼 · AI 판단 센터 반영</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 관리자용 -->
+  <div class="view" id="vAdmin">
+    <div class="kpis">
+      <div class="kpi"><div class="l">자동판단 정확도</div><div class="v">95<small>%</small></div><div class="d" style="color:#1c7d49">▲ 수정사유 학습 반영</div></div>
+      <div class="kpi"><div class="l">세척 대기</div><div class="v">4<small>설비</small></div><div class="d" style="color:var(--blue)">실시간 집계</div></div>
+      <div class="kpi"><div class="l">전체 예상 완료</div><div class="v">15:40</div><div class="d" style="color:var(--sub)">인원 3명 기준</div></div>
+      <div class="kpi"><div class="l">지연 위험</div><div class="v">1<small>건</small></div><div class="d" style="color:var(--amber)">튜브 성형 — 최우선 배치</div></div>
+    </div>
+    <div class="grid2">
+      <div class="card" id="rankCard">
+        <h3>📋 오늘의 추천 세척 순위 <span class="hint">점수 = 전환 40% + 주기경과 35% + 생산부하 25%</span></h3>
+        <div class="legend"><span><i style="background:#dc4b4b"></i>제품·색상 전환</span><span><i style="background:#e8940a"></i>세척주기 경과</span><span><i style="background:#2f7fd6"></i>생산부하</span></div>
+        <div class="rank r1"><div class="no">1</div><div class="body"><div class="nm">튜브 성형 <span class="eta">시작 13:30 → 완료 14:20</span></div><div class="sbar"><i class="c1" style="width:38%"></i><i class="c2" style="width:31%"></i><i class="c3" style="width:20%"></i></div><div class="brk">전환 38 + 주기 31 + 부하 20 · 치약→선크림 <b style="color:var(--red)">색상 전환</b></div></div><div class="sc">89</div></div>
+        <div class="rank r2"><div class="no">2</div><div class="body"><div class="nm">치약충전 2호 <span class="eta">완료 14:55</span></div><div class="sbar"><i class="c1" style="width:26%"></i><i class="c2" style="width:29%"></i><i class="c3" style="width:21%"></i></div><div class="brk">전환 26 + 주기 29 + 부하 21</div></div><div class="sc">76</div></div>
+        <div class="rank r3"><div class="no">3</div><div class="body"><div class="nm">일회용 라인 <span class="eta">완료 15:20</span></div><div class="sbar"><i class="c1" style="width:18%"></i><i class="c2" style="width:27%"></i><i class="c3" style="width:19%"></i></div><div class="brk">전환 18 + 주기 27 + 부하 19</div></div><div class="sc">64</div></div>
+        <div class="rank r4"><div class="no">4</div><div class="body"><div class="nm">멀티 성형 <span class="eta">완료 15:40</span></div><div class="sbar"><i class="c1" style="width:14%"></i><i class="c2" style="width:22%"></i><i class="c3" style="width:15%"></i></div><div class="brk">전환 14 + 주기 22 + 부하 15 · 익일 생산 여유</div></div><div class="sc">51</div></div>
+      </div>
+      <div>
+        <div class="card learn" id="learnCard">
+          <h3>🧠 현장 수정 → 학습 이력 <span class="hint">사유 저장 · 로직 반영</span></h3>
+          <div class="li"><span class="dt">8/13</span><div>2위↔3위 현장 교체 — 사유 <b>「금형 세척 대기」</b><span class="badge">가중치 반영됨</span></div></div>
+          <div class="li"><span class="dt">8/11</span><div>긴급 1건 수동 승격 — 사유 <b>「당일 재생산 확정」</b><span class="badge">규칙 추가됨</span></div></div>
+          <div class="li"><span class="dt">8/08</span><div>추천 그대로 수행 — 수정 없음 <span class="badge">정확도 ▲</span></div></div>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3>⏱ 예상 완료 타임라인</h3>
+          <div style="font-size:13.5px;line-height:2;font-weight:700;color:var(--sub)">
+            13:30 <b style="color:var(--ink)">튜브 성형</b> — 50분<br>
+            14:25 <b style="color:var(--ink)">치약충전 2호</b> — 30분<br>
+            14:58 <b style="color:var(--ink)">일회용 라인</b> — 22분<br>
+            15:22 <b style="color:var(--ink)">멀티 성형</b> — 18분 → <b style="color:#1c7d49">15:40 전체 완료</b>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flow"><span class="f1">경험 배차</span><span class="ar">→</span><span class="f2">점수 기반 자동 추천</span><span class="ar">→</span><span class="f3">수정사유 학습 · 95% 자동판단</span></div>
+  </div>
+</div>
+<script>
+function setTab(v){
+  document.getElementById('vWorker').classList.toggle('on',v==='worker');
+  document.getElementById('vAdmin').classList.toggle('on',v==='admin');
+  document.getElementById('tbW').classList.toggle('on',v==='worker');
+  document.getElementById('tbA').classList.toggle('on',v==='admin');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
