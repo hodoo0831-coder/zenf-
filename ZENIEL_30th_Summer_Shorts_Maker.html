@@ -1198,12 +1198,14 @@ function drawFrame(t){
   }
 
   /* 상시 워터마크 */
+  if (S.watermark !== false){
   ctx.save();
   ctx.globalAlpha = .92; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=8;
   ctx.fillStyle = '#fff'; ctx.font = '800 30px '+FONT;
   ctx.fillText('ZENIEL  30th  SUMMER  MOMENTS', W/2, H-96);
   ctx.restore();
+  }
 
   /* 진행 바 */
   const p = TL.total ? Math.min(1, t/TL.total) : 0;
