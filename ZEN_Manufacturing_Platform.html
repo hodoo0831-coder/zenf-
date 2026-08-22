@@ -571,7 +571,7 @@ const LIVE_SEED={ // 프로덕션 D1(data.work_records) 실측 — 2026-08-07 ~ 
 let LIVE={apiBase:'',today:LIVE_SEED,brief:null,status:'demo',sys:'pbox',_tried:false};
 try{LIVE.apiBase=localStorage.getItem('zen_live_api')||'';}catch(e){}
 /* ===== 모듈 내부 탭 ===== */
-let vtab={prod:'status',labor:'status',safe:'status',report:'doc',planhub:'load',insight:'kpi'};
+let vtab={labor:'status',safe:'status',report:'doc',planhub:'today',insight:'kpi'};
 function setVtab(v,t){vtab[v]=t;go(v);window.scrollTo({top:0});}
 function vtabsBar(view,tabs){const list=tabs.filter(t=>t.show!==false);const cur=list.some(t=>t.k===vtab[view])?vtab[view]:list[0].k;return `<div class="vtabs">${list.map(t=>`<button class="${cur===t.k?'on':''}" onclick="setVtab('${view}','${t.k}')">${t.label}</button>`).join('')}</div>`;}
 function vtabActive(view,tabs){const list=tabs.filter(t=>t.show!==false);return list.some(t=>t.k===vtab[view])?vtab[view]:list[0].k;}
@@ -818,8 +818,7 @@ function headCur(){return scoped()?myLines().reduce((a,l)=>a+G.cur(l),0):DB.head
 const AGENTS=[
   {id:'home',name:'종합 상황판',icon:'🏭',sub:'AP 대전공장 · 실시간 종합 운영 현황'},
   {id:'judge',name:'AI 판단 센터',icon:'🧠',sub:'실측 → 판단 → 조치, 한 화면'},
-  {id:'planhub',name:'계획 Agent',icon:'🗓',sub:'주간계획 · 부하율·필요인원 · 지연오더'},
-  {id:'prod',name:'생산 Agent',icon:'📈',sub:'실시간 실적 · CAPA · P-BOX·오리콘'},
+  {id:'planhub',name:'생산·계획 Agent',icon:'📈',sub:'금일 실적 · 주간계획 · 부하율 · 지연오더'},
   {id:'labor',name:'인력 Agent',icon:'👥',sub:'출근 · 결원 · 대체인력 · 잔업 추천'},
   {id:'clean',name:'세척 Agent',icon:'🧼',sub:'세척 우선순위 자동 추천 · 95% 자동판단'},
   {id:'stock',name:'창고 Agent',icon:'📦',sub:'포장재 창고 적치 · 구역별 포화율'},
@@ -829,9 +828,9 @@ const AGENTS=[
   {id:'insight',name:'분석·보고 Agent',icon:'📊',sub:'KPI·LOSS 분석 · 월마감 보고서'},
 ];
 const ROLES={
-  field:{name:'현장',emoji:'🧑‍🏭',allow:['home','prod','clean','orikonwash','safe','safeapp']},
-  admin:{name:'관리자',emoji:'👔',allow:['home','judge','planhub','prod','labor','clean','stock','orikonwash','safe','qual','data','opl','safeapp']},
-  center:{name:'센터',emoji:'🛰️',allow:['home','judge','planhub','prod','labor','clean','stock','orikonwash','safe','qual','insight','data','opl','safeapp']},
+  field:{name:'현장',emoji:'🧑‍🏭',allow:['home','planhub','clean','orikonwash','safe','safeapp']},
+  admin:{name:'관리자',emoji:'👔',allow:['home','judge','planhub','labor','clean','stock','orikonwash','safe','qual','data','opl','safeapp']},
+  center:{name:'센터',emoji:'🛰️',allow:['home','judge','planhub','labor','clean','stock','orikonwash','safe','qual','insight','data','opl','safeapp']},
 };
 let role='center';
 
@@ -955,9 +954,9 @@ V.prod=()=>{
   return vtabsBar('prod',tabs)+(t==='pbox'?renderLive():prodStatus());
 };
 V.planhub=()=>{
-  const tabs=[{k:'plan',label:'주간계획'},{k:'load',label:'부하율·필요인원'},{k:'delay',label:'지연오더'}];
+  const tabs=[{k:'today',label:'금일 실적'},{k:'plan',label:'주간계획'},{k:'load',label:'부하율·필요인원'},{k:'delay',label:'지연오더'}];
   const t=vtabActive('planhub',tabs);
-  return vtabsBar('planhub',tabs)+(t==='load'?loadView():t==='delay'?V.delay():V.plan());
+  return vtabsBar('planhub',tabs)+(t==='today'?prodStatus():t==='load'?loadView():t==='delay'?V.delay():V.plan());
 };
 /* ===== AI 판단 센터 — 전 Agent 자동 판단 통합(실측→기준→판단→조치) ===== */
 function collectJudgments(){
@@ -1813,7 +1812,7 @@ let cur='home';
 const NAV_TOOLS={opl:{name:'OPL 교육자료',icon:'📄'},data:{name:'데이터 관리',icon:'🗄'}};
 const NAV_GROUPS=[
   {sec:'홈 · OVERVIEW',ids:['home','judge']},
-  {sec:'AI AGENTS',ids:['planhub','prod','labor','clean','stock','orikonwash','qual','safe','insight']},
+  {sec:'AI AGENTS',ids:['planhub','labor','clean','stock','orikonwash','qual','safe','insight']},
   {sec:'도구 · TOOLS',ids:['opl','data']},
 ];
 function buildNav(){
@@ -1833,7 +1832,7 @@ function buildNav(){
     <div class="spacer"></div>
     <div class="user"><div class="av">${R.emoji}</div><div style="flex:1;min-width:0"><div class="nm">홍길동 ${R.name}</div><div class="rl">${scopeLabel()}</div><div class="roleswitch">${['field','admin','center'].map(k=>`<span class="rchip ${role===k?'on':''}" onclick="switchRole('${k}')">${ROLES[k].name}</span>`).join('')}</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
 }
-const GO_REDIR={plan:['planhub','plan'],delay:['planhub','delay'],load:['planhub','load'],kpi:['insight','kpi'],report:['insight','report']};
+const GO_REDIR={prod:['planhub','today'],plan:['planhub','plan'],delay:['planhub','delay'],load:['planhub','load'],kpi:['insight','kpi'],report:['insight','report']};
 function go(id){
   if(GO_REDIR[id]){const[a,t]=GO_REDIR[id];vtab[a]=t;id=a;}
   if(!ROLES[role].allow.includes(id)&&!['data','safeapp'].includes(id))id='home';
