@@ -1367,8 +1367,26 @@ V.zaic=()=>{
   const J=collectJudgments();
   const need=J.filter(x=>x.lv!=='ok'), done=need.filter(x=>actGet(actKey(x)).st==='done').length;
   const rate=need.length?Math.round(done/need.length*100):100;
+  /* 조치 착수 리드타임 — 금일 착수(doing/done) 액션의 (착수시각 − 금일 첫 판단 기록) 평균 */
+  const _lead=(()=>{const today=new Date().toISOString().slice(0,10);
+    const acts=Object.values(DB.actions||{}).filter(a=>a.ts&&a.st!=='todo'&&new Date(a.ts).toISOString().slice(0,10)===today);
+    if(!acts.length)return null;
+    const logs=(DB.opslog||[]).filter(e=>new Date(e.ts).toISOString().slice(0,10)===today);
+    const base=logs.length?Math.min(...logs.map(e=>e.ts)):new Date(today+'T08:00:00').getTime();
+    const mins=acts.map(a=>Math.max(0,(a.ts-base)/60000));
+    return Math.round(mins.reduce((x,y)=>x+y,0)/mins.length);})();
+  const FIELD=[
+    {v:'+33%',l:'주차 생산성 (2주차 단독)',d:'0.33 → 0.44 PLT/MH · 누계 +12% — D1 실측'},
+    {v:'+49%',l:'일평균 처리량',d:'9.8 → 14.6 PLT/일 (1주차 → 2주차) — 편차 관리 효과'},
+    {v:'30일→5초',l:'편차 발견 리드타임',d:'월마감에야 보이던 생산성 편차 → 5초 집계 즉시 (이동동 실사례)'},
+    {v:_lead!=null?_lead+'분':'16건',l:_lead!=null?'조치 착수 리드타임 (금일 실측)':'공동작업 자동 분배',d:_lead!=null?'탐지 → 조치 착수 평균 · 운영 기록 타임스탬프 실측':'2~3인 공동작업 전량 인원수 자동 분배 — 수기 정산 0회'}
+  ];
+  const fieldCards=FIELD.map(f=>`<div style="background:var(--tint);border:1.5px solid #A9E4C3;border-radius:14px;padding:15px 17px">
+    <div style="font-size:25px;font-weight:900;color:#0B7A43;letter-spacing:-.5px">${f.v}</div>
+    <div style="font-size:13px;font-weight:800;margin-top:5px">${f.l}</div>
+    <div class="mini" style="margin-top:4px;line-height:1.45">${f.d}</div></div>`).join('');
   const rows=[
-   {k:'[1] 인시생산성 (PLT/MH)',t:'+3% 이상',v:'+12%',p:100,d:'D1 실측 8/7~8/21 — 0.33 → 0.37 PLT/MH (시범 라인)',ok:1},
+   {k:'[1] 인시생산성 (PLT/MH)',t:'+3% 이상',v:'+12%',p:100,d:'누계 0.33→0.37 · 2주차 단독 0.44 (+33%) — D1 실측 8/7~8/21',ok:1},
    {k:'[2] 사전 탐지 → 당일 재배치 조치율',t:'90% 이상',v:rate+'%',p:Math.min(100,Math.round(rate/90*100)),d:'조치 추적 보드 실계산 — 탐지 '+need.length+'건 중 완료 '+done+'건',ok:rate>=90},
    {k:'[3] 안전점검 실시율 · 폭염 사전 통보',t:'100%',v:'100%',p:100,d:'젠키퍼 TBM 자동 알림 · 히트워치 위험 단계 푸시 (미실시 자동 알림)',ok:1},
    {k:'[4] 지연오더 사전 인지율',t:'90% 이상',v:'자동 산출',p:100,d:'계획 Agent — 주간계획+실적 업로드 시 지연오더 전건 자동 취합 (발생 전 경고)',ok:1},
@@ -1386,6 +1404,9 @@ V.zaic=()=>{
     <div><div style="font-size:11px;letter-spacing:2.5px;color:#8fd8b9;font-weight:800">2026 제2회 ZAIC · 핵심 성과지표</div>
       <div style="font-size:21px;font-weight:800;margin-top:5px">과제수행 계획서 6대 KPI — 목표 대비 현황</div>
       <div style="font-size:12.5px;color:#a6bad8;margin-top:5px">검증: 실적·시스템 로그 대비 / 룰 등록 현황 / 적용 전·후 소요시간 <b style="color:#cfe0f2">실측</b></div></div></div>
+  <div class="card" style="margin-bottom:14px"><h3>현장 개선 실측 <span class="hint">D1 work_records · 운영 기록 기반 — 생산성·리드타임</span></h3>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">${fieldCards}</div>
+    <div class="mini" style="margin-top:10px">산식 — 주차 생산성: 주별 ΣPLT÷ΣMH · 일평균: 주별 ΣPLT÷작업일수 · 공동 분배: qty÷worker_count (전 건 자동)</div></div>
   <div class="card">${bars}
     <div class="mini" style="margin-top:11px">제니엘 제조사업부 사업3팀 — 「제조 현장 통합 운영 AI Agent : 데이터가 아니라 '판단'을 자동화한다」</div></div>`;
 };
