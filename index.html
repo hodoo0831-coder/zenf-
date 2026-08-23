@@ -1013,19 +1013,62 @@ const OPSLOG_SEED=[
    {t:'08:30',area:'시스템',ev:'가동 시작 — 현장 입력 → 5초 자동 집계 검증 완료 (D1 첫 레코드)',st:'done'}]}
 ];
 function opsLog(ev,area,st){DB.opslog=DB.opslog||[];DB.opslog.push({ts:Date.now(),area,ev,st:st||'info'});saveDB();}
-function opsLogView(){
+function opsDays(){
   const dyn={};(DB.opslog||[]).forEach(e=>{const d=new Date(e.ts),key=d.toISOString().slice(0,10);
     (dyn[key]=dyn[key]||[]).push({t:d.toTimeString().slice(0,5),area:e.area,ev:e.ev,st:e.st});});
   const days={};OPSLOG_SEED.forEach(x=>days[x.d]=[...x.items]);
   Object.entries(dyn).forEach(([d,items])=>{days[d]=[...(days[d]||[]),...items];});
+  return days;
+}
+function opsPrint(d){
+  const days=opsDays(), it=(days[d]||[]).sort((a,b)=>a.t<b.t?-1:1);
+  if(!it.length)return;
+  const wd=['일','월','화','수','목','금','토'][new Date(d+'T00:00:00').getDay()];
+  const done=it.filter(x=>x.st==='done').length, warn=it.filter(x=>x.st==='warn').length;
+  const stlab=st=>st==='done'?'조치 완료':st==='warn'?'경고·판단':'자동 집계';
+  const rows=it.map(x=>`<tr><td>${x.t}</td><td>${x.area}</td><td style="text-align:left">${x.ev}</td><td class="s-${x.st}">${stlab(x.st)}</td></tr>`).join('');
+  const w=window.open('','_blank','width=900,height=1000');
+  if(!w){toast('팝업을 허용해 주세요');return;}
+  w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>ZEN 일일 운영 보고서 ${d}</title><style>
+    body{font-family:'Pretendard','Malgun Gothic',sans-serif;color:#1b2736;margin:36px 44px}
+    .hd{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #1d3a5f;padding-bottom:12px}
+    .hd h1{font-size:22px;margin:0}.hd .co{font-size:12px;color:#66788f;font-weight:600}
+    .meta{margin-top:12px;font-size:13.5px;font-weight:700}
+    .sum{display:flex;gap:12px;margin:16px 0}
+    .sum div{flex:1;border:1px solid #e2e9f3;border-radius:10px;padding:12px 14px;text-align:center}
+    .sum .n{font-size:24px;font-weight:900}.sum .l{font-size:11.5px;color:#66788f;font-weight:700;margin-top:3px}
+    table{width:100%;border-collapse:collapse;margin-top:6px;font-size:12.5px}
+    th{background:#eef3f9;color:#3d557a;padding:8px 9px;font-size:11.5px}
+    td{border-bottom:1px solid #edf1f6;padding:9px;text-align:center;vertical-align:top;line-height:1.5}
+    .s-done{color:#1c7d49;font-weight:800}.s-warn{color:#b47708;font-weight:800}.s-info{color:#2f6db3;font-weight:700}
+    .ft{margin-top:26px;display:flex;justify-content:space-between;align-items:flex-end;font-size:11.5px;color:#66788f}
+    .sign{display:flex;gap:26px;font-size:12.5px;font-weight:700;color:#1b2736}
+    .sign span{border-top:1px solid #9aa8b8;padding-top:6px;min-width:110px;text-align:center}
+    @media print{body{margin:12mm}}
+  </style></head><body>
+    <div class="hd"><h1>ZEN 일일 운영 보고서</h1><div class="co">ZEN Manufacturing Platform · AP 대전공장 · 제니엘 제조사업부 사업3팀</div></div>
+    <div class="meta">보고 일자 : ${d} (${wd})</div>
+    <div class="sum"><div><div class="n">${it.length}</div><div class="l">총 기록</div></div>
+      <div><div class="n" style="color:#1c7d49">${done}</div><div class="l">조치 완료</div></div>
+      <div><div class="n" style="color:#b47708">${warn}</div><div class="l">경고·판단</div></div></div>
+    <table><tr><th style="width:52px">시간</th><th style="width:76px">영역</th><th>내용</th><th style="width:78px">상태</th></tr>${rows}</table>
+    <div class="ft"><span>본 보고서는 플랫폼 운영 기록에서 자동 생성되었습니다 · 출력 ${new Date().toISOString().slice(0,10)}</span>
+      <div class="sign"><span>작성 : ZEN Platform (자동)</span><span>확인 : </span></div></div>
+    <script>setTimeout(()=>{try{window.print()}catch(e){}},350)<\/script>
+  </body></html>`);
+  w.document.close();
+}
+function opsLogView(){
+  const days=opsDays();
   const keys=Object.keys(days).sort().reverse();
   const dot=st=>st==='done'?'#2aa864':st==='warn'?'#e8940a':'#5b9bd5';
   const stlab=st=>st==='done'?'조치 완료':st==='warn'?'경고·판단':'자동 집계';
   const cards=keys.map(d=>{const it=days[d].sort((a,b)=>a.t<b.t?1:-1);
     const done=it.filter(x=>x.st==='done').length, warn=it.filter(x=>x.st==='warn').length;
     const wd=['일','월','화','수','목','금','토'][new Date(d+'T00:00:00').getDay()];
-    return `<div class="card" style="margin-bottom:12px"><h3 style="font-size:15.5px">${d} (${wd})
-      <span class="hint" style="margin-left:10px">기록 ${it.length} · 조치 완료 ${done}${warn?' · 경고 '+warn:''}</span></h3>
+    return `<div class="card" style="margin-bottom:12px"><h3 style="font-size:15.5px;cursor:pointer" onclick="opsPrint('${d}')" title="클릭 시 일일 보고서 출력">${d} (${wd})
+      <span class="hint" style="margin-left:10px">기록 ${it.length} · 조치 완료 ${done}${warn?' · 경고 '+warn:''}</span>
+      <button class="btn" style="margin-left:auto;padding:5px 13px" onclick="event.stopPropagation();opsPrint('${d}')">🖨 일일 보고서</button></h3>
       ${it.map(x=>`<div style="display:flex;gap:11px;align-items:flex-start;padding:9px 2px;border-bottom:1px solid var(--line)">
         <span style="font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap;margin-top:2px">${x.t}</span>
         <span style="width:8px;height:8px;border-radius:50%;background:${dot(x.st)};flex-shrink:0;margin-top:6px"></span>
@@ -1038,7 +1081,7 @@ function opsLogView(){
     <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
       <div><div style="font-size:11px;letter-spacing:2.5px;color:#8fd8b9;font-weight:800">OPERATIONS LOG · 일자별 운영 기록</div>
         <div style="font-size:21px;font-weight:800;margin-top:5px">탐지·조치·집계가 날짜별 이력으로 남습니다</div>
-        <div style="font-size:12.5px;color:#a6bad8;margin-top:5px">인수인계·감사 대응 — <b style="color:#cfe0f2">누가 언제 무엇을 판단·조치했는지</b> 재현 가능</div></div>
+        <div style="font-size:12.5px;color:#a6bad8;margin-top:5px">날짜를 누르면 <b style="color:#cfe0f2">일일 보고서로 즉시 출력(PDF)</b> — 인수인계·감사 대응</div></div>
       <div style="margin-left:auto;display:flex;gap:30px">
         <div><div class="tnum" style="font-size:28px;font-weight:800">${keys.length}</div><div style="font-size:11px;color:#a6bad8">기록 일수</div></div>
         <div><div class="tnum" style="font-size:28px;font-weight:800;color:#8fd8b9">${keys.reduce((a,k)=>a+days[k].length,0)}</div><div style="font-size:11px;color:#a6bad8">누적 기록</div></div>
