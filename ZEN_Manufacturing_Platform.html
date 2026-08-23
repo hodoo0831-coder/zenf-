@@ -12,6 +12,16 @@
     --blue:#4f8fe8;--navy:#1b2736;--green:#2aa864;--red:#e04a3f;--amber:#e39412;--purple:#a855f7;--teal:#14b8a6;
     --shadow:0 1px 3px rgba(27,39,54,.06);--radius:14px;
   }
+
+  .sysboard{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
+  .sysb{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px 13px;cursor:pointer;transition:.15s;position:relative}
+  .sysb:hover{border-color:#0EA75C;box-shadow:0 6px 18px rgba(14,167,92,.15);transform:translateY(-2px)}
+  .sysb .se{font-size:23px}
+  .sysb .sn{font-size:13.5px;font-weight:900;color:var(--navy);margin-top:7px}
+  .sysb .sd{font-size:10.5px;font-weight:600;color:#54687F;margin-top:3px;line-height:1.35}
+  .sysb .sl{position:absolute;top:11px;right:12px;font-size:9.5px;font-weight:900;color:#0C8A4C;background:#D6F5E3;border-radius:12px;padding:2px 8px}
+  .sysb .sl::before{content:'●';margin-right:3px;font-size:8px}
+  @media(max-width:1100px){.sysboard{grid-template-columns:repeat(3,1fr)}}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
   body{background:linear-gradient(180deg,#f2f5fa,#e9eef5) fixed,var(--bg);
@@ -1021,7 +1031,16 @@ V.home=()=>{
   ${hero}
   ${decisionFlow}
   ${predCard}
-  <div class="chead" style="margin:18px 0 10px">운영 영역 바로가기</div>
+  <div class="chead" style="margin:18px 0 10px">실연동 시스템 <span class="mtag real">6종 실배포 · LIVE</span></div>
+  <div class="sysboard">
+    <div class="sysb" onclick="window.open(LIVE_URL.safe,'_blank')"><span class="sl">LIVE</span><div class="se">🦺</div><div class="sn">젠키퍼</div><div class="sd">안전 셀프점검 · TBM · 신고</div></div>
+    <div class="sysb" onclick="window.open(LIVE_URL.heat,'_blank')"><span class="sl">LIVE</span><div class="se">🌡️</div><div class="sn">히트워치</div><div class="sd">체감온도 · 푸시 · 휴게 부여</div></div>
+    <div class="sysb" onclick="go('orikonwash')"><span class="sl">LIVE</span><div class="se">📦</div><div class="sn">오리콘·P-BOX</div><div class="sd">실적 5초 집계 · D1 실측</div></div>
+    <div class="sysb" onclick="go('clean')"><span class="sl">LIVE</span><div class="se">🧼</div><div class="sn">세척실</div><div class="sd">배차 자동 추천 · 95%</div></div>
+    <div class="sysb" onclick="window.open(LIVE_URL.wh,'_blank')"><span class="sl">LIVE</span><div class="se">🏭</div><div class="sn">창고 적치</div><div class="sd">히트맵 · 재배치 · 보고문</div></div>
+    <div class="sysb" onclick="window.open(LIVE_URL.monthly,'_blank')"><span class="sl">LIVE</span><div class="se">📊</div><div class="sn">월마감 분석</div><div class="sd">정산 엑셀 → 경영 보고서</div></div>
+  </div>
+  <div class="chead" style="margin:2px 0 10px">운영 영역 바로가기</div>
   ${otiles}
   ${alertBand}
   <div class="chead" style="margin:2px 0 10px">실시간 실적 <span class="mtag real">실측</span></div>
@@ -2050,7 +2069,7 @@ function buildNav(){
     <div class="logo"><div class="t"><span>ZEN</span> Manufacturing</div><div class="s">Platform · AP 대전공장</div></div>
     ${body}
     <div class="spacer"></div>
-    <div class="user"><div class="av">${R.emoji}</div><div style="flex:1;min-width:0"><div class="nm">홍길동 ${R.name}</div><div class="rl">${scopeLabel()}</div><div class="roleswitch">${['field','admin','center'].map(k=>`<span class="rchip ${role===k?'on':''}" onclick="switchRole('${k}')">${ROLES[k].name}</span>`).join('')}</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
+    <div class="user"><div class="av">${R.emoji}</div><div style="flex:1;min-width:0"><div class="nm">${role==='center'?'이민아':'홍길동'} ${R.name}</div><div class="rl">${scopeLabel()}</div><div class="roleswitch">${['field','admin','center'].map(k=>`<span class="rchip ${role===k?'on':''}" onclick="switchRole('${k}')">${ROLES[k].name}</span>`).join('')}</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
 }
 const GO_REDIR={prod:['planhub','today'],plan:['planhub','plan'],delay:['planhub','delay'],load:['planhub','load'],
   planhub:['ops','production'],labor:['ops','labor'],clean:['ops','clean'],stock:['ops','stock'],orikonwash:['ops','indirect'],safe:['ops','safe'],qual:['ops','quality'],
