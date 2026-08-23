@@ -867,6 +867,13 @@ function loadCalc(plan,days,base){
   const groups=Object.entries(Gm).map(([grp,v])=>({grp,load:v.cap?Math.round(v.wk/v.cap*100):0,need:v.need,avail:v.avail,needAdj:+v.needAdj.toFixed(1),gap:+(v.needAdj-v.avail).toFixed(1)})).filter(g=>g.need>0||g.wk>0).sort((a,b)=>b.load-a.load);
   return {rows,groups};
 }
+/* 보안: 업로드 값 무해화 — 모든 엑셀 파싱 결과에서 태그 문자 제거 (XSS 방지) */
+(function(){if(typeof XLSX==='undefined')return;const orig=XLSX.utils.sheet_to_json;
+  const clean=v=>typeof v==='string'?v.replace(/[<>]/g,''):v;
+  XLSX.utils.sheet_to_json=function(){const r=orig.apply(this,arguments);
+    if(Array.isArray(r))r.forEach(row=>{if(Array.isArray(row)){for(let i=0;i<row.length;i++)row[i]=clean(row[i]);}
+      else if(row&&typeof row==='object'){for(const k in row)row[k]=clean(row[k]);}});
+    return r;};})();
 function loadUpload(input){const f=input.files[0];if(!f)return;const rd=new FileReader();
   rd.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
     const QC=[5,8,11,14,17,20];const plan={};
@@ -2032,11 +2039,25 @@ function fillScope(r){
   sel.disabled=(r==='center');
 }
 document.querySelectorAll('#roles button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#roles button').forEach(x=>x.classList.remove('on'));b.classList.add('on');fillScope(b.dataset.role);});
-const ACCESS_PIN='1996';
-function doLogin(){
+/* 보안: 비밀번호는 SHA-256 해시로만 보관 — 소스 열람으로 원문 확인 불가 */
+const ACCESS_HASH='3d1e557b540ac045b3b327994a351f08a443f9216f9b2b8d3a0f42b58671ac83';
+async function sha256(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+function _lock(){try{return JSON.parse(localStorage.getItem('zen_lock')||'{}');}catch(e){return {};}}
+let _idleT=null;
+function armIdle(){const R=()=>{clearTimeout(_idleT);_idleT=setTimeout(()=>{logout();const e=document.getElementById('pwErr');if(e){e.textContent='30분 미사용으로 잠금 — 다시 로그인하세요';e.style.display='block';}},30*60*1000);};
+  if(!armIdle._on){['click','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,R,{passive:true}));armIdle._on=1;}R();}
+async function doLogin(){
   const pwEl=document.getElementById('pw'),pwErr=document.getElementById('pwErr');
-  if(pwEl&&pwEl.value!==ACCESS_PIN){if(pwErr)pwErr.style.display='block';if(pwEl){pwEl.value='';pwEl.focus();}return;}
+  const L=_lock();
+  if(L.until&&Date.now()<L.until){if(pwErr){pwErr.textContent='입력 5회 초과 — '+Math.ceil((L.until-Date.now())/1000)+'초 후 다시 시도하세요';pwErr.style.display='block';}return;}
+  if(pwEl){const h=await sha256(pwEl.value||'');
+    if(h!==ACCESS_HASH){const n=(L.n||0)+1,lock=n>=5;
+      try{localStorage.setItem('zen_lock',JSON.stringify(lock?{n:0,until:Date.now()+30000}:{n}));}catch(e){}
+      if(pwErr){pwErr.textContent=lock?'입력 5회 초과 — 30초간 잠금됩니다':'비밀번호가 올바르지 않습니다 ('+n+'/5)';pwErr.style.display='block';}
+      pwEl.value='';pwEl.focus();return;}}
+  try{localStorage.removeItem('zen_lock');}catch(e){}
   if(pwErr)pwErr.style.display='none';
+  armIdle();
   role=document.querySelector('#roles button.on').dataset.role;
   const v=document.getElementById('scopeSel').value;
   if(role==='field'){scope=(ZONES[v]?ZONES[v].slice():[v]);scopeName=v;}
@@ -2048,7 +2069,7 @@ function doLogin(){
   buildNav();go(cur);applyBig();clockTick();
   document.getElementById('srcTag').textContent='데이터: '+dataSource;
   document.getElementById('srcTag').classList.toggle('live',dataSource!=='기준값');
-  try{localStorage.setItem('zen_session',JSON.stringify({role,scope:document.getElementById('scopeSel').value}));}catch(e){}
+  try{localStorage.setItem('zen_session',JSON.stringify({role,scope:document.getElementById('scopeSel').value,ts:Date.now()}));}catch(e){}
 }
 function _p2(n){return String(n).padStart(2,'0');}
 function todayKR(){const d=new Date(),wd=['일','월','화','수','목','금','토'][d.getDay()];return `${d.getFullYear()}.${_p2(d.getMonth()+1)}.${_p2(d.getDate())} (${wd})`;}
@@ -2065,7 +2086,7 @@ try{bigMode=localStorage.getItem('zen_big')==='1';}catch(e){}
 function switchRole(r){if(!ROLES[r]||r===role)return;role=r;
   if(r==='field'){const first=DEFAULT_DB.lines[0].key;scope=[first];scopeName=first+' 라인';}
   else{scope=null;scopeName='전체';}
-  try{localStorage.setItem('zen_session',JSON.stringify({role,scope:r==='field'?scope[0]:'전체'}));}catch(e){}
+  try{localStorage.setItem('zen_session',JSON.stringify({role,scope:r==='field'?scope[0]:'전체',ts:Date.now()}));}catch(e){}
   const c=ROLES[role].allow.includes(cur)?cur:'home';buildNav();go(c);toast(ROLES[r].name+' 화면으로 전환');}
 function logout(){try{localStorage.removeItem('zen_session');}catch(e){}document.getElementById('app').classList.remove('show');document.getElementById('login').style.display='flex';}
 document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
@@ -2074,6 +2095,7 @@ loadDB();
 fillScope('center');
 // 시작 시 항상 역할 선택 로그인 화면 표시 — 지난번 역할만 미리 선택해 편의 제공
 (function preselectRole(){try{const s=JSON.parse(localStorage.getItem('zen_session')||'null');if(!s||!ROLES[s.role])return;
+  if(s.ts&&Date.now()-s.ts>8*3600*1000){localStorage.removeItem('zen_session');return;}
   document.querySelectorAll('#roles button').forEach(x=>x.classList.toggle('on',x.dataset.role===s.role));
   fillScope(s.role);
   const sel=document.getElementById('scopeSel');if(s.scope&&[...sel.options].some(o=>o.value===s.scope))sel.value=s.scope;
