@@ -202,6 +202,19 @@
   .pred .pr{font-weight:800;font-size:13px;color:var(--navy)}
   .pred .ps{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5}
   .pred .prule{font-size:10.5px;font-weight:800;color:#1c7a48;background:#e8f6ee;border:1px solid #cfe8da;display:inline-block;padding:2px 8px;border-radius:20px;margin-top:7px}
+  .flowhead{display:flex;align-items:center;gap:8px;margin:18px 0 10px;flex-wrap:wrap}
+  .flowstep{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.2px}
+  .flowstep b{width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:#edf3fa;color:#31567f}
+  .flowstep.on{color:#176f42}.flowstep.on b{background:#dff3e8;color:#176f42}
+  .flowarrow{color:#aab8c8;font-weight:900}
+  .decisiongrid{display:grid;grid-template-columns:1.05fr 1.35fr 1.2fr;gap:12px;margin-bottom:16px}
+  .decisioncard{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:16px;min-width:0}
+  .decisioncard.now{border-top:3px solid #4f8fe8}.decisioncard.predict{border-top:3px solid #e39412}.decisioncard.act{border-top:3px solid #2aa864}
+  .decisioncard .dt{font-size:12px;font-weight:800;color:var(--muted);display:flex;align-items:center;gap:7px}
+  .decisioncard .dv{font-size:18px;font-weight:800;color:var(--navy);margin-top:10px;line-height:1.35}
+  .decisioncard .ds{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.55}
+  .decisioncard .dbtns{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}
+  @media(max-width:900px){.decisiongrid{grid-template-columns:1fr}.flowarrow{display:none}}
   .mtag{font-size:10px;font-weight:800;letter-spacing:.5px;padding:2px 8px;border-radius:6px;margin-left:8px;vertical-align:2px}
   .mtag.real{background:#eaf1fb;color:#2c6dae}.mtag.mp{background:#e8f6ee;color:#1c7a48}
   .briefbox{background:#12233b;color:#e6eef9;border:1px solid #24344c;border-radius:12px;padding:16px 18px;font-family:'Malgun Gothic','Apple SD Gothic Neo',monospace;font-size:12.5px;line-height:1.75;white-space:pre-wrap;overflow-x:auto;margin:0}
@@ -600,7 +613,7 @@ const ICON={
   target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
   wrench:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2 2-2.6-.6-.6-2.6z"/>',
 };
-const NAV_ICON={home:'factory',planhub:'clock',prod:'activity',labor:'users',clean:'droplet',stock:'package',orikonwash:'droplet',safe:'shield',qual:'flask',insight:'gauge',kpi:'gauge',report:'report',opl:'report',data:'db'};
+const NAV_ICON={home:'factory',judge:'spark',ops:'activity',planhub:'clock',prod:'activity',labor:'users',clean:'droplet',stock:'package',orikonwash:'droplet',safe:'shield',qual:'flask',insight:'gauge',kpi:'gauge',report:'report',opl:'report',data:'db'};
 function svic(n,s){s=s||18;return '<svg class="sv" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(ICON[n]||'')+'</svg>';}
 function tintOf(c){return c==='#16a34a'?'g':c==='#d97706'?'a':c==='#dc2626'?'r':'n';}
 function hydrateIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(function(e){if(e.getAttribute('data-done'))return;e.innerHTML=svic(e.getAttribute('data-ic'),16);e.setAttribute('data-done','1');});}
@@ -816,8 +829,9 @@ function headCur(){return scoped()?myLines().reduce((a,l)=>a+G.cur(l),0):DB.head
 
 /* ============ AGENTS / ROLES ============ */
 const AGENTS=[
-  {id:'home',name:'종합 상황판',icon:'🏭',sub:'AP 대전공장 · 실시간 종합 운영 현황'},
-  {id:'judge',name:'AI 판단 센터',icon:'🧠',sub:'실측 → 판단 → 조치, 한 화면'},
+  {id:'home',name:'통합 관제',icon:'🏭',sub:'현재 상태 → 예측 → 판단 → 조치'},
+  {id:'judge',name:'AI 예측·판단',icon:'🧠',sub:'2~4시간 · 익일 · 익주 위험 사전 판단'},
+  {id:'ops',name:'현장 운영',icon:'⚙️',sub:'생산 · 인력 · 세척 · 창고 · 안전 · 품질'},
   {id:'planhub',name:'생산·계획 Agent',icon:'📈',sub:'금일 실적 · 주간계획 · 부하율 · 지연오더'},
   {id:'labor',name:'인력 Agent',icon:'👥',sub:'출근 · 결원 · 대체인력 · 잔업 추천'},
   {id:'clean',name:'세척 Agent',icon:'🧼',sub:'세척 우선순위 자동 추천 · 95% 자동판단'},
@@ -828,9 +842,9 @@ const AGENTS=[
   {id:'insight',name:'분석·보고 Agent',icon:'📊',sub:'KPI·LOSS 분석 · 월마감 보고서'},
 ];
 const ROLES={
-  field:{name:'현장',emoji:'🧑‍🏭',allow:['home','planhub','clean','orikonwash','safe','safeapp']},
-  admin:{name:'관리자',emoji:'👔',allow:['home','judge','planhub','labor','clean','stock','orikonwash','safe','qual','data','opl','safeapp']},
-  center:{name:'센터',emoji:'🛰️',allow:['home','judge','planhub','labor','clean','stock','orikonwash','safe','qual','insight','data','opl','safeapp']},
+  field:{name:'현장',emoji:'🧑‍🏭',allow:['home','ops','planhub','clean','orikonwash','safe','safeapp']},
+  admin:{name:'관리자',emoji:'👔',allow:['home','judge','ops','planhub','labor','clean','stock','orikonwash','safe','qual','data','opl','safeapp']},
+  center:{name:'센터',emoji:'🛰️',allow:['home','judge','ops','planhub','labor','clean','stock','orikonwash','safe','qual','insight','data','opl','safeapp']},
 };
 let role='center';
 
@@ -939,13 +953,22 @@ V.home=()=>{
   ];
   const predCard=`<div class="card" style="margin-top:16px"><div class="chead" style="margin-bottom:10px">작업 예측 · AI 판단<span class="mtag mp">예측</span><span style="text-transform:none;letter-spacing:0;font-weight:600;color:var(--muted);margin-left:8px">내일·향후를 코드화된 기준으로 사전 판단</span></div>
     <div class="predgrid">${preds.map(x=>`<div class="pred ${x.lv}"><div class="ph"><span class="ico sm ${x.lv==='crit'?'r':x.lv==='warn'?'a':''}">${svic(x.ic,15)}</span><span class="pr">${x.r}</span></div><div class="ps">${x.s}</div><div class="prule">적용 기준 ${x.rule}</div></div>`).join('')}</div></div>`;
+  const judgments=collectJudgments(),priority=judgments.find(x=>x.lv==='crit')||judgments.find(x=>x.lv==='warn')||judgments[0];
+  const decisionFlow=`<div class="flowhead"><div class="flowstep"><b>1</b>현재 상태</div><span class="flowarrow">→</span><div class="flowstep"><b>2</b>위험 예측</div><span class="flowarrow">→</span><div class="flowstep"><b>3</b>AI 판단</div><span class="flowarrow">→</span><div class="flowstep on"><b>4</b>조치 실행</div></div>
+  <div class="decisiongrid">
+    <div class="decisioncard now"><div class="dt">${svic('activity',15)} 현재 상태</div><div class="dv">생산 ${tp.ach}% · 인력 ${cur}/${need}명</div><div class="ds">OEE ${oee}% · 불량 ${df}% · 가동 현황을 실시간 종합</div></div>
+    <div class="decisioncard predict"><div class="dt">${svic('clock',15)} 최우선 예측</div><div class="dv">${priority.r}</div><div class="ds">${priority.s}<br><b>판단 기준:</b> ${priority.rule}</div></div>
+    <div class="decisioncard act"><div class="dt">${svic('spark',15)} AI 권고 조치</div><div class="dv">${priority.act}</div><div class="ds">권고안을 검토한 뒤 실행하거나 담당자에게 전달하세요.</div><div class="dbtns">${actGet(actKey(priority)).st==='done'?`<span style="font-size:12.5px;font-weight:900;color:#176f42;background:#dff3e8;border-radius:8px;padding:8px 14px">✓ 조치 완료됨</span>`:`<button class="btn p" onclick="actHome(${judgments.indexOf(priority)},'ok')">조치 승인</button><button class="btn" onclick="actHome(${judgments.indexOf(priority)},'fwd')">담당자 전달</button>`}<button class="btn" onclick="go('judge')">판단 근거</button></div></div>
+  </div>`;
   return `
   ${hero}
-  ${alertBand}
+  ${decisionFlow}
+  ${predCard}
+  <div class="chead" style="margin:18px 0 10px">운영 영역 바로가기</div>
   ${otiles}
+  ${alertBand}
   <div class="chead" style="margin:2px 0 10px">실시간 실적 <span class="mtag real">실측</span></div>
   ${renderLive()}
-  ${predCard}
   <div class="card" style="margin-top:16px"><div class="chead" style="margin-bottom:12px">라인별 생산 달성률 <span class="mtag real">실측</span></div>${lineBars}</div>`;
 };
 V.prod=()=>{
@@ -957,6 +980,21 @@ V.planhub=()=>{
   const tabs=[{k:'today',label:'금일 실적'},{k:'plan',label:'주간계획'},{k:'load',label:'부하율·필요인원'},{k:'delay',label:'지연오더'}];
   const t=vtabActive('planhub',tabs);
   return vtabsBar('planhub',tabs)+(t==='today'?prodStatus():t==='load'?loadView():t==='delay'?V.delay():V.plan());
+};
+
+function actHome(i,mode){const J=collectJudgments(),x=J[i];if(!x)return;const k=actKey(x);DB.actions=DB.actions||{};
+  if(mode==='ok'){DB.actions[k]=Object.assign(actGet(k),{st:'done',ts:Date.now()});saveDB();toast('조치 승인 — 완료 처리되었습니다 (조치 추적 반영)');}
+  else{const txt=`[조치 요청] ${x.area} — ${x.r}\n· 근거: ${x.s}\n· 적용 기준: ${x.rule}\n· 권장 조치: ${x.act}\n· 기한: 금일 내\n(ZEN Manufacturing Platform 자동 생성)`;
+    DB.actions[k]=Object.assign(actGet(k),{st:'doing',txt,ts:Date.now()});saveDB();
+    try{navigator.clipboard.writeText(txt);}catch(e){} toast('조치 문안 복사됨 — 담당자에게 전달하세요');}
+  go(cur);}
+V.ops=()=>{
+  const target={production:'planhub',labor:'labor',clean:'clean',stock:'stock',indirect:'orikonwash',safe:'safe',quality:'qual'};
+  const tabs=[{k:'production',label:'생산'},{k:'labor',label:'인력'},{k:'clean',label:'세척'},{k:'stock',label:'창고'},{k:'indirect',label:'간접작업'},{k:'safe',label:'안전'},{k:'quality',label:'품질'}].filter(x=>ROLES[role].allow.includes(target[x.k]));
+  const t=vtabActive('ops',tabs);
+  const map={production:()=>V.planhub(),labor:()=>V.labor(),clean:()=>V.clean(),stock:()=>V.stock(),indirect:()=>V.orikonwash(),safe:()=>V.safe(),quality:()=>V.qual()};
+  const engines='<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 12px;font-size:12px;font-weight:700;color:var(--muted)"><span style="background:var(--tint);color:#176f42;border:1px solid #cfe8da;border-radius:20px;padding:5px 13px;font-weight:900">⚙️ AI Agent 8기 가동중</span><span>생산·계획 · 인력 · 세척 · 창고 · 간접작업 · 품질 · 안전 · 분석·보고 — 판단은 <b>AI 예측·판단</b>에 집결</span></div>';
+  return engines+vtabsBar('ops',tabs)+(map[t]||map.production)();
 };
 /* ===== AI 판단 센터 — 전 Agent 자동 판단 통합(실측→기준→판단→조치) ===== */
 function collectJudgments(){
@@ -1809,11 +1847,13 @@ function genReport(t){go('report');toast(t+'를 생성했습니다 (DB 최신값
 
 /* ============ ROUTER / NAV / LOGIN ============ */
 let cur='home';
-const NAV_TOOLS={opl:{name:'OPL 교육자료',icon:'📄'},data:{name:'데이터 관리',icon:'🗄'}};
+const NAV_TOOLS={opl:{name:'OPL 교육자료',icon:'📄'},data:{name:'관리·연동',icon:'🗄'}};
 const NAV_GROUPS=[
-  {sec:'홈 · OVERVIEW',ids:['home','judge']},
-  {sec:'AI AGENTS',ids:['planhub','labor','clean','stock','orikonwash','qual','safe','insight']},
-  {sec:'도구 · TOOLS',ids:['opl','data']},
+  {sec:'CONTROL',ids:['home']},
+  {sec:'PREDICT',ids:['judge']},
+  {sec:'OPERATIONS',ids:['ops']},
+  {sec:'PERFORMANCE',ids:['insight']},
+  {sec:'MANAGEMENT',ids:['data','opl']},
 ];
 function buildNav(){
   const R=ROLES[role],allow=id=>R.allow.includes(id);
@@ -1832,9 +1872,11 @@ function buildNav(){
     <div class="spacer"></div>
     <div class="user"><div class="av">${R.emoji}</div><div style="flex:1;min-width:0"><div class="nm">홍길동 ${R.name}</div><div class="rl">${scopeLabel()}</div><div class="roleswitch">${['field','admin','center'].map(k=>`<span class="rchip ${role===k?'on':''}" onclick="switchRole('${k}')">${ROLES[k].name}</span>`).join('')}</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
 }
-const GO_REDIR={prod:['planhub','today'],plan:['planhub','plan'],delay:['planhub','delay'],load:['planhub','load'],kpi:['insight','kpi'],report:['insight','report']};
+const GO_REDIR={prod:['planhub','today'],plan:['planhub','plan'],delay:['planhub','delay'],load:['planhub','load'],
+  planhub:['ops','production'],labor:['ops','labor'],clean:['ops','clean'],stock:['ops','stock'],orikonwash:['ops','indirect'],safe:['ops','safe'],qual:['ops','quality'],
+  kpi:['insight','kpi'],report:['insight','report']};
 function go(id){
-  if(GO_REDIR[id]){const[a,t]=GO_REDIR[id];vtab[a]=t;id=a;}
+  let _rg=0;while(GO_REDIR[id]&&_rg++<4){const[a,t]=GO_REDIR[id];vtab[a]=t;id=a;}
   if(!ROLES[role].allow.includes(id)&&!['data','safeapp'].includes(id))id='home';
   if(id==='data'&&!ROLES[role].allow.includes('data'))id='home';
   cur=id;
