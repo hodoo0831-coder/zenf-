@@ -1379,7 +1379,7 @@ V.zaic=()=>{
     {v:'+33%',l:'주차 생산성 (2주차 단독)',d:'0.33 → 0.44 PLT/MH · 누계 +12% — D1 실측'},
     {v:'+49%',l:'일평균 처리량',d:'9.8 → 14.6 PLT/일 (1주차 → 2주차) — 편차 관리 효과'},
     {v:'30일→5초',l:'편차 발견 리드타임',d:'월마감에야 보이던 생산성 편차 → 5초 집계 즉시 (이동동 실사례)'},
-    {v:_lead!=null?_lead+'분':'16건',l:_lead!=null?'조치 착수 리드타임 (금일 실측)':'공동작업 자동 분배',d:_lead!=null?'탐지 → 조치 착수 평균 · 운영 기록 타임스탬프 실측':'2~3인 공동작업 전량 인원수 자동 분배 — 수기 정산 0회'}
+    {v:_lead!=null?(_lead===0?'즉시':_lead+'분'):'16건',l:_lead!=null?'조치 착수 리드타임 (금일 실측)':'공동작업 자동 분배',d:_lead!=null?'탐지 → 조치 착수 평균 · 운영 기록 타임스탬프 실측':'2~3인 공동작업 전량 인원수 자동 분배 — 수기 정산 0회'}
   ];
   const fieldCards=FIELD.map(f=>`<div style="background:var(--tint);border:1.5px solid #A9E4C3;border-radius:14px;padding:15px 17px">
     <div style="font-size:25px;font-weight:900;color:#0B7A43;letter-spacing:-.5px">${f.v}</div>
