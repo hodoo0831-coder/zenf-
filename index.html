@@ -831,7 +831,7 @@ function headCur(){return scoped()?myLines().reduce((a,l)=>a+G.cur(l),0):DB.head
 const AGENTS=[
   {id:'home',name:'통합 관제',icon:'🏭',sub:'현재 상태 → 예측 → 판단 → 조치'},
   {id:'judge',name:'AI 예측·판단',icon:'🧠',sub:'2~4시간 · 익일 · 익주 위험 사전 판단'},
-  {id:'track',name:'조치 추적',icon:'✅',sub:'탐지 → 조치 → 결과 · 미조치 재알림'},
+  {id:'track',name:'조치 추적',icon:'✅',sub:'오늘 조치 · 일자별 운영 기록'},
   {id:'ops',name:'현장 운영',icon:'⚙️',sub:'생산 · 인력 · 세척 · 창고 · 안전 · 품질'},
   {id:'planhub',name:'생산·계획 Agent',icon:'📈',sub:'금일 실적 · 주간계획 · 부하율 · 지연오더'},
   {id:'labor',name:'인력 Agent',icon:'👥',sub:'출근 · 결원 · 대체인력 · 잔업 추천'},
@@ -983,8 +983,71 @@ V.planhub=()=>{
   return vtabsBar('planhub',tabs)+(t==='today'?prodStatus():t==='load'?loadView():t==='delay'?V.delay():V.plan());
 };
 
+
+/* ============ 일자별 운영 기록 ============ */
+const OPSLOG_SEED=[
+ {d:'2026-08-22',items:[
+   {t:'08:10',area:'판단',ev:'일일 자동 판단 7건 산출 — 긴급 2 · 경고 5',st:'warn'},
+   {t:'09:05',area:'안전',ev:'폭염 경고 WBGT 29.4℃ — 시간당 휴식·수분 공지 발송',st:'done'}]},
+ {d:'2026-08-21',items:[
+   {t:'13:51',area:'간접작업',ev:'P-BOX 세척 6 PLT·540 EA 자동 집계 (정철훈·이호선 2인 분배 · 11 MH)',st:'info'},
+   {t:'14:20',area:'생산',ev:'지연 위험 오더 2건 경고 → 우선순위 재조정',st:'done'}]},
+ {d:'2026-08-20',items:[
+   {t:'13:56',area:'간접작업',ev:'P-BOX 17 PLT·1,530 EA 집계 (2건 · 공동작업 자동 분배)',st:'info'},
+   {t:'16:40',area:'세척',ev:'우선순위 89점 초과 — CIP 병렬 투입 권고 → 시행',st:'done'}]},
+ {d:'2026-08-19',items:[
+   {t:'09:50',area:'간접작업',ev:'단독작업 2.5 PLT 집계 · 생산성 편차 경보(0.11 PLT/MH ▼69%) → 재배치 검토',st:'warn'},
+   {t:'11:00',area:'인력',ev:'익주 부하율 산출 — 초격차 +2.4명 부족 사전 경고',st:'warn'}]},
+ {d:'2026-08-18',items:[
+   {t:'12:20',area:'간접작업',ev:'P-BOX 33 PLT·2,970 EA 집계 — 일 최대 실적',st:'info'},
+   {t:'15:30',area:'창고',ev:'HnB 1층 적치 초과 122% — 재배치안 자동 생성 → 이동 완료',st:'done'}]},
+ {d:'2026-08-14',items:[
+   {t:'18:00',area:'보고',ev:'주간 마감 자동 집계 — 주 누계 59 PLT · 5,310 EA · 보고문 발송',st:'done'}]},
+ {d:'2026-08-12',items:[
+   {t:'10:00',area:'창고',ev:'주 1회 적치 점검 — 12구역 평균 104% · 초과 7구역 판정 → 재배치 2건',st:'done'}]},
+ {d:'2026-08-11',items:[
+   {t:'09:30',area:'계획',ev:'33주 주간계획 업로드 → 익주 인력 부족 −2.4명 사전 산출·알람',st:'warn'}]},
+ {d:'2026-08-08',items:[
+   {t:'07:25',area:'간접작업',ev:'P-BOX 관리자 대시보드 가동 — 첫 자동 집계 14 PLT·1,260 EA',st:'info'}]},
+ {d:'2026-08-07',items:[
+   {t:'08:30',area:'시스템',ev:'가동 시작 — 현장 입력 → 5초 자동 집계 검증 완료 (D1 첫 레코드)',st:'done'}]}
+];
+function opsLog(ev,area,st){DB.opslog=DB.opslog||[];DB.opslog.push({ts:Date.now(),area,ev,st:st||'info'});saveDB();}
+function opsLogView(){
+  const dyn={};(DB.opslog||[]).forEach(e=>{const d=new Date(e.ts),key=d.toISOString().slice(0,10);
+    (dyn[key]=dyn[key]||[]).push({t:d.toTimeString().slice(0,5),area:e.area,ev:e.ev,st:e.st});});
+  const days={};OPSLOG_SEED.forEach(x=>days[x.d]=[...x.items]);
+  Object.entries(dyn).forEach(([d,items])=>{days[d]=[...(days[d]||[]),...items];});
+  const keys=Object.keys(days).sort().reverse();
+  const dot=st=>st==='done'?'#2aa864':st==='warn'?'#e8940a':'#5b9bd5';
+  const stlab=st=>st==='done'?'조치 완료':st==='warn'?'경고·판단':'자동 집계';
+  const cards=keys.map(d=>{const it=days[d].sort((a,b)=>a.t<b.t?1:-1);
+    const done=it.filter(x=>x.st==='done').length, warn=it.filter(x=>x.st==='warn').length;
+    const wd=['일','월','화','수','목','금','토'][new Date(d+'T00:00:00').getDay()];
+    return `<div class="card" style="margin-bottom:12px"><h3 style="font-size:15.5px">${d} (${wd})
+      <span class="hint" style="margin-left:10px">기록 ${it.length} · 조치 완료 ${done}${warn?' · 경고 '+warn:''}</span></h3>
+      ${it.map(x=>`<div style="display:flex;gap:11px;align-items:flex-start;padding:9px 2px;border-bottom:1px solid var(--line)">
+        <span style="font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap;margin-top:2px">${x.t}</span>
+        <span style="width:8px;height:8px;border-radius:50%;background:${dot(x.st)};flex-shrink:0;margin-top:6px"></span>
+        <span style="font-size:13.5px;font-weight:600;line-height:1.5;flex:1">${x.ev}</span>
+        <span style="font-size:10.5px;font-weight:800;color:var(--muted);border:1px solid var(--line2);border-radius:16px;padding:2px 9px;white-space:nowrap">${x.area}</span>
+        <span style="font-size:10.5px;font-weight:800;color:${dot(x.st)};white-space:nowrap;margin-top:2px">${stlab(x.st)}</span>
+      </div>`).join('')}</div>`;}).join('');
+  return `
+  <div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,#16283f,#0e1a2e);border:none;color:#fff">
+    <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <div><div style="font-size:11px;letter-spacing:2.5px;color:#8fd8b9;font-weight:800">OPERATIONS LOG · 일자별 운영 기록</div>
+        <div style="font-size:21px;font-weight:800;margin-top:5px">탐지·조치·집계가 날짜별 이력으로 남습니다</div>
+        <div style="font-size:12.5px;color:#a6bad8;margin-top:5px">인수인계·감사 대응 — <b style="color:#cfe0f2">누가 언제 무엇을 판단·조치했는지</b> 재현 가능</div></div>
+      <div style="margin-left:auto;display:flex;gap:30px">
+        <div><div class="tnum" style="font-size:28px;font-weight:800">${keys.length}</div><div style="font-size:11px;color:#a6bad8">기록 일수</div></div>
+        <div><div class="tnum" style="font-size:28px;font-weight:800;color:#8fd8b9">${keys.reduce((a,k)=>a+days[k].length,0)}</div><div style="font-size:11px;color:#a6bad8">누적 기록</div></div>
+      </div></div></div>
+  ${cards}
+  <div class="mini" style="margin-top:4px">8/7~8/21 기록은 D1 실측(work_records) 기반 · 이후 조치 이력은 플랫폼에서 자동 기록</div>`;
+}
 function actHome(i,mode){const J=collectJudgments(),x=J[i];if(!x)return;const k=actKey(x);DB.actions=DB.actions||{};
-  if(mode==='ok'){DB.actions[k]=Object.assign(actGet(k),{st:'done',ts:Date.now()});saveDB();toast('조치 승인 — 완료 처리되었습니다 (조치 추적 반영)');}
+  if(mode==='ok'){DB.actions[k]=Object.assign(actGet(k),{st:'done',ts:Date.now()});opsLog(`[${x.area}] ${x.r} — 조치 승인·완료 처리`,x.area,'done');saveDB();toast('조치 승인 — 완료 처리되었습니다 (조치 추적 반영)');}
   else{const txt=`[조치 요청] ${x.area} — ${x.r}\n· 근거: ${x.s}\n· 적용 기준: ${x.rule}\n· 권장 조치: ${x.act}\n· 기한: 금일 내\n(ZEN Manufacturing Platform 자동 생성)`;
     DB.actions[k]=Object.assign(actGet(k),{st:'doing',txt,ts:Date.now()});saveDB();
     try{navigator.clipboard.writeText(txt);}catch(e){} toast('조치 문안 복사됨 — 담당자에게 전달하세요');}
@@ -1125,15 +1188,20 @@ V.rulebook=()=>{
 /* ── 조치 추적 (탐지 → 조치 → 결과) ── */
 function actKey(x){return x.area+'|'+x.rule;}
 function actGet(k){DB.actions=DB.actions||{};return DB.actions[k]||{st:'todo'};}
-function actSet(k,st){DB.actions=DB.actions||{};DB.actions[k]=Object.assign(actGet(k),{st,ts:Date.now()});saveDB();go(cur==='track'?'track':cur);}
+function actSet(k,st){DB.actions=DB.actions||{};DB.actions[k]=Object.assign(actGet(k),{st,ts:Date.now()});if(st==='done')opsLog('판단 항목 조치 완료 처리','조치','done');saveDB();go(cur==='track'?'track':cur);}
 function actGen(i){
   const J=collectJudgments(),x=J[i];if(!x)return;const k=actKey(x);
   const txt=`[조치 요청] ${x.area} — ${x.r}\n· 근거: ${x.s}\n· 적용 기준: ${x.rule}\n· 권장 조치: ${x.act}\n· 기한: 금일 내 — 완료 시 판단 센터 [완료] 처리\n(ZEN Manufacturing Platform 자동 생성 · ${new Date().toISOString().slice(0,10)})`;
   DB.actions=DB.actions||{};DB.actions[k]=Object.assign(actGet(k),{st:'doing',txt,ts:Date.now()});saveDB();
   try{navigator.clipboard.writeText(txt);}catch(e){}
-  toast('조치 문안 생성 · 복사됨');go(cur==='track'?'track':cur);
+  opsLog(`[${x.area}] ${x.r} — 조치 문안 생성·담당자 전달`,x.area,'info');toast('조치 문안 생성 · 복사됨');go(cur==='track'?'track':cur);
 }
 V.track=()=>{
+  const tabs=[{k:'now',label:'오늘 조치 현황'},{k:'log',label:'일자별 운영 기록'}];
+  const t=vtabActive('track',tabs);
+  return vtabsBar('track',tabs)+(t==='log'?opsLogView():V.trackNow());
+};
+V.trackNow=()=>{
   const J=collectJudgments();
   const actbl=J.map((x,i)=>({x,i,k:actKey(x),a:actGet(actKey(x))}));
   const need=actbl.filter(o=>o.x.lv!=='ok');
