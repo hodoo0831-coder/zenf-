@@ -399,6 +399,55 @@
   @media (max-width:1080px){.viz{grid-template-columns:1fr 1fr}.hero .hstats{margin-left:0;width:100%}}
 </style>
 
+
+<style>
+/* ══ 선명 모드 — 대비·채도·글자 강화 (마지막 로드로 우선 적용) ══ */
+:root{
+  --ink:#0D1A2B; --navy:#0F2038; --muted:#42556D; --muted2:#6B7E96;
+  --line:#D7E1EF; --line2:#C6D3E4; --hair:#DDE6F2;
+  --accent:#0EA75C; --green:#0EA75C; --tint:#DFF6E9;
+  --blue:#2E7FE0; --red:#E03426; --amber:#E88A00; --purple:#8E4CF0; --teal:#0BA99A;
+  --ok:#0E9A50; --warn:#D97E00; --bad:#DC2020;
+}
+body{color:var(--ink)}
+.mini{color:#4A5D75;font-weight:600}
+.hint{color:#54687F!important}
+/* KPI — 숫자를 더 크고 진하게 */
+.kpi .val{font-size:34px;font-weight:900;letter-spacing:-.8px;color:var(--navy)}
+.kpi .lab{font-size:13px;font-weight:800;color:#3B4E66}
+.kpi .delta{font-weight:800}
+/* 카드 제목·판단 텍스트 */
+.card h3,.chead{font-weight:900;color:var(--navy)}
+.pred .pr{font-size:14px;font-weight:900;color:var(--navy)}
+.pred .ps{color:#3E5169;font-weight:600}
+.prule{background:#D9F4E4!important;color:#0B7A43!important;border-color:#A9E4C3!important;font-weight:900!important}
+/* 상태 태그 — 채도 업 */
+.t-red{background:#FDDCDC;color:#C81E1E;border-color:#F5A9A9}
+.t-amber{background:#FFEECC;color:#B26A00;border-color:#F0CE8B}
+.t-green{background:#D6F5E3;color:#0C8A4C;border-color:#9FE3BE}
+.t-blue{background:#DBEAFD;color:#1F63C0;border-color:#AECDF5}
+/* 네비 — 활성 항목 또렷하게 */
+.nav a{font-weight:700;color:#33465E}
+.nav a.on{background:#DFF6E9!important;color:#0B7A43!important;font-weight:900}
+.nav a.on .ic{color:#0EA75C}
+.nav .sec{color:#5A6E86;font-weight:800}
+.nav a .badge.t-red{background:#E03426;color:#fff;border:0}
+.nav a .badge.t-amber{background:#E88A00;color:#fff;border:0}
+/* 결정 카드 상단 보더 진하게 */
+.decisioncard.now{border-top-color:#2E7FE0;border-top-width:4px}
+.decisioncard.predict{border-top-color:#E88A00;border-top-width:4px}
+.decisioncard.act{border-top-color:#0EA75C;border-top-width:4px}
+.decisioncard .dv{color:var(--navy);font-weight:900}
+.decisioncard .ds{color:#42556D}
+/* 버튼 */
+.btn{font-weight:800;color:#26394F;border-color:#C6D3E4}
+.btn.p{background:#0EA75C;border-color:#0EA75C;color:#fff}
+/* 표 */
+th{color:#2E4157!important;font-weight:900!important}
+td{color:#1C2C40}
+/* 진행바 트랙 대비 */
+.tr{background:#E4EAF3}
+</style>
 </head>
 <body>
 
