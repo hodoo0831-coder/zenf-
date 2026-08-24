@@ -458,6 +458,61 @@ td{color:#1C2C40}
 /* 진행바 트랙 대비 */
 .tr{background:#E4EAF3}
 </style>
+<style>
+/* ══ 반응형 — 태블릿·모바일 (마지막 로드) ══════════════════════ */
+/* 그리드·플렉스 자식의 min-width:auto 로 인한 가로 넘침 차단 */
+@media (max-width:1080px){
+  .grid>*,.viz>*,.dash>*,.otiles>*,.sysboard>*,.statrow>*,
+  .predgrid>*,.decisiongrid>*,.aband>*,.livekpis>*,.card,.kpi{min-width:0}
+  .hero{padding:20px 18px}
+  .hero .hl{flex:1 1 100%;min-width:0}
+  .hero .hstats,.hero .hm{margin-left:0;width:100%;justify-content:flex-start}
+  .hint{white-space:normal}
+  table{max-width:100%}
+}
+/* ── 태블릿 세로 (≤820) ── */
+@media (max-width:820px){
+  .viz{grid-template-columns:1fr 1fr}
+  .sysboard{grid-template-columns:repeat(3,1fr)}
+  .otiles{grid-template-columns:repeat(3,1fr)}
+  .livebar{grid-template-columns:1fr;padding:16px 18px}
+}
+/* ── 모바일 (≤640) ── */
+@media (max-width:640px){
+  .stage{padding:14px 12px 26px}
+  .bar{position:sticky;top:0;z-index:120;background:var(--bg);padding-top:10px}
+  .bar h1{font-size:17px}
+  .bar .sub,.bar .right .btn .lbl{display:none}
+  /* 다열 그리드 → 1열 */
+  .grid,.g2,.g3,.g4,.viz,.dash,.statrow,.predgrid,.decisiongrid,
+  .aband,.lines-grid,.whmap,.aiband .arecos{grid-template-columns:1fr!important}
+  /* 작은 타일은 2열 유지 */
+  .otiles,.sysboard,.gquad,.livekpis{grid-template-columns:repeat(2,1fr)!important}
+  /* 타이포 축소 */
+  .hero .htitle{font-size:20px}
+  .hero .hl .t{font-size:18px}
+  .hero .hl .s{font-size:11.5px}
+  .livebar .lh .t{font-size:18px}
+  .kpi .val{font-size:26px}
+  .card{padding:14px 13px}
+  .card h3{font-size:14.5px;flex-wrap:wrap;gap:4px}
+  /* 표 — 카드 안에서 가로 스크롤 */
+  .card>table,.tblwrap{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* 터치 타깃 확보 */
+  .btn,.vtab,.pchip,button{min-height:38px}
+  .vtabsBar,.vtabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .vtabsBar::-webkit-scrollbar,.vtabs::-webkit-scrollbar{display:none}
+  /* 로그인 화면 */
+  #login .lcard,.loginCard{width:calc(100vw - 32px);max-width:400px;padding:22px 18px}
+}
+/* ── 소형 (≤400) ── */
+@media (max-width:400px){
+  .otiles,.sysboard,.gquad,.livekpis{grid-template-columns:1fr!important}
+  .kpi .val{font-size:23px}
+}
+/* 가로 스크롤 최종 방어 */
+html,body{max-width:100%;overflow-x:hidden}
+</style>
 </head>
 <body>
 
