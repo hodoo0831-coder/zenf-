@@ -216,7 +216,7 @@
   .flowstep{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.2px}
   .flowstep b{width:24px;height:24px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:#edf3fa;color:#31567f}
   .flowstep.on{color:#176f42}.flowstep.on b{background:#dff3e8;color:#176f42}
-  .flowarrow{color:#aab8c8;font-weight:900}
+  .flowarrow{color:#7a8ba0;font-weight:900}
   .decisiongrid{display:grid;grid-template-columns:1.05fr 1.35fr 1.2fr;gap:12px;margin-bottom:16px}
   .decisioncard{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:16px;min-width:0}
   .decisioncard.now{border-top:3px solid #4f8fe8}.decisioncard.predict{border-top:3px solid #e39412}.decisioncard.act{border-top:3px solid #2aa864}
@@ -1037,7 +1037,7 @@ V.home=()=>{
   const whRate=DB.wh?whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0]):null;
   const hm=(lab,val,vals,col)=>`<div class="m"><div class="ml">${lab}</div><div class="mv tnum">${val}</div><div class="sp">${spark(vals,{color:col,w:104,h:24})}</div></div>`;
   const hero=`<div class="hero">
-    <div class="hl"><div class="k">AI CONTROL TOWER</div><div class="t">실시간 통합 운영 현황</div><div class="s">8개 Agent가 실측을 종합해 <b style="color:#9ff0cf">‘판단’까지 자동화</b> · AP 대전공장 가동 6/6 라인 · ${dataSource==='기준값'?'기준 데이터':'실데이터 '+dataSource}</div></div>
+    <div class="hl"><div class="k">AI CONTROL TOWER</div><div class="t">실시간 통합 운영 현황</div><div class="s">8개 Agent가 실측을 종합해 <b style="color:#0B7A43;text-decoration:underline;text-decoration-color:#8fd8b9">‘판단’까지 자동화</b> · AP 대전공장 가동 6/6 라인 · ${dataSource==='기준값'?'기준 데이터':'실데이터 '+dataSource}</div></div>
     <div class="hm">
       ${hm('생산 달성률',tp.ach+'<small>%</small>',[68,71,70,74,72,73,tp.ach],'#7fe0b0')}
       ${hm('OEE',oee+'<small>%</small>',[79,81,80,82,81,80,oee],'#7fe0b0')}
@@ -1518,7 +1518,7 @@ function laborStatus(){
     <div class="kpi"><div class="ic" data-ic="users"></div><div class="lab">총 필요 인원</div><div class="val">${headNeed()}<small>명</small></div></div>
     <div class="kpi"><div class="ic" data-ic="users"></div><div class="lab">현재 투입</div><div class="val">${headCur()}<small>명</small></div></div>
     <div class="kpi"><div class="ic" data-ic="alert"></div><div class="lab">부족 인원</div><div class="val neg">${gap}<small>명</small></div></div>
-    <div class="kpi"><div class="ic" data-ic="clock"></div><div class="lab">연차</div><div class="val" style="color:#ffcf5a">${DB.work[1].n}<small>명</small></div></div>
+    <div class="kpi"><div class="ic" data-ic="clock"></div><div class="lab">연차</div><div class="val" style="color:#b8860b">${DB.work[1].n}<small>명</small></div></div>
   </div>
   ${aib}
   <div class="grid g2" style="grid-template-columns:1.3fr 1fr">
@@ -1830,7 +1830,7 @@ V.data=()=>{
         <div class="mini" style="margin-top:4px">라인 데이터(라인/필요/출근/목표/실적/CAPA/불량%…) 자동 매핑</div>
       </div>
       <input id="file" type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importFile(this.files[0])">
-      <div class="mini" style="margin-top:10px">현재 데이터원: <b id="srcNow" style="color:#7fb8ff">${dataSource}</b></div>
+      <div class="mini" style="margin-top:10px">현재 데이터원: <b id="srcNow" style="color:#1c5fa8">${dataSource}</b></div>
     </div>
     <div class="card"><h3>② 템플릿 · 내보내기</h3>
       <p class="mini">양식 내려받아 값 채워 재업로드 · 헤더명 자동 인식.</p>
@@ -2316,7 +2316,9 @@ body{font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sa
 .login .brand{color:#1b2736 !important}.login .brand span{color:#2aa864 !important}
 .login .tagline{color:#5f7288 !important}
 .login .thesis{background:#eef8f2 !important;color:#177a4b !important;border:1px solid #cdeeda !important}
+.login .thesis b{color:#0B7A43 !important;text-decoration:underline;text-decoration-color:#8fd8b9;text-underline-offset:2px}
 .login .caps{color:#8d9db4 !important}
+.login .caps b{color:#1c3a54 !important;font-weight:800}
 .login label{color:#5f7288 !important}
 .roles button{background:#f7fafc !important;border:1px solid var(--line2) !important;color:#44566e !important}
 .roles button.on{background:#eef8f2 !important;border-color:#2aa864 !important;color:#177a4b !important;box-shadow:0 0 0 2px #2aa86422 !important}
@@ -2332,8 +2334,11 @@ body{font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sa
 .hero .htitle{color:#1b2736 !important}
 .hero .hsub{color:#5f7288 !important}
 .hero .hsub b{color:#177a4b !important}
-.hero .m .ml{color:#8d9db4 !important}
+.hero .m .ml{color:#5f7288 !important}
 .hero .m .mv{color:#1b2736 !important}
+.hero .m .mv small{color:#8d9db4 !important}
+.hero .hl .k{color:#2aa864 !important}
+.hero .hl .s{color:#5f7288 !important}
 /* 카드·KPI 플랫화 */
 .card,.kpi{box-shadow:var(--shadow) !important}
 .card:hover{box-shadow:0 4px 14px rgba(27,39,54,.09) !important}
