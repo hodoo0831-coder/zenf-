@@ -1473,8 +1473,313 @@ V.judge=()=>{
 V.insight=()=>{
   const tabs=[{k:'kpi',label:'KPI·LOSS 분석'},{k:'report',label:'월마감 보고서'}];
   const t=vtabActive('insight',tabs);
-  return vtabsBar('insight',tabs)+(t==='report'?V.report():V.kpi());
+  return insightExportBar()+vtabsBar('insight',tabs)+(t==='report'?V.report():V.kpi());
 };
+/* ============ 분석·보고 내보내기 — 엑셀 · PDF · PPT ============ */
+const CONTRACT_HC={office:90,prod:153,prodDelta:10};
+function insightExportBar(){
+  const btn=(kind,ic,t,s,primary)=>`<button onclick="exportInsight('${kind}')" style="display:flex;align-items:center;gap:9px;background:${primary?'#0EA75C':'rgba(255,255,255,.06)'};border:1px solid ${primary?'#0EA75C':'rgba(255,255,255,.16)'};color:#fff;border-radius:11px;padding:9px 15px;cursor:pointer;font-family:inherit;text-align:left">
+    <span style="font-size:19px">${ic}</span><span><span style="display:block;font-weight:800;font-size:13.5px">${t}</span><span style="display:block;font-size:10.5px;color:${primary?'#e7fbf1':'#9fb4d2'};font-weight:600;margin-top:1px">${s}</span></span></button>`;
+  return `<div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,#16283f,#0e1a2e);border:none">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:11px;letter-spacing:2.5px;color:#8fd8b9;font-weight:800">EXPORT</div>
+        <div style="font-size:16px;font-weight:800;color:#fff;margin-top:4px">경영 보고 3종 — 형식에 맞춰 즉시 생성</div>
+        <div style="font-size:11.5px;color:#8fa6c4;margin-top:3px">데이터원: 기준값·가정 산식 · 실시간 현장 입력 아님</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+        ${btn('xlsx','📊','엑셀','요약·라인KPI·LOSS·인력 4시트')}
+        ${btn('pdf','📄','PDF','인쇄용 경영 보고 문서')}
+        ${btn('ppt','📽','PPT','임원 보고 4슬라이드',true)}
+      </div>
+    </div></div>`;
+}
+function insightPack(){
+  const L=myLines(), tp=totProd(), oee=avgOEE(), df=avgDefect();
+  const avgA=Math.round(L.reduce((a,l)=>a+l.oeeA,0)/L.length);
+  const avgP=Math.round(L.reduce((a,l)=>a+l.oeeP,0)/L.length);
+  const avgQ=+(L.reduce((a,l)=>a+(100-l.defect),0)/L.length).toFixed(1);
+  const totMH=L.reduce((a,l)=>a+l.on*8,0);
+  const upph=totMH?Math.round(tp.a/totMH):0;
+  const otH=(DB.otTrend||[]).reduce((a,b)=>a+b.v,0);
+  const AS={price:300,wage:12000,otMul:1.5};
+  const missUnits=L.reduce((a,l)=>a+Math.max(0,l.target-l.actual),0);
+  const defUnits=L.reduce((a,l)=>a+Math.round(l.actual*l.defect/100),0);
+  const lossDef=defUnits*AS.price, lossOT=Math.round(otH*AS.wage*AS.otMul), lossOpp=missUnits*AS.price;
+  const hc=CONTRACT_HC, tot=hc.office+hc.prod;
+  const won=n=>n>=1e8?(n/1e8).toFixed(1)+'억':n>=1e4?Math.round(n/1e4).toLocaleString()+'만':n.toLocaleString();
+  const brief=buildDailyBrief();
+  const lines=L.map(l=>{const o=G.oee(l),up=Math.round(l.actual/(l.on*8||1));
+    return {key:l.key,ach:G.achieve(l),a:l.oeeA,p:l.oeeP,q:+(100-l.defect).toFixed(1),oee:o,upph:up,defect:l.defect,target:l.target,actual:l.actual};});
+  return {L,tp,oee,df,avgA,avgP,avgQ,totMH,upph,otH,AS,lossDef,lossOT,lossOpp,defUnits,missUnits,hc,tot,won,brief,lines,day:todayKR(),note:'기준값·가정 산식 기반 추정 · 실시간 현장 입력이 아님'};
+}
+function exportInsight(kind){
+  if(kind==='xlsx')return exportInsightXlsx();
+  if(kind==='ppt')return exportInsightPpt();
+  return exportInsightPdf();
+}
+function _insStatus(v,good,warn){return v>=good?{c:'#16a34a',t:'양호'}:v>=warn?{c:'#d97706',t:'주의'}:{c:'#dc2626',t:'위험'};}
+function exportInsightXlsx(){
+  const P=insightPack();
+  const wb=XLSX.utils.book_new();
+  const sum=XLSX.utils.aoa_to_sheet([
+    ['ZEN 분석·보고 — 경영 요약'],['작성일',P.day],['공장','AP 대전공장 · 제니엘 제조사업부 사업3팀'],['데이터 성격',P.note],[],
+    ['관리자 한 줄 요약'],[P.brief.oneLine],[],
+    ['① 핵심 지표'],
+    ['지표','값','판정','근거'],
+    ['OEE',P.oee+'%',_insStatus(P.oee,80,70).t,'가동 '+P.avgA+'% · 성능 '+P.avgP+'% · 양품 '+P.avgQ+'%'],
+    ['계획 준수율',P.tp.ach+'%',_insStatus(P.tp.ach,90,80).t,'실적 '+(P.tp.a/1000).toFixed(0)+'천 / 목표 '+(P.tp.t/1000).toFixed(0)+'천개'],
+    ['불량률',P.df+'%',P.df<=1.5?'양호':'주의','목표 1.5% 이하'],
+    ['인시생산성(UPPH)',P.upph+'개/인·h','','총 '+P.totMH+' MH 투입'],
+    [],['② 도급 인력'],
+    ['구분','인원','비고'],
+    ['업무도급',P.hc.office,'간접·사무'],
+    ['생산도급',P.hc.prod,'전월 대비 +'+P.hc.prodDelta+'명'],
+    ['합계',P.tot,''],
+    [],['③ LOSS 추정 (가정 단가 '+P.AS.price+'원/개 · 시급 '+P.AS.wage.toLocaleString()+'원)'],
+    ['항목','산식','금액'],
+    ['불량 LOSS',P.defUnits.toLocaleString()+'개 × '+P.AS.price+'원',P.won(P.lossDef)+'원'],
+    ['잔업 LOSS',P.otH+'h × '+P.AS.wage.toLocaleString()+'원 × '+P.AS.otMul,P.won(P.lossOT)+'원'],
+    ['기회 LOSS',P.missUnits.toLocaleString()+'개(목표 미달) × '+P.AS.price+'원',P.won(P.lossOpp)+'원'],
+    ['LOSS 합계','',P.won(P.lossDef+P.lossOT+P.lossOpp)+'원']
+  ]);
+  sum['!cols']=[{wch:18},{wch:24},{wch:12},{wch:44}];
+  XLSX.utils.book_append_sheet(wb,sum,'경영요약');
+  const line=XLSX.utils.aoa_to_sheet([['라인','목표','실적','달성률%','가동%','성능%','양품%','OEE%','UPPH','불량률%','판정']].concat(
+    P.lines.map(l=>[l.key,l.target,l.actual,l.ach,l.a,l.p,l.q,l.oee,l.upph,l.defect,_insStatus(l.ach,90,80).t])));
+  line['!cols']=[{wch:12},{wch:10},{wch:10},{wch:10},{wch:8},{wch:8},{wch:8},{wch:8},{wch:10},{wch:10},{wch:8}];
+  XLSX.utils.book_append_sheet(wb,line,'라인별 KPI');
+  const hc=XLSX.utils.aoa_to_sheet([['구분','인원','비고'],['업무도급',P.hc.office,'간접·사무'],['생산도급',P.hc.prod,'전월 대비 +'+P.hc.prodDelta],['합계',P.tot,'']]);
+  hc['!cols']=[{wch:14},{wch:10},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,hc,'도급인원');
+  const msg=XLSX.utils.aoa_to_sheet([['관리자 보고 메시지 (복사용)'],[P.brief.msg]]);
+  msg['!cols']=[{wch:90}];
+  XLSX.utils.book_append_sheet(wb,msg,'보고 메시지');
+  XLSX.writeFile(wb,'ZEN_분석보고_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('분석·보고를 엑셀로 내보냈습니다');
+}
+function exportInsightPdf(){
+  const P=insightPack();
+  const tag=(v,good,warn)=>{const s=_insStatus(v,good,warn);return `<span style="color:${s.c};font-weight:800">${s.t}</span>`;};
+  const rows=P.lines.map((l,i)=>{const s=_insStatus(l.ach,90,80),ds=l.defect<=1.5?{c:'#16a34a'}:{c:'#dc2626'};
+    return `<tr style="background:${i%2?'#f7f9fc':'#fff'}"><td><b>${l.key}</b></td><td class="num">${l.target.toLocaleString()}</td><td class="num">${l.actual.toLocaleString()}</td><td class="num" style="color:${s.c};font-weight:800">${l.ach}%</td><td class="num">${l.oee}%</td><td class="num" style="color:${ds.c};font-weight:800">${l.defect}%</td><td style="color:${s.c};font-weight:700">${s.t}</td></tr>`;}).join('');
+  const kpiCard=(l,v,c)=>`<div class="kc" style="border-top-color:${c||'#1D3A5F'}"><div class="l">${l}</div><div class="n">${v}</div></div>`;
+  const lossCard=(l,v,f)=>`<div class="lc"><div class="l">${l}</div><div class="n">${v}</div><div class="f">${f}</div></div>`;
+  const w=window.open('','_blank','width=980,height=1160');
+  if(!w){toast('팝업을 허용해 주세요');return;}
+  w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>ZEN 분석·보고 ${P.day}</title><style>
+    @page{size:A4;margin:16mm 14mm}
+    *{box-sizing:border-box}
+    body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#1b2736;margin:0;background:#fff}
+    .head{background:linear-gradient(120deg,#16283f,#1d3a5f 60%,#153050);color:#fff;padding:26px 34px;border-radius:0 0 14px 14px}
+    .head .eb{font-size:10.5px;letter-spacing:3px;color:#8fd8b9;font-weight:800}
+    .head h1{font-size:24px;margin:6px 0 4px;font-weight:900}
+    .head .sub{font-size:12px;color:#b9c9e2}
+    .wrap{padding:22px 34px 10px}
+    .note{background:#eef8f2;border:1px solid #cdeeda;color:#145c38;border-radius:9px;padding:9px 13px;font-size:11.5px;font-weight:700;margin-bottom:16px}
+    .brief{background:#f4f7fb;border-left:4px solid #0EA75C;border-radius:8px;padding:11px 15px;font-size:13.5px;font-weight:700;margin-bottom:18px}
+    h2{font-size:14.5px;color:#1d3a5f;margin:22px 0 10px;padding-bottom:6px;border-bottom:2px solid #e2e9f3}
+    .kgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:6px}
+    .kc{border-top:3px solid #1D3A5F;background:#f7f9fc;border-radius:0 0 9px 9px;padding:10px 11px}
+    .kc .l{font-size:10.5px;color:#5f6b7a;font-weight:700}
+    .kc .n{font-size:19px;font-weight:900;color:#1d3a5f;margin-top:2px}
+    table{width:100%;border-collapse:collapse;font-size:11.5px}
+    th{background:#1d3a5f;color:#fff;text-align:left;padding:8px 9px;font-size:11px}
+    td{padding:7px 9px;border-bottom:1px solid #edf1f6}
+    td.num{text-align:right;font-variant-numeric:tabular-nums}
+    .lgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:8px}
+    .lc{background:#fef2f2;border:1px solid #fbd5d5;border-radius:9px;padding:10px 12px}
+    .lc .l{font-size:10.5px;color:#9f4040;font-weight:700}
+    .lc .n{font-size:16.5px;font-weight:900;color:#b3261e;margin-top:2px}
+    .lc .f{font-size:9.5px;color:#a8746f;margin-top:3px}
+    .lc.tot{background:#1d3a5f}.lc.tot .l{color:#b9c9e2}.lc.tot .n{color:#fff}.lc.tot .f{color:#8fa6c4}
+    .foot{margin-top:26px;padding-top:12px;border-top:1px solid #e2e9f3;font-size:10px;color:#9aa7b8;display:flex;justify-content:space-between}
+    .pbtn{position:fixed;top:14px;right:16px;background:#1d3a5f;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer;font-family:inherit}
+    @media print{.pbtn{display:none}.head{border-radius:0}}
+  </style></head><body>
+    <button class="pbtn" onclick="window.print()">🖨 인쇄 / PDF 저장</button>
+    <div class="head"><div class="eb">2026 제2회 ZAIC · ZEN MANUFACTURING PLATFORM</div><h1>분석·보고 — 경영 요약</h1><div class="sub">AP 대전공장 · 제니엘 제조사업부 사업3팀 · ${P.day}</div></div>
+    <div class="wrap">
+      <div class="note">${P.note}</div>
+      <div class="brief">💬 ${P.brief.oneLine.replace(/</g,'&lt;')}</div>
+      <h2>① 핵심 지표</h2>
+      <div class="kgrid">
+        ${kpiCard('OEE',P.oee+'%',_insStatus(P.oee,80,70).c)}
+        ${kpiCard('계획 준수율',P.tp.ach+'%',_insStatus(P.tp.ach,90,80).c)}
+        ${kpiCard('불량률',P.df+'%',P.df<=1.5?'#16a34a':'#dc2626')}
+        ${kpiCard('업무도급',P.hc.office+'명')}
+        ${kpiCard('생산도급',P.hc.prod+'명 +'+P.hc.prodDelta,'#0EA75C')}
+      </div>
+      <h2>② 라인별 KPI 실측</h2>
+      <table><thead><tr><th>라인</th><th>목표</th><th>실적</th><th>달성률</th><th>OEE</th><th>불량률</th><th>판정</th></tr></thead><tbody>${rows}</tbody></table>
+      <h2>③ LOSS 추정 <span style="font-weight:600;color:#8a97a8;font-size:10.5px">가정 단가 ${P.AS.price}원/개 · 시급 ${P.AS.wage.toLocaleString()}원</span></h2>
+      <div class="lgrid">
+        ${lossCard('불량 LOSS',P.won(P.lossDef)+'원',P.defUnits.toLocaleString()+'개 × '+P.AS.price+'원')}
+        ${lossCard('잔업 LOSS',P.won(P.lossOT)+'원',P.otH+'h × 1.5배')}
+        ${lossCard('기회 LOSS',P.won(P.lossOpp)+'원',P.missUnits.toLocaleString()+'개 미달')}
+        <div class="lc tot"><div class="l">LOSS 합계</div><div class="n">${P.won(P.lossDef+P.lossOT+P.lossOpp)}원</div><div class="f">3개 항목 합산</div></div>
+      </div>
+      <div class="foot"><span>ZEN Manufacturing Platform · 자동 생성 문서 — 기준값 기반 추정치이며 실시간 현장 입력이 아닙니다</span><span>${P.day}</span></div>
+    </div>
+    <script>setTimeout(function(){try{window.print()}catch(e){}},450)<\/script>
+  </body></html>`);
+  w.document.close();
+}
+function _crc32(u8){let c=~0;for(let i=0;i<u8.length;i++){c^=u8[i];for(let k=0;k<8;k++)c=c&1?(c>>>1)^0xEDB88320:c>>>1;}return(~c)>>>0;}
+function _u16(n){return new Uint8Array([n&255,(n>>>8)&255]);}
+function _u32(n){return new Uint8Array([n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255]);}
+function zipStore(files){
+  const enc=new TextEncoder(), chunks=[], cds=[]; let off=0;
+  files.forEach(f=>{
+    const name=enc.encode(f.name), data=typeof f.data==='string'?enc.encode(f.data):f.data, crc=_crc32(data);
+    const loc=new Uint8Array(30+name.length); loc.set([0x50,0x4b,0x03,0x04,0x14,0,0,0,0,0,0,0,0,0]);
+    loc.set(_u32(crc),14); loc.set(_u32(data.length),18); loc.set(_u32(data.length),22);
+    loc.set(_u16(name.length),26); loc.set(name,30);
+    chunks.push(loc,data);
+    const cen=new Uint8Array(46+name.length); cen.set([0x50,0x4b,0x01,0x02,0x14,0,0x14,0,0,0,0,0,0,0,0,0]);
+    cen.set(_u32(crc),16); cen.set(_u32(data.length),20); cen.set(_u32(data.length),24);
+    cen.set(_u16(name.length),28); cen.set(_u32(off),42); cen.set(name,46);
+    cds.push(cen); off+=loc.length+data.length;
+  });
+  const cd=cds.reduce((a,b)=>a+b.length,0), body=chunks.reduce((a,b)=>a+b.length,0);
+  const eocd=new Uint8Array(22); eocd.set([0x50,0x4b,0x05,0x06,0,0,0,0]);
+  eocd.set(_u16(files.length),8); eocd.set(_u16(files.length),10); eocd.set(_u32(cd),12); eocd.set(_u32(body),16);
+  const out=new Uint8Array(body+cd+22); let p=0;
+  chunks.forEach(x=>{out.set(x,p);p+=x.length;}); cds.forEach(x=>{out.set(x,p);p+=x.length;}); out.set(eocd,p);
+  return out;
+}
+/* ---- PPTX 도형 헬퍼 (16:9, EMU 단위) ---- */
+const PPT_W=12192000, PPT_H=6858000;
+let _pptIdSeq=1; function _pptId(){return ++_pptIdSeq;}
+function _pptEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function pptBg(hex){return `<p:bg><p:bgPr><a:solidFill><a:srgbClr val="${hex}"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>`;}
+function pptRect(x,y,cx,cy,hex,opts){
+  opts=opts||{};
+  const geom=opts.round?'roundRect':'rect';
+  const line=opts.line?`<a:ln w="${opts.lineW||12700}"><a:solidFill><a:srgbClr val="${opts.line}"/></a:solidFill></a:ln>`:'<a:ln><a:noFill/></a:ln>';
+  return `<p:sp><p:nvSpPr><p:cNvPr id="${_pptId()}" name="shape"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="${Math.round(x)}" y="${Math.round(y)}"/><a:ext cx="${Math.round(cx)}" cy="${Math.round(cy)}"/></a:xfrm><a:prstGeom prst="${geom}"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="${hex}"/></a:solidFill>${line}</p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/></p:txBody></p:sp>`;
+}
+function pptText(x,y,cx,cy,text,opts){
+  opts=opts||{};
+  const sz=opts.sz||1400, color=opts.color||'1B2736', bold=opts.b?'1':'0', align=opts.align||'l', anchor=opts.anchor||'t';
+  const paras=String(text).split('\n').map(t=>`<a:p><a:pPr algn="${align}"/><a:r><a:rPr lang="ko-KR" sz="${sz}" b="${bold}" dirty="0"><a:solidFill><a:srgbClr val="${color}"/></a:solidFill><a:latin typeface="Malgun Gothic"/><a:ea typeface="Malgun Gothic"/><a:cs typeface="Malgun Gothic"/></a:rPr><a:t>${_pptEsc(t)}</a:t></a:r></a:p>`).join('');
+  return `<p:sp><p:nvSpPr><p:cNvPr id="${_pptId()}" name="tx"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="${Math.round(x)}" y="${Math.round(y)}"/><a:ext cx="${Math.round(cx)}" cy="${Math.round(cy)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/></p:spPr><p:txBody><a:bodyPr wrap="square" anchor="${anchor}"><a:noAutofit/></a:bodyPr><a:lstStyle/>${paras}</p:txBody></p:sp>`;
+}
+function pptTile(x,y,cx,cy,label,value,accentHex,bgHex){
+  return pptRect(x,y,cx,cy,bgHex||'F4F7FB')
+    +pptRect(x,y,26000,cy,accentHex||'0EA75C')
+    +pptText(x+64000,y+50000,cx-100000,320000,label,{sz:1050,color:'5F7288',b:1})
+    +pptText(x+64000,y+cy-620000,cx-100000,560000,value,{sz:2400,color:'1B2736',b:1});
+}
+function pptTableCell(text,w,opts){
+  opts=opts||{};
+  const fill=opts.fill?`<a:solidFill><a:srgbClr val="${opts.fill}"/></a:solidFill>`:'<a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill>';
+  const color=opts.color||'1B2736', bold=opts.b?'1':'0', sz=opts.sz||1200, align=opts.align||'l';
+  return `<a:tc><a:txBody><a:bodyPr/><a:lstStyle/><a:p><a:pPr algn="${align}"/><a:r><a:rPr lang="ko-KR" sz="${sz}" b="${bold}" dirty="0"><a:solidFill><a:srgbClr val="${color}"/></a:solidFill><a:latin typeface="Malgun Gothic"/><a:ea typeface="Malgun Gothic"/></a:rPr><a:t>${_pptEsc(text)}</a:t></a:r></a:p></a:txBody><a:tcPr marL="45000" marR="45000" marT="30000" marB="30000" anchor="ctr">${fill}</a:tcPr></a:tc>`;
+}
+function pptTable(x,y,cx,rowH,colWidths,headerRow,dataRows){
+  const grid=colWidths.map(w=>`<a:gridCol w="${Math.round(w)}"/>`).join('');
+  const hdr=`<a:tr h="${Math.round(rowH*1.05)}">`+headerRow.map((t,i)=>pptTableCell(t,colWidths[i],{fill:'1D3A5F',color:'FFFFFF',b:1,sz:1200,align:i===0?'l':'r'})).join('')+`</a:tr>`;
+  const rows=dataRows.map((r,ri)=>`<a:tr h="${Math.round(rowH)}">`+r.map((cell,ci)=>{
+    const c=(typeof cell==='object')?cell:{t:cell};
+    return pptTableCell(c.t,colWidths[ci],{fill:c.fill||(ri%2?'F4F7FB':'FFFFFF'),color:c.color||'1B2736',b:c.b,sz:1150,align:ci===0?'l':'r'});
+  }).join('')+`</a:tr>`).join('');
+  const cy=Math.round(rowH*1.05)+dataRows.length*Math.round(rowH);
+  return `<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="${_pptId()}" name="tbl"/><p:cNvGraphicFramePr><a:graphicFrameLocks noGrp="1"/></p:cNvGraphicFramePr><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="${Math.round(x)}" y="${Math.round(y)}"/><a:ext cx="${Math.round(cx)}" cy="${cy}"/></p:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table"><a:tbl><a:tblPr firstRow="1" bandRow="1"/><a:tblGrid>${grid}</a:tblGrid>${hdr}${rows}</a:tbl></a:graphicData></a:graphic></p:graphicFrame>`;
+}
+function exportInsightPpt(){
+  const P=insightPack();
+  const M=560000; // 여백
+  const slideXml=body=>`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld>${body}</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`;
+  const tree=(bg,shapes)=>`${bg||''}<p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>${shapes}</p:spTree>`;
+  const footer=t=>pptText(M,PPT_H-420000,PPT_W-2*M,320000,t,{sz:1000,color:'9AA7B8'});
+
+  /* 슬라이드 1 — 표지 */
+  const s1=slideXml(tree(pptBg('16283F'),
+    pptRect(M,2100000,900000,26000,'0EA75C')
+    +pptText(M,2260000,8000000,420000,'2026 제2회 ZAIC',{sz:1400,color:'8FD8B9',b:1})
+    +pptText(M,2740000,10800000,1000000,'ZEN 분석·보고',{sz:4400,color:'FFFFFF',b:1})
+    +pptText(M,3760000,10800000,500000,P.day+' · AP 대전공장',{sz:1600,color:'B9C9E2'})
+    +pptText(M,4160000,10800000,420000,'제니엘 제조사업부 사업3팀',{sz:1300,color:'7F93B3'})
+    +pptText(M,PPT_H-620000,10800000,420000,'기준값·가정 산식 기반 추정 · 실시간 현장 입력 아님',{sz:1000,color:'5D7396'})
+  ));
+
+  /* 슬라이드 2 — 핵심 지표 */
+  const tileW=(PPT_W-2*M-4*80000)/5, tileY=1500000, tileH=1500000;
+  const tiles=[
+    {l:'OEE',v:P.oee+'%',c:_insStatus(P.oee,80,70).c==='#dc2626'?'D64545':_insStatus(P.oee,80,70).c==='#d97706'?'E8940A':'0EA75C'},
+    {l:'계획 준수율',v:P.tp.ach+'%',c:'2F6FED'},
+    {l:'불량률',v:P.df+'%',c:P.df<=1.5?'0EA75C':'D64545'},
+    {l:'업무도급',v:P.hc.office+'명',c:'8A63D2'},
+    {l:'생산도급',v:P.hc.prod+'명',c:'0EA75C'}
+  ];
+  const tilesXml=tiles.map((t,i)=>pptTile(M+i*(tileW+80000),tileY,tileW,tileH,t.l,t.v,t.c)).join('');
+  const s2=slideXml(tree(pptBg('FFFFFF'),
+    pptText(M,420000,9000000,500000,'핵심 지표',{sz:2200,color:'16283F',b:1})
+    +pptText(M,900000,9000000,400000,P.day+' 기준',{sz:1200,color:'8A97A8'})
+    +tilesXml
+    +pptRect(M,tileY+tileH+220000,PPT_W-2*M,1200000,'EEF8F2',{round:true,line:'CDEEDA'})
+    +pptText(M+220000,tileY+tileH+380000,PPT_W-2*M-440000,900000,'💬 '+P.brief.oneLine,{sz:1300,color:'145C38',b:1})
+    +footer('ZEN Manufacturing Platform · 제니엘 제조사업부 사업3팀')
+  ));
+
+  /* 슬라이드 3 — 라인별 KPI */
+  const colW=[2200000,1700000,1700000,1700000,1500000,1500000];
+  const header=['라인','목표','실적','달성률','OEE','불량률'];
+  const rows3=P.lines.map(l=>[
+    {t:l.key,b:1},
+    {t:l.target.toLocaleString()},
+    {t:l.actual.toLocaleString()},
+    {t:l.ach+'%',color:_insStatus(l.ach,90,80).c==='#dc2626'?'D64545':_insStatus(l.ach,90,80).c==='#d97706'?'B8860B':'0B7A43',b:1},
+    {t:l.oee+'%'},
+    {t:l.defect+'%',color:l.defect<=1.5?'0B7A43':'D64545',b:1}
+  ]);
+  const s3=slideXml(tree(pptBg('FFFFFF'),
+    pptText(M,420000,9000000,500000,'라인별 KPI 실측',{sz:2200,color:'16283F',b:1})
+    +pptText(M,900000,9000000,400000,'목표 대비 실적 · '+P.lines.length+'개 라인',{sz:1200,color:'8A97A8'})
+    +pptTable(M,1600000,PPT_W-2*M,560000,colW,header,rows3)
+    +footer('ZEN Manufacturing Platform · 제니엘 제조사업부 사업3팀')
+  ));
+
+  /* 슬라이드 4 — LOSS 추정 · 도급 인력 */
+  const lossW=(PPT_W-2*M-3*80000)/4;
+  const lossXml=[
+    {l:'불량 LOSS',v:P.won(P.lossDef)+'원',f:P.defUnits.toLocaleString()+'개 × '+P.AS.price+'원'},
+    {l:'잔업 LOSS',v:P.won(P.lossOT)+'원',f:P.otH+'h × 1.5배'},
+    {l:'기회 LOSS',v:P.won(P.lossOpp)+'원',f:P.missUnits.toLocaleString()+'개 미달'}
+  ].map((c,i)=>pptRect(M+i*(lossW+80000),1500000,lossW,1500000,'FEF2F2',{round:true,line:'FBD5D5'})
+    +pptText(M+i*(lossW+80000)+70000,1560000,lossW-120000,320000,c.l,{sz:1050,color:'9F4040',b:1})
+    +pptText(M+i*(lossW+80000)+70000,2100000,lossW-120000,500000,c.v,{sz:1900,color:'B3261E',b:1})
+    +pptText(M+i*(lossW+80000)+70000,2620000,lossW-120000,320000,c.f,{sz:900,color:'A8746F'})
+  ).join('')
+  +pptRect(M+3*(lossW+80000),1500000,lossW,1500000,'16283F',{round:true})
+  +pptText(M+3*(lossW+80000)+70000,1560000,lossW-120000,320000,'LOSS 합계',{sz:1050,color:'B9C9E2',b:1})
+  +pptText(M+3*(lossW+80000)+70000,2100000,lossW-120000,500000,P.won(P.lossDef+P.lossOT+P.lossOpp)+'원',{sz:1900,color:'FFFFFF',b:1})
+  +pptText(M+3*(lossW+80000)+70000,2620000,lossW-120000,320000,'3개 항목 합산',{sz:900,color:'8FA6C4'});
+  const s4=slideXml(tree(pptBg('FFFFFF'),
+    pptText(M,420000,9000000,500000,'LOSS 추정 · 도급 인력',{sz:2200,color:'16283F',b:1})
+    +pptText(M,900000,9000000,400000,'가정 단가 '+P.AS.price+'원/개 · 시급 '+P.AS.wage.toLocaleString()+'원',{sz:1200,color:'8A97A8'})
+    +lossXml
+    +pptTile(M,3300000,tileW,1300000,'업무도급',P.hc.office+'명','8A63D2')
+    +pptTile(M+tileW+80000,3300000,tileW,1300000,'생산도급',P.hc.prod+'명 (+'+P.hc.prodDelta+')','0EA75C')
+    +pptTile(M+2*(tileW+80000),3300000,tileW,1300000,'도급 합계',P.tot+'명','2F6FED')
+    +footer('ZEN Manufacturing Platform · 제니엘 제조사업부 사업3팀 · 자동 생성 문서')
+  ));
+
+  const files=[
+    {name:'[Content_Types].xml',data:'<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slides/slide1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/><Override PartName="/ppt/slides/slide2.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/><Override PartName="/ppt/slides/slide3.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/><Override PartName="/ppt/slides/slide4.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/></Types>'},
+    {name:'_rels/.rels',data:'<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>'},
+    {name:'ppt/presentation.xml',data:`<?xml version="1.0" encoding="UTF-8"?><p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:sldIdLst><p:sldId id="256" r:id="rId1"/><p:sldId id="257" r:id="rId2"/><p:sldId id="258" r:id="rId3"/><p:sldId id="259" r:id="rId4"/></p:sldIdLst><p:sldSz cx="${PPT_W}" cy="${PPT_H}"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>`},
+    {name:'ppt/_rels/presentation.xml.rels',data:'<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide4.xml"/></Relationships>'},
+    {name:'ppt/slides/slide1.xml',data:s1},
+    {name:'ppt/slides/slide2.xml',data:s2},
+    {name:'ppt/slides/slide3.xml',data:s3},
+    {name:'ppt/slides/slide4.xml',data:s4}
+  ];
+  const blob=new Blob([zipStore(files)],{type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+  const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='ZEN_분석보고_'+new Date().toISOString().slice(0,10)+'.pptx';a.click();URL.revokeObjectURL(u);
+  toast('분석·보고를 PPT 4슬라이드로 내보냈습니다');
+}
 function prodStatus(){
   const L=myLines();const tp=totProd();const ends=L.map(l=>l.end).sort();
   const rows=L.map(l=>{const a=G.achieve(l),col=sc(a,70,60);return `<div class="barrow"><div class="nm">${l.key}</div><div>${pbar(a,col)}<div class="mini" style="margin-top:4px">CAPA 부하 ${G.load(l)}% · 예상종료 ${l.end}</div></div><div class="vv" style="color:${col}">${a}%</div></div>`;}).join('');
