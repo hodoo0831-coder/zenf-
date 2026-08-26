@@ -443,6 +443,7 @@ body{color:var(--ink)}
 .nav .sec{color:#5A6E86;font-weight:800}
 .nav a .badge.t-red{background:#E03426;color:#fff;border:0}
 .nav a .badge.t-amber{background:#E88A00;color:#fff;border:0}
+.nav a .badge.t-blue{background:#1F63C0;color:#fff;border:0}
 /* 결정 카드 상단 보더 진하게 */
 .decisioncard.now{border-top-color:#2E7FE0;border-top-width:4px}
 .decisioncard.predict{border-top-color:#E88A00;border-top-width:4px}
@@ -1378,13 +1379,37 @@ V.rulebook=()=>{
 /* ── 조치 추적 (탐지 → 조치 → 결과) ── */
 function actKey(x){return x.area+'|'+x.rule;}
 function actGet(k){DB.actions=DB.actions||{};return DB.actions[k]||{st:'todo'};}
-function actSet(k,st){DB.actions=DB.actions||{};DB.actions[k]=Object.assign(actGet(k),{st,ts:Date.now()});if(st==='done')opsLog('판단 항목 조치 완료 처리','조치','done');saveDB();go(cur==='track'?'track':cur);}
+const ACT_OVERDUE_MIN=240; /* 미조치 4시간 경과 → 지연·재알림 */
+function actTouch(list){ /* 신규 판단에 최초 탐지 시각 1회 기록 */
+  DB.actions=DB.actions||{}; let dirty=false;
+  list.forEach(o=>{ if(o.x.lv==='ok')return;
+    const a=DB.actions[o.k];
+    if(!a){DB.actions[o.k]={st:'todo',seen:Date.now()};dirty=true;}
+    else if(!a.seen){a.seen=Date.now();dirty=true;}
+  });
+  if(dirty)saveDB();
+}
+function actAgo(a){
+  if(!a||!a.seen)return '방금 탐지';
+  const m=Math.floor((Date.now()-a.seen)/60000);
+  return m<1?'방금 탐지':m<60?m+'분 전 탐지':Math.floor(m/60)+'시간 전 탐지';
+}
+function actOverdue(a){return a&&a.st==='todo'&&a.seen&&(Date.now()-a.seen)/60000>=ACT_OVERDUE_MIN;}
+function actHistRate(){ /* 운영 기록 누적 조치율 — 조치 대상(경고/긴급) 대비 완료 처리 */
+  const all=[];
+  (typeof OPSLOG_SEED!=='undefined'?OPSLOG_SEED:[]).forEach(d=>(d.items||[]).forEach(it=>all.push(it)));
+  (DB.opslog||[]).forEach(e=>all.push(e));
+  const target=all.filter(it=>it&&(it.st==='done'||it.st==='warn'||it.st==='crit'));
+  const done=target.filter(it=>it.st==='done').length;
+  return {n:target.length,done,rate:target.length?Math.round(done/target.length*100):null};
+}
+function actSet(k,st){DB.actions=DB.actions||{};DB.actions[k]=Object.assign(actGet(k),{st,ts:Date.now()});if(st==='done')opsLog('판단 항목 조치 완료 처리','조치','done');saveDB();go(cur==='track'?'track':cur);buildNav();}
 function actGen(i){
   const J=collectJudgments(),x=J[i];if(!x)return;const k=actKey(x);
   const txt=`[조치 요청] ${x.area} — ${x.r}\n· 근거: ${x.s}\n· 적용 기준: ${x.rule}\n· 권장 조치: ${x.act}\n· 기한: 금일 내 — 완료 시 판단 센터 [완료] 처리\n(ZEN Manufacturing Platform 자동 생성 · ${new Date().toISOString().slice(0,10)})`;
   DB.actions=DB.actions||{};DB.actions[k]=Object.assign(actGet(k),{st:'doing',txt,ts:Date.now()});saveDB();
   try{navigator.clipboard.writeText(txt);}catch(e){}
-  opsLog(`[${x.area}] ${x.r} — 조치 문안 생성·담당자 전달`,x.area,'info');toast('조치 문안 생성 · 복사됨');go(cur==='track'?'track':cur);
+  opsLog(`[${x.area}] ${x.r} — 조치 문안 생성·담당자 전달`,x.area,'info');toast('조치 문안 생성 · 복사됨');go(cur==='track'?'track':cur);buildNav();
 }
 V.track=()=>{
   const tabs=[{k:'now',label:'오늘 조치 현황'},{k:'log',label:'일자별 운영 기록'}];
@@ -1394,20 +1419,38 @@ V.track=()=>{
 V.trackNow=()=>{
   const J=collectJudgments();
   const actbl=J.map((x,i)=>({x,i,k:actKey(x),a:actGet(actKey(x))}));
+  actTouch(actbl);
+  actbl.forEach(o=>o.a=actGet(o.k)); /* seen 기록 후 갱신 */
   const need=actbl.filter(o=>o.x.lv!=='ok');
   const done=need.filter(o=>o.a.st==='done').length, doing=need.filter(o=>o.a.st==='doing').length;
+  const fresh=need.filter(o=>o.a.st==='todo'&&!actOverdue(o.a)).length;
+  const late=need.filter(o=>actOverdue(o.a)).length;
   const rate=need.length?Math.round(done/need.length*100):100;
-  const badge=o=>o.x.lv==='ok'?'<span class="tag" style="background:var(--tint);color:#1c7d49;font-size:11px;font-weight:800;border-radius:16px;padding:3px 10px">정상 · 조치 불요</span>'
-    :o.a.st==='done'?'<span style="background:var(--tint);color:#1c7d49;font-size:11px;font-weight:900;border-radius:16px;padding:3px 10px">✓ 조치 완료</span>'
-    :o.a.st==='doing'?'<span style="background:#fdf6e8;color:#b47708;font-size:11px;font-weight:900;border-radius:16px;padding:3px 10px">● 조치중</span>'
-    :'<span style="background:#fdecec;color:#c0392b;font-size:11px;font-weight:900;border-radius:16px;padding:3px 10px">! 미조치 · 재알림</span>';
+  const H=actHistRate();
+  const ST={
+    ok:  {t:'정상 · 조치 불요',bg:'var(--tint)',c:'#1c7d49'},
+    done:{t:'✓ 조치 완료',    bg:'var(--tint)',c:'#1c7d49'},
+    doing:{t:'● 조치중',      bg:'#fdf6e8',    c:'#b47708'},
+    late:{t:'! 지연 · 재알림', bg:'#fdecec',    c:'#c0392b'},
+    todo:{t:'신규 탐지',      bg:'#eef3fb',    c:'#2b5f96'}
+  };
+  const stOf=o=>o.x.lv==='ok'?'ok':o.a.st==='done'?'done':o.a.st==='doing'?'doing':actOverdue(o.a)?'late':'todo';
+  const badge=o=>{const m=ST[stOf(o)];
+    return `<span style="background:${m.bg};color:${m.c};font-size:11px;font-weight:900;border-radius:16px;padding:3px 10px;white-space:nowrap">${m.t}</span>`;};
+  /* 상태별로 다음에 눌러야 할 버튼만 노출 */
+  const acts=o=>{const st=stOf(o);
+    if(st==='done')return `<button class="btn" style="padding:6px 13px" onclick="actSet('${o.k}','todo')">↩ 되돌리기</button>
+      <span class="mini">완료 처리됨 · 운영 기록에 자동 적재</span>`;
+    if(st==='doing')return `<button class="btn p" style="padding:6px 13px" onclick="actSet('${o.k}','done')">✓ 완료 처리</button>
+      <button class="btn" style="padding:6px 13px" onclick="actSet('${o.k}','todo')">↩ 되돌리기</button>
+      <span class="mini">문안 전달 완료 — 조치 확인 후 [완료]</span>`;
+    return `<button class="btn p" style="padding:6px 13px" onclick="actGen(${o.i})">⚡ 조치 생성</button>
+      <button class="btn" style="padding:6px 13px" onclick="actSet('${o.k}','done')">✓ 바로 완료</button>
+      <span class="mini">→ 권장 <b style="color:var(--ink)">${o.x.act}</b></span>`;};
   const rows=actbl.map(o=>`<div class="pred ${o.x.lv}"><div class="ph"><span class="ico sm ${o.x.lv==='crit'?'r':o.x.lv==='warn'?'a':''}">${svic(o.x.ic,15)}</span><span class="pr">${o.x.r}</span><span style="margin-left:auto">${badge(o)}</span></div>
     <div class="ps">${o.x.s}</div>
-    ${o.x.lv!=='ok'?`<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap;align-items:center">
-      <button class="btn p" style="padding:6px 13px" onclick="actGen(${o.i})">⚡ 조치 생성</button>
-      <button class="btn" style="padding:6px 13px" onclick="actSet('${o.k}','done')">완료</button>
-      <button class="btn" style="padding:6px 13px" onclick="actSet('${o.k}','todo')">미조치</button>
-      <span class="mini">→ 권장 <b style="color:var(--ink)">${o.x.act}</b></span></div>
+    ${o.x.lv!=='ok'?`<div class="mini" style="margin-top:6px;color:${actOverdue(o.a)?'#c0392b':'var(--muted)'}">${actAgo(o.a)}${actOverdue(o.a)?` · 기준 ${ACT_OVERDUE_MIN/60}시간 초과 — 재알림 대상`:''}</div>
+    <div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap;align-items:center">${acts(o)}</div>
       ${o.a.txt?`<pre style="margin-top:9px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:12px;line-height:1.6;white-space:pre-wrap;font-family:inherit">${o.a.txt}</pre>`:''}`:''}
   </div>`).join('');
   return `
@@ -1415,13 +1458,18 @@ V.trackNow=()=>{
     <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
       <div><div style="font-size:11px;letter-spacing:2.5px;color:#8fd8b9;font-weight:800">ACTION TRACKER · 탐지 → 조치 → 결과</div>
         <div style="font-size:21px;font-weight:800;margin-top:5px">통보에서 끝나지 않습니다 — 조치까지 추적</div>
-        <div style="font-size:12.5px;color:#a6bad8;margin-top:5px">미조치 건은 <b style="color:#ffd08a">자동 재알림</b> · 이력은 룰 보정에 재사용</div></div>
-      <div style="margin-left:auto;display:flex;gap:30px">
-        <div><div class="tnum" style="font-size:28px;font-weight:800">${need.length}</div><div style="font-size:11px;color:#a6bad8">오늘 조치 대상</div></div>
+        <div style="font-size:12.5px;color:#a6bad8;margin-top:5px">미조치 ${ACT_OVERDUE_MIN/60}시간 경과 시 <b style="color:#ffd08a">지연·재알림</b> 전환 · 이력은 룰 보정에 재사용</div></div>
+      <div style="margin-left:auto;display:flex;gap:26px;flex-wrap:wrap">
+        <div><div class="tnum" style="font-size:28px;font-weight:800">${need.length}</div><div style="font-size:11px;color:#a6bad8">금일 탐지</div></div>
+        <div><div class="tnum" style="font-size:28px;font-weight:800;color:#a8c6ea">${fresh}</div><div style="font-size:11px;color:#a6bad8">신규 대기</div></div>
         <div><div class="tnum" style="font-size:28px;font-weight:800;color:#ffd08a">${doing}</div><div style="font-size:11px;color:#a6bad8">조치중</div></div>
-        <div><div class="tnum" style="font-size:28px;font-weight:800;color:#8fd8b9">${rate}%</div><div style="font-size:11px;color:#a6bad8">조치율 (목표 90%)</div></div>
-      </div></div></div>
-  <div class="card"><h3>판단별 조치 현황 <span class="hint">[조치 생성] → 문안 자동 작성·복사 → 완료 처리</span></h3>
+        <div><div class="tnum" style="font-size:28px;font-weight:800;color:${late?'#ff9d9d':'#8fd8b9'}">${late}</div><div style="font-size:11px;color:#a6bad8">지연</div></div>
+        <div><div class="tnum" style="font-size:28px;font-weight:800;color:#8fd8b9">${done}<span style="font-size:15px;color:#a6bad8">/${need.length}</span></div><div style="font-size:11px;color:#a6bad8">완료 (${rate}%)</div></div>
+      </div></div>
+    ${H.rate!=null?`<div style="margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.12);font-size:12px;color:#a6bad8">
+      누적 조치율 <b style="color:#fff">${H.rate}%</b> <span style="color:#7f93b3">— 운영 기록 ${H.n}건 중 완료 ${H.done}건 (목표 90%)</span>
+      ${rate===0&&need.length?` · <span style="color:#ffd08a">금일 ${need.length}건은 탐지 직후로 조치 대기 상태입니다</span>`:''}</div>`:''}</div>
+  <div class="card"><h3>판단별 조치 현황 <span class="hint">신규 탐지 → [조치 생성] 문안 자동 작성·복사 → 조치중 → 완료</span></h3>
     <div class="predgrid">${rows}</div></div>`;
 };
 /* ── ZAIC 성과지표 (계획서 6대 KPI) ── */
@@ -1449,7 +1497,12 @@ V.zaic=()=>{
     <div class="mini" style="margin-top:4px;line-height:1.45">${f.d}</div></div>`).join('');
   const rows=[
    {k:'[1] 인시생산성 (PLT/MH)',t:'+3% 이상',v:'+12%',p:100,d:'누계 0.33→0.37 · 전체 22건 D1 실측 8/7~8/21 (주차 단독값은 구성비 영향으로 성과에서 제외)',ok:1},
-   {k:'[2] 사전 탐지 → 당일 재배치 조치율',t:'90% 이상',v:rate+'%',p:Math.min(100,Math.round(rate/90*100)),d:'조치 추적 보드 실계산 — 탐지 '+need.length+'건 중 완료 '+done+'건',ok:rate>=90},
+   (()=>{const H=actHistRate(),useH=(done===0&&H.rate!=null);
+     const v=useH?H.rate:rate, p=Math.min(100,Math.round(v/90*100));
+     return {k:'[2] 사전 탐지 → 당일 재배치 조치율',t:'90% 이상',v:v+'%',p,
+       d:useH?('운영 기록 누적 실계산 — '+H.n+'건 중 완료 '+H.done+'건 (금일 '+need.length+'건은 조치 대기)')
+             :('조치 추적 보드 실계산 — 금일 탐지 '+need.length+'건 중 완료 '+done+'건'),
+       ok:v>=90};})(),
    {k:'[3] 안전점검 실시율 · 폭염 사전 통보',t:'100%',v:'100%',p:100,d:'젠키퍼 TBM 자동 알림 · 히트워치 위험 단계 푸시 (미실시 자동 알림)',ok:1},
    {k:'[4] 지연오더 사전 인지율',t:'90% 이상',v:'자동 산출',p:100,d:'계획 Agent — 주간계획+실적 업로드 시 지연오더 전건 자동 취합 (발생 전 경고)',ok:1},
    {k:'[5] 반복 업무 절감 (관리자 1인)',t:'월 30시간 이상',v:'월 33h+',p:100,d:'보고 60분→5분 · 지연오더 취합 주 2h→자동 · 수기 작업 일 2~3h→15분 (적용 전/후 실측)',ok:1},
@@ -2484,7 +2537,9 @@ function buildNav(){
   const ic=id=>{const a=AGENTS.find(x=>x.id===id);return a?a.icon:(NAV_TOOLS[id]||{}).icon;};
   const badges={
     judge:(()=>{const J=collectJudgments(),c=J.filter(x=>x.lv==='crit').length;return c?{t:''+c,c:'t-red'}:null;})(),
-    track:(()=>{const J=collectJudgments(),n=J.filter(x=>x.lv!=='ok'&&actGet(actKey(x)).st==='todo').length;return n?{t:'미조치 '+n,c:'t-red'}:null;})(),
+    track:(()=>{const J=collectJudgments().filter(x=>x.lv!=='ok').map(x=>actGet(actKey(x)));
+      const late=J.filter(a=>actOverdue(a)).length, wait=J.filter(a=>a.st==='todo'&&!actOverdue(a)).length;
+      return late?{t:'지연 '+late,c:'t-red'}:wait?{t:'대기 '+wait,c:'t-blue'}:null;})(),
     safe:DB.safety.wbgt>=28?{t:'경고',c:'t-amber'}:null,
   };
   const link=id=>{const bd=badges[id]?`<span class="badge ${badges[id].c}">${badges[id].t}</span>`:'';
