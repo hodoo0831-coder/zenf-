@@ -555,7 +555,7 @@ html,body{max-width:100%;overflow-x:hidden}
         <span class="src" id="srcTag">데이터: 기준값</span>
         <div class="clock">
           <div class="d" id="topDate">—</div>
-          <div class="r"><span class="dot"></span> 자동 갱신 중</div>
+          <div class="r" id="refreshTag"><span class="dot"></span> 자동 갱신 중</div>
         </div>
       </div>
     </div>
@@ -866,7 +866,7 @@ function sysPreview(s){
     wsub:'대기 설비·생산 종료·세척시간·긴급도·가용인원 입력 → 추천 순위 확인',
     tiles:[tile('세척 대기','4 설비','#17934f'),tile('최우선','튜브 성형','#dc4b4b'),tile('예상 완료','15:40','#12b886'),tile('긴급','1 건','#f59f00')],
     asub:'점수 기반 순서·예상 완료시간 자동 추천 · 현장 수정 가능(사유 기록)',
-    kpis:[kpi('자동판단 정확도','95%','목표','#39b98a'),kpi('세척 대기','4 설비','실시간','#5ab0ff'),kpi('지연위험','1 건','주의','#d98a2b')],
+    kpis:[kpi('자동판단율','95%','목표치','#39b98a'),kpi('세척 대기','4 설비','실시간','#5ab0ff'),kpi('지연위험','1 건','주의','#d98a2b')],
     cap:'점수 기반 우선순위 (긴급도·여유시간·가용인원)',
     bars:[bar('1위 튜브 성형',89,'#dc4b4b'),bar('2위 치약충전',76,'#f59f00'),bar('3위 일회용',64,'#17934f')],
     note:'추천 순위는 현장 수정 가능 · 변경사유 저장 → 지속 학습'
@@ -949,7 +949,7 @@ const AGENTS=[
   {id:'ops',name:'현장 운영',icon:'⚙️',sub:'생산 · 인력 · 세척 · 창고 · 안전 · 품질'},
   {id:'planhub',name:'생산·계획 Agent',icon:'📈',sub:'금일 실적 · 주간계획 · 부하율 · 지연오더'},
   {id:'labor',name:'인력 Agent',icon:'👥',sub:'출근 · 결원 · 대체인력 · 잔업 추천'},
-  {id:'clean',name:'세척 Agent',icon:'🧼',sub:'세척 우선순위 자동 추천 · 95% 자동판단'},
+  {id:'clean',name:'세척 Agent',icon:'🧼',sub:'세척 우선순위 자동 추천 · 자동판단율 목표 95%'},
   {id:'stock',name:'창고 Agent',icon:'📦',sub:'포장재 창고 적치 · 구역별 포화율'},
   {id:'orikonwash',name:'간접작업 Agent',icon:'📦',sub:'오리콘·P-BOX 실적 · 5초 자동집계'},
   {id:'safe',name:'안전 Agent',icon:'🦺',sub:'TBM · 폭염 · 위험요인 추천'},
@@ -1037,7 +1037,7 @@ V.home=()=>{
   const whRate=DB.wh?whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0]):null;
   const hm=(lab,val,vals,col)=>`<div class="m"><div class="ml">${lab}</div><div class="mv tnum">${val}</div><div class="sp">${spark(vals,{color:col,w:104,h:24})}</div></div>`;
   const hero=`<div class="hero">
-    <div class="hl"><div class="k">AI CONTROL TOWER</div><div class="t">실시간 통합 운영 현황</div><div class="s">8개 Agent가 실측을 종합해 <b style="color:#0B7A43;text-decoration:underline;text-decoration-color:#8fd8b9">‘판단’까지 자동화</b> · AP 대전공장 가동 6/6 라인 · ${dataSource==='기준값'?'기준 데이터':'실데이터 '+dataSource}</div></div>
+    <div class="hl"><div class="k">AI CONTROL TOWER</div><div class="t">통합 운영 현황</div><div class="s">8개 Agent가 실측을 종합해 <b style="color:#0B7A43;text-decoration:underline;text-decoration-color:#8fd8b9">‘판단’까지 자동화</b> · AP 대전공장 가동 6/6 라인 · ${dataSource==='기준값'?'<b style="color:#8a7333">기준 데이터(시드)</b> — 실측 연결 시 자동 전환':'실데이터 '+dataSource}</div></div>
     <div class="hm">
       ${hm('생산 달성률',tp.ach+'<small>%</small>',[68,71,70,74,72,73,tp.ach],'#7fe0b0')}
       ${hm('OEE',oee+'<small>%</small>',[79,81,80,82,81,80,oee],'#7fe0b0')}
@@ -1298,38 +1298,38 @@ V.judgeLog=()=>{
 
 /* ============ 판단 룰 카탈로그 · 조치 추적 · ZAIC 성과지표 ============ */
 const RULEBOOK=[
- {id:'R-01',agent:'인력',cond:'부하율 = 계획량 ÷ 인력 주CAPA',th:'> 140%',judge:'인력 부족',act:'여유 그룹 재배치 · 필요 T/O 산출'},
- {id:'R-02',agent:'인력',cond:'부하율',th:'< 70%',judge:'여유 인력',act:'타 그룹 지원 전환 추천'},
- {id:'R-03',agent:'인력',cond:'그룹 간 부족·여유 격차',th:'> 0.4명',judge:'재배치 대상',act:'이동 배치안 자동 생성'},
- {id:'R-04',agent:'인력',cond:'신장률 시뮬레이션(±%)',th:'입력값',judge:'필요 인원 변화',act:'시나리오별 T/O 재산출'},
- {id:'R-05',agent:'인력',cond:'주간계획 업로드',th:'즉시',judge:'익주 부족·여유 사전 산출',act:'발생 전 알람 (선제 판단)'},
- {id:'R-06',agent:'생산',cond:'오더 달성률',th:'< 70%',judge:'지연 위험 오더',act:'우선순위 재조정 · 투입 강화'},
- {id:'R-07',agent:'생산',cond:'CAPA 부하율',th:'≥ 100%',judge:'과부하 라인',act:'잔업·증원 검토'},
- {id:'R-08',agent:'생산',cond:'계획 대비 실적 (오더별)',th:'< 100%',judge:'지연오더 자동 취합',act:'부족수량 순 목록 · 엑셀 산출'},
- {id:'R-09',agent:'생산',cond:'시간당 산출 급락',th:'전시간 −30%',judge:'라인 이상 징후',act:'설비·인력 점검 알림'},
- {id:'R-10',agent:'세척',cond:'우선순위 점수 산식',th:'전환40+주기35+부하25',judge:'세척 순번 자동 추천',act:'순위·예상 완료시간 제시'},
- {id:'R-11',agent:'세척',cond:'제품·색상·알러지 전환',th:'전환 발생',judge:'전환 가중 1.0 (최우선)',act:'해당 설비 상위 배치'},
- {id:'R-12',agent:'세척',cond:'세척주기 경과',th:'≥ 8h',judge:'주기 가중 상승',act:'우선순위 점수 가산'},
- {id:'R-13',agent:'세척',cond:'우선순위 점수',th:'≥ 75점',judge:'지연 위험',act:'CIP 병렬 투입 권고'},
- {id:'R-14',agent:'세척',cond:'현장 순위 수정 + 사유 저장',th:'수정 발생',judge:'룰 보정 대상',act:'가중치 학습 반영 (95% 자동판단)'},
- {id:'R-15',agent:'창고',cond:'구역 적치율',th:'≥ 100%',judge:'초과 구역',act:'여유 구역 재배치 · 출하 우선'},
- {id:'R-16',agent:'창고',cond:'구역 적치율',th:'90~99%',judge:'포화 임박',act:'입고 억제 · 모니터링 강화'},
- {id:'R-17',agent:'창고',cond:'주간 증가율 반영 익주 예측',th:'≥ 100%',judge:'포화 예측',act:'선제 재배치안 생성'},
- {id:'R-18',agent:'창고',cond:'초과분 재배치 비용',th:'거리·환적 가중',judge:'최적 이동 경로',act:'재배치안 + 보고문 자동 작성'},
- {id:'R-19',agent:'창고',cond:'자재 소진일수 = 재고÷일소비',th:'≤ 재주문점',judge:'발주 필요',act:'즉시 발주 추천 (MOQ 반영)'},
- {id:'R-20',agent:'안전',cond:'WBGT (온열지수)',th:'≥ 28℃',judge:'폭염 주의',act:'수분 · 휴식 안내'},
- {id:'R-21',agent:'안전',cond:'WBGT',th:'≥ 31℃',judge:'폭염 경고',act:'시간당 10분 휴식 · 옥외 단축'},
- {id:'R-22',agent:'안전',cond:'체감온도 (히트워치)',th:'≥ 35℃',judge:'위험',act:'푸시 알람 · 작업시간 조정'},
- {id:'R-23',agent:'안전',cond:'체감온도',th:'≥ 38℃',judge:'옥외작업 중지',act:'전면 중지 통보 100%'},
- {id:'R-24',agent:'안전',cond:'작업 전 TBM 실시 여부',th:'미실시',judge:'점검 누락',act:'자동 알림 100% (실시율 100%)'},
- {id:'R-25',agent:'안전',cond:'위험 신고 처리상태',th:'미조치 24h',judge:'방치 위험',act:'담당자 자동 재알림'},
- {id:'R-26',agent:'품질',cond:'불량률',th:'> 1.5%',judge:'품질 이상',act:'최다 원인 라인 조치 권고'},
- {id:'R-27',agent:'품질',cond:'파레토 상위 불량 원인',th:'상위 1~3',judge:'교육 대상',act:'OPL 교육자료 자동 선정'},
- {id:'R-28',agent:'간접작업',cond:'실적 집계 주기',th:'5초 · 다기기',judge:'실시간 통합',act:'수기 전표 대체 (자동 집계)'},
- {id:'R-29',agent:'간접작업',cond:'공동작업 실적',th:'인원수 분배',judge:'개인 실적 산출',act:'개인별 MH · PLT/MH 자동 계산'},
- {id:'R-30',agent:'간접작업',cond:'작업자 생산성 편차',th:'> 40%',judge:'이상치',act:'경보 · 판단 센터 상신'},
- {id:'R-31',agent:'분석·보고',cond:'월마감 전월·전년 증감',th:'± 2σ 초과',judge:'이상치 항목',act:'자동 감지 · 드릴다운 제시'},
- {id:'R-32',agent:'분석·보고',cond:'KPI 임계 미달 항목',th:'목표 대비',judge:'보고 하이라이트',act:'임원 보고서 자동 생성'}
+ {id:'R-01',agent:'인력',cond:'부하율 = 계획량 ÷ 인력 주CAPA',th:'> 140%',judge:'인력 부족',act:'여유 그룹 재배치 · 필요 T/O 산출',impl:'plat'},
+ {id:'R-02',agent:'인력',cond:'부하율',th:'< 70%',judge:'여유 인력',act:'타 그룹 지원 전환 추천',impl:'plat'},
+ {id:'R-03',agent:'인력',cond:'그룹 간 부족·여유 격차',th:'> 0.4명',judge:'재배치 대상',act:'이동 배치안 자동 생성',impl:'plat'},
+ {id:'R-04',agent:'인력',cond:'신장률 시뮬레이션(±%)',th:'입력값',judge:'필요 인원 변화',act:'시나리오별 T/O 재산출',impl:'plat'},
+ {id:'R-05',agent:'인력',cond:'주간계획 업로드',th:'즉시',judge:'익주 부족·여유 사전 산출',act:'발생 전 알람 (선제 판단)',impl:'plat'},
+ {id:'R-06',agent:'생산',cond:'오더 달성률',th:'< 70%',judge:'지연 위험 오더',act:'우선순위 재조정 · 투입 강화',impl:'plat'},
+ {id:'R-07',agent:'생산',cond:'CAPA 부하율',th:'≥ 100%',judge:'과부하 라인',act:'잔업·증원 검토',impl:'plat'},
+ {id:'R-08',agent:'생산',cond:'계획 대비 실적 (오더별)',th:'< 100%',judge:'지연오더 자동 취합',act:'부족수량 순 목록 · 엑셀 산출',impl:'plat'},
+ {id:'R-09',agent:'생산',cond:'시간당 산출 급락',th:'전시간 −30%',judge:'라인 이상 징후',act:'설비·인력 점검 알림',impl:'doc'},
+ {id:'R-10',agent:'세척',cond:'우선순위 점수 산식',th:'전환40+주기35+부하25',judge:'세척 순번 자동 추천',act:'순위·예상 완료시간 제시',impl:'plat'},
+ {id:'R-11',agent:'세척',cond:'제품·색상·알러지 전환',th:'전환 발생',judge:'전환 가중 1.0 (최우선)',act:'해당 설비 상위 배치',impl:'plat'},
+ {id:'R-12',agent:'세척',cond:'세척주기 경과',th:'≥ 8h',judge:'주기 가중 상승',act:'우선순위 점수 가산',impl:'plat'},
+ {id:'R-13',agent:'세척',cond:'우선순위 점수',th:'≥ 75점',judge:'지연 위험',act:'CIP 병렬 투입 권고',impl:'plat'},
+ {id:'R-14',agent:'세척',cond:'현장 순위 수정 + 사유 저장',th:'수정 발생',judge:'룰 보정 대상',act:'가중치 학습 반영 (자동판단율 목표 95%)',impl:'app'},
+ {id:'R-15',agent:'창고',cond:'구역 적치율',th:'≥ 100%',judge:'초과 구역',act:'여유 구역 재배치 · 출하 우선',impl:'plat'},
+ {id:'R-16',agent:'창고',cond:'구역 적치율',th:'90~99%',judge:'포화 임박',act:'입고 억제 · 모니터링 강화',impl:'plat'},
+ {id:'R-17',agent:'창고',cond:'주간 증가율 반영 익주 예측',th:'≥ 100%',judge:'포화 예측',act:'선제 재배치안 생성',impl:'plat'},
+ {id:'R-18',agent:'창고',cond:'초과분 재배치 비용',th:'거리·환적 가중',judge:'최적 이동 경로',act:'재배치안 + 보고문 자동 작성',impl:'doc'},
+ {id:'R-19',agent:'창고',cond:'자재 소진일수 = 재고÷일소비',th:'≤ 재주문점',judge:'발주 필요',act:'즉시 발주 추천 (MOQ 반영)',impl:'plat'},
+ {id:'R-20',agent:'안전',cond:'WBGT (온열지수)',th:'≥ 28℃',judge:'폭염 주의',act:'수분 · 휴식 안내',impl:'plat'},
+ {id:'R-21',agent:'안전',cond:'WBGT',th:'≥ 31℃',judge:'폭염 경고',act:'시간당 10분 휴식 · 옥외 단축',impl:'plat'},
+ {id:'R-22',agent:'안전',cond:'체감온도 (히트워치)',th:'≥ 35℃',judge:'위험',act:'푸시 알람 · 작업시간 조정',impl:'app'},
+ {id:'R-23',agent:'안전',cond:'체감온도',th:'≥ 38℃',judge:'옥외작업 중지',act:'전면 중지 통보 100%',impl:'app'},
+ {id:'R-24',agent:'안전',cond:'작업 전 TBM 실시 여부',th:'미실시',judge:'점검 누락',act:'자동 알림 100% (실시율 100%)',impl:'app'},
+ {id:'R-25',agent:'안전',cond:'위험 신고 처리상태',th:'미조치 24h',judge:'방치 위험',act:'담당자 자동 재알림',impl:'app'},
+ {id:'R-26',agent:'품질',cond:'불량률',th:'> 1.5%',judge:'품질 이상',act:'최다 원인 라인 조치 권고',impl:'plat'},
+ {id:'R-27',agent:'품질',cond:'파레토 상위 불량 원인',th:'상위 1~3',judge:'교육 대상',act:'OPL 교육자료 자동 선정',impl:'plat'},
+ {id:'R-28',agent:'간접작업',cond:'실적 집계 주기',th:'5초 · 다기기',judge:'실시간 통합',act:'수기 전표 대체 (자동 집계)',impl:'app'},
+ {id:'R-29',agent:'간접작업',cond:'공동작업 실적',th:'인원수 분배',judge:'개인 실적 산출',act:'개인별 MH · PLT/MH 자동 계산',impl:'app'},
+ {id:'R-30',agent:'간접작업',cond:'작업자 생산성 편차',th:'> 40%',judge:'이상치',act:'경보 · 판단 센터 상신',impl:'plat'},
+ {id:'R-31',agent:'분석·보고',cond:'월마감 전월·전년 증감',th:'± 2σ 초과',judge:'이상치 항목',act:'자동 감지 · 드릴다운 제시',impl:'doc'},
+ {id:'R-32',agent:'분석·보고',cond:'KPI 임계 미달 항목',th:'목표 대비',judge:'보고 하이라이트',act:'임원 보고서 자동 생성',impl:'plat'}
 ];
 function liveRuleIds(){
   const J=collectJudgments(), ids=new Set();
@@ -1347,26 +1347,33 @@ function liveRuleIds(){
 let ruleFilter='전체';
 V.rulebook=()=>{
   const live=liveRuleIds();
+  const nPlat=RULEBOOK.filter(r=>r.impl==='plat').length, nApp=RULEBOOK.filter(r=>r.impl==='app').length, nDoc=RULEBOOK.filter(r=>r.impl==='doc').length;
   const agents=['전체',...Array.from(new Set(RULEBOOK.map(r=>r.agent)))];
   const chips=agents.map(a=>`<button class="btn ${a===ruleFilter?'p':''}" style="padding:6px 12px" onclick="ruleFilter='${a}';go('judge')">${a}</button>`).join(' ');
   const list=RULEBOOK.filter(r=>ruleFilter==='전체'||r.agent===ruleFilter);
-  const rows=list.map(r=>`<tr${live.has(r.id)?' style="background:var(--tint)"':''}>
+  const IMPL_LB={plat:{t:'플랫폼 산출',c:'#0B7A43',b:'#DFF6E9'},app:{t:'연동 앱 산출',c:'#1c5fa8',b:'#E4EEFA'},doc:{t:'정의만',c:'#8a7333',b:'#FBF3DC'}};
+  const rows=list.map(r=>{const im=IMPL_LB[r.impl]||IMPL_LB.doc;
+    return `<tr${live.has(r.id)?' style="background:var(--tint)"':''}>
     <td style="font-weight:800;white-space:nowrap">${r.id}${live.has(r.id)?' <span style="font-size:10px;font-weight:900;color:#1c7d49">● 발동 중</span>':''}</td>
     <td style="white-space:nowrap">${r.agent}</td><td>${r.cond}</td>
-    <td style="font-weight:800;white-space:nowrap">${r.th}</td><td>${r.judge}</td><td class="mini" style="font-size:12px">${r.act}</td></tr>`).join('');
+    <td style="font-weight:800;white-space:nowrap">${r.th}</td><td>${r.judge}</td><td class="mini" style="font-size:12px">${r.act}</td>
+    <td style="white-space:nowrap"><span style="font-size:10.5px;font-weight:800;color:${im.c};background:${im.b};border-radius:10px;padding:3px 8px">${im.t}</span></td></tr>`;}).join('');
   return `
   <div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,#16283f,#0e1a2e);border:none;color:#fff">
     <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
       <div><div style="font-size:11px;letter-spacing:2.5px;color:#8fd8b9;font-weight:800">RULEBOOK · 기준의 코드화</div>
         <div style="font-size:21px;font-weight:800;margin-top:5px">관리자 경험 → 정량 판단 룰 ${RULEBOOK.length}개</div>
         <div style="font-size:12.5px;color:#a6bad8;margin-top:5px">신규 관리자도 <b style="color:#cfe0f2">동일 판단 재현</b> — 담당자 의존 구조 해소</div></div>
-      <div style="margin-left:auto;display:flex;gap:30px">
+      <div style="margin-left:auto;display:flex;gap:26px">
         <div><div class="tnum" style="font-size:28px;font-weight:800">${RULEBOOK.length}</div><div style="font-size:11px;color:#a6bad8">코드화 룰</div></div>
+        <div><div class="tnum" style="font-size:28px;font-weight:800">${nPlat}</div><div style="font-size:11px;color:#a6bad8">플랫폼 산출</div></div>
+        <div><div class="tnum" style="font-size:28px;font-weight:800">${nApp}</div><div style="font-size:11px;color:#a6bad8">연동 앱 산출</div></div>
         <div><div class="tnum" style="font-size:28px;font-weight:800;color:#8fd8b9">${live.size}</div><div style="font-size:11px;color:#a6bad8">지금 발동 중</div></div>
       </div></div></div>
   <div class="card"><h3>판단 룰 카탈로그 <span class="hint">조건 · 임계값 · 판단 · 자동 조치</span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">${chips}</span></h3>
-    <div style="overflow:auto"><table><tr><th>룰</th><th>Agent</th><th>조건</th><th>임계값</th><th>판단</th><th>자동 조치</th></tr>${rows}</table></div>
-    <div class="mini" style="margin-top:10px">초록 행 = 현재 실측 데이터로 <b>발동 중인 룰</b> · 임계값은 운영 실측(오탐/미탐 이력)으로 주기 보정</div></div>`;
+    <div style="overflow:auto"><table><tr><th>룰</th><th>Agent</th><th>조건</th><th>임계값</th><th>판단</th><th>자동 조치</th><th>산출 위치</th></tr>${rows}</table></div>
+    <div class="mini" style="margin-top:10px">초록 행 = 현재 실측 데이터로 <b>발동 중인 룰</b> · 임계값은 운영 실측(오탐/미탐 이력)으로 주기 보정</div>
+    <div class="mini" style="margin-top:6px;line-height:1.6"><b>산출 위치</b> — <span style="color:#0B7A43;font-weight:800">플랫폼 산출 ${nPlat}</span>: 이 화면에서 직접 계산·판단 · <span style="color:#1c5fa8;font-weight:800">연동 앱 산출 ${nApp}</span>: 젠키퍼·히트워치·현장 앱에서 판단, 플랫폼은 결과 수신 · <span style="color:#8a7333;font-weight:800">정의만 ${nDoc}</span>: 기준은 확정, 로직 미구현(차기 반영)</div></div>`;
 };
 /* ── 조치 추적 (탐지 → 조치 → 결과) ── */
 function actKey(x){return x.area+'|'+x.rule;}
@@ -1431,17 +1438,17 @@ V.zaic=()=>{
     const mins=acts.map(a=>Math.max(0,(a.ts-base)/60000));
     return Math.round(mins.reduce((x,y)=>x+y,0)/mins.length);})();
   const FIELD=[
-    {v:'+33%',l:'주차 생산성 (2주차 단독)',d:'0.33 → 0.44 PLT/MH · 누계 +12% — D1 실측'},
-    {v:'+49%',l:'일평균 처리량',d:'9.8 → 14.6 PLT/일 (1주차 → 2주차) — 편차 관리 효과'},
-    {v:'30일→5초',l:'편차 발견 리드타임',d:'월마감에야 보이던 생산성 편차 → 5초 집계 즉시 (이동동 실사례)'},
-    {v:_lead!=null?(_lead===0?'즉시':_lead+'분'):'16건',l:_lead!=null?'조치 착수 리드타임 (금일 실측)':'공동작업 자동 분배',d:_lead!=null?'탐지 → 조치 착수 평균 · 운영 기록 타임스탬프 실측':'2~3인 공동작업 전량 인원수 자동 분배 — 수기 정산 0회'}
+    {v:'+12%',l:'인시생산성 (누계)',d:'0.33 → 0.37 PLT/MH · 8/7~8/21 전체 22건 — D1 실측',ok:1},
+    {v:'30일→5초',l:'편차 발견 리드타임',d:'월마감에야 보이던 생산성 편차를 집계 즉시 감지 (이동동 0.11 실사례)',ok:1},
+    {v:'16건',l:'공동작업 자동 분배',d:'2~3인 공동작업 전량 인원수 자동 분배 — 수기 정산 0회',ok:1},
+    {v:_lead!=null?(_lead===0?'즉시':_lead+'분'):'전건',l:_lead!=null?'조치 착수 리드타임 (금일 실측)':'조치 이력 추적',d:_lead!=null?'탐지 → 조치 착수 평균 · 운영 기록 타임스탬프 실측':'탐지 건별 조치 상태·시각 자동 기록',ok:1}
   ];
   const fieldCards=FIELD.map(f=>`<div style="background:var(--tint);border:1.5px solid #A9E4C3;border-radius:14px;padding:15px 17px">
     <div style="font-size:25px;font-weight:900;color:#0B7A43;letter-spacing:-.5px">${f.v}</div>
     <div style="font-size:13px;font-weight:800;margin-top:5px">${f.l}</div>
     <div class="mini" style="margin-top:4px;line-height:1.45">${f.d}</div></div>`).join('');
   const rows=[
-   {k:'[1] 인시생산성 (PLT/MH)',t:'+3% 이상',v:'+12%',p:100,d:'누계 0.33→0.37 · 2주차 단독 0.44 (+33%) — D1 실측 8/7~8/21',ok:1},
+   {k:'[1] 인시생산성 (PLT/MH)',t:'+3% 이상',v:'+12%',p:100,d:'누계 0.33→0.37 · 전체 22건 D1 실측 8/7~8/21 (주차 단독값은 구성비 영향으로 성과에서 제외)',ok:1},
    {k:'[2] 사전 탐지 → 당일 재배치 조치율',t:'90% 이상',v:rate+'%',p:Math.min(100,Math.round(rate/90*100)),d:'조치 추적 보드 실계산 — 탐지 '+need.length+'건 중 완료 '+done+'건',ok:rate>=90},
    {k:'[3] 안전점검 실시율 · 폭염 사전 통보',t:'100%',v:'100%',p:100,d:'젠키퍼 TBM 자동 알림 · 히트워치 위험 단계 푸시 (미실시 자동 알림)',ok:1},
    {k:'[4] 지연오더 사전 인지율',t:'90% 이상',v:'자동 산출',p:100,d:'계획 Agent — 주간계획+실적 업로드 시 지연오더 전건 자동 취합 (발생 전 경고)',ok:1},
@@ -1461,7 +1468,12 @@ V.zaic=()=>{
       <div style="font-size:12.5px;color:#a6bad8;margin-top:5px">검증: 실적·시스템 로그 대비 / 룰 등록 현황 / 적용 전·후 소요시간 <b style="color:#cfe0f2">실측</b></div></div></div>
   <div class="card" style="margin-bottom:14px"><h3>현장 개선 실측 <span class="hint">D1 work_records · 운영 기록 기반 — 생산성·리드타임</span></h3>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">${fieldCards}</div>
-    <div class="mini" style="margin-top:10px">산식 — 주차 생산성: 주별 ΣPLT÷ΣMH · 일평균: 주별 ΣPLT÷작업일수 · 공동 분배: qty÷worker_count (전 건 자동)</div></div>
+    <div class="mini" style="margin-top:10px">산식 — 인시생산성: ΣPLT÷ΣMH · 공동 분배: qty÷worker_count (전 건 자동)</div>
+    <div class="mini" style="margin-top:7px;background:#FBF3DC;border:1px solid #ecdcae;border-radius:9px;padding:9px 12px;line-height:1.6;color:#6b5a24">
+      <b>해석 주의</b> — 주차 단위로 끊으면 2주차 0.44 PLT/MH(+33%)이지만, 시스템별 생산성이 다르고
+      (<b>P-BOX 0.33 / 오리콘 0.22</b>) 주차 간 작업 구성비가 달라 <b>생산성 개선분과 구성 변화분이 분리되지 않습니다</b>.
+      표본도 22건으로 유의성 검정이 불가하여, 위 카드는 <b>누계 +12%</b>만 성과로 제시합니다.
+    </div></div>
   <div class="card">${bars}
     <div class="mini" style="margin-top:11px">제니엘 제조사업부 사업3팀 — 「제조 현장 통합 운영 AI Agent : 데이터가 아니라 '판단'을 자동화한다」</div></div>`;
 };
@@ -1540,8 +1552,10 @@ function exportInsightXlsx(){
     ['항목','산식','금액'],
     ['불량 LOSS',P.defUnits.toLocaleString()+'개 × '+P.AS.price+'원',P.won(P.lossDef)+'원'],
     ['잔업 LOSS',P.otH+'h × '+P.AS.wage.toLocaleString()+'원 × '+P.AS.otMul,P.won(P.lossOT)+'원'],
-    ['기회 LOSS',P.missUnits.toLocaleString()+'개(목표 미달) × '+P.AS.price+'원',P.won(P.lossOpp)+'원'],
-    ['LOSS 합계','',P.won(P.lossDef+P.lossOT+P.lossOpp)+'원']
+    ['실손실 합계','불량 + 잔업',P.won(P.lossDef+P.lossOT)+'원'],
+    [],['참고 — 미달성 기회금액 (손실 아님)'],
+    ['미달성 기회금액',P.missUnits.toLocaleString()+'개(목표 미달) × '+P.AS.price+'원',P.won(P.lossOpp)+'원'],
+    ['※ 산정 주의','목표 미달분의 환산 매출이며 발생한 비용이 아님 · 목표값은 기준 시드',' ']
   ]);
   sum['!cols']=[{wch:18},{wch:24},{wch:12},{wch:44}];
   XLSX.utils.book_append_sheet(wb,sum,'경영요약');
@@ -1592,7 +1606,8 @@ function exportInsightPdf(){
     .lc .l{font-size:10.5px;color:#9f4040;font-weight:700}
     .lc .n{font-size:16.5px;font-weight:900;color:#b3261e;margin-top:2px}
     .lc .f{font-size:9.5px;color:#a8746f;margin-top:3px}
-    .lc.tot{background:#1d3a5f}.lc.tot .l{color:#b9c9e2}.lc.tot .n{color:#fff}.lc.tot .f{color:#8fa6c4}
+    .lc.tot{background:#1d3a5f;border-color:#1d3a5f}.lc.tot .l{color:#b9c9e2}.lc.tot .n{color:#fff}.lc.tot .f{color:#8fa6c4}
+    .lc.ref{background:#f7f9fc;border-color:#dbe3ee}.lc.ref .l{color:#5f6b7a}.lc.ref .n{color:#42546b}.lc.ref .f{color:#8a97a8}
     .foot{margin-top:26px;padding-top:12px;border-top:1px solid #e2e9f3;font-size:10px;color:#9aa7b8;display:flex;justify-content:space-between}
     .pbtn{position:fixed;top:14px;right:16px;background:#1d3a5f;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer;font-family:inherit}
     @media print{.pbtn{display:none}.head{border-radius:0}}
@@ -1612,12 +1627,12 @@ function exportInsightPdf(){
       </div>
       <h2>② 라인별 KPI 실측</h2>
       <table><thead><tr><th>라인</th><th>목표</th><th>실적</th><th>달성률</th><th>OEE</th><th>불량률</th><th>판정</th></tr></thead><tbody>${rows}</tbody></table>
-      <h2>③ LOSS 추정 <span style="font-weight:600;color:#8a97a8;font-size:10.5px">가정 단가 ${P.AS.price}원/개 · 시급 ${P.AS.wage.toLocaleString()}원</span></h2>
+      <h2>③ LOSS 추정 <span style="font-weight:600;color:#8a97a8;font-size:10.5px">가정 단가 ${P.AS.price}원/개 · 시급 ${P.AS.wage.toLocaleString()}원 — 실손실과 기회금액을 분리 표기</span></h2>
       <div class="lgrid">
         ${lossCard('불량 LOSS',P.won(P.lossDef)+'원',P.defUnits.toLocaleString()+'개 × '+P.AS.price+'원')}
         ${lossCard('잔업 LOSS',P.won(P.lossOT)+'원',P.otH+'h × 1.5배')}
-        ${lossCard('기회 LOSS',P.won(P.lossOpp)+'원',P.missUnits.toLocaleString()+'개 미달')}
-        <div class="lc tot"><div class="l">LOSS 합계</div><div class="n">${P.won(P.lossDef+P.lossOT+P.lossOpp)}원</div><div class="f">3개 항목 합산</div></div>
+        <div class="lc tot"><div class="l">실손실 합계</div><div class="n">${P.won(P.lossDef+P.lossOT)}원</div><div class="f">불량 + 잔업</div></div>
+        <div class="lc ref"><div class="l">미달성 기회금액 <span style="font-weight:600">(손실 아님)</span></div><div class="n">${P.won(P.lossOpp)}원</div><div class="f">${P.missUnits.toLocaleString()}개 미달 × ${P.AS.price}원 · 목표는 기준 시드</div></div>
       </div>
       <div class="foot"><span>ZEN Manufacturing Platform · 자동 생성 문서 — 기준값 기반 추정치이며 실시간 현장 입력이 아닙니다</span><span>${P.day}</span></div>
     </div>
@@ -1745,20 +1760,23 @@ function exportInsightPpt(){
   const lossW=(PPT_W-2*M-3*80000)/4;
   const lossXml=[
     {l:'불량 LOSS',v:P.won(P.lossDef)+'원',f:P.defUnits.toLocaleString()+'개 × '+P.AS.price+'원'},
-    {l:'잔업 LOSS',v:P.won(P.lossOT)+'원',f:P.otH+'h × 1.5배'},
-    {l:'기회 LOSS',v:P.won(P.lossOpp)+'원',f:P.missUnits.toLocaleString()+'개 미달'}
+    {l:'잔업 LOSS',v:P.won(P.lossOT)+'원',f:P.otH+'h × 1.5배'}
   ].map((c,i)=>pptRect(M+i*(lossW+80000),1500000,lossW,1500000,'FEF2F2',{round:true,line:'FBD5D5'})
     +pptText(M+i*(lossW+80000)+70000,1560000,lossW-120000,320000,c.l,{sz:1050,color:'9F4040',b:1})
     +pptText(M+i*(lossW+80000)+70000,2100000,lossW-120000,500000,c.v,{sz:1900,color:'B3261E',b:1})
     +pptText(M+i*(lossW+80000)+70000,2620000,lossW-120000,320000,c.f,{sz:900,color:'A8746F'})
   ).join('')
-  +pptRect(M+3*(lossW+80000),1500000,lossW,1500000,'16283F',{round:true})
-  +pptText(M+3*(lossW+80000)+70000,1560000,lossW-120000,320000,'LOSS 합계',{sz:1050,color:'B9C9E2',b:1})
-  +pptText(M+3*(lossW+80000)+70000,2100000,lossW-120000,500000,P.won(P.lossDef+P.lossOT+P.lossOpp)+'원',{sz:1900,color:'FFFFFF',b:1})
-  +pptText(M+3*(lossW+80000)+70000,2620000,lossW-120000,320000,'3개 항목 합산',{sz:900,color:'8FA6C4'});
+  +pptRect(M+2*(lossW+80000),1500000,lossW,1500000,'16283F',{round:true})
+  +pptText(M+2*(lossW+80000)+70000,1560000,lossW-120000,320000,'실손실 합계',{sz:1050,color:'B9C9E2',b:1})
+  +pptText(M+2*(lossW+80000)+70000,2100000,lossW-120000,500000,P.won(P.lossDef+P.lossOT)+'원',{sz:1900,color:'FFFFFF',b:1})
+  +pptText(M+2*(lossW+80000)+70000,2620000,lossW-120000,320000,'불량 + 잔업',{sz:900,color:'8FA6C4'})
+  +pptRect(M+3*(lossW+80000),1500000,lossW,1500000,'F7F9FC',{round:true,line:'DBE3EE'})
+  +pptText(M+3*(lossW+80000)+70000,1560000,lossW-120000,320000,'미달성 기회금액 (손실 아님)',{sz:1000,color:'5F6B7A',b:1})
+  +pptText(M+3*(lossW+80000)+70000,2100000,lossW-120000,500000,P.won(P.lossOpp)+'원',{sz:1900,color:'42546B',b:1})
+  +pptText(M+3*(lossW+80000)+70000,2620000,lossW-120000,320000,P.missUnits.toLocaleString()+'개 미달 · 목표는 기준 시드',{sz:900,color:'8A97A8'});
   const s4=slideXml(tree(pptBg('FFFFFF'),
     pptText(M,420000,9000000,500000,'LOSS 추정 · 도급 인력',{sz:2200,color:'16283F',b:1})
-    +pptText(M,900000,9000000,400000,'가정 단가 '+P.AS.price+'원/개 · 시급 '+P.AS.wage.toLocaleString()+'원',{sz:1200,color:'8A97A8'})
+    +pptText(M,900000,9000000,400000,'가정 단가 '+P.AS.price+'원/개 · 시급 '+P.AS.wage.toLocaleString()+'원 — 실손실과 기회금액 분리',{sz:1200,color:'8A97A8'})
     +lossXml
     +pptTile(M,3300000,tileW,1300000,'업무도급',P.hc.office+'명','8A63D2')
     +pptTile(M+tileW+80000,3300000,tileW,1300000,'생산도급',P.hc.prod+'명 (+'+P.hc.prodDelta+')','0EA75C')
@@ -2095,7 +2113,7 @@ V.report=()=>{
   const lowLines=myLines().filter(l=>G.achieve(l)<70).map(l=>l.key).join('·');
   const brief=buildDailyBrief();
   return `
-  <div class="card" style="margin-bottom:14px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic('spark',16)}</span> 보고문 자동 생성 <span class="hint">8개 Agent 실데이터 종합 · 관리자 한 줄 + 메신저 보고문</span><span style="margin-left:auto;display:flex;gap:6px"><button class="btn" onclick="go('report')">↻ 재생성</button><button class="btn" onclick="dlDailyBrief()">⬇ 저장</button></span></h3>
+  <div class="card" id="dailyBrief" style="margin-bottom:14px"><h3><span style="display:inline-flex;vertical-align:-3px;color:var(--accent)">${svic('spark',16)}</span> 보고문 자동 생성 <span class="hint">8개 Agent 실데이터 종합 · 관리자 한 줄 + 메신저 보고문</span><span style="margin-left:auto;display:flex;gap:6px"><button class="btn" onclick="go('report')">↻ 재생성</button><button class="btn" onclick="dlDailyBrief()">⬇ 저장</button></span></h3>
     <div class="reco" style="margin-bottom:12px"><div class="ic" data-ic="report" style="color:var(--accent)"></div><div class="tx"><div class="r">${brief.oneLine.replace(/</g,'&lt;')}</div><div class="s">관리자 한 줄 요약 · <a onclick="copyDailyBrief('one')" style="color:#3f74b5;cursor:pointer;font-weight:700">복사</a></div></div></div>
     <div style="position:relative"><pre class="briefbox">${brief.msg.replace(/</g,'&lt;')}</pre><button class="btn p" style="position:absolute;top:11px;right:11px" onclick="copyDailyBrief('msg')">복사</button></div>
   </div>
@@ -2113,7 +2131,7 @@ V.report=()=>{
     <div class="chead" style="margin-bottom:8px">월별 매출 추이 (2025.12 ~ 2026.7 · 억원)</div>${barsChart(bars,{max:5.6})}
     <div class="mini" style="margin-top:8px">정산 엑셀 업로드 → 자동 적재·분석 · 7월 <b>최고치 경신</b></div></div>`;})()}
   <div class="grid g3" style="margin-bottom:14px">
-    ${[['일간 보고서',todayKR(),'📄','t-blue','생성 가능',"genReport('일간 보고서')"],['주간 보고서',weekKR(),'🗂','t-blue','생성 가능',"genReport('주간 보고서')"],['월 마감 보고서',prevMonthKR()+' · v4.0','📅','t-green','도구 열기',"document.getElementById('monthlyReport').scrollIntoView({behavior:'smooth'})"]].map(r=>`<a class="cardlink" onclick="${r[5]}"><div class="card"><div style="display:flex;gap:11px;align-items:center"><div style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#eef4fb;border:1px solid var(--line2)">${r[2]}</div><div><div style="font-weight:800">${r[0]}</div><div class="mini">${r[1]}</div></div></div><div style="margin-top:12px"><span class="tag ${r[3]}">${r[4]}</span></div></div></a>`).join('')}
+    ${[['일간 보고서',todayKR(),'📄','t-blue','생성 가능','daily'],['주간 보고서',weekKR(),'🗂','t-blue','생성 가능','weekly'],['월 마감 보고서',prevMonthKR()+' · v4.0','📅','t-green','도구 열기','monthly']].map(r=>`<a class="cardlink" onclick="openReport('${r[5]}')"><div class="card"><div style="display:flex;gap:11px;align-items:center"><div style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#eef4fb;border:1px solid var(--line2);flex:0 0 auto">${r[2]}</div><div style="flex:1;min-width:0"><div style="font-weight:800">${r[0]}</div><div class="mini">${r[1]}</div></div><span class="tag ${r[3]}">${r[4]}</span></div></div></a>`).join('')}
   </div>
   ${dualEmbed('monthly','월 마감 자동 보고서',svic('report',16),monthlyURL(),'74vh','monthlyReport')}
   ${ledger('일간 생산일보 (문서형)','8개 Agent 데이터 자동 취합 · 정식 문서 양식 — 클릭하여 펼침',`<div style="text-align:right;margin:2px 0 8px"><button class="btn" onclick="exportReport()">⬇ 내보내기</button></div><div class="report-doc"><h4>AP 대전공장 생산일보 — ${todayKR()}</h4><div class="kv">작성: ZEN Report Agent · 자동 생성 · 데이터원: ${dataSource}</div><p><b>1. 생산 실적</b><br>전 라인 목표 ${(tp.t/1000).toFixed(0)}천개 대비 실적 ${(tp.a/1000).toFixed(0)}천개(달성률 ${tp.ach}%). ${topLines||'-'} 정상, ${lowLines||'없음'} 부진.</p><p><b>2. 인력 현황</b><br>필요 ${headNeed()}명 대비 투입 ${headCur()}명(${headNeed()-headCur()}명 부족), 연차 ${DB.work[1].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p><p><b>3. 품질</b><br>평균 불량률 ${df}%(목표 1.5%). 주요 원인 ${DB.paretoNames[0]}·${DB.paretoNames[1]}. 최다 라인 조치 진행.</p><p><b>4. 안전</b><br>WBGT ${DB.safety.wbgt}℃ 폭염 ${DB.safety.wbgt>=28?'경고':'주의'}. 휴식·수분 조치. 무재해 ${DB.safety.noAccident}일.</p><p><b>5. 자재/설비</b><br>${orders.length?orders.map(s=>s.name).join('·')+' 긴급 발주 요청':'자재 발주 이슈 없음'}. 완제품 창고 ${DB.warehouse[0].fill}% 포화. 전 라인 OEE ${oee}%.</p><ul><li><b>금일 조치:</b> 인력 재배치, 발주 ${orders.length}건, 세척 ${myLines().filter(l=>G.cleanScore(l)>=75).length}라인</li><li><b>익일 리스크:</b> 자재 미입고 시 라인 중단 · 폭염 지속</li></ul></div>`)}`;
@@ -2372,8 +2390,15 @@ V.opl=()=>`<div class="card" id="oplGen" style="padding:12px"><h3>OPL 원포인�
 V.safeapp=()=>`<div class="card" style="padding:12px"><h3>안전 관리 (ZEN Keeper) <span class="hint">배포본 연동 · zenkeeper.netlify.app</span><span style="margin-left:auto;display:flex;gap:8px"><button class="btn" onclick="window.open('https://zenkeeper.netlify.app/','_blank')">↗ 새 창</button><button class="btn" onclick="window.open('ZENF_Safety_App_v65.html','_blank')">로컬본</button></span></h3><iframe class="safe" src="https://zenkeeper.netlify.app/" title="ZEN Keeper" loading="lazy"></iframe><div class="mini" style="margin-top:6px">비어 보이면 ‘새 창’으로 여세요.</div></div>`;
 
 /* ============ DATA OPS ============ */
-function rerender(){go(cur);buildNav();document.getElementById('srcTag').textContent='데이터: '+dataSource;document.getElementById('srcTag').classList.toggle('live',dataSource!=='기준값');}
-function editLine(i,k,v){DB.lines[i][k]=(v===''||isNaN(+v))?0:+v; if(dataSource==='기준값')dataSource='수동 편집'; saveDB(); go(cur); document.getElementById('srcTag').textContent='데이터: '+dataSource; }
+function syncSrcTag(){
+  const t=document.getElementById('srcTag'); if(t){t.textContent='데이터: '+dataSource;t.classList.toggle('live',dataSource!=='기준값');}
+  const r=document.getElementById('refreshTag');
+  if(r)r.innerHTML=(dataSource==='기준값')
+    ? '<span class="dot" style="background:#b9922e"></span> 기준 데이터 · 미연결'
+    : '<span class="dot"></span> 자동 갱신 중';
+}
+function rerender(){go(cur);buildNav();syncSrcTag();}
+function editLine(i,k,v){DB.lines[i][k]=(v===''||isNaN(+v))?0:+v; if(dataSource==='기준값')dataSource='수동 편집'; saveDB(); go(cur); syncSrcTag(); }
 function resetDB(){DB=JSON.parse(JSON.stringify(DEFAULT_DB));dataSource='기준값';planWeek=0;try{localStorage.removeItem(LS_KEY);}catch(e){}toast('기준값으로 복원했습니다 (저장 데이터 삭제)');rerender();}
 const IMPORT_MAP={'라인':'key','필요':'need','출근':'on','연차':'leave','교육':'edu','목표':'target','실적':'actual','capa':'capa','CAPA':'capa','불량%':'defect','불량':'defect','세척경과h':'clElapsed','세척경과':'clElapsed','전환0~1':'clTransfer','전환':'clTransfer'};
 function applyRows(rows){
@@ -2432,7 +2457,15 @@ function exportXLSX(){const ws=XLSX.utils.aoa_to_sheet(dbToAOA());const wb=XLSX.
 function exportCSV(){const aoa=dbToAOA();const csv=aoa.map(r=>r.join(',')).join('\n');dl('ZEN_라인데이터.csv','﻿'+csv,'text/csv');toast('CSV를 내려받았습니다');}
 function exportReport(){const el=document.querySelector('.report-doc');dl('ZEN_생산일보_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.txt',el.innerText,'text/plain');toast('보고서를 내보냈습니다');}
 function dl(fn,content,mime){const b=new Blob([content],{type:mime});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=fn;a.click();URL.revokeObjectURL(u);}
-function genReport(t){go('report');toast(t+'를 생성했습니다 (DB 최신값 반영)');}
+function genReport(t){openReport(t&&t.indexOf('월')>=0?'monthly':t&&t.indexOf('주')>=0?'weekly':'daily');}
+function openReport(kind){
+  const jump=id=>{const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});};
+  if(kind==='weekly'){vtab.track='log';go('track');return;}
+  const needGo=cur!=='insight'||vtab.insight!=='report';
+  vtab.insight='report';
+  if(needGo)go('insight');
+  setTimeout(()=>jump(kind==='monthly'?'monthlyReport':'dailyBrief'), needGo?120:30);
+}
 
 /* ============ ROUTER / NAV / LOGIN ============ */
 let cur='home';
@@ -2527,8 +2560,7 @@ async function doLogin(){
   document.getElementById('app').classList.add('show');
   cur=(DB.plan&&ROLES[role].allow.includes('plan'))?'plan':'home';
   buildNav();go(cur);applyBig();clockTick();
-  document.getElementById('srcTag').textContent='데이터: '+dataSource;
-  document.getElementById('srcTag').classList.toggle('live',dataSource!=='기준값');
+  syncSrcTag();
   try{localStorage.setItem('zen_session',JSON.stringify({role,scope:document.getElementById('scopeSel').value,ts:Date.now()}));}catch(e){}
 }
 function _p2(n){return String(n).padStart(2,'0');}
