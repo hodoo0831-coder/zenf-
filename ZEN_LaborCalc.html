@@ -247,36 +247,71 @@ document.querySelectorAll('#g-chips .chip').forEach(c=>c.addEventListener('click
 document.getElementById('to').addEventListener('input',render);
 
 // 계획표 업로드 — 모든 시트 파싱 → 주로 등록
+function nnum(v){
+  if(typeof v==='number'&&isFinite(v))return v;
+  const m=String(v==null?'':v).replace(/[, ]/g,'').match(/-?\d+(?:\.\d+)?/);
+  return m?+m[0]:0;
+}
+function qtyCols(rows){
+  const hdr=rows[0]||[];const cols=[];
+  for(let i=3;i<hdr.length;i++){
+    const v=String(hdr[i]==null?'':hdr[i]).trim();
+    if(/^\d{4}[.\-\/]\d{1,2}[.\-\/]\d{1,2}$/.test(v))cols.push(i+2);
+  }
+  return cols.length?cols:[5,8,11,14,17,20];
+}
+function rowQty(r,cols){return cols.reduce((a,c)=>a+nnum(r[c]),0);}
+function parseSheet(rows){
+  const cols=qtyCols(rows);
+  const fromSum={};
+  rows.forEach(r=>{
+    const nm=String(r[2]==null?'':r[2]).replace(/\s+/g,' ').trim();
+    if(!nm.endsWith('합계'))return;
+    const key=nm.replace(/\s*합계$/,'').trim();if(!key)return;
+    fromSum[key]=(fromSum[key]||0)+rowQty(r,cols);
+  });
+  if(Object.values(fromSum).some(v=>v>0))return fromSum;
+  const fromRes={};
+  rows.forEach(r=>{
+    const nm=String(r[2]==null?'':r[2]).replace(/\s+/g,' ').trim();
+    if(!nm||nm.endsWith('합계'))return;
+    const s=rowQty(r,cols);if(!s)return;
+    fromRes[nm]=(fromRes[nm]||0)+s;
+  });
+  return fromRes;
+}
 function aggregate(plan){
   const g={};GK.forEach(k=>g[k]=0);
-  for(const k in plan){const v=plan[k];
-    if(k.startsWith('세정자동'))g.세정자동+=v;
-    else if(k.startsWith('직선')||k.startsWith('리필'))g.직선+=v;
-    else if(k.startsWith('팜플'))continue;
-    else if(k.startsWith('멀티')||k.startsWith('세럼')||k.startsWith('턴테이블'))g.멀티+=v;
-    else if(k.startsWith('치약')){if(k.indexOf('충전')>=0)g.치약+=v;}
-    else if(k.startsWith('튜브'))g.튜브+=v;
-    else if(k.indexOf('염모')>=0||k.indexOf('산화')>=0){if(k.indexOf('염모제 충전')<0)g.염모+=v;}
+  for(const k in plan){const v=+plan[k]||0,n=k;
+    if(n.indexOf('팜플')>=0)continue;
+    if(n.indexOf('초격차')>=0||n.startsWith('세정'))g.세정자동+=v;
+    else if(n.startsWith('직선')||n.startsWith('리필'))g.직선+=v;
+    else if(n.startsWith('멀티')||n.startsWith('세럼')||n.startsWith('턴테이블'))g.멀티+=v;
+    else if(n.indexOf('치약')>=0){if(n.indexOf('충전')>=0)g.치약+=v;}
+    else if(n.startsWith('튜브'))g.튜브+=v;
+    else if(n.indexOf('염모')>=0||n.indexOf('산화')>=0){if(n.indexOf('염모제 충전')<0)g.염모+=v;}
   }
   return g;
 }
 document.getElementById('file').addEventListener('change',ev=>{
   const f=ev.target.files[0];if(!f)return;
+  const stEl=document.getElementById('upst');
+  if(typeof XLSX==='undefined'){stEl.textContent='⚠ 엑셀 엔진 로딩 중 — 잠시 후 다시';ev.target.value='';return;}
   const rd=new FileReader();
   rd.onload=e=>{try{
     const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-    const qc=[5,8,11,14,17,20];let added=[];
+    let added=[];
     wb.SheetNames.forEach(sn=>{
-      const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1});
-      const plan={};let hit=0;
-      rows.forEach(r=>{const nm=(r[2]||'').toString();
-        if(nm.endsWith('합계')){let s=0;qc.forEach(c=>{if(typeof r[c]==='number')s+=r[c];});plan[nm.replace(' 합계','').trim()]=s;hit++;}});
-      if(hit>0){const key='📄 '+sn;WEEKS[key]=aggregate(plan);added.push(key);}
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});
+      const g=aggregate(parseSheet(rows));
+      if(!Object.values(g).some(v=>v>0))return;
+      const key='📄 '+sn;WEEKS[key]=g;added.push(key);
     });
-    if(!added.length){document.getElementById('upst').textContent='⚠ 합계행 없음';return;}
-    document.getElementById('upst').textContent='✓ '+added.length+'개 주 추가';
+    if(!added.length){stEl.textContent='⚠ 계획수량 없음 — 리소스 합계/일자 열을 확인';return;}
+    stEl.textContent='✓ '+added.length+'개 주 반영';
     setWeek(added[0]);
-  }catch(err){document.getElementById('upst').textContent='⚠ 파싱 실패';console.error(err);}};
+  }catch(err){stEl.textContent='⚠ 파싱 실패';console.error(err);}
+  ev.target.value='';};
   rd.readAsArrayBuffer(f);
 });
 
