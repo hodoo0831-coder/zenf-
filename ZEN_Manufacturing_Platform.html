@@ -548,6 +548,11 @@ td{color:#1C2C40}
   .otiles,.sysboard,.gquad,.livekpis{grid-template-columns:1fr!important}
   .kpi .val{font-size:23px}
 }
+/* ── 터치 기기: 화면 폭과 무관하게 터치 타깃 확보 (iPad 등 큰 터치 화면 포함) ── */
+@media (pointer:coarse){
+  .btn,.vtab,.pchip,#view button,.nav a{min-height:40px}
+  #view button{display:inline-flex;align-items:center;justify-content:center}
+}
 /* 가로 스크롤 최종 방어 */
 body{max-width:100%;overflow-x:clip}
 html{height:auto;min-height:100%}
