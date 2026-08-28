@@ -1,0 +1,131 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>구조 재편 비교</title>
+<style>
+  :root{--navy:#1f3050;--ink:#20304a;--muted:#5f6f86;--line:#e4e9f0;--hair:#eef2f7;
+        --green:#22a05f;--greenbg:#e8f6ee;--amber:#d98a2b;--amberbg:#fbf1e2;--red:#dc4b4b;--redbg:#fbeaea;
+        --blue:#3f74b5;--bluebg:#eaf1fb;--bg:#f5f7fa;--card:#fff;--shadow:0 1px 3px rgba(18,32,58,.06)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Malgun Gothic',sans-serif;line-height:1.5;padding:26px 20px 60px}
+  .wrap{max-width:1180px;margin:0 auto}
+  .top{margin-bottom:22px}
+  .brand{font-size:11px;letter-spacing:2.2px;font-weight:800;color:var(--green);text-transform:uppercase}
+  h1{font-size:23px;font-weight:800;margin:5px 0 4px;letter-spacing:-.3px}
+  .sub{font-size:13px;color:var(--muted)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:8px}
+  @media(max-width:840px){.cols{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px 18px 20px;box-shadow:var(--shadow)}
+  .panel.tobe{border-color:#cfe6d8;box-shadow:0 3px 14px rgba(34,160,95,.10)}
+  .ptag{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;padding:3px 9px;border-radius:20px;margin-bottom:12px}
+  .ptag.as{background:#eef1f5;color:#6a7789}
+  .ptag.to{background:var(--greenbg);color:var(--green)}
+  .grp{margin-bottom:15px}
+  .grp:last-child{margin-bottom:0}
+  .glab{font-size:10.5px;letter-spacing:1.1px;text-transform:uppercase;color:#8b98ac;font-weight:800;margin-bottom:7px}
+  .item{border:1px solid var(--hair);border-left:3px solid var(--line);border-radius:9px;padding:9px 12px;margin-bottom:7px;background:#fcfdfe}
+  .item:last-child{margin-bottom:0}
+  .item .nm{font-size:13.5px;font-weight:700;color:var(--navy)}
+  .item .tabs{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .item .tabs b{color:#43536b;font-weight:700}
+  .item.home{border-left-color:var(--navy);background:#f7f9fc}
+  .item.plan{border-left-color:var(--blue)}
+  .item.ops{border-left-color:var(--green)}
+  .item.ins{border-left-color:var(--amber)}
+  .item.tool{border-left-color:#8a99ad}
+  .chip{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;margin-left:6px;vertical-align:1px}
+  .chip.mv{background:var(--bluebg);color:var(--blue)}
+  .chip.mg{background:var(--amberbg);color:var(--amber)}
+  .chip.lite{background:var(--greenbg);color:var(--green)}
+  .friction{margin-top:24px;background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px 20px 8px;box-shadow:var(--shadow)}
+  .friction h2{font-size:15px;margin:0 0 14px;font-weight:800;color:var(--navy)}
+  .frow{display:grid;grid-template-columns:26px 1fr 1fr;gap:12px;align-items:start;padding:12px 0;border-top:1px solid var(--hair)}
+  .frow:first-of-type{border-top:0}
+  .fn{width:24px;height:24px;border-radius:50%;background:var(--redbg);color:var(--red);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .fp .t{font-size:13px;font-weight:700;color:#3a2a2a}
+  .fp .d{font-size:12px;color:var(--muted);margin-top:2px}
+  .fs{border-left:2px solid var(--greenbg);padding-left:12px}
+  .fs .t{font-size:13px;font-weight:700;color:var(--green)}
+  .fs .d{font-size:12px;color:var(--muted);margin-top:2px}
+  .flabel{display:grid;grid-template-columns:26px 1fr 1fr;gap:12px;font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#9aa7ba;padding-bottom:4px}
+  .legend{margin-top:18px;font-size:12px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+  .legend .k{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+</style></head><body><div class="wrap">
+<div class="top">
+  <div class="brand">ZEN Manufacturing · IA</div>
+  <h1>구조 재편 비교 — 현행 vs 흐름 중심</h1>
+  <div class="sub">왼쪽이 지금 구조, 오른쪽이 제안(계획 → 운영 → 분석 → 도구). 색 표시는 <b>어디로 옮겨지는지</b>를 뜻합니다.</div>
+</div>
+
+<div class="cols">
+  <!-- AS-IS -->
+  <div class="panel">
+    <span class="ptag as">현행 · AS-IS</span>
+    <div class="grp"><div class="glab">Overview</div>
+      <div class="item home"><div class="nm">종합 상황판</div></div>
+    </div>
+    <div class="grp"><div class="glab">운영 · Operations</div>
+      <div class="item"><div class="nm">생산 Agent</div><div class="tabs"><b>탭:</b> 실시간현황 · <span style="color:#3f74b5">주간계획</span> · <span style="color:#3f74b5">지연오더</span> · P-BOX·오리콘</div></div>
+      <div class="item"><div class="nm">인력 Agent</div><div class="tabs"><b>탭:</b> 현황 · <span style="color:#3f74b5">부하율·필요인원</span></div></div>
+      <div class="item"><div class="nm">세척 Agent</div></div>
+      <div class="item"><div class="nm">창고 Agent</div></div>
+    </div>
+    <div class="grp"><div class="glab">품질·안전 · Quality &amp; EHS</div>
+      <div class="item"><div class="nm">품질 Agent</div></div>
+      <div class="item"><div class="nm">안전 Agent</div><div class="tabs"><b>탭:</b> 현황 · 연동시스템(히트워치·ZEN Keeper)</div></div>
+    </div>
+    <div class="grp"><div class="glab">분석 · Analytics</div>
+      <div class="item"><div class="nm" style="color:#d98a2b">KPI Agent</div><div class="tabs">OEE · 원가 · LOSS</div></div>
+      <div class="item"><div class="nm" style="color:#d98a2b">Report Agent</div><div class="tabs">월마감 보고서</div></div>
+    </div>
+    <div class="grp"><div class="glab">관리 · Admin</div>
+      <div class="item"><div class="nm">OPL 교육자료</div></div>
+      <div class="item"><div class="nm">데이터 관리</div></div>
+    </div>
+  </div>
+
+  <!-- TO-BE -->
+  <div class="panel tobe">
+    <span class="ptag to">재편안 · TO-BE</span>
+    <div class="grp"><div class="glab">Overview</div>
+      <div class="item home"><div class="nm">종합 상황판</div></div>
+    </div>
+    <div class="grp"><div class="glab">계획 · Plan &nbsp;— 흩어진 계획을 한 곳으로</div>
+      <div class="item plan"><div class="nm">계획 Agent <span class="chip mv">신설</span></div>
+        <div class="tabs"><b>탭:</b> <span style="color:#3f74b5">주간계획</span> · <span style="color:#3f74b5">부하율·필요인원</span> · <span style="color:#3f74b5">지연오더</span></div></div>
+    </div>
+    <div class="grp"><div class="glab">운영 · Operations &nbsp;— 지금 돌아가는 것</div>
+      <div class="item ops"><div class="nm">생산 Agent <span class="chip lite">경량화</span></div><div class="tabs">실시간실적 · P-BOX·오리콘 <span style="color:#8b98ac">(계획·지연 빠짐)</span></div></div>
+      <div class="item ops"><div class="nm">세척 Agent · 창고 Agent</div></div>
+      <div class="item ops"><div class="nm">안전 Agent · 품질 Agent</div></div>
+    </div>
+    <div class="grp"><div class="glab">분석 · Insight</div>
+      <div class="item ins"><div class="nm">분석·보고 Agent <span class="chip mg">KPI+Report 통합</span></div>
+        <div class="tabs"><b>탭:</b> KPI·LOSS · 월마감 보고서</div></div>
+    </div>
+    <div class="grp"><div class="glab">도구 · Tools</div>
+      <div class="item tool"><div class="nm">OPL 교육자료 · 데이터 관리</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="friction">
+  <h2>구조적 마찰 → 재편 후 해소</h2>
+  <div class="flabel"><div></div><div>지금 문제</div><div>재편 후</div></div>
+  <div class="frow"><div class="fn">1</div>
+    <div class="fp"><div class="t">생산 Agent 과적재</div><div class="d">실적+주간계획+지연오더+P-BOX가 한 화면에. 미래(계획)와 현재(실적)가 뒤섞임.</div></div>
+    <div class="fs"><div class="t">실적 전용으로 경량화</div><div class="d">생산은 “지금 돌아가는 것”만. 계획·지연은 계획 Agent로 이동.</div></div></div>
+  <div class="frow"><div class="fn">2</div>
+    <div class="fp"><div class="t">계획·인력이 두 군데로 분산</div><div class="d">부하율은 인력에, 주간계획·지연은 생산에. 근데 셋 다 같은 주간계획 엑셀에서 나옴.</div></div>
+    <div class="fs"><div class="t">계획 Agent 한 곳으로 통합</div><div class="d">주간계획 → 부하율/필요인원 → 지연오더가 한 흐름. 데이터 소스도 하나.</div></div></div>
+  <div class="frow"><div class="fn">3</div>
+    <div class="fp"><div class="t">KPI vs Report 경계 모호</div><div class="d">분석(OEE·LOSS)과 보고서 출력(월마감)이 별도 메뉴로 나란히.</div></div>
+    <div class="fs"><div class="t">분석·보고 하나로</div><div class="d">한 화면 탭으로: 분석해서 → 보고서로 낸다는 흐름이 그대로 드러남.</div></div></div>
+</div>
+
+<div class="legend">
+  <span class="k"><span class="sw" style="background:#3f74b5"></span>계획으로 이동</span>
+  <span class="k"><span class="sw" style="background:#d98a2b"></span>통합</span>
+  <span class="k"><span class="sw" style="background:#22a05f"></span>경량화</span>
+  <span class="k" style="margin-left:auto;color:#8b98ac">메뉴 수: 현행 11 → 재편 7 · 역할별 노출(현장/관리자/센터)은 그대로 유지</span>
+</div>
+</div></body></html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>인력 부족·여유 자동계산 · AP 대전 생산도급</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" media="print" onload="this.media='all'">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#EDF0F5;--card:#fff;--line:#D7DEE8;--grid:#E9EDF3;
+  --ink:#14213B;--ink2:#3A4760;--muted:#6C788C;--brand:#1F4E79;--brand2:#2C6DAE;
+  --short:#CD3F38;--shortbg:#FBEBEA;--near:#C4841E;--nearbg:#FBF2E2;--surp:#2A8E68;--surpbg:#E6F3ED;
+  --kr:'Nanum Gothic',-apple-system,'Malgun Gothic',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--kr);font-size:16px;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;line-height:1.5}
+.wrap{max-width:1100px;margin:0 auto;padding:22px 16px 70px}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--brand);font-weight:700;text-transform:uppercase}
+h1{font-size:24px;font-weight:800;letter-spacing:-.01em;margin-top:2px}
+.h-sub{font-size:13.5px;color:var(--muted);margin-top:3px}
+.verdict{border:2px solid var(--line);border-radius:14px;padding:10px 18px;text-align:center;min-width:140px;background:#fff}
+.verdict .vl{font-size:11px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;font-weight:700}
+.verdict .vb{font-size:22px;font-weight:800;margin-top:1px}
+
+.weekbar{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.weekbar .wl{font-size:13px;font-weight:800;color:var(--ink2)}
+.wchips{display:flex;gap:8px;flex-wrap:wrap}
+.wchip{font-size:13px;font-weight:700;padding:8px 15px;border:1.5px solid var(--line);border-radius:9px;background:#fff;color:var(--ink2);cursor:pointer}
+.wchip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.upl{margin-left:auto;display:flex;gap:8px;align-items:center}
+.upbtn{font-size:13px;font-weight:700;padding:9px 15px;border-radius:10px;border:1.5px dashed var(--brand2);background:#F2F7FC;color:var(--brand);cursor:pointer;white-space:nowrap}
+.upst{font-size:11px;color:var(--muted)}
+
+.bar{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 20px;margin-bottom:14px;display:grid;grid-template-columns:1.7fr 1fr;gap:24px;align-items:start}
+.field .flab{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;font-weight:700;margin-bottom:9px}
+.field .flab .fv{font-size:17px;color:var(--brand);font-weight:800}
+input[type=range]{width:100%;accent-color:var(--brand);height:6px}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.chip{font-size:12.5px;font-weight:700;padding:6px 12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;color:var(--ink2);cursor:pointer}
+.chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.tonum{width:70px;font-family:var(--kr);font-size:16px;font-weight:800;padding:5px;border:1.5px solid var(--line);border-radius:8px;text-align:center;color:var(--brand)}
+
+.conc{background:var(--ink);color:#EAF1F8;border-radius:16px;padding:16px 22px;font-size:15.5px;line-height:1.6;margin-bottom:14px}
+.conc b{color:#fff;font-weight:800}.conc .ctag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8FB2D8;display:block;margin-bottom:5px;font-weight:700}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 16px;position:relative;overflow:hidden}
+.kpi .tag{position:absolute;top:0;left:0;width:5px;height:100%}
+.kpi.short .tag{background:var(--short)}.kpi.surp .tag{background:var(--surp)}.kpi.near .tag{background:var(--near)}.kpi.neu .tag{background:var(--brand)}
+.kpi .kl{font-size:12.5px;color:var(--muted);font-weight:700}
+.kpi .kn{font-size:30px;font-weight:800;letter-spacing:-.01em;margin-top:5px}
+.kpi .ku{font-size:14px;color:var(--muted);font-weight:700;margin-left:2px}
+.kpi .ks{font-size:12px;margin-top:3px;color:var(--ink2)}
+.kpi.short .kn{color:var(--short)}.kpi.surp .kn{color:var(--surp)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:14px}
+.pad{padding:16px 20px}
+.cap{font-size:15px;font-weight:800;margin-bottom:2px}
+.cap small{font-weight:400;color:var(--muted);font-size:12.5px}
+.tblx{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+.tblx th,.tblx td{padding:9px 6px;text-align:center;border-bottom:1px solid var(--grid)}
+.tblx th{font-size:10.5px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.tblx td.g{text-align:left;font-weight:800;color:var(--ink2)}
+.tblx td.calc{font-weight:800}
+.tblx tr.short td{background:var(--shortbg)}.tblx tr.surp td{background:var(--surpbg)}
+.tblx input{width:88px;font-family:var(--kr);font-size:13px;font-weight:700;padding:6px 4px;border:1px solid var(--line);border-radius:7px;text-align:center;color:var(--ink);background:#FCFDFE}
+.tblx input.sm{width:52px}
+.tblx input:focus{outline:2px solid var(--brand2);border-color:var(--brand2)}
+.tblx tfoot td{border-top:2px solid var(--line);border-bottom:none;font-weight:800;padding-top:11px}
+.tblx tfoot td.calc{font-size:15px}
+.chbox{height:250px;position:relative;margin-top:6px}
+.two{display:grid;grid-template-columns:1.25fr 1fr;gap:14px}
+.warn{background:var(--nearbg);border:1px solid #E6C98A;border-radius:10px;padding:11px 15px;font-size:12.5px;color:#6B4E15;margin-top:10px;line-height:1.55}
+.warn b{color:#8A5A00}
+.actions{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.btn{font-family:var(--kr);font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;border:1.5px solid var(--brand);background:var(--brand);color:#fff;cursor:pointer}
+.btn.ghost{background:#fff;color:var(--brand)}
+.foot{font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.75}.foot b{color:var(--ink2)}
+@media (max-width:860px){
+  .bar{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}
+  h1{font-size:21px}.upl{margin-left:0;width:100%}.tblx input{width:66px}.tblx input.sm{width:46px}.tblx td,.tblx th{padding:7px 3px}
+}
+@media print{body{background:#fff}.actions,.upl,input[type=range]{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hd">
+    <div>
+      <div class="eyebrow">AP 대전 · 생산도급 · 인력 기준</div>
+      <h1>인력 부족·여유 자동계산</h1>
+      <div class="h-sub">주간 계획량 ÷ 인력 주CAPA로 부하율·필요인원을 산출합니다.</div>
+    </div>
+    <div class="verdict"><div class="vl">전체 판정</div><div class="vb" id="v-badge">—</div></div>
+  </div>
+
+  <div class="weekbar">
+    <span class="wl">주 선택</span>
+    <div class="wchips" id="wchips"></div>
+    <div class="upl">
+      <label class="upbtn">📄 계획표 업로드<input type="file" id="file" accept=".xlsx,.xls" style="display:none"></label>
+      <span class="upst" id="upst">28·29주 내장</span>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="field">
+      <div class="flab">신장율 (부하율 버전) <span class="fv" id="g-val">0%</span></div>
+      <input type="range" id="growth" min="-10" max="30" step="1" value="0">
+      <div class="chips" id="g-chips">
+        <span class="chip on" data-g="0">계획 그대로</span><span class="chip" data-g="5">+5%</span>
+        <span class="chip" data-g="10">+10%</span><span class="chip" data-g="15">+15%</span><span class="chip" data-g="20">+20%</span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="flab">보유 TO <span class="fv"><input id="to" type="number" value="108" class="tonum"></span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5">정직 97 + 단기 11 = 108 / 부하 기준 정규 98명</div>
+    </div>
+  </div>
+
+  <div class="conc"><span class="ctag">자동 결론</span><span id="conc">—</span></div>
+
+  <div class="kpis">
+    <div class="kpi neu"><div class="tag"></div><div class="kl">총 필요인원</div><div class="kn" id="k1n">—</div><div class="ks" id="k1s">—</div></div>
+    <div class="kpi" id="k2"><div class="tag"></div><div class="kl">보유 TO 대비</div><div class="kn" id="k2n">—</div><div class="ks">부족(−)/여유(+)</div></div>
+    <div class="kpi neu"><div class="tag"></div><div class="kl">전체 부하율</div><div class="kn" id="k3n">—</div><div class="ks">필요÷정규 98</div></div>
+    <div class="kpi" id="k4"><div class="tag"></div><div class="kl">부족 그룹</div><div class="kn" id="k4n">—</div><div class="ks">부하율>1</div></div>
+  </div>
+
+  <div class="two">
+    <div class="card pad">
+      <div class="cap">그룹별 산출 <small>· 파란 칸 직접 수정</small></div>
+      <table class="tblx">
+        <thead><tr><th>그룹</th><th>정규인원</th><th>인력 주CAPA</th><th>계획량(주)</th><th>부하율</th><th>필요인원</th><th>부족/여유</th></tr></thead>
+        <tbody id="tbody"></tbody>
+        <tfoot><tr><td class="g">전체</td><td class="calc" id="f-hc">—</td><td class="calc" id="f-cap">—</td><td class="calc" id="f-plan">—</td><td class="calc" id="f-load">—</td><td class="calc" id="f-need">—</td><td class="calc" id="f-diff">—</td></tr></tfoot>
+      </table>
+      <div class="warn">계획표 자동합산 규칙 — <b>팜플 제외</b>, <b>치약=충전만</b>(수축 후공정 제외), <b>염모=염모제충전 중복단계 제외</b>. 염모·튜브는 주별 편차가 크니 필요 시 계획량 셀 직접 보정.</div>
+    </div>
+    <div class="card pad">
+      <div class="cap">그룹별 부하율</div>
+      <div class="chbox"><canvas id="chart"></canvas></div>
+      <div style="font-size:11.5px;color:var(--muted);margin-top:8px">점선 = 부하율 1.0. 초과 그룹은 증원·교대·잔업 필요.</div>
+    </div>
+  </div>
+
+  <div class="actions"><button class="btn" onclick="window.print()">인쇄 / PDF</button></div>
+
+  <div class="foot">
+    <b>산출식</b> 부하율 = 계획량 × (1+신장율) ÷ 인력 주CAPA. 필요인원 = 정규인원 × 부하율. 부족/여유 = 정규인원 − 필요, 전체는 보유 TO 대비.<br>
+    <b>인력 주CAPA</b> = 표준 크루가 주간 소화하는 물량(설비CAPA 아님, 실가동·효율·교대 반영). 출처: AP 인력시뮬 부하율원본.<br>
+    <b>기본 데이터</b> 28주 확정·29주 예정(계획표 원본). 다른 주는 동일 양식 계획표 업로드 → 주 선택으로 전환.
+  </div>
+</div>
+
+<script>
+const CAP={세정자동:623000,직선:246881,멀티:470479,치약:840000,튜브:644562,염모:276000};
+const HC={세정자동:18,직선:18,멀티:22,치약:13,튜브:9,염모:18};
+const GK=Object.keys(CAP);
+// 내장 주 데이터 (계획표 확정본에서 중복제거 규칙 적용)
+const WEEKS={
+ '28주 확정':{세정자동:633390,직선:331020,멀티:459011,치약:685224,튜브:1056311,염모:510948},
+ '29주 예정':{세정자동:590670,직선:441268,멀티:499071,치약:613728,튜브:921739,염모:357896}
+};
+let curWeek='28주 확정';
+let D={};
+const st={g:0};
+const C={short:'#CD3F38',near:'#C4841E',surp:'#2A8E68',ink:'#14213B'};
+function TO(){return +document.getElementById('to').value||0;}
+function fmt(n){return Math.round(n).toLocaleString('ko-KR');}
+function set(id,v){document.getElementById(id).textContent=v;}
+function loadG(g){return CAP[g]>0? D[g]*(1+st.g/100)/CAP[g] : 0;}
+
+function setWeek(w){curWeek=w;D=Object.assign({},WEEKS[w]);renderWeekChips();buildRows();render();}
+function renderWeekChips(){
+  const box=document.getElementById('wchips');box.innerHTML='';
+  Object.keys(WEEKS).forEach(w=>{
+    const el=document.createElement('span');el.className='wchip'+(w===curWeek?' on':'');el.textContent=w;
+    el.onclick=()=>setWeek(w);box.appendChild(el);
+  });
+}
+function buildRows(){
+  const tb=document.getElementById('tbody');tb.innerHTML='';
+  GK.forEach(g=>{
+    tb.insertAdjacentHTML('beforeend',
+     `<tr data-g="${g}"><td class="g">${g}</td>
+      <td>${HC[g]}</td><td>${fmt(CAP[g])}</td>
+      <td><input data-f="plan" value="${Math.round(D[g])}"></td>
+      <td class="calc c-load"></td><td class="calc c-need"></td><td class="calc c-diff"></td></tr>`);
+  });
+  tb.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',e=>{
+    D[e.target.closest('tr').dataset.g]=+e.target.value||0;render();}));
+}
+let chart;
+function render(){
+  let tPlan=0,tNeed=0,shortG=0;const tHc=98,tCap=Object.values(CAP).reduce((a,b)=>a+b,0);
+  GK.forEach(g=>{const load=loadG(g),need=HC[g]*load,diff=HC[g]-need;
+    tPlan+=D[g]*(1+st.g/100);tNeed+=need;if(load>1.0001)shortG++;
+    const tr=document.querySelector(`tr[data-g="${g}"]`);
+    tr.querySelector('.c-load').textContent=load.toFixed(2);
+    tr.querySelector('.c-need').textContent=need.toFixed(1);
+    const dc=tr.querySelector('.c-diff');dc.textContent=(diff>=0?'+':'')+diff.toFixed(1);dc.style.color=diff>=0?C.surp:C.short;
+    tr.className=load>1.0001?'short':(load<0.9?'surp':'');});
+  const to=TO(),diffTO=to-tNeed,overall=tNeed/tHc;
+  set('f-hc',tHc);set('f-cap',fmt(tCap));set('f-plan',fmt(tPlan));set('f-load',overall.toFixed(2));set('f-need',tNeed.toFixed(1));
+  const fd=document.getElementById('f-diff');fd.textContent=(diffTO>=0?'+':'')+diffTO.toFixed(1);fd.style.color=diffTO>=0?C.surp:C.short;
+
+  document.querySelector('#k1n').innerHTML=tNeed.toFixed(1)+'<span class="ku">명</span>';set('k1s',curWeek+' / TO '+to);
+  document.querySelector('#k2n').innerHTML=(diffTO>=0?'+':'')+diffTO.toFixed(1)+'<span class="ku">명</span>';
+  document.getElementById('k2').className='kpi '+(diffTO>=0?'surp':'short');
+  document.querySelector('#k3n').innerHTML=overall.toFixed(2);
+  document.querySelector('#k4n').innerHTML=shortG+'<span class="ku">개</span>';
+  document.getElementById('k4').className='kpi '+(shortG>0?'near':'surp');
+
+  const vb=document.getElementById('v-badge');
+  if(diffTO<0){vb.textContent='부족';vb.style.color=C.short;}
+  else if(overall>=0.9){vb.textContent='빠듯';vb.style.color=C.near;}
+  else{vb.textContent='여유';vb.style.color=C.surp;}
+
+  const gtxt=st.g>0?`+${st.g}% 반영`:(st.g<0?`${st.g}% 반영`:'계획 그대로');
+  const sn=GK.filter(g=>loadG(g)>1);
+  let conc;
+  if(diffTO<0) conc=`<b>${curWeek}</b>(${gtxt}) 총 필요 <b>${tNeed.toFixed(0)}명</b>, 보유 TO ${to}명 대비 <b>${Math.abs(diffTO).toFixed(0)}명 부족</b>. 부하 초과 ${shortG}개 그룹(${sn.join(', ')}). 정규 98명 기준 <b>${(98-tNeed).toFixed(0)}명</b> 부족.`;
+  else conc=`<b>${curWeek}</b>(${gtxt}) 총 필요 <b>${tNeed.toFixed(0)}명</b>, 보유 TO ${to}명 내 <b>${diffTO.toFixed(0)}명 여유</b>${sn.length?' · 단 '+sn.join('·')+' 부하 초과':''}.`;
+  document.getElementById('conc').innerHTML=conc;
+
+  const loads=GK.map(loadG);
+  if(typeof Chart==='undefined'){return;} // Chart.js 미로드(오프라인 등) — 표·KPI는 그대로 표시
+  if(chart)chart.destroy();
+  const ref={id:'r',afterDatasetsDraw(c){const{ctx,chartArea:{left,right},scales:{y}}=c;const yy=y.getPixelForValue(1);ctx.save();ctx.strokeStyle=C.ink;ctx.lineWidth=1.6;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(right,yy);ctx.stroke();ctx.restore();}};
+  chart=new Chart(document.getElementById('chart'),{type:'bar',
+    data:{labels:GK,datasets:[{data:loads,backgroundColor:loads.map(l=>l>1?C.short:(l>=0.9?C.near:C.surp)),borderRadius:5,barPercentage:.7}]},
+    plugins:[ref],options:{responsive:true,maintainAspectRatio:false,animation:{duration:250},
+      plugins:{legend:{display:false},tooltip:{bodyFont:{family:'Nanum Gothic'},callbacks:{label:x=>' 부하율 '+x.raw.toFixed(2)}}},
+      scales:{y:{beginAtZero:true,grid:{color:'#E9EDF3'},ticks:{font:{family:'Nanum Gothic',size:11},color:'#6C788C'}},x:{grid:{display:false},ticks:{font:{family:'Nanum Gothic',size:12},color:'#3A4760'}}}}});
+}
+window.addEventListener('load',()=>{try{render();}catch(e){}}); // defer 스크립트(Chart) 로드 후 차트 재그림
+
+document.getElementById('growth').addEventListener('input',e=>{st.g=+e.target.value;set('g-val',(st.g>0?'+':'')+st.g+'%');document.querySelectorAll('#g-chips .chip').forEach(c=>c.classList.toggle('on',+c.dataset.g===st.g));render();});
+document.querySelectorAll('#g-chips .chip').forEach(c=>c.addEventListener('click',()=>{st.g=+c.dataset.g;document.getElementById('growth').value=st.g;set('g-val',(st.g>0?'+':'')+st.g+'%');document.querySelectorAll('#g-chips .chip').forEach(x=>x.classList.toggle('on',x===c));render();}));
+document.getElementById('to').addEventListener('input',render);
+
+// 계획표 업로드 — 모든 시트 파싱 → 주로 등록
+function nnum(v){
+  if(typeof v==='number'&&isFinite(v))return v;
+  const m=String(v==null?'':v).replace(/[, ]/g,'').match(/-?\d+(?:\.\d+)?/);
+  return m?+m[0]:0;
+}
+function qtyCols(rows){
+  const hdr=rows[0]||[];const cols=[];
+  for(let i=3;i<hdr.length;i++){
+    const v=String(hdr[i]==null?'':hdr[i]).trim();
+    if(/^\d{4}[.\-\/]\d{1,2}[.\-\/]\d{1,2}$/.test(v))cols.push(i+2);
+  }
+  return cols.length?cols:[5,8,11,14,17,20];
+}
+function rowQty(r,cols){return cols.reduce((a,c)=>a+nnum(r[c]),0);}
+function parseSheet(rows){
+  const cols=qtyCols(rows);
+  const fromSum={};
+  rows.forEach(r=>{
+    const nm=String(r[2]==null?'':r[2]).replace(/\s+/g,' ').trim();
+    if(!nm.endsWith('합계'))return;
+    const key=nm.replace(/\s*합계$/,'').trim();if(!key)return;
+    fromSum[key]=(fromSum[key]||0)+rowQty(r,cols);
+  });
+  if(Object.values(fromSum).some(v=>v>0))return fromSum;
+  const fromRes={};
+  rows.forEach(r=>{
+    const nm=String(r[2]==null?'':r[2]).replace(/\s+/g,' ').trim();
+    if(!nm||nm.endsWith('합계'))return;
+    const s=rowQty(r,cols);if(!s)return;
+    fromRes[nm]=(fromRes[nm]||0)+s;
+  });
+  return fromRes;
+}
+function aggregate(plan){
+  const g={};GK.forEach(k=>g[k]=0);
+  for(const k in plan){const v=+plan[k]||0,n=k;
+    if(n.indexOf('팜플')>=0)continue;
+    if(n.indexOf('초격차')>=0||n.startsWith('세정'))g.세정자동+=v;
+    else if(n.startsWith('직선')||n.startsWith('리필'))g.직선+=v;
+    else if(n.startsWith('멀티')||n.startsWith('세럼')||n.startsWith('턴테이블'))g.멀티+=v;
+    else if(n.indexOf('치약')>=0){if(n.indexOf('충전')>=0)g.치약+=v;}
+    else if(n.startsWith('튜브'))g.튜브+=v;
+    else if(n.indexOf('염모')>=0||n.indexOf('산화')>=0){if(n.indexOf('염모제 충전')<0)g.염모+=v;}
+  }
+  return g;
+}
+document.getElementById('file').addEventListener('change',ev=>{
+  const f=ev.target.files[0];if(!f)return;
+  const stEl=document.getElementById('upst');
+  if(typeof XLSX==='undefined'){stEl.textContent='⚠ 엑셀 엔진 로딩 중 — 잠시 후 다시';ev.target.value='';return;}
+  const rd=new FileReader();
+  rd.onload=e=>{try{
+    const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+    let added=[];
+    wb.SheetNames.forEach(sn=>{
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});
+      const g=aggregate(parseSheet(rows));
+      if(!Object.values(g).some(v=>v>0))return;
+      const key='📄 '+sn;WEEKS[key]=g;added.push(key);
+    });
+    if(!added.length){stEl.textContent='⚠ 계획수량 없음 — 리소스 합계/일자 열을 확인';return;}
+    stEl.textContent='✓ '+added.length+'개 주 반영';
+    setWeek(added[0]);
+  }catch(err){stEl.textContent='⚠ 파싱 실패';console.error(err);}
+  ev.target.value='';};
+  rd.readAsArrayBuffer(f);
+});
+
+setWeek('28주 확정');
+</script>
+</body>
+</html>

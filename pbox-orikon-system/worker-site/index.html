@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1F4E78">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="박스 작업">
+<title>박스 작업 시스템 선택</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    :root {
+        --navy: #1F4E78;
+        --navy-dark: #163a5a;
+        --navy-light: #2e75b6;
+        --sky: #5B9BD5;
+        --sky-light: #A8C8E0;
+        --bg-soft: #f5f9fc;
+        --text-white: rgba(255,255,255,0.95);
+        --text-muted: rgba(255,255,255,0.65);
+    }
+    
+    html, body {
+        font-family: 'Nanum Gothic', sans-serif;
+        min-height: 100vh;
+        background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+        color: var(--text-white);
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+    }
+    
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        padding: 24px 20px 40px;
+        position: relative;
+    }
+    
+    /* 배경 장식 */
+    body::before {
+        content: '';
+        position: fixed;
+        top: -100px;
+        right: -100px;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(91,155,213,0.2) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+    }
+    body::after {
+        content: '';
+        position: fixed;
+        bottom: -150px;
+        left: -100px;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(46,117,182,0.15) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    /* 상단 헤더 */
+    .header {
+        text-align: center;
+        padding: 40px 0 30px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .brand-tag {
+        font-size: 11px;
+        letter-spacing: 3px;
+        color: var(--text-muted);
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+    
+    .title {
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        color: white;
+        margin-bottom: 8px;
+        animation: fade-up 0.6s ease-out;
+    }
+    
+    .subtitle {
+        font-size: 13px;
+        color: var(--text-muted);
+        font-weight: 400;
+        animation: fade-up 0.6s ease-out 0.1s backwards;
+    }
+    
+    @keyframes fade-up {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* 카드 컨테이너 */
+    .cards {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        max-width: 500px;
+        width: 100%;
+        margin: 20px auto 0;
+        padding: 0 4px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* 시스템 카드 */
+    .system-card {
+        background: rgba(255,255,255,0.06);
+        backdrop-filter: blur(10px);
+        border: 1.5px solid rgba(255,255,255,0.15);
+        border-radius: 20px;
+        padding: 28px 24px;
+        text-align: center;
+        color: white;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        animation: card-up 0.6s ease-out backwards;
+        min-height: 180px;
+        justify-content: center;
+    }
+    
+    .system-card:nth-child(1) { animation-delay: 0.2s; }
+    .system-card:nth-child(2) { animation-delay: 0.35s; }
+    
+    @keyframes card-up {
+        from { opacity: 0; transform: translateY(30px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    .system-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .system-card:hover::before {
+        left: 100%;
+    }
+    
+    .system-card:hover, .system-card:active {
+        background: rgba(255,255,255,0.12);
+        border-color: var(--sky);
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+    }
+    
+    .system-card:active {
+        transform: translateY(-1px) scale(0.98);
+    }
+    
+    .card-icon {
+        width: 72px;
+        height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .card-title {
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: -0.3px;
+        color: white;
+    }
+    
+    .card-desc {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 400;
+        letter-spacing: 0.3px;
+    }
+    
+    .card-arrow {
+        position: absolute;
+        top: 24px;
+        right: 24px;
+        color: rgba(255,255,255,0.4);
+        font-size: 18px;
+        transition: all 0.3s ease;
+    }
+    
+    .system-card:hover .card-arrow {
+        color: var(--sky);
+        transform: translateX(4px);
+    }
+    
+    /* 하단 크레딧 */
+    .footer {
+        text-align: center;
+        padding: 30px 0 10px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .divider {
+        width: 50px;
+        height: 1.5px;
+        background: rgba(255,255,255,0.2);
+        margin: 0 auto 12px;
+    }
+    
+    .credit {
+        font-size: 10px;
+        color: var(--text-muted);
+        letter-spacing: 1.5px;
+        font-weight: 400;
+    }
+    
+    /* 태블릿/데스크톱 */
+    @media (min-width: 700px) {
+        body { padding: 60px 40px; }
+        .header { padding-top: 60px; }
+        .title { font-size: 32px; }
+        .subtitle { font-size: 15px; }
+        .cards {
+            flex-direction: row;
+            gap: 24px;
+            margin-top: 40px;
+        }
+        .system-card {
+            flex: 1;
+            min-height: 260px;
+            padding: 40px 28px;
+        }
+        .card-icon { width: 90px; height: 90px; }
+        .card-title { font-size: 22px; }
+    }
+</style>
+</head>
+<body>
+    <div class="header">
+        <div class="brand-tag">ZENIEL × AMOREPACIFIC DAEJEON</div>
+        <div class="title">박스 작업 시스템</div>
+        <div class="subtitle">사용할 시스템을 선택하세요</div>
+    </div>
+    
+    <div class="cards">
+        <!-- 오리콘 박스 카드 -->
+        <a href="./orikon/" class="system-card" id="cardOrikon">
+            <div class="card-arrow">→</div>
+            <div class="card-icon">
+                <svg width="72" height="72" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 30 60 L 100 30 L 170 60 L 170 150 L 100 180 L 30 150 Z" fill="white" stroke="#1F4E78" stroke-width="3" stroke-linejoin="round"/>
+                    <path d="M 30 60 L 100 30 L 170 60 L 100 90 Z" fill="#f0f4f8" stroke="#1F4E78" stroke-width="3" stroke-linejoin="round"/>
+                    <line x1="100" y1="90" x2="100" y2="180" stroke="#1F4E78" stroke-width="2"/>
+                    <line x1="50" y1="86" x2="50" y2="164" stroke="#5B9BD5" stroke-width="1.5" opacity="0.5"/>
+                    <line x1="70" y1="78" x2="70" y2="172" stroke="#5B9BD5" stroke-width="1.5" opacity="0.5"/>
+                    <line x1="30" y1="105" x2="100" y2="135" stroke="#5B9BD5" stroke-width="1.5" opacity="0.5"/>
+                    <line x1="130" y1="78" x2="130" y2="172" stroke="#5B9BD5" stroke-width="1.5" opacity="0.5"/>
+                    <line x1="150" y1="86" x2="150" y2="164" stroke="#5B9BD5" stroke-width="1.5" opacity="0.5"/>
+                    <line x1="100" y1="135" x2="170" y2="105" stroke="#5B9BD5" stroke-width="1.5" opacity="0.5"/>
+                </svg>
+            </div>
+            <div class="card-title">오리콘 박스</div>
+            <div class="card-desc">세척 · 분류 · 수리</div>
+        </a>
+        
+        <!-- P-BOX 카드 -->
+        <a href="./pbox/" class="system-card" id="cardPbox">
+            <div class="card-arrow">→</div>
+            <div class="card-icon">
+                <svg width="72" height="72" viewBox="0 0 64 64" fill="none">
+                    <rect x="8" y="14" width="48" height="10" rx="2" fill="white" stroke="#1F4E78" stroke-width="2"/>
+                    <line x1="20" y1="14" x2="20" y2="24" stroke="#A8C8E0" stroke-width="0.6" opacity="0.45"/>
+                    <line x1="32" y1="14" x2="32" y2="24" stroke="#A8C8E0" stroke-width="0.6" opacity="0.45"/>
+                    <line x1="44" y1="14" x2="44" y2="24" stroke="#A8C8E0" stroke-width="0.6" opacity="0.45"/>
+                    <rect x="8" y="28" width="48" height="26" rx="2" fill="white" stroke="#1F4E78" stroke-width="2"/>
+                    <line x1="20" y1="28" x2="20" y2="54" stroke="#A8C8E0" stroke-width="0.6" opacity="0.45"/>
+                    <line x1="32" y1="28" x2="32" y2="54" stroke="#A8C8E0" stroke-width="0.6" opacity="0.45"/>
+                    <line x1="44" y1="28" x2="44" y2="54" stroke="#A8C8E0" stroke-width="0.6" opacity="0.45"/>
+                    <line x1="8" y1="40" x2="56" y2="40" stroke="#A8C8E0" stroke-width="0.6" opacity="0.45"/>
+                </svg>
+            </div>
+            <div class="card-title">P-BOX</div>
+            <div class="card-desc">세척 · 간지</div>
+        </a>
+    </div>
+    
+    <div class="footer">
+        <div class="divider"></div>
+        <div class="credit">Developed by LEE MIN AH</div>
+    </div>
+</body>
+</html>

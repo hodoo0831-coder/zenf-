@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZEN OPL Generator · 원포인트레슨 자동생성</title>
+<style>
+  :root{
+    --navy:#1E2761;--navy2:#2A3878;--gold:#E8B339;--ice:#CADCFC;
+    --ink:#1A1A2E;--grey:#5B6172;--line:#D7DCEA;
+    --ng:#C0392B;--ok:#1E7A52;--okbg:#E9F4EE;
+    --bg:#eef2f7;--panel:#fff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink)}
+  .app{display:grid;grid-template-columns:380px 1fr;height:100vh}
+  /* ---------- FORM ---------- */
+  .form{background:#fff;border-right:1px solid var(--line);overflow-y:auto;padding:16px 16px 40px}
+  .form h1{font-size:16px;margin:0 0 2px;color:var(--navy)}
+  .form h1 b{color:var(--gold)}
+  .form .sub{font-size:11.5px;color:var(--grey);margin-bottom:14px}
+  .grp{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;background:#fbfcfe}
+  .grp h3{font-size:12px;margin:0 0 9px;color:var(--navy);display:flex;align-items:center;gap:6px}
+  .grp h3 .dot{width:6px;height:6px;border-radius:50%;background:var(--gold)}
+  label{display:block;font-size:11px;color:var(--grey);margin:8px 0 3px;font-weight:600}
+  input[type=text],textarea,select{width:100%;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-size:12.5px;font-family:inherit;color:var(--ink);background:#fff}
+  textarea{resize:vertical;line-height:1.45}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .hint{font-size:10.5px;color:var(--grey);margin-top:4px;line-height:1.4}
+  .btn{border:0;border-radius:8px;padding:9px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn.p{background:var(--navy);color:#fff}
+  .btn.g{background:var(--gold);color:var(--navy)}
+  .btn.o{background:#fff;border:1px solid var(--line);color:var(--navy)}
+  .btn.sm{padding:5px 9px;font-size:11px}
+  .btn.dl{background:var(--ok);color:#fff}
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .card-edit{border:1px solid var(--line);border-radius:9px;padding:10px;margin-bottom:9px;background:#fff}
+  .card-edit .ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .card-edit .ch .t{font-size:11px;font-weight:800;color:var(--navy)}
+  .card-edit .rm{background:none;border:0;color:var(--ng);cursor:pointer;font-size:15px;line-height:1}
+  .ngtag{color:var(--ng);font-weight:700}.oktag{color:var(--ok);font-weight:700}
+  .photo-btn{display:inline-block;font-size:11px;color:var(--navy);border:1px dashed var(--line);border-radius:7px;padding:6px 9px;cursor:pointer;margin-top:4px}
+  .photo-thumb{width:100%;height:64px;object-fit:cover;border-radius:6px;margin-top:6px;border:1px solid var(--line)}
+  .paste-area textarea{min-height:120px}
+  .toolbar{position:sticky;top:0;background:#fff;padding:10px 0;margin:-16px -16px 12px;padding:12px 16px;border-bottom:1px solid var(--line);z-index:5;display:flex;gap:8px}
+  /* ---------- PREVIEW ---------- */
+  .preview{overflow:auto;padding:24px;background:#e6ecf4}
+  .scaler{transform-origin:top center;margin:0 auto}
+  .page{width:297mm;height:210mm;background:#fff;margin:0 auto 18px;box-shadow:0 8px 30px rgba(20,30,60,.18);position:relative;overflow:hidden;color:var(--ink)}
+  /* Header */
+  .pg-head{position:absolute;left:0;top:0;width:100%;height:30mm;background:var(--navy)}
+  .pg-head .logo{position:absolute;left:11.4mm;top:6.6mm;width:38mm;height:16.8mm;background:var(--gold);border-radius:2mm;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--navy);line-height:1}
+  .pg-head .logo .a{font-size:9pt;font-weight:800;letter-spacing:1px}
+  .pg-head .logo .b{font-size:14pt;font-weight:800;letter-spacing:2px;margin-top:2px}
+  .pg-head .ttl{position:absolute;left:54mm;top:5.5mm;width:150mm}
+  .pg-head .ttl .t{color:#fff;font-size:21pt;font-weight:800;line-height:1.05}
+  .pg-head .ttl .s{color:var(--ice);font-size:11pt;margin-top:2mm}
+  .pg-head .cls{position:absolute;right:11.4mm;top:7.6mm;width:39mm;height:8.6mm;background:var(--navy2);border:1px solid var(--gold);border-radius:1.5mm;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9.5pt;font-weight:700}
+  .pg-head .no{position:absolute;right:11.4mm;top:17.6mm;width:66mm;text-align:right;color:var(--ice);font-size:8.5pt;line-height:1.5}
+  /* Meta */
+  .meta{position:absolute;left:11.4mm;top:33mm;width:274mm;height:11.7mm;background:#F4F6FB;border:1px solid var(--line);display:flex}
+  .meta .c{flex:1;display:flex;align-items:center;padding:0 3.4mm;border-left:1px solid var(--line);font-size:10pt}
+  .meta .c:first-child{border-left:0}
+  .meta .c b{color:var(--navy);margin-right:2mm;font-size:9.5pt}
+  .meta .c .v{color:var(--ink);font-weight:700}
+  .meta .c .v.empty{color:var(--grey);font-weight:400}
+  /* core */
+  .core{position:absolute;left:11.4mm;top:48.5mm;width:274mm;font-size:13pt;font-weight:800;color:var(--ink)}
+  .core .k{color:var(--gold);font-size:11pt;margin-right:2mm}
+  .core .hi{color:var(--ng)}
+  /* cards */
+  .cards{position:absolute;left:11.4mm;top:60mm;width:274mm;display:flex;gap:7.6mm}
+  .cardx{flex:1;background:#fff;border:1px solid var(--line);border-radius:1mm;box-shadow:0 2px 7px rgba(0,0,0,.12);height:117mm;padding:3.6mm;display:flex;flex-direction:column;position:relative}
+  .cardx .ph{width:100%;height:41mm;object-fit:cover;border-radius:1mm;border:1px solid var(--line);background:#EEF1F8}
+  .cardx .ph.empty{display:flex;align-items:center;justify-content:center;color:var(--grey);font-size:9pt}
+  .cardx .ngchip{position:absolute;left:6.4mm;top:6.4mm;background:var(--ng);color:#fff;font-size:9.5pt;font-weight:800;padding:1mm 3mm;border-radius:1.2mm}
+  .cardx .ngwrap{margin-top:3mm}
+  .cardx .ngk{font-size:8.5pt;color:var(--ng);font-weight:700}
+  .cardx .ngt{font-size:12pt;color:var(--ng);font-weight:800;line-height:1.15}
+  .cardx .ngd{font-size:9.5pt;color:var(--grey);margin-top:1.6mm;line-height:1.35}
+  .cardx .div{border-top:1px dashed var(--line);margin:3mm 0;position:relative;height:0}
+  .cardx .div .o{position:absolute;left:50%;top:-3.2mm;transform:translateX(-50%);width:6.4mm;height:6.4mm;border-radius:50%;background:var(--ok);color:#fff;font-size:8pt;display:flex;align-items:center;justify-content:center}
+  .cardx .okwrap{background:var(--okbg);margin:0 -3.6mm -3.6mm;padding:3.2mm 3.6mm;border-radius:0 0 1mm 1mm;flex:1;margin-top:auto}
+  .cardx .okk{font-size:8.5pt;color:var(--ok);font-weight:700}
+  .cardx .okt{font-size:12.5pt;color:var(--ok);font-weight:800;line-height:1.15}
+  .cardx .okd{font-size:10pt;color:var(--ink);margin-top:1.8mm;line-height:1.4}
+  /* why footer */
+  .why{position:absolute;left:11.4mm;bottom:9mm;width:274mm;height:10.6mm;background:var(--navy);display:flex;align-items:center;padding:0 4.6mm}
+  .why .w{color:var(--gold);font-size:9pt;font-weight:800;margin-right:2.4mm}
+  .why .tx{color:#fff;font-size:10pt;flex:1}
+  .why .tx .hi{color:var(--gold);font-weight:700}
+  .why .org{color:var(--ice);font-size:8.5pt;white-space:nowrap;margin-left:6mm}
+  /* page2 */
+  .pg2-head{position:absolute;left:0;top:0;width:100%;height:24mm;background:var(--navy)}
+  .pg2-head .lg{position:absolute;left:11.4mm;top:6.6mm;width:15.7mm;height:11.2mm;background:var(--gold);border-radius:1.5mm;display:flex;align-items:center;justify-content:center;color:var(--navy);font-size:12pt;font-weight:800}
+  .pg2-head .tt{position:absolute;left:31mm;top:4.5mm;color:#fff}
+  .pg2-head .tt .t{font-size:19pt;font-weight:800}
+  .pg2-head .tt .s{font-size:10pt;color:var(--ice);margin-top:1mm}
+  .pg2-head .rt{position:absolute;right:11.4mm;top:8mm;width:86mm;text-align:right;color:var(--ice);font-size:9pt}
+  .edu{position:absolute;left:11.4mm;top:30mm;width:274mm;height:23.4mm;border:1px solid var(--line);display:flex;flex-wrap:wrap}
+  .edu .cell{width:50%;height:50%;display:flex;align-items:stretch;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+  .edu .cell:nth-child(-n+2){border-top:0}
+  .edu .cell:nth-child(odd){border-left:0}
+  .edu .cell .k{width:29mm;background:var(--navy2);color:#fff;font-size:10pt;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .edu .cell .v{flex:1;display:flex;align-items:center;padding:0 3.2mm;font-size:10.5pt;color:var(--ink)}
+  .signwrap{position:absolute;left:11.4mm;top:59mm;width:274mm;display:flex;gap:7.6mm}
+  .sigtbl{flex:1;border-collapse:collapse;table-layout:fixed}
+  .sigtbl th{background:var(--navy);color:#fff;font-size:10pt;font-weight:700;border:.75px solid #fff;height:10mm}
+  .sigtbl td{border:.75px solid var(--line);height:11mm;font-size:10pt;text-align:center;color:var(--grey)}
+  .sigtbl tr:nth-child(even) td{background:#F7F9FD}
+  .sigtbl col.no{width:16%}.sigtbl col.nm{width:30%}.sigtbl col.sg{width:30%}.sigtbl col.dt{width:24%}
+  .signote{position:absolute;left:11.4mm;bottom:11mm;width:274mm;font-size:9.5pt;color:var(--grey);font-style:italic}
+  @media print{
+    @page{size:A4 landscape;margin:0}
+    body{background:#fff}
+    .app{display:block;height:auto}
+    .form{display:none}
+    .preview{overflow:visible;padding:0;background:#fff}
+    .scaler{transform:none!important}
+    .page{margin:0;box-shadow:none;page-break-after:always;break-after:page}
+    .page:last-child{page-break-after:auto}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ============ FORM ============ -->
+  <div class="form">
+    <div class="toolbar">
+      <button class="btn g" style="flex:1" onclick="doPrint()">🖨 PDF / 인쇄</button>
+      <button class="btn o sm" onclick="loadSample()">예시</button>
+    </div>
+    <h1><b>ZEN</b> OPL 생성기</h1>
+    <div class="sub">붙여넣기 → 자동 생성 → 인쇄. 3단계면 끝납니다.</div>
+
+    <div class="grp paste-area">
+      <h3><span class="dot"></span>① 점검·이슈 내용 붙여넣기</h3>
+      <textarea id="paste" placeholder="점검결과/통지문 내용을 그대로 붙여넣으세요.
+
+예)
+제목: 설비 세척 후 부속 보관 기준 준수
+적발: 호퍼 내부에 자재(봉)를 넣은 채 보관
+준수: 호퍼 봉은 분리하여 별도 보관
+적발: 부속을 겹쳐 쌓아 세척 사각지대 발생
+준수: 겹치지 않도록 간격을 두고 단독 보관
+WHY: 세척·살균 불량 및 교차오염 위험"></textarea>
+      <div class="btnrow">
+        <button class="btn p" style="flex:1" onclick="autoGen()">⚡ 자동 생성</button>
+        <button class="btn o" onclick="clearAll()">비우기</button>
+      </div>
+      <div class="hint">‘적발/준수’(또는 NG/OK) 문장만 있으면 됩니다. 제목·WHY는 넣으면 반영, 없으면 자동 처리돼요.</div>
+    </div>
+
+    <div class="grp">
+      <h3><span class="dot"></span>② 내용 확인·수정</h3>
+      <label>제목</label><input type="text" id="f_title">
+      <div id="cardList"></div>
+      <button class="btn o sm" onclick="addCard()">＋ 항목 추가</button>
+      <label style="margin-top:12px">WHY · 왜 지켜야 하나 <span class="hint" style="display:inline">(강조는 *별표*)</span></label>
+      <textarea id="f_why" rows="2" placeholder="접촉면에 세척액·UV가 닿지 않아 *세척·살균 불량 및 교차오염* 위험이 발생합니다."></textarea>
+    </div>
+
+    <div class="grp" style="padding:0;overflow:hidden">
+      <div style="padding:12px;cursor:pointer;display:flex;align-items:center;gap:6px" onclick="toggleAdv()">
+        <span id="advArrow" style="color:var(--gold);font-size:12px">▸</span>
+        <span style="font-size:12px;font-weight:700;color:var(--navy)">상세 설정 (선택)</span>
+        <span class="hint" style="margin:0 0 0 auto">관리번호·작성자·서명부 등</span>
+      </div>
+      <div id="advBody" style="display:none;padding:0 12px 12px;border-top:1px solid var(--line)">
+        <div class="row2" style="margin-top:10px">
+          <div><label>분류</label>
+            <select id="f_class"><option>개선·문제해결</option><option>안전</option><option>품질</option><option>설비</option><option>세척·위생</option><option>작업표준</option></select>
+          </div>
+          <div><label>관리번호</label><input type="text" id="f_docNo" placeholder="OPL-YYMM-주제-01"></div>
+        </div>
+        <label>부제</label><input type="text" id="f_subtitle">
+        <div class="row2">
+          <div><label>작성일</label><input type="text" id="f_date" placeholder="2026. 08. 10."></div>
+          <div><label>작성자</label><input type="text" id="f_author"></div>
+        </div>
+        <div class="row2">
+          <div><label>교육대상</label><input type="text" id="f_target"></div>
+          <div><label>소속</label><input type="text" id="f_org"></div>
+        </div>
+        <label>핵심 한 줄 <span class="hint" style="display:inline">(비우면 미표시 · 강조 *별표*)</span></label>
+        <textarea id="f_core" rows="2" placeholder="세척이 끝난 부속은 *분리 보관*해야 사각지대가 없습니다."></textarea>
+        <div class="row2">
+          <div><label>교육장소</label><input type="text" id="f_eduPlace" placeholder="AP 대전공장 현장"></div>
+          <div><label>교육자</label><input type="text" id="f_eduTeacher"></div>
+        </div>
+        <div class="row2">
+          <div><label>서명 인원수</label><input type="text" id="f_signRows" value="18"></div>
+          <div><label>교육일자</label><input type="text" id="f_eduDate" placeholder="2026.   .   "></div>
+        </div>
+        <label>동의 문구</label>
+        <textarea id="f_note" rows="2"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PREVIEW ============ -->
+  <div class="preview" id="preview">
+    <div class="scaler" id="scaler">
+      <div class="page" id="page1"></div>
+      <div class="page" id="page2"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const S={
+  title:'설비 세척 후 부속 보관 기준 준수',
+  subtitle:'점검 결과 미준수 적발 → 작업자 전달 및 실시 여부 점검',
+  classification:'개선·문제해결',
+  docNo:'OPL-2508-설비세척-01',
+  date:'2026. 08. 10.',
+  author:'이민아 (대전센터)',
+  target:'세척 담당 작업자',
+  org:'제니엘 제조사업부 · AP 대전공장',
+  core:'세척·살균이 끝난 부속은 *분리·비겹침 상태*로 보관해야 사각지대 없이 세척·UV살균이 보장됩니다.',
+  why:'겹치거나 결합된 상태에서는 접촉면에 세척액·UV가 닿지 않아 *세척·살균 불량 및 교차오염* 위험이 발생합니다.',
+  cards:[
+    {ngTitle:'호퍼 봉 미분리 보관',ng:'호퍼 내부에 자재(봉)를 넣은 채 보관',okTitle:'호퍼 봉 분리 보관',ok:'호퍼 내부 자재 보관 금지 · 호퍼 봉은 반드시 분리하여 별도 보관',photo:null},
+    {ngTitle:'부속 간 겹침 보관',ng:'부속을 겹쳐 쌓아 접촉면이 세척·건조 사각지대 발생',okTitle:'겹침 없이 보관',ok:'부속끼리 겹치지 않도록 간격을 두고 단독 보관',photo:null},
+    {ngTitle:'UV함 사전 결합 보관',ng:'노즐 커버·자재를 결합한 상태로 UV함에 투입',okTitle:'결합 없이 분리 보관',ok:'UV함 보관 시 노즐 커버·자재를 분리 투입',photo:null},
+  ],
+  eduPlace:'AP 대전공장 현장', eduTeacher:'이민아 (대전센터)', eduDate:'2026.   .   ',
+  signRows:18,
+  note:'※ 본 OPL 교육 이수자는 위 보관 기준을 숙지하였으며, 현장 적용 및 준수에 동의합니다.'
+};
+
+/* ---- highlight parse: *text* -> <span class=hi> ---- */
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function hl(s){return esc(s).replace(/\*([^*]+)\*/g,'<span class="hi">$1</span>');}
+
+/* ---- render ---- */
+function renderCardEdit(){
+  const box=document.getElementById('cardList');
+  box.innerHTML=S.cards.map((c,i)=>`
+    <div class="card-edit">
+      <div class="ch"><div class="t">항목 ${i+1}</div><button class="rm" onclick="rmCard(${i})" title="삭제">×</button></div>
+      <label class="ngtag">✕ 적발 (이렇게 하면 안 됨)</label><textarea rows="2" oninput="setCard(${i},'ng',this.value)" placeholder="적발 상황을 한 줄로">${esc(c.ng)}</textarea>
+      <label class="oktag">✓ 준수 기준 (이렇게 하세요)</label><textarea rows="2" oninput="setCard(${i},'ok',this.value)" placeholder="올바른 작업 방법을 한 줄로">${esc(c.ok)}</textarea>
+      <label class="photo-btn" onclick="document.getElementById('ph${i}').click()">📷 적발 사진 ${c.photo?'변경':'업로드'}</label>
+      <input type="file" id="ph${i}" accept="image/*" style="display:none" onchange="setPhoto(${i},this)">
+      ${c.photo?`<img class="photo-thumb" src="${c.photo}">`:''}
+    </div>`).join('');
+}
+function escAttr(s){return esc(s).replace(/"/g,'&quot;');}
+
+function renderPreview(){
+  // scale
+  const prev=document.getElementById('preview'), scaler=document.getElementById('scaler');
+  const pageW=297*96/25.4; // mm->px @96dpi
+  const avail=prev.clientWidth-48;
+  const sc=Math.min(1,avail/pageW);
+  scaler.style.transform='scale('+sc+')';
+  scaler.style.width=pageW+'px';
+  prev.style.setProperty('--sc',sc);
+  // page1
+  const N=S.cards.length;
+  const cards=S.cards.map(c=>`
+    <div class="cardx">
+      ${c.photo?`<img class="ph" src="${c.photo}">`:`<div class="ph empty">점검 사진</div>`}
+      <div class="ngchip">✕ 적발</div>
+      <div class="ngwrap">
+        <div class="ngk">이렇게 하면 안 됩니다</div>
+        <div class="ngt">${esc(c.ngTitle||c.ng)}</div>
+        ${c.ng&&c.ng!==(c.ngTitle||c.ng)?`<div class="ngd">${esc(c.ng)}</div>`:''}
+      </div>
+      <div class="div"><div class="o">▼</div></div>
+      <div class="okwrap">
+        <div class="okk">✓ 준수 기준</div>
+        <div class="okt">${esc(c.okTitle||c.ok)}</div>
+        ${c.ok&&c.ok!==(c.okTitle||c.ok)?`<div class="okd">${esc(c.ok)}</div>`:''}
+      </div>
+    </div>`).join('');
+  document.getElementById('page1').innerHTML=`
+    <div class="pg-head">
+      <div class="logo"><div class="a">ONE POINT</div><div class="b">LESSON</div></div>
+      <div class="ttl"><div class="t">${esc(S.title)}</div><div class="s">${esc(S.subtitle)}</div></div>
+      <div class="cls">분류 &nbsp;|&nbsp; ${esc(S.classification)}</div>
+      <div class="no">관리번호 &nbsp;${esc(S.docNo)}<br>작성일 &nbsp;${esc(S.date)}</div>
+    </div>
+    <div class="meta">
+      <div class="c"><b>작성</b><span class="v">${esc(S.author)||'&nbsp;'}</span></div>
+      <div class="c"><b>검토</b><span class="v empty">&nbsp;</span></div>
+      <div class="c"><b>승인</b><span class="v empty">&nbsp;</span></div>
+      <div class="c"><b>교육대상</b><span class="v">${esc(S.target)||'&nbsp;'}</span></div>
+    </div>
+    ${S.core&&S.core.trim()?`<div class="core"><span class="k">핵심</span>${hl(S.core)}</div>`:''}
+    <div class="cards">${cards}</div>
+    <div class="why"><span class="w">WHY</span><span class="tx">${hl(S.why)}</span><span class="org">${esc(S.org)}</span></div>`;
+  // page2
+  const rows=parseInt(S.signRows)||18;
+  const half=Math.ceil(rows/2);
+  const block=(start)=>{
+    let tr='';
+    for(let r=0;r<half;r++){const no=start+r;if(no>rows)break;tr+=`<tr><td>${no}</td><td></td><td></td><td></td></tr>`;}
+    return `<table class="sigtbl"><colgroup><col class="no"><col class="nm"><col class="sg"><col class="dt"></colgroup>
+      <thead><tr><th>No</th><th>성명</th><th>서명</th><th>일자</th></tr></thead><tbody>${tr}</tbody></table>`;
+  };
+  document.getElementById('page2').innerHTML=`
+    <div class="pg2-head">
+      <div class="lg">OPL</div>
+      <div class="tt"><div class="t">교육 실시 확인 · 서명부</div><div class="s">${esc(S.title)}${S.docNo?'  ('+esc(S.docNo)+')':''}</div></div>
+      <div class="rt">교육받은 작업자는 성명·서명을 기재합니다.</div>
+    </div>
+    <div class="edu">
+      <div class="cell"><div class="k">교육명</div><div class="v">${esc(S.title)}</div></div>
+      <div class="cell"><div class="k">교육일자</div><div class="v">${esc(S.eduDate)}</div></div>
+      <div class="cell"><div class="k">교육장소</div><div class="v">${esc(S.eduPlace)}</div></div>
+      <div class="cell"><div class="k">교육자</div><div class="v">${esc(S.eduTeacher)}</div></div>
+    </div>
+    <div class="signwrap">${block(1)}${block(half+1)}</div>
+    <div class="signote">${esc(S.note)}</div>`;
+}
+
+/* ---- form <-> state ---- */
+function bindForm(){
+  const map={f_title:'title',f_subtitle:'subtitle',f_class:'classification',f_docNo:'docNo',f_date:'date',f_author:'author',f_target:'target',f_org:'org',f_core:'core',f_why:'why',f_eduPlace:'eduPlace',f_eduTeacher:'eduTeacher',f_eduDate:'eduDate',f_signRows:'signRows',f_note:'note'};
+  for(const id in map){const el=document.getElementById(id);el.value=S[map[id]]??'';el.oninput=()=>{S[map[id]]=el.value;renderPreview();};}
+}
+function fillForm(){const map={f_title:'title',f_subtitle:'subtitle',f_class:'classification',f_docNo:'docNo',f_date:'date',f_author:'author',f_target:'target',f_org:'org',f_core:'core',f_why:'why',f_eduPlace:'eduPlace',f_eduTeacher:'eduTeacher',f_eduDate:'eduDate',f_signRows:'signRows',f_note:'note'};for(const id in map){document.getElementById(id).value=S[map[id]]??'';}}
+
+function setCard(i,k,v){S.cards[i][k]=v;if(k==='ng')S.cards[i].ngTitle=shorten(v,16);if(k==='ok')S.cards[i].okTitle=shorten(v,16);renderPreview();}
+function toggleAdv(){const b=document.getElementById('advBody'),a=document.getElementById('advArrow');const open=b.style.display==='none';b.style.display=open?'block':'none';a.textContent=open?'▾':'▸';}
+function setPhoto(i,input){const f=input.files[0];if(!f)return;const rd=new FileReader();rd.onload=e=>{S.cards[i].photo=e.target.result;renderCardEdit();renderPreview();};rd.readAsDataURL(f);}
+function addCard(){if(S.cards.length>=4){alert('항목은 최대 4개까지 권장합니다.');return;}S.cards.push({ngTitle:'',ng:'',okTitle:'',ok:'',photo:null});renderCardEdit();renderPreview();}
+function rmCard(i){if(S.cards.length<=1){alert('최소 1개 카드가 필요합니다.');return;}S.cards.splice(i,1);renderCardEdit();renderPreview();}
+
+/* ---- auto-generate from pasted text ---- */
+function autoGen(){
+  const raw=document.getElementById('paste').value.trim();
+  if(!raw){alert('먼저 이슈 내용을 붙여넣어 주세요.');return;}
+  const lines=raw.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const cards=[];let pendingNG=null;let title='',why='',core='';
+  const takeVal=(l)=>l.replace(/^[^:：]*[:：]\s*/,'').trim();
+  const stripNo=(l)=>l.replace(/^\s*\d+[\.\)]\s*/,'').trim();
+  for(let raw0 of lines){
+    let l=raw0;
+    // arrow pair on one line: NG → OK
+    if(/[→➔➜=]{1,2}>?/.test(l) && /(적발|ng|미준수|위반)/i.test(l)===false && l.includes('→')){
+      const parts=l.split('→');
+      if(parts.length===2){cards.push(mkCard(stripNo(parts[0]),parts[1].trim()));continue;}
+    }
+    if(/^(제목|title)\s*[:：]/i.test(l)){title=takeVal(l);continue;}
+    if(/^(부제|subtitle)\s*[:：]/i.test(l)){S.subtitle=takeVal(l);continue;}
+    if(/^(핵심|core)\s*[:：]/i.test(l)){core=takeVal(l);continue;}
+    if(/^(why|왜)\s*[:：]/i.test(l)){why=takeVal(l);continue;}
+    if(/^(적발|ng|미준수|위반|현상)\s*\d*\s*[:：\.\)]/i.test(l)){pendingNG=takeVal(l);continue;}
+    if(/^(준수|ok|기준|개선|요청|조치)\s*\d*\s*[:：\.\)]/i.test(l)){
+      const ok=takeVal(l);
+      if(pendingNG!=null){cards.push(mkCard(pendingNG,ok));pendingNG=null;}
+      else cards.push(mkCard('적발 항목',ok));
+      continue;
+    }
+    // numbered plain line with arrow inside handled above; else treat "a → b"
+    if(l.includes('→')){const p=l.split('→');if(p.length===2){cards.push(mkCard(stripNo(p[0]),p[1].trim()));continue;}}
+    // first free line -> title if none
+    if(!title){title=stripNo(l);continue;}
+    // leftover free line -> append to last card OK or as core
+    if(cards.length && !core){/* ignore */}
+  }
+  if(pendingNG!=null)cards.push(mkCard(pendingNG,''));
+  if(cards.length){S.cards=cards.slice(0,4);}
+  S.title=title||deriveTitle(S.cards);
+  S.core=core||'';   // 없으면 미표시
+  S.why=why||'';     // 없으면 비움(②에서 입력)
+  const t=(S.title||'주제').replace(/[\s·:]/g,'').slice(0,6);S.docNo='OPL-'+ymm()+'-'+t+'-01';
+  fillForm();renderCardEdit();renderPreview();
+}
+function deriveTitle(cards){
+  const ok=(cards.find(c=>c.ok&&c.ok.trim())||{}).ok||'';
+  if(ok){let t=ok.replace(/[.。]$/,'');t=shorten(t,16);return /준수|기준/.test(t)?t:t+' 기준 준수';}
+  return '점검 지적사항 준수';
+}
+function mkCard(ng,ok){
+  ng=(ng||'').trim();ok=(ok||'').trim();
+  return {ngTitle:shorten(ng,16),ng:ng,okTitle:shorten(ok,16),ok:ok,photo:null};
+}
+function shorten(s,n){s=(s||'').replace(/[.。]$/,'');return s.length>n?s.slice(0,n):s;}
+function ymm(){return '2508';}
+
+function clearAll(){S.title='';S.subtitle='';S.core='';S.why='';S.cards=[{ngTitle:'',ng:'',okTitle:'',ok:'',photo:null}];document.getElementById('paste').value='';fillForm();renderCardEdit();renderPreview();}
+function loadSample(){location.reload();}
+function doPrint(){window.print();}
+
+function init(){bindForm();renderCardEdit();renderPreview();}
+window.addEventListener('resize',renderPreview);
+init();
+</script>
+</body>
+</html>

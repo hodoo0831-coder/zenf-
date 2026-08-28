@@ -1,0 +1,3871 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>세척실 AI v2.7 | 태블릿</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', Arial, sans-serif; background: var(--gray-50); color: var(--gray-900); overflow-x: hidden; word-break: keep-all; line-break: strict; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  button { font-family: inherit; cursor: pointer; border: none; }
+  input, select, textarea { font-family: inherit; }
+
+  :root {
+    /* Primary palette - 더 정제된 톤 */
+    --navy: #1F4E78;
+    --navy-deep: #163b5c;
+    --navy-light: #2563a0;
+    --sky: #5B9BD5;
+    --sky-light: #DDEBF7;
+    --sky-pale: #F0F6FC;
+
+    /* Accents */
+    --red: #C00000;
+    --red-light: #FCE4D6;
+    --red-pale: #FFF5F5;
+    --yellow: #E0A800;
+    --yellow-light: #FFF2CC;
+    --yellow-pale: #FFFBEB;
+    --green: #548235;
+    --green-light: #E2EFDA;
+    --green-pale: #F4F9EE;
+    --orange: #ED7D31;
+    --orange-light: #FCE7D5;
+
+    /* Neutrals - 더 풍부한 회색 톤 */
+    --gray-900: #0F172A;
+    --gray-800: #1E293B;
+    --gray-700: #334155;
+    --gray-600: #475569;
+    --gray-500: #64748B;
+    --gray-400: #94A3B8;
+    --gray-300: #CBD5E1;
+    --gray-200: #E2E8F0;
+    --gray-100: #F1F5F9;
+    --gray-50:  #F8FAFC;
+    --white: #FFFFFF;
+
+    /* Backwards compat */
+    --light-sky: var(--sky-light);
+    --light-red: var(--red-light);
+    --light-yellow: var(--yellow-light);
+    --light-green: var(--green-light);
+    --light-orange: var(--orange-light);
+    --gray: var(--gray-600);
+    --light-gray: var(--gray-100);
+
+    /* Shadows - 다층 그림자로 깊이감 */
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.10), 0 8px 10px -6px rgba(15, 23, 42, 0.06);
+
+    /* Radius */
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --r-xl: 20px;
+    --r-2xl: 24px;
+  }
+
+  /* ===== 로그인 화면 ===== */
+  #loginScreen {
+    position: fixed; left: 0; right: 0; bottom: 0; top: 41px;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(91, 155, 213, 0.25), transparent 55%),
+      radial-gradient(ellipse at 70% 80%, rgba(13, 148, 136, 0.20), transparent 50%),
+      linear-gradient(135deg, #0F2847 0%, #1E3A5F 50%, #163b5c 100%);
+    display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;
+  }
+  @media (max-width: 600px) {
+    #loginScreen { top: 35px; }
+  }
+  #loginScreen.hide { display: none; }
+  .login-card {
+    background: white; border-radius: var(--r-2xl); padding: 44px; max-width: 480px; width: 100%;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.30), 0 0 0 1px rgba(255,255,255,0.05);
+    /* 스플래시 종료에 맞춰 부드럽게 등장 */
+    opacity: 0;
+    transform: translateY(20px);
+    animation: loginCardIn 0.7s cubic-bezier(0.4, 0, 0.2, 1) 1.8s forwards;
+  }
+  @keyframes loginCardIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .login-card h1 { color: var(--navy); font-size: 32px; margin-bottom: 8px; text-align: center; font-weight: 800; letter-spacing: -0.02em; }
+  .login-card .subtitle { color: var(--gray-500); text-align: center; margin-bottom: 32px; font-size: 16px; font-weight: 500; }
+  .login-options { display: flex; flex-direction: column; gap: 14px; }
+  .login-btn {
+    padding: 24px; border-radius: var(--r-lg); border: 2px solid var(--gray-100);
+    text-align: left; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--gray-50);
+    display: flex; align-items: center; gap: 18px;
+  }
+  .login-btn:active { transform: scale(0.98); }
+  .login-btn:hover { border-color: var(--sky); background: var(--sky-pale); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .login-btn .icon {
+    width: 60px; height: 60px; border-radius: 18px; display: flex;
+    align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: white; flex-shrink: 0;
+    box-shadow: var(--shadow-md);
+  }
+  .login-btn .icon.production { background: linear-gradient(135deg, var(--orange), #d96b1e); }
+  .login-btn .icon.manufacturing { background: linear-gradient(135deg, #0D9488, #0a6e64); }
+  .login-btn .icon.washroom { background: linear-gradient(135deg, var(--navy), var(--navy-deep)); }
+  .login-btn .text-block { flex: 1; }
+  .login-btn .role-name { font-size: 22px; font-weight: 800; color: var(--navy); margin-bottom: 5px; letter-spacing: -0.01em; }
+  .login-btn .role-desc { font-size: 15px; color: var(--gray-500); font-weight: 500; }
+
+  /* ===== 헤더 ===== */
+  header { background: linear-gradient(135deg, var(--navy), var(--navy-deep)); color: white; padding: 16px 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: var(--shadow-md); position: sticky; top: 0; z-index: 100;
+  }
+  header .left { display: flex; align-items: center; gap: 14px; }
+  header .title { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+  header .role-tag {
+    font-size: 16px; padding: 7px 16px; border-radius: 999px;
+    background: rgba(255,255,255,0.15); font-weight: 700; letter-spacing: 0.3px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  header .role-tag.production { background: linear-gradient(135deg, var(--orange), #d96b1e); border-color: transparent; }
+  header .role-tag.manufacturing { background: linear-gradient(135deg, #0D9488, #0a6e64); border-color: transparent; }
+  header .role-tag.washroom { background: linear-gradient(135deg, var(--sky), #4583c0); border-color: transparent; }
+  header .right { display: flex; align-items: center; gap: 16px; }
+  header .clock { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  header .logout-btn {
+    background: rgba(255,255,255,0.1); color: white; padding: 10px 18px;
+    border: 1px solid rgba(255,255,255,0.2); border-radius: var(--r-sm); font-size: 15px; font-weight: 700;
+    transition: all 0.15s;
+  }
+  header .logout-btn:hover { background: rgba(255,255,255,0.2); }
+
+  /* ===== 탭 ===== */
+  nav.tabs {
+    background: white; display: flex; border-bottom: 1px solid var(--gray-200);
+    overflow-x: auto; position: sticky; top: 70px; z-index: 99;
+    box-shadow: var(--shadow-sm);
+  }
+  nav.tabs button {
+    flex: 1; min-width: 150px; padding: 22px 14px; font-size: 20px; font-weight: 700;
+    color: var(--gray-500); background: transparent; border: none; border-bottom: 3px solid transparent;
+    transition: all 0.15s; white-space: nowrap; letter-spacing: -0.01em;
+    cursor: pointer;
+  }
+  nav.tabs button:hover { color: var(--navy); background: var(--gray-50); }
+  nav.tabs button.active {
+    color: var(--navy); border-bottom-color: var(--sky); background: var(--sky-pale);
+  }
+  nav.tabs button .badge {
+    display: inline-block; min-width: 24px; padding: 2px 8px; margin-left: 6px;
+    border-radius: 999px; background: var(--red); color: white; font-size: 13px; font-weight: 800;
+    box-shadow: var(--shadow-sm);
+  }
+  nav.tabs button .badge.hide { display: none; }
+  nav.tabs button .badge.warn { background: var(--yellow); color: #7A4F00; }
+
+  /* ===== 메인 ===== */
+  main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  h2.section-title {
+    font-size: 25px; color: var(--navy); margin-bottom: 16px; font-weight: 800; letter-spacing: -0.02em;
+    padding-bottom: 12px; border-bottom: 2px solid var(--sky-light);
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  h2.section-title small { font-size: 14px; color: var(--gray-500); font-weight: 500; letter-spacing: 0; }
+
+  /* ===== 검색바 ===== */
+  .search-bar {
+    background: white; border-radius: var(--r-lg); padding: 12px;
+    margin-bottom: 14px; display: flex; gap: 8px; align-items: center;
+    box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200);
+  }
+  .search-bar input {
+    flex: 1; padding: 18px 22px; font-size: 22px; border: 2px solid transparent;
+    border-radius: var(--r-md); background: var(--gray-50); font-weight: 600;
+    transition: all 0.15s;
+  }
+  .search-bar input:focus { outline: none; border-color: var(--sky); background: white; box-shadow: 0 0 0 4px rgba(91, 155, 213, 0.15); }
+  .search-bar .clear-btn { background: var(--gray-100); padding: 18px 22px; border-radius: var(--r-md); font-size: 20px; color: var(--gray-500); font-weight: bold; transition: all 0.15s; cursor: pointer; border: none; }
+  .search-bar .clear-btn:hover { background: var(--gray-200); color: var(--gray-700); }
+
+  /* ===== 그룹 필터 ===== */
+  .group-filter {
+    display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .group-chip {
+    padding: 12px 22px; border-radius: 999px; background: white;
+    border: 1.5px solid var(--gray-200); font-size: 17px; font-weight: 700;
+    color: var(--gray-600); transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+  .group-chip:hover { border-color: var(--sky); color: var(--navy); transform: translateY(-1px); }
+  .group-chip.active { background: var(--navy); color: white; border-color: var(--navy); box-shadow: var(--shadow-md); }
+  .group-chip .count { font-size: 14px; opacity: 0.7; margin-left: 6px; font-weight: 600; }
+
+  /* ===== 즐겨찾기 ===== */
+  .favorites-section {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FFF9E0 100%);
+    border-radius: var(--r-lg); padding: 16px; margin-bottom: 14px;
+    border: 1px solid #FCE7B3;
+    box-shadow: var(--shadow-sm);
+  }
+  .favorites-title {
+    font-size: 16px; color: #92660C; font-weight: 800; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* ===== 라인 그리드 ===== */
+  .line-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px;
+  }
+  .line-card {
+    background: white; border-radius: var(--r-lg); padding: 22px;
+    border: 1px solid var(--gray-200); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer; position: relative; min-height: 160px;
+    display: flex; flex-direction: column; gap: 7px;
+    box-shadow: var(--shadow-sm);
+  }
+  .line-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: var(--sky); }
+  .line-card:active { transform: scale(0.97); }
+  .line-card .group-badge {
+    display: inline-block; padding: 5px 12px; border-radius: 999px;
+    font-size: 13px; font-weight: 800; color: white; align-self: flex-start;
+    letter-spacing: 0.3px;
+    box-shadow: var(--shadow-sm);
+  }
+  .line-card .line-name { font-size: 24px; font-weight: 800; color: var(--navy); margin-top: 4px; letter-spacing: -0.02em; }
+  .line-card .meta { font-size: 14px; color: var(--gray-500); font-weight: 500; }
+  .line-card .star {
+    position: absolute; top: 12px; right: 12px; font-size: 24px;
+    color: var(--gray-300); cursor: pointer; padding: 4px; line-height: 1;
+    transition: all 0.15s;
+  }
+  .line-card .star:hover { transform: scale(1.2); }
+  .line-card .star.on { color: #FFC107; text-shadow: 0 2px 4px rgba(255, 193, 7, 0.4); }
+  .line-card .count-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    color: white; font-weight: 800; font-size: 12px;
+    padding: 3px 9px; border-radius: 11px;
+    box-shadow: 0 2px 6px rgba(217, 119, 6, 0.45);
+    letter-spacing: -0.3px;
+    z-index: 1;
+  }
+
+  /* ===== 카테고리 chip (도착 등록 모달) ===== */
+  .cat-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .cat-chip {
+    flex: 1 0 auto;
+    min-width: 64px;
+    padding: 9px 8px;
+    border: 2px solid var(--gray-300);
+    background: white;
+    color: var(--gray-600);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: -0.3px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cat-chip:hover { border-color: var(--gray-400); background: var(--gray-50); }
+  .cat-chip.active {
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+  .cat-chip[data-cat="ALL"].active { background: linear-gradient(135deg, #475569, #1E293B); }
+  .cat-chip[data-cat="C1"].active  { background: linear-gradient(135deg, #10B981, #047857); }
+  .cat-chip[data-cat="C2"].active  { background: linear-gradient(135deg, #06B6D4, #0E7490); }
+  .cat-chip[data-cat="C3"].active  { background: linear-gradient(135deg, #F59E0B, #B45309); }
+  .cat-chip[data-cat="C4"].active  { background: linear-gradient(135deg, #EF4444, #B91C1C); }
+  .cat-chip[data-cat="C5"].active  { background: linear-gradient(135deg, #8B5CF6, #6D28D9); }
+  .cat-chip.suggested {
+    border-color: #FFC107;
+    background: #FFFBEB;
+    color: #92400E;
+  }
+  .cat-chip.suggested::before {
+    content: '★ ';
+    color: #F59E0B;
+  }
+
+  /* 상태별 라인 카드 */
+  .line-card.waiting {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FFF9E0 100%);
+    border-color: #FCE7B3;
+  }
+  .line-card.waiting::after {
+    content: '대기'; position: absolute; bottom: 14px; right: 14px;
+    background: linear-gradient(135deg, #E0A800, #C99000); color: white; padding: 5px 14px;
+    border-radius: 999px; font-size: 13px; font-weight: 800;
+    box-shadow: var(--shadow-sm);
+  }
+  .line-card.washing {
+    background: linear-gradient(135deg, var(--sky-pale) 0%, #E5EFF8 100%);
+    border-color: #B8D4ED;
+  }
+  .line-card.washing::after {
+    content: '세척중'; position: absolute; bottom: 14px; right: 14px;
+    background: linear-gradient(135deg, var(--sky), #4583c0); color: white; padding: 5px 14px;
+    border-radius: 999px; font-size: 13px; font-weight: 800;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ===== 요약 카드 ===== */
+  .summary-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px; margin-bottom: 18px;
+  }
+  .summary-card {
+    background: white; border-radius: var(--r-lg); padding: 22px;
+    text-align: center; border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
+    position: relative; overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s, filter 0.2s;
+    /* button 리셋 */
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .summary-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .summary-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: var(--sky);
+  }
+  .summary-card .label { font-size: 14px; color: var(--gray-500); margin-bottom: 8px; font-weight: 700; letter-spacing: -0.01em; }
+  .summary-card .value { font-size: 40px; font-weight: 800; color: var(--navy); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .summary-card.alert::before { background: var(--red); }
+  .summary-card.alert .value { color: var(--red); }
+  .summary-card.warn::before { background: var(--yellow); }
+  .summary-card.warn .value { color: var(--yellow); }
+  /* 필터 활성 상태 */
+  .summary-card.is-active {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 3px var(--sky), var(--shadow-md);
+    border-color: var(--sky);
+  }
+  .summary-card.warn.is-active { box-shadow: 0 0 0 3px var(--yellow), var(--shadow-md); border-color: var(--yellow); }
+  .summary-card.alert.is-active { box-shadow: 0 0 0 3px var(--red), var(--shadow-md); border-color: var(--red); }
+  /* 필터 비활성(다른 카드 어둡게) */
+  .summary-row.has-active .summary-card:not(.is-active) {
+    opacity: 0.45;
+    filter: grayscale(0.5);
+  }
+
+  /* 필터 패널 */
+  .filter-panel {
+    background: white;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 18px;
+    overflow: hidden;
+    animation: filterPanelIn 0.25s ease-out;
+  }
+  @keyframes filterPanelIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .filter-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .filter-panel-header h3 {
+    margin: 0; font-size: 16px; font-weight: 800; color: var(--navy);
+    letter-spacing: -0.01em;
+  }
+  .filter-clear-btn {
+    background: white;
+    border: 1px solid var(--gray-300);
+    color: var(--gray-600);
+    font-size: 13px; font-weight: 600;
+    padding: 6px 12px; border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-clear-btn:hover { background: var(--gray-100); border-color: var(--gray-400); }
+  .filter-panel-body {
+    padding: 14px 18px;
+    max-height: 480px;
+    overflow-y: auto;
+  }
+  .filter-item {
+    padding: 14px 16px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--r-md);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .filter-item:hover {
+    background: white;
+    border-color: var(--sky);
+    box-shadow: 0 2px 8px rgba(91, 155, 213, 0.15);
+    transform: translateX(2px);
+  }
+  .filter-item:active { transform: translateX(2px) scale(0.99); }
+  .filter-item::after {
+    content: '›';
+    color: var(--gray-400);
+    font-size: 24px;
+    font-weight: 300;
+    margin-left: auto;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .filter-item.no-action {
+    cursor: default;
+  }
+  .filter-item.no-action:hover {
+    background: var(--gray-50);
+    border-color: var(--gray-200);
+    box-shadow: none;
+    transform: none;
+  }
+  .filter-item:last-child { margin-bottom: 0; }
+  .filter-item .item-prio {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    color: white;
+    letter-spacing: 0.04em;
+  }
+  .filter-item .item-prio.HIGH { background: var(--red); }
+  .filter-item .item-prio.MEDIUM { background: var(--yellow); color: #7A4F00; }
+  .filter-item .item-prio.LOW { background: var(--green); }
+  .filter-item .item-prio.RUN { background: var(--sky); }
+  .filter-item .item-prio.DONE { background: var(--green); }
+  .filter-item .item-prio.REWORK { background: var(--red); }
+  .filter-item .item-info { flex: 1; min-width: 0; }
+  .filter-item .item-line {
+    font-size: 16px; font-weight: 800; color: var(--navy); margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .filter-item .item-meta {
+    font-size: 12px; color: var(--gray-600); line-height: 1.5;
+  }
+  .filter-item .item-meta strong { color: var(--navy); font-weight: 700; }
+  .filter-empty {
+    text-align: center; padding: 40px 20px;
+    color: var(--gray-400); font-size: 14px;
+  }
+
+  /* ===== 폼 ===== */
+  .form-row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .form-row label { font-size: 19px; font-weight: 800; color: var(--navy); min-width: 120px; letter-spacing: -0.01em; }
+  .form-row input, .form-row select, .form-row textarea {
+    flex: 1; min-width: 200px; padding: 16px 18px; font-size: 20px; font-weight: 600;
+    border: 1.5px solid var(--gray-200); border-radius: var(--r-md); background: white;
+    transition: all 0.15s; color: var(--gray-900);
+  }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: none; border-color: var(--sky); box-shadow: 0 0 0 4px rgba(91, 155, 213, 0.15); }
+  .form-row .selected-line {
+    flex: 1; padding: 16px 18px; background: var(--sky-pale); border-radius: var(--r-md);
+    font-weight: 800; color: var(--navy); font-size: 20px; border: 1.5px solid var(--sky-light);
+    letter-spacing: -0.01em;
+  }
+
+  /* 큰 버튼 */
+  .btn {
+    display: inline-block; padding: 18px 32px; font-size: 20px; font-weight: 800; letter-spacing: -0.01em;
+    border-radius: var(--r-md); border: none; transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); min-width: 140px;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: linear-gradient(135deg, var(--navy), var(--navy-deep)); color: white; }
+  .btn-arrival { background: linear-gradient(135deg, var(--orange), #d96b1e); color: white; }
+  .btn-start { background: linear-gradient(135deg, var(--green), #426c2a); color: white; }
+  .btn-stop { background: linear-gradient(135deg, var(--red), #960000); color: white; }
+  .btn-secondary { background: var(--gray-100); color: var(--navy); }
+  .btn-secondary:hover { background: var(--gray-200); }
+  .btn-big { padding: 24px; font-size: 22px; width: 100%; }
+
+  /* ===== 진행 패널 ===== */
+  .running-panel {
+    background: white; border-radius: var(--r-xl); padding: 32px; text-align: center;
+  }
+  .running-panel.waiting { border: 2px solid #FCE7B3; background: linear-gradient(135deg, #FFFBEB, #FFF9E0); }
+  .running-panel.washing { border: 2px solid #B8D4ED; background: linear-gradient(135deg, var(--sky-pale), #F5FAFE); }
+  .running-panel .line-label { font-size: 46px; font-weight: 800; color: var(--navy); margin-bottom: 10px; letter-spacing: -0.03em; }
+  .running-panel .group-tag {
+    display: inline-block; padding: 7px 18px; border-radius: 999px;
+    font-size: 15px; font-weight: 800; color: white; margin-bottom: 18px;
+    box-shadow: var(--shadow-sm); letter-spacing: 0.3px;
+  }
+  .running-panel .timer {
+    font-size: 88px; font-weight: 800; font-variant-numeric: tabular-nums;
+    letter-spacing: -0.04em; margin: 22px 0;
+  }
+  .running-panel.waiting .timer { color: #C99000; }
+  .running-panel.washing .timer { color: var(--sky); }
+  .running-panel .meta {
+    display: flex; justify-content: center; gap: 30px; margin: 22px 0;
+    color: var(--gray-500); font-size: 15px; flex-wrap: wrap; font-weight: 500;
+  }
+  .running-panel .meta span { display: block; font-size: 24px; color: var(--navy); font-weight: 800; margin-top: 4px; letter-spacing: -0.01em; }
+
+  /* 토글 */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    padding: 16px; background: var(--gray-50); border-radius: var(--r-md); margin: 16px 0;
+    border: 1px solid var(--gray-200);
+  }
+  .toggle-row .label { font-size: 16px; font-weight: 700; color: var(--navy); }
+  .toggle {
+    position: relative; width: 60px; height: 32px; background: var(--gray-300);
+    border-radius: 16px; cursor: pointer; transition: background 0.2s;
+  }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px;
+    background: white; border-radius: 13px; transition: left 0.2s;
+    box-shadow: var(--shadow-sm);
+  }
+  .toggle.on { background: var(--red); }
+  .toggle.on::after { left: 31px; }
+
+  .note-input {
+    width: 100%; padding: 12px 16px; font-size: 15px;
+    border: 1.5px solid var(--gray-200); border-radius: var(--r-sm); margin: 10px 0;
+    transition: all 0.15s;
+  }
+  .note-input:focus { outline: none; border-color: var(--sky); }
+
+  /* ===== 기록 리스트 ===== */
+  .records { background: white; border-radius: var(--r-lg); padding: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); }
+  .record-item {
+    display: grid; grid-template-columns: auto 1fr auto auto;
+    gap: 12px; align-items: center; padding: 14px 8px;
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.15s;
+  }
+  .record-item:hover { background: var(--gray-50); }
+  .record-item:last-child { border-bottom: none; }
+  .record-item .group-bar {
+    width: 4px; height: 44px; border-radius: 2px;
+  }
+  .record-item .info .product { font-size: 20px; font-weight: 800; color: var(--navy); letter-spacing: -0.01em; }
+  .record-item .info .item { font-size: 15px; color: var(--gray-500); margin-top: 4px; font-weight: 500; }
+  .record-item .info .timeline { font-size: 14px; color: var(--gray-400); margin-top: 5px; font-variant-numeric: tabular-nums; font-weight: 500; }
+  .record-item .durations { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+  .record-item .dur-chip {
+    font-size: 14px; padding: 4px 12px; border-radius: 999px; font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .dur-chip.wait { background: var(--yellow-light); color: #92660C; }
+  .dur-chip.wash { background: var(--sky-light); color: var(--navy); }
+  .record-item .tags { display: flex; gap: 4px; flex-direction: column; align-items: flex-end; }
+  .tag {
+    font-size: 13px; padding: 3px 10px; border-radius: 999px; font-weight: 800;
+  }
+  .tag.rework { background: var(--red-light); color: var(--red); }
+  .tag.cat { background: var(--sky-light); color: var(--navy); }
+
+  .records .empty {
+    text-align: center; padding: 50px 20px; color: var(--gray-500); font-size: 15px;
+    font-weight: 500;
+  }
+
+  /* ===== 액션바 ===== */
+  .action-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+
+  /* ===== 우선순위 보드 ===== */
+  .priority-list { display: flex; flex-direction: column; gap: 10px; }
+  .priority-card {
+    background: white; border-radius: var(--r-lg); padding: 18px 20px;
+    display: grid; grid-template-columns: auto 1fr auto auto;
+    align-items: center; gap: 14px; border-left: 6px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .priority-card:hover { transform: translateX(2px); box-shadow: var(--shadow-md); }
+  .priority-card.HIGH { border-left-color: var(--red); background: linear-gradient(135deg, #FFF5F5 0%, #FFEAEA 100%); }
+  .priority-card.MEDIUM { border-left-color: var(--yellow); background: linear-gradient(135deg, #FFFBEB 0%, #FFF6D6 100%); }
+  .priority-card.LOW { border-left-color: var(--green); background: linear-gradient(135deg, #F4F9EE 0%, #EAF3DD 100%); }
+  .priority-card .group-bar {
+    width: 4px; height: 54px; border-radius: 2px;
+  }
+  .priority-card .info .name { font-size: 22px; font-weight: 800; color: var(--navy); letter-spacing: -0.02em; }
+  .priority-card .info .detail { font-size: 14px; color: var(--gray-500); margin-top: 5px; font-weight: 500; line-height: 1.5; }
+  .priority-card .remain {
+    font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums;
+    padding: 8px 18px; border-radius: 999px; letter-spacing: -0.02em;
+    box-shadow: var(--shadow-sm);
+  }
+  .priority-card.HIGH .remain { background: linear-gradient(135deg, var(--red), #960000); color: white; }
+  .priority-card.MEDIUM .remain { background: linear-gradient(135deg, #F0B400, #D6A000); color: #5A4500; }
+  .priority-card.LOW .remain { background: var(--green-light); color: var(--green); }
+  .priority-card .prio-label {
+    font-size: 14px; font-weight: 800; padding: 5px 14px; border-radius: 999px; letter-spacing: 0.5px;
+    box-shadow: var(--shadow-sm);
+  }
+  .priority-card.HIGH .prio-label { background: var(--red); color: white; }
+  .priority-card.MEDIUM .prio-label { background: var(--yellow); color: #5A4500; }
+  .priority-card.LOW .prio-label { background: var(--green); color: white; }
+
+  /* ===== 모달 ===== */
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 1000; align-items: center; justify-content: center; padding: 16px;
+    animation: fadeIn 0.2s ease-out;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: white; border-radius: var(--r-xl); padding: 28px;
+    max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto;
+    box-shadow: var(--shadow-xl);
+    animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .modal h3 { color: var(--navy); margin-bottom: 18px; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+  .modal .modal-body { margin: 16px 0; color: var(--gray-700); font-size: 18px; line-height: 1.6; }
+  .modal .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
+
+  /* ===== 토스트 ===== */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--navy), var(--navy-deep)); color: white; padding: 16px 32px;
+    border-radius: 999px; font-size: 18px; font-weight: 800;
+    box-shadow: var(--shadow-xl);
+    opacity: 0; transition: opacity 0.25s, transform 0.25s;
+    z-index: 2000; pointer-events: none;
+    letter-spacing: -0.01em;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-8px); }
+  .toast.success { background: linear-gradient(135deg, var(--green), #426c2a); }
+  .toast.error { background: linear-gradient(135deg, var(--red), #960000); }
+  .toast.warn { background: linear-gradient(135deg, var(--yellow), #c99000); color: #5A4500; }
+
+  /* ===== 설정/통계 카드 ===== */
+  .settings-box { background: white; border-radius: var(--r-lg); padding: 24px; margin-bottom: 14px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); }
+  .settings-box h3 { color: var(--navy); font-size: 21px; margin-bottom: 14px; font-weight: 800; letter-spacing: -0.01em; }
+  .settings-box p { color: var(--gray-600); font-size: 17px; margin-bottom: 10px; line-height: 1.7; font-weight: 500; }
+  .settings-box .stat-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0; border-bottom: 1px dashed var(--gray-200);
+  }
+  .settings-box .stat-row:last-child { border-bottom: none; }
+  .settings-box .stat-row .key { font-weight: 700; color: var(--navy); font-size: 17px; letter-spacing: -0.01em; }
+  .settings-box .stat-row .val { color: var(--gray-700); font-variant-numeric: tabular-nums; font-size: 17px; font-weight: 600; }
+
+  /* ===== KPI 강조 박스 ===== */
+  .kpi-box {
+    background:
+      radial-gradient(ellipse at top right, rgba(91, 155, 213, 0.4), transparent 60%),
+      linear-gradient(135deg, var(--navy), var(--navy-deep));
+    color: white; border-radius: var(--r-xl); padding: 28px; margin-bottom: 18px;
+    box-shadow: var(--shadow-lg);
+    position: relative; overflow: hidden;
+  }
+  .kpi-box h3 { color: white; font-size: 18px; margin-bottom: 18px; opacity: 0.95; font-weight: 700; letter-spacing: -0.01em; }
+  .kpi-box .kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px;
+  }
+  .kpi-box .kpi-cell { text-align: center; }
+  .kpi-box .kpi-val {
+    font-size: 48px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.03em;
+  }
+  .kpi-box .kpi-label { font-size: 14px; opacity: 0.85; margin-top: 6px; line-height: 1.5; font-weight: 500; }
+
+  /* 반응형 */
+  @media (max-width: 600px) {
+    header { padding: 14px 18px; }
+    header .title { font-size: 20px; }
+    header .clock { font-size: 20px; }
+    nav.tabs { top: 60px; }
+    nav.tabs button { font-size: 16px; padding: 16px 10px; min-width: 110px; }
+    main { padding: 14px; }
+    .running-panel .timer { font-size: 64px; }
+    .running-panel .line-label { font-size: 32px; }
+    .form-row label { min-width: 100%; }
+    .summary-row { grid-template-columns: repeat(2, 1fr); }
+    .summary-card { padding: 18px; }
+    .summary-card .value { font-size: 34px; }
+    .kpi-box { padding: 22px; }
+    .kpi-box .kpi-val { font-size: 38px; }
+    .line-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+    .line-card { padding: 16px; min-height: 130px; }
+    .line-card .line-name { font-size: 20px; }
+  }
+
+  /* ===== 콜라보 푸터 ===== */
+  .collab-footer {
+    background: linear-gradient(180deg, #2C4A6E 0%, #1E3A5F 100%);
+    margin-top: 40px;
+    padding: 22px 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ===== 스플래시 인트로 ===== */
+  #splashScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(91, 155, 213, 0.25), transparent 55%),
+      radial-gradient(ellipse at 70% 80%, rgba(13, 148, 136, 0.20), transparent 50%),
+      linear-gradient(135deg, #0F2847 0%, #1E3A5F 50%, #163b5c 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    animation: splashFadeOut 0.5s ease-in 2.0s forwards;
+  }
+  /* 빛나는 배경 효과 */
+  #splashScreen .splash-bg {
+    position: absolute;
+    inset: -20%;
+    background:
+      radial-gradient(circle at 25% 30%, rgba(96, 165, 250, 0.15) 0%, transparent 25%),
+      radial-gradient(circle at 75% 70%, rgba(167, 139, 250, 0.12) 0%, transparent 25%),
+      radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 30%);
+    animation: splashBgPulse 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes splashBgPulse {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.6; }
+    50% { transform: scale(1.05) rotate(2deg); opacity: 1; }
+  }
+
+  #splashScreen .splash-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: white;
+    padding: 24px;
+    max-width: 90%;
+  }
+
+  /* 상단 브랜드 */
+  #splashScreen .splash-brand {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: splashFadeIn 0.6s ease-out 0.2s forwards;
+  }
+
+  /* 메인 타이틀 - 한 글자씩 등장 */
+  #splashScreen .splash-title {
+    font-size: 56px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    margin: 0 0 14px 0;
+    color: #FFFFFF;
+    text-shadow:
+      0 0 30px rgba(96, 165, 250, 0.6),
+      0 4px 20px rgba(0, 0, 0, 0.5);
+    line-height: 1.15;
+  }
+  #splashScreen .splash-title .char {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(30px) scale(0.85);
+    animation: splashCharIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  #splashScreen .splash-title .char:nth-child(1) { animation-delay: 0.40s; }
+  #splashScreen .splash-title .char:nth-child(2) { animation-delay: 0.48s; }
+  #splashScreen .splash-title .char:nth-child(3) { animation-delay: 0.56s; }
+  #splashScreen .splash-title .char:nth-child(4) { animation-delay: 0.64s; }
+  #splashScreen .splash-title .char:nth-child(5) { animation-delay: 0.72s; }
+  #splashScreen .splash-title .char:nth-child(6) { animation-delay: 0.80s; }
+  #splashScreen .splash-title .char:nth-child(7) { animation-delay: 0.88s; }
+  #splashScreen .splash-title .char:nth-child(8) { animation-delay: 0.96s; }
+  #splashScreen .splash-title .char:nth-child(9) { animation-delay: 1.04s; }
+  #splashScreen .splash-title .char:nth-child(10) { animation-delay: 1.12s; }
+  #splashScreen .splash-title .char:nth-child(11) { animation-delay: 1.20s; }
+  #splashScreen .splash-title .char.gap { width: 0.4em; }
+  @keyframes splashCharIn {
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* 버전 */
+  #splashScreen .splash-version {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.65);
+    margin-bottom: 38px;
+    opacity: 0;
+    animation: splashFadeIn 0.5s ease-out 1.35s forwards;
+  }
+
+  /* 카테고리 점 */
+  #splashScreen .splash-cats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 36px;
+  }
+  #splashScreen .splash-cat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    animation: splashFadeIn 0.4s ease-out forwards;
+  }
+  #splashScreen .splash-cat[data-cat="C1"] { animation-delay: 1.50s; }
+  #splashScreen .splash-cat[data-cat="C2"] { animation-delay: 1.58s; }
+  #splashScreen .splash-cat[data-cat="C3"] { animation-delay: 1.66s; }
+  #splashScreen .splash-cat[data-cat="C4"] { animation-delay: 1.74s; }
+  #splashScreen .splash-cat[data-cat="C5"] { animation-delay: 1.82s; }
+  #splashScreen .splash-cat .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    box-shadow: 0 0 16px currentColor;
+    animation: splashDotPulse 1.4s ease-in-out infinite;
+  }
+  #splashScreen .splash-cat[data-cat="C1"] .dot { background: #10B981; color: #10B981; animation-delay: 0s; }
+  #splashScreen .splash-cat[data-cat="C2"] .dot { background: #06B6D4; color: #06B6D4; animation-delay: 0.15s; }
+  #splashScreen .splash-cat[data-cat="C3"] .dot { background: #F59E0B; color: #F59E0B; animation-delay: 0.30s; }
+  #splashScreen .splash-cat[data-cat="C4"] .dot { background: #EF4444; color: #EF4444; animation-delay: 0.45s; }
+  #splashScreen .splash-cat[data-cat="C5"] .dot { background: #8B5CF6; color: #8B5CF6; animation-delay: 0.60s; }
+  @keyframes splashDotPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.4); opacity: 0.7; }
+  }
+  #splashScreen .splash-cat .lbl {
+    font-size: 10px;
+    line-height: 1.3;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  /* 진행 바 */
+  #splashScreen .splash-progress {
+    width: 220px;
+    height: 3px;
+    margin: 0 auto 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 99px;
+    overflow: hidden;
+    opacity: 0;
+    animation: splashFadeIn 0.4s ease-out 1.30s forwards;
+  }
+  #splashScreen .splash-progress-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #60A5FA, #06B6D4, #10B981);
+    border-radius: 99px;
+    animation: splashProgress 1.0s cubic-bezier(0.4, 0, 0.2, 1) 1.30s forwards;
+    box-shadow: 0 0 12px rgba(96, 165, 250, 0.6);
+  }
+  @keyframes splashProgress {
+    to { width: 100%; }
+  }
+
+  /* 하단 크레딧 */
+  #splashScreen .splash-credit {
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    color: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    animation: splashFadeIn 0.5s ease-out 1.5s forwards;
+  }
+
+  /* 페이드 인/아웃 공통 */
+  @keyframes splashFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes splashFadeOut {
+    to { opacity: 0; visibility: hidden; pointer-events: none; }
+  }
+
+  /* 모바일 */
+  @media (max-width: 600px) {
+    #splashScreen .splash-title { font-size: 38px; }
+    #splashScreen .splash-cats { gap: 14px; }
+    #splashScreen .splash-cat .lbl { font-size: 9px; }
+    #splashScreen .splash-progress { width: 180px; }
+    #splashScreen .splash-brand { font-size: 11px; letter-spacing: 0.2em; margin-bottom: 24px; }
+  }
+  /* 매우 작은 화면 */
+  @media (max-width: 380px) {
+    #splashScreen .splash-title { font-size: 30px; }
+    #splashScreen .splash-cats { gap: 10px; }
+  }
+
+  /* ===== 콜라보 상단 띠 (헤더 위) ===== */
+  .collab-bar {
+    background: linear-gradient(180deg, #1E3A5F 0%, #0F2847 100%);
+    padding: 10px 16px;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 10000;
+  }
+  .collab-bar .collab-inner {
+    gap: 12px 22px;
+  }
+  .collab-bar .collab-brand {
+    font-size: 12px;
+    letter-spacing: 0.28em;
+  }
+  .collab-bar .collab-credit {
+    font-size: 12px;
+  }
+  .collab-bar .collab-x {
+    font-size: 12px;
+  }
+  @media (max-width: 600px) {
+    .collab-bar { padding: 8px 12px; }
+    .collab-bar .collab-inner { gap: 6px 14px; }
+    .collab-bar .collab-brand { font-size: 10px; letter-spacing: 0.22em; }
+    .collab-bar .collab-credit { font-size: 11px; }
+  }
+  .collab-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 18px 28px;
+    color: rgba(255, 255, 255, 0.92);
+  }
+  .collab-brand {
+    font-family: 'SF Mono', 'Menlo', 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    white-space: nowrap;
+  }
+  .collab-x {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 14px;
+    font-weight: 300;
+  }
+  .collab-credit {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: #FFFFFF;
+    white-space: nowrap;
+  }
+  @media (max-width: 600px) {
+    .collab-inner { gap: 10px 18px; }
+    .collab-brand { font-size: 12px; letter-spacing: 0.25em; }
+    .collab-credit { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 스플래시 화면 (인트로) ===== -->
+<div id="splashScreen">
+  <div class="splash-bg"></div>
+  <div class="splash-content">
+    <div class="splash-brand">ZENIEL&nbsp;&nbsp;×&nbsp;&nbsp;AMOREPACIFIC&nbsp;DAEJEON</div>
+    <h1 class="splash-title">
+      <span class="char">세</span><span class="char">척</span><span class="char">실</span>
+      <span class="char gap">&nbsp;</span>
+      <span class="char">관</span><span class="char">리</span>
+      <span class="char gap">&nbsp;</span>
+      <span class="char">시</span><span class="char">스</span><span class="char">템</span>
+    </h1>
+    <div class="splash-version">v2.7 · AP 대전공장 세척실 운영</div>
+    <div class="splash-cats">
+      <div class="splash-cat" data-cat="C1"><span class="dot"></span><span class="lbl">C1<br>저점도</span></div>
+      <div class="splash-cat" data-cat="C2"><span class="dot"></span><span class="lbl">C2<br>중점도</span></div>
+      <div class="splash-cat" data-cat="C3"><span class="dot"></span><span class="lbl">C3<br>고점도</span></div>
+      <div class="splash-cat" data-cat="C4"><span class="dot"></span><span class="lbl">C4<br>염모제</span></div>
+      <div class="splash-cat" data-cat="C5"><span class="dot"></span><span class="lbl">C5<br>특수</span></div>
+    </div>
+    <div class="splash-progress"><div class="splash-progress-fill"></div></div>
+    <div class="splash-credit">Developed&nbsp;by&nbsp;LEE&nbsp;MIN&nbsp;AH</div>
+  </div>
+</div>
+
+<!-- ===== 콜라보 헤더 띠 ===== -->
+<div class="collab-bar">
+  <div class="collab-inner">
+    <span class="collab-brand">ZENIEL</span>
+    <span class="collab-x">×</span>
+    <span class="collab-brand">AMOREPACIFIC&nbsp;DAEJEON</span>
+    <span class="collab-credit">Developed&nbsp;by&nbsp;LEE&nbsp;MIN&nbsp;AH</span>
+  </div>
+</div>
+
+<!-- ===== 로그인 화면 ===== -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>세척실 관리 시스템</h1>
+    <p class="subtitle">사용자 역할을 선택하세요</p>
+    <div class="login-options">
+      <button class="login-btn" onclick="login('production')">
+        <div class="icon production">생</div>
+        <div class="text-block">
+          <div class="role-name">생산라인 및 설비</div>
+          <div class="role-desc">호퍼·탱크를 세척실에 갖다놓고 [도착 등록]</div>
+        </div>
+      </button>
+      <button class="login-btn" onclick="login('manufacturing')">
+        <div class="icon manufacturing">제</div>
+        <div class="text-block">
+          <div class="role-name">포터블 및 제조팀</div>
+          <div class="role-desc">에어펌프·호스류 등 세척물을 갖다놓고 [도착 등록]</div>
+        </div>
+      </button>
+      <button class="login-btn" onclick="login('washroom')">
+        <div class="icon washroom">세</div>
+        <div class="text-block">
+          <div class="role-name">세척실</div>
+          <div class="role-desc">세척 시작·종료, 우선순위 확인, 기록 관리</div>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 헤더 ===== -->
+<header id="mainHeader" style="display:none;">
+  <div class="left">
+    <span class="title">세척실 AI <small style="opacity:0.7; font-weight:normal; margin-left:4px;">v2.7</small></span>
+    <span class="role-tag" id="roleTag">생산라인 및 설비</span>
+  </div>
+  <div class="right">
+    <span class="clock" id="headerClock">--:--:--</span>
+    <button class="logout-btn" onclick="logout()">전환</button>
+  </div>
+</header>
+
+<!-- ===== 탭 ===== -->
+<nav class="tabs" id="mainTabs" style="display:none;">
+  <!-- 동적으로 채워짐 (역할별로 다름) -->
+</nav>
+
+<main id="mainContent" style="display:none;">
+
+  <!-- ====== [생산라인] 도착 등록 화면 ====== -->
+  <section id="tab-arrival" class="screen">
+    <div class="kpi-box" style="background: linear-gradient(135deg, var(--orange), #F4A460);">
+      <h3>📦 호퍼·탱크 도착 등록 안내</h3>
+      <p style="font-size:16px; opacity:0.95; line-height:1.7; margin-top:8px; word-break: keep-all;">
+        세척실에 갖다놓으신 후 <strong>아래에서 라인을 선택하고 [도착 등록] 버튼</strong>을 눌러주세요.
+        도착 시각이 자동 기록되어 세척실 인력이 알게 됩니다.
+      </p>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="searchArrival" placeholder="🔍 라인 이름 검색 (예: 직선, 염모제, 튜브2호 ...)" autocomplete="off">
+      <button class="clear-btn" onclick="clearSearch('searchArrival')">×</button>
+    </div>
+
+    <div class="group-filter" id="groupFilterArrival"></div>
+
+    <h2 class="section-title">⭐ 자주 쓰는 라인 <small>최근 도착 등록한 라인</small></h2>
+    <div class="favorites-section" id="favsArrival">
+      <div style="text-align:center; color: #7A4F00; font-size:16px; padding:18px; word-break: keep-all;">
+        도착 등록을 한 번 하면 여기에 자동으로 표시됩니다
+      </div>
+    </div>
+
+    <h2 class="section-title">전체 라인 <small id="lineCountArrival">66개</small></h2>
+    <div class="line-grid" id="lineGridArrival"></div>
+  </section>
+
+  <!-- ====== [세척실] 홈/대시보드 ====== -->
+  <section id="tab-home" class="screen">
+    <div class="summary-row" id="homeSummaryRow">
+      <button type="button" class="summary-card warn" data-filter="waiting">
+        <div class="label">📦 대기 중</div>
+        <div class="value" id="sumWaiting">0</div>
+      </button>
+      <button type="button" class="summary-card" data-filter="washing">
+        <div class="label">🚿 세척 중</div>
+        <div class="value" id="sumRunning">0</div>
+      </button>
+      <button type="button" class="summary-card" data-filter="done">
+        <div class="label">✅ 오늘 완료</div>
+        <div class="value" id="sumDone">0</div>
+      </button>
+      <button type="button" class="summary-card alert" data-filter="rework">
+        <div class="label">🔄 재세척</div>
+        <div class="value" id="sumRework">0</div>
+      </button>
+    </div>
+
+    <!-- 필터링된 항목 표시 영역 -->
+    <div id="homeFilterPanel" class="filter-panel" style="display:none;">
+      <div class="filter-panel-header">
+        <h3 id="filterPanelTitle">💧 대기 중 항목</h3>
+        <button type="button" class="filter-clear-btn" onclick="clearHomeFilter()">✕ 닫기</button>
+      </div>
+      <div id="filterPanelBody" class="filter-panel-body"></div>
+    </div>
+
+    <div class="kpi-box">
+      <h3>📊 오늘의 핵심 지표</h3>
+      <div class="kpi-grid">
+        <div class="kpi-cell">
+          <div class="kpi-val" id="kpiAvgWait">0</div>
+          <div class="kpi-label">평균 대기시간(분) <br>도착→세척시작</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-val" id="kpiAvgWash">0</div>
+          <div class="kpi-label">평균 세척시간(분) <br>제니엘 책임</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-val" id="kpiTotalWait">0</div>
+          <div class="kpi-label">누적 대기LOSS(분)</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-val" id="kpiOnTimeRate">—</div>
+          <div class="kpi-label">⭐ AP 필요시간 준수율 <br>요청대로 완료한 비율</div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">🚿 진행 중 라인 <small>탭하여 상태 변경</small></h2>
+    <div class="line-grid" id="activeLines"></div>
+  </section>
+
+  <!-- ====== [세척실] 라인 선택 ====== -->
+  <section id="tab-lines" class="screen">
+    <div class="search-bar">
+      <input type="text" id="searchLines" placeholder="🔍 라인 이름 검색 (직접 시작할 때)" autocomplete="off">
+      <button class="clear-btn" onclick="clearSearch('searchLines')">×</button>
+    </div>
+    <div class="group-filter" id="groupFilterLines"></div>
+
+    <h2 class="section-title">⭐ 자주 쓰는 라인</h2>
+    <div class="favorites-section" id="favsLines">
+      <div style="text-align:center; color: #7A4F00; font-size:16px; padding:18px; word-break: keep-all;">
+        세척 시작을 한 번 하면 여기에 자동으로 표시됩니다
+      </div>
+    </div>
+
+    <h2 class="section-title">전체 라인 <small id="lineCountLines">66개</small></h2>
+    <div class="line-grid" id="lineGridLines"></div>
+  </section>
+
+  <!-- ====== [세척실] 우선순위 ====== -->
+  <section id="tab-priority" class="screen">
+    <h2 class="section-title">🎯 세척 우선순위
+      <small>대기 중 + 다음 오더 임박순</small>
+    </h2>
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="openNextOrderModal()">+ 다음 오더 등록</button>
+      <button class="btn btn-secondary" onclick="clearNextOrders()">다음 오더 초기화</button>
+    </div>
+    <div class="priority-list" id="priorityList"></div>
+  </section>
+
+  <!-- ====== [세척실] 오늘 기록 ====== -->
+  <section id="tab-records" class="screen">
+    <h2 class="section-title">📝 오늘의 세척 기록
+      <small id="recordsDate"></small>
+    </h2>
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="exportCSV()">📥 CSV 내보내기</button>
+      <button class="btn btn-primary" onclick="exportToExcel()">📊 엑셀 다운로드</button>
+      <button class="btn btn-secondary" onclick="showDeleteLastConfirm()">마지막 기록 삭제</button>
+    </div>
+    <div id="statsChart" style="background:white; border-radius:12px; padding:16px; margin-bottom:14px; box-shadow:var(--shadow-sm);"></div>
+    <div class="records" id="recordsList"></div>
+  </section>
+
+  <!-- ====== [제조팀] 내가 보낸 기록 ====== -->
+  <section id="tab-mfg-history" class="screen">
+    <h2 class="section-title">📜 포터블 및 제조팀이 보낸 세척물 기록 <small id="mfgHistoryCount">0건</small></h2>
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="exportMfgCSV()">📥 제조 기록 CSV 내보내기</button>
+    </div>
+    <div class="records" id="mfgHistoryList"></div>
+  </section>
+
+  <!-- ====== [제조팀] 제조 통계 (BY27 협상 데이터) ====== -->
+  <section id="tab-mfg-stats" class="screen">
+    <h2 class="section-title">🏭 포터블 및 제조팀 세척 통계 <small>BY27 협상 데이터</small></h2>
+
+    <div class="summary-row">
+      <div class="summary-card">
+        <div class="label">📦 오늘 도착</div>
+        <div class="value" id="mfgStatToday">0</div>
+      </div>
+      <div class="summary-card warn">
+        <div class="label">⏰ 대기 중</div>
+        <div class="value" id="mfgStatWaiting">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">✅ 완료</div>
+        <div class="value" id="mfgStatDone">0</div>
+      </div>
+      <div class="summary-card alert">
+        <div class="label">🔴 누적 대기LOSS(분)</div>
+        <div class="value" id="mfgStatLoss">0</div>
+      </div>
+    </div>
+
+    <div class="kpi-box" style="background: radial-gradient(ellipse at top right, rgba(13, 148, 136, 0.4), transparent 60%), linear-gradient(135deg, #0D9488, #0a6e64);">
+      <h3>📊 점도(카테고리)별 도착 건수 — 오늘</h3>
+      <div class="kpi-grid" id="mfgCategoryKPI"></div>
+    </div>
+
+    <div class="settings-box">
+      <h3>📋 최근 7일 추이</h3>
+      <div id="mfg7daysList"></div>
+    </div>
+  </section>
+
+  <!-- ====== [공통] 설정 ====== -->
+  <section id="tab-settings" class="screen">
+    <h2 class="section-title">⚙️ 설정 및 도움말</h2>
+
+    <div class="settings-box">
+      <h3>📊 데이터 현황</h3>
+      <div class="stat-row"><span class="key">전체 기록 수</span><span class="val" id="statTotal">0</span></div>
+      <div class="stat-row"><span class="key">오늘 기록 수</span><span class="val" id="statToday">0</span></div>
+      <div class="stat-row"><span class="key">대기 중</span><span class="val" id="statWaiting">0</span></div>
+      <div class="stat-row"><span class="key">세척 중</span><span class="val" id="statWashing">0</span></div>
+      <div class="stat-row"><span class="key">즐겨찾기 라인</span><span class="val" id="statFavs">0</span></div>
+      <div class="stat-row"><span class="key">저장 위치</span><span class="val">localStorage</span></div>
+    </div>
+
+    <div class="settings-box">
+      <h3>📖 v2.1 변경 사항 (NEW)</h3>
+      <p>⭐ <strong>필요 시간(수기→디지털)</strong> — 생산라인 및 설비가 도착 등록 시 "X시까지 완료" 직접 입력</p>
+      <p>⭐ <strong>점도/제품 선택</strong> — 안(C1~C5) + 제품타입(1제, 2제, 파우치 등) 둘 다 선택</p>
+      <p>⭐ <strong>AP 필요시간 준수율</strong> — 홈 KPI에 새 지표 추가 (BY27 협상 핵심)</p>
+      <p>⭐ <strong>지연/여유 자동 계산</strong> — 필요시간 대비 실제 완료 시각 차이 기록 (Delay_Min)</p>
+    </div>
+
+    <div class="settings-box">
+      <h3>📖 v2 기본 기능</h3>
+      <p>① <strong>2계정 시스템</strong> — 생산라인 및 설비(도착 등록) / 세척실(시작·종료) 별도 화면</p>
+      <p>② <strong>3단계 추적</strong> — 도착(T2) → 세척시작(T3) → 세척종료(T4)</p>
+      <p>③ <strong>대기시간 KPI</strong> — 도착~세척시작 시간을 자동 측정</p>
+      <p>④ <strong>66개 라인 검색·즐겨찾기</strong> — 자주 쓰는 라인 자동 상위 노출</p>
+    </div>
+
+    <div class="settings-box">
+      <h3>💾 데이터 백업 / 복구</h3>
+      <p>퇴근 전 [CSV 내보내기]로 일일 백업, 주간 [JSON 백업]으로 전체 백업 권장</p>
+      <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="exportJSON()">전체 JSON 백업</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('jsonInput').click()">JSON 복구</button>
+        <input type="file" id="jsonInput" style="display:none" accept=".json" onchange="importJSON(event)">
+      </div>
+    </div>
+
+    <div class="settings-box">
+      <h3>⚠️ 전체 데이터 초기화</h3>
+      <p>CSV/JSON 백업 완료 후에만 진행하세요. 복구 불가능합니다.</p>
+      <button class="btn" style="background: var(--red); color: white;" onclick="showResetConfirm()">전체 초기화</button>
+    </div>
+
+    <div class="settings-box">
+      <h3>제니엘 제조사업부 사업3팀</h3>
+      <p style="margin: 0;">v2.3 · AP 대전공장 세척실 · 이민아</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== 콜라보 푸터 ===== -->
+<footer class="collab-footer">
+  <div class="collab-inner">
+    <span class="collab-brand">ZENIEL</span>
+    <span class="collab-x">×</span>
+    <span class="collab-brand">AMOREPACIFIC&nbsp;DAEJEON</span>
+    <span class="collab-credit">Developed&nbsp;by&nbsp;LEE&nbsp;MIN&nbsp;AH</span>
+  </div>
+</footer>
+
+<!-- ===== 도착 등록 모달 (생산라인용) ===== -->
+<div class="modal-backdrop" id="modalArrival">
+  <div class="modal" style="max-width: 560px;">
+    <h3>📦 도착 등록</h3>
+    <div class="form-row">
+      <label>라인</label>
+      <div class="selected-line" id="arrivalLineLabel">—</div>
+    </div>
+
+    <div class="form-row" style="background: #FFF9E6; padding: 12px; border-radius: 10px; border-left: 4px solid var(--yellow); margin-bottom: 14px;">
+      <label style="color: #7A4F00;">⏰ 필요 시간</label>
+      <input type="time" id="arrivalRequiredTime" style="flex: 0 1 140px;">
+      <span style="color: #7A4F00; font-weight: 600; font-size: 14px;">까지 완료</span>
+      <div style="flex-basis: 100%; font-size: 13px; color: #7A4F00; margin-top: 6px; margin-left: 120px; word-break: keep-all; line-height: 1.5;">
+        💡 이 시각까지 세척이 끝나야 다음 오더 시작 가능<br>(수기 인계장에 적던 그 시각)
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>점도/제품</label>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+        <div class="cat-chips" id="arrivalCatChips">
+          <button type="button" class="cat-chip" data-cat="ALL">전체</button>
+          <button type="button" class="cat-chip" data-cat="C1">C1 저점도</button>
+          <button type="button" class="cat-chip" data-cat="C2">C2 중점도</button>
+          <button type="button" class="cat-chip" data-cat="C3">C3 고점도</button>
+          <button type="button" class="cat-chip" data-cat="C4">C4 염모제</button>
+          <button type="button" class="cat-chip" data-cat="C5">C5 특수</button>
+        </div>
+        <select id="arrivalProductType">
+          <option value="">— 선택하세요 —</option>
+        </select>
+      </div>
+    </div>
+    <div id="arrivalCategoryHint" style="margin-top:-8px; margin-left: 120px; margin-bottom: 12px; font-size: 14px; color: var(--gray); word-break: keep-all;"></div>
+
+    <div class="form-row">
+      <label>품목/오더</label>
+      <input type="text" id="arrivalItem" placeholder="품목코드 또는 오더번호 (선택)" autocomplete="off">
+    </div>
+    <div class="form-row">
+      <label>통/단위 개수</label>
+      <input type="number" id="arrivalUnitCount" value="1" min="1" max="99">
+      <span style="font-size: 15px; color: var(--gray-500); font-weight: 600;">개 (한 번에 들어온 통 수)</span>
+    </div>
+    <div class="form-row">
+      <label>운반 인원</label>
+      <input type="number" id="arrivalCarriers" value="1" min="1" max="5">
+    </div>
+    <div class="form-row">
+      <label>특이사항</label>
+      <input type="text" id="arrivalNote" placeholder="(선택)" autocomplete="off">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalArrival')">취소</button>
+      <button class="btn btn-arrival" onclick="confirmArrival()">📦 도착 등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 세척 시작 모달 (세척실용) ===== -->
+<div class="modal-backdrop" id="modalStart">
+  <div class="modal">
+    <h3>🚿 세척 시작</h3>
+    <div class="form-row">
+      <label>라인</label>
+      <div class="selected-line" id="startLineLabel">—</div>
+    </div>
+    <div id="startWaitingInfo" style="display:none; background: var(--light-yellow); padding: 14px 16px; border-radius: 10px; margin-bottom: 12px; border-left: 5px solid var(--yellow);">
+      <div style="font-size:15px; color:#7A4F00; font-weight:700;">⏰ 도착 후 대기시간</div>
+      <div style="font-size:26px; font-weight:bold; color:#7A4F00; margin-top:5px;" id="startWaitMin">0분</div>
+      <div style="font-size:13px; color:#7A4F00; margin-top:3px;" id="startArrivalAt">—</div>
+    </div>
+    <div id="startRequiredInfo" style="display:none; background: var(--light-sky); padding: 14px 16px; border-radius: 10px; margin-bottom: 12px; border-left: 5px solid var(--sky);">
+      <div style="font-size:15px; color:var(--navy); font-weight:700;">🎯 생산라인 및 설비 필요 시간</div>
+      <div style="font-size:26px; font-weight:bold; color:var(--navy); margin-top:5px;" id="startRequiredAt">—</div>
+      <div style="font-size:13px; color:var(--navy); margin-top:3px; word-break: keep-all; line-height: 1.5;" id="startRequiredHint">—</div>
+    </div>
+    <div id="startProductInfo" style="display:none; background: var(--light-gray); padding: 12px 16px; border-radius: 10px; margin-bottom: 12px;">
+      <span style="font-size:15px; color:var(--navy); font-weight:700;">📦 점도/제품: </span>
+      <span style="font-size:15px; word-break: keep-all;" id="startProductLabel">—</span>
+    </div>
+    <div class="form-row">
+      <label>품목코드</label>
+      <input type="text" id="startItem" placeholder="(선택)" autocomplete="off">
+    </div>
+    <div class="form-row">
+      <label>작업자 수</label>
+      <input type="number" id="startWorkers" value="1" min="1" max="10">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalStart')">취소</button>
+      <button class="btn btn-start" onclick="confirmStart()">▶ 세척 시작</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 진행 중 모달 ===== -->
+<div class="modal-backdrop" id="modalRunning">
+  <div class="modal" style="max-width: 560px;">
+    <div class="running-panel" id="runningPanel">
+      <div class="line-label" id="runLineLabel">—</div>
+      <div class="group-tag" id="runGroupTag">—</div>
+      <div style="font-size:13px; color: var(--gray); margin-bottom:8px;" id="runStatusLabel">상태</div>
+      <div class="timer" id="runTimer">00:00</div>
+      <div class="meta" id="runMeta"></div>
+
+      <div class="toggle-row" id="runReworkRow" style="display:none;">
+        <div class="label">재세척 (Rework_Flag)</div>
+        <div class="toggle" id="runReworkToggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <input type="text" class="note-input" id="runNote" placeholder="특이사항 (선택)" style="display:none;">
+
+      <div class="modal-actions" style="justify-content: space-between; margin-top: 16px;">
+        <button class="btn btn-secondary" onclick="closeModal('modalRunning')">뒤로</button>
+        <div id="runActionButtons" style="display:flex; gap:8px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 다음 오더 추가 모달 ===== -->
+<div class="modal-backdrop" id="modalNextOrder">
+  <div class="modal">
+    <h3>다음 오더 등록</h3>
+    <div class="form-row">
+      <label>라인</label>
+      <select id="noLine"></select>
+    </div>
+    <div class="form-row">
+      <label>품목</label>
+      <input type="text" id="noItem" placeholder="(선택)">
+    </div>
+    <div class="form-row">
+      <label>다음 시작</label>
+      <input type="datetime-local" id="noNextStart">
+    </div>
+    <div class="form-row">
+      <label>PreWash</label>
+      <select id="noPreWash"><option value="N">N</option><option value="Y">Y (즉시 HIGH)</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalNextOrder')">취소</button>
+      <button class="btn btn-primary" onclick="confirmNextOrder()">추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 확인 모달 ===== -->
+<div class="modal-backdrop" id="modalConfirm">
+  <div class="modal">
+    <h3 id="confirmTitle">확인</h3>
+    <div class="modal-body" id="confirmBody">정말로 진행하시겠습니까?</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalConfirm')">취소</button>
+      <button class="btn" style="background: var(--red); color: white;" id="confirmOkBtn">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 관리자 암호 입력 모달 ===== -->
+<div class="modal-backdrop" id="modalAdminPw">
+  <div class="modal" style="max-width: 440px;">
+    <h3>🔒 관리자 인증</h3>
+    <div class="modal-body" style="text-align: center; padding: 8px 0 4px;">
+      <div style="font-size: 16px; color: var(--gray-600); margin-bottom: 18px;">
+        이 동작에는 <strong style="color: var(--navy);">관리자 암호</strong>가 필요합니다
+      </div>
+      <input type="password" id="adminPwInput" inputmode="numeric" maxlength="10"
+        style="width: 100%; padding: 18px 20px; font-size: 28px; text-align: center;
+               font-weight: 800; letter-spacing: 8px; border: 2px solid var(--gray-200);
+               border-radius: var(--r-md); background: var(--gray-50); font-variant-numeric: tabular-nums;
+               color: var(--navy);"
+        placeholder="••••" autocomplete="off">
+      <div id="adminPwError" style="margin-top: 12px; color: var(--red); font-size: 14px; font-weight: 700; min-height: 20px;"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="adminPwCancel">취소</button>
+      <button class="btn btn-primary" id="adminPwOk">확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">저장 완료</div>
+
+<script>
+/* ============================================================
+ * 라인 마스터 (66개)
+ * ============================================================ */
+const LINE_MASTER = [
+  { group: '직선', name: '대용량 충전',     base: 35, category: 'C2' },
+  { group: '직선', name: '동기화 직선13호', base: 30, category: 'C1' },
+  { group: '직선', name: '동기화 직선14호', base: 30, category: 'C1' },
+  { group: '직선', name: '리필1호',         base: 25, category: 'C1' },
+  { group: '직선', name: '리필3호',         base: 25, category: 'C1' },
+  { group: '직선', name: '직선11호',        base: 30, category: 'C1' },
+  { group: '직선', name: '직선13호',        base: 30, category: 'C1' },
+  { group: '직선', name: '직선14호',        base: 30, category: 'C1' },
+  { group: '직선', name: '직선15호',        base: 30, category: 'C1' },
+  { group: '직선', name: '직선16호',        base: 30, category: 'C1' },
+  { group: '직선', name: '직선4호',         base: 30, category: 'C1' },
+  { group: '직선', name: '직선5호',         base: 30, category: 'C1' },
+  { group: '세정 자동', name: '세정 자동 1호', base: 25, category: 'C1' },
+  { group: '세정 자동', name: '세정 자동 2호', base: 25, category: 'C1' },
+  { group: '세정 자동', name: '세정 자동 3호', base: 25, category: 'C1' },
+  { group: '세정 자동', name: '세정 자동 4호', base: 25, category: 'C1' },
+  { group: '멀티', name: '멀티셀2호', base: 40, category: 'C2' },
+  { group: '멀티', name: '멀티셀3호', base: 40, category: 'C2' },
+  { group: '멀티', name: '멀티셀6호', base: 40, category: 'C2' },
+  { group: '멀티', name: '멀티셀7호', base: 40, category: 'C2' },
+  { group: '멀티', name: '멀티셀8호', base: 40, category: 'C2' },
+  { group: 'HnB기타', name: '내부 기획라인',   base: 30, category: 'C2' },
+  { group: 'HnB기타', name: '성형물 제조실',   base: 45, category: 'C3' },
+  { group: 'HnB기타', name: '세럼충전기',      base: 50, category: 'C3' },
+  { group: 'HnB기타', name: '재작업장',        base: 30, category: 'C2' },
+  { group: 'HnB기타', name: '크림2호',         base: 50, category: 'C3' },
+  { group: 'HnB기타', name: '크림3호',         base: 50, category: 'C3' },
+  { group: 'HnB기타', name: '턴테이블1호',     base: 35, category: 'C2' },
+  { group: 'HnB기타', name: '턴테이블3호',     base: 35, category: 'C2' },
+  { group: 'HnB기타', name: '턴테이블4호',     base: 35, category: 'C2' },
+  { group: 'HnB기타', name: '팜플1호',         base: 30, category: 'C2' },
+  { group: 'HnB기타', name: '팜플2호',         base: 30, category: 'C2' },
+  { group: 'HnB기타', name: '팜플3호',         base: 30, category: 'C2' },
+  { group: 'HnB기타', name: '팜플6호',         base: 30, category: 'C2' },
+  { group: 'HnB기타', name: '팜플7호',         base: 30, category: 'C2' },
+  { group: 'HnB기타', name: '팜플8호',         base: 30, category: 'C2' },
+  { group: 'HnB기타', name: '픽서충전',        base: 35, category: 'C2' },
+  { group: '염모제', name: '산화제 충전2호',     base: 65, category: 'C4' },
+  { group: '염모제', name: '산화제 충전3호',     base: 65, category: 'C4' },
+  { group: '염모제', name: '산화제 충전5호',     base: 65, category: 'C4' },
+  { group: '염모제', name: '산화제 충전6호',     base: 65, category: 'C4' },
+  { group: '염모제', name: '산화제 충전8호',     base: 65, category: 'C4' },
+  { group: '염모제', name: '염모제 충전1호',     base: 75, category: 'C4' },
+  { group: '염모제', name: '염모제 충전3호',     base: 75, category: 'C4' },
+  { group: '염모제', name: '염모제 충전5호',     base: 75, category: 'C4' },
+  { group: '염모제', name: '염모제 파우치3호',   base: 60, category: 'C4' },
+  { group: '염모제', name: '염모제 파우치4호',   base: 60, category: 'C4' },
+  { group: '염모제', name: '염모제 파우치5호',   base: 60, category: 'C4' },
+  { group: '염모제', name: '염모제 파우치6호',   base: 60, category: 'C4' },
+  { group: '치약', name: '일회용 치약충전', base: 40, category: 'C3' },
+  { group: '치약', name: '치약기획',        base: 40, category: 'C3' },
+  { group: '치약', name: '치약수축2호',     base: 30, category: 'C2' },
+  { group: '치약', name: '치약수축4호',     base: 30, category: 'C2' },
+  { group: '치약', name: '치약수축5호',     base: 30, category: 'C2' },
+  { group: '치약', name: '치약충전2호',     base: 45, category: 'C3' },
+  { group: '치약', name: '치약충전3호',     base: 45, category: 'C3' },
+  { group: '치약', name: '치약충전4호',     base: 45, category: 'C3' },
+  { group: '치약', name: '치약충전5호',     base: 45, category: 'C3' },
+  { group: '치약', name: '치약충전6호',     base: 45, category: 'C3' },
+  { group: '튜브', name: '튜브2호', base: 35, category: 'C3' },
+  { group: '튜브', name: '튜브3호', base: 35, category: 'C3' },
+  { group: '튜브', name: '튜브4호', base: 35, category: 'C3' },
+  { group: '튜브', name: '튜브5호', base: 35, category: 'C3' },
+  { group: '튜브', name: '튜브6호', base: 35, category: 'C3' },
+  { group: '튜브', name: '튜브7호', base: 35, category: 'C3' },
+  { group: '튜브', name: '튜브8호', base: 35, category: 'C3' },
+  { group: '포터블 및 제조팀', name: '포터블 통', base: 40, category: 'C2' },
+  { group: '포터블 및 제조팀', name: '에어펌프', base: 25, category: 'C1' },
+  { group: '포터블 및 제조팀', name: '호스류',   base: 20, category: 'C1' },
+  { group: '포터블 및 제조팀', name: '기타',     base: 30, category: 'C2' },
+];
+
+const GROUP_COLORS = {
+  '직선': '#5B9BD5', '초격차': '#70AD47', '세정 자동': '#70AD47', '멀티': '#7030A0',
+  'HnB기타': '#ED7D31', '염모제': '#C00000', '치약': '#00B0F0', '튜브': '#7F6000',
+  '제조': '#0D9488', '포터블 및 제조팀': '#0D9488',
+};
+const GROUPS = ['직선', '세정 자동', '멀티', 'HnB기타', '염모제', '치약', '튜브', '포터블 및 제조팀'];
+const CATEGORY_MASTER = {
+  C1: { name: '저점도', buffer: 5, weight: 1.0 },
+  C2: { name: '중점도', buffer: 10, weight: 1.1 },
+  C3: { name: '고점도', buffer: 15, weight: 1.2 },
+  C4: { name: '염모제', buffer: 20, weight: 1.4 },
+  C5: { name: '특수',   buffer: 30, weight: 1.5 },
+};
+
+// 점도-제품타입 매핑 (생산라인이 도착 등록 시 직접 선택)
+const PRODUCT_TYPES = [
+  { cat: 'C1', label: '샴푸/바디워시',      desc: '저점도 액상' },
+  { cat: 'C1', label: '클렌징 폼',          desc: '저점도' },
+  { cat: 'C1', label: '헤어 토너',          desc: '저점도' },
+  { cat: 'C1', label: '그 외 저점도',       desc: '저점도 액상' },
+  { cat: 'C2', label: '린스/에센스/세럼',   desc: '중점도' },
+  { cat: 'C2', label: '산화제',             desc: '중점도' },
+  { cat: 'C2', label: '로션',               desc: '중점도' },
+  { cat: 'C2', label: '그 외 중점도',       desc: '중점도' },
+  { cat: 'C3', label: '트리트먼트/세럼',    desc: '고점도' },
+  { cat: 'C3', label: '크림',               desc: '고점도' },
+  { cat: 'C3', label: '치약',               desc: '고점도' },
+  { cat: 'C3', label: '튜브 충전물',        desc: '고점도' },
+  { cat: 'C3', label: '그 외 고점도',       desc: '고점도' },
+  { cat: 'C4', label: '1제 (염모제)',       desc: '염모제' },
+  { cat: 'C4', label: '2제 (산화제)',       desc: '염모제' },
+  { cat: 'C4', label: '파우치',             desc: '염모제' },
+  { cat: 'C4', label: '메이크업/색조',      desc: '염모제' },
+  { cat: 'C5', label: '젤리류',             desc: '특수' },
+  { cat: 'C5', label: '변성/변색 우려',     desc: '특수' },
+  { cat: 'C5', label: '그 외 특수',         desc: '특수' },
+];
+
+/* ============================================================
+ * 데이터 레이어 (localStorage)
+ * ============================================================ */
+const KEYS = {
+  ROLE: 'seceokAI_v2_role',
+  RECORDS: 'seceokAI_v2_records',
+  WAITING: 'seceokAI_v2_waiting',     // 도착했는데 세척 시작 안 한 것
+  WASHING: 'seceokAI_v2_washing',     // 세척 진행 중
+  NEXTORDER: 'seceokAI_v2_nextOrders',
+  FAVS_PROD: 'seceokAI_v2_favs_production',
+  FAVS_WASH: 'seceokAI_v2_favs_washroom',
+  FILTER: 'seceokAI_v2_filter',
+};
+function loadJSON(k, def) { try { return JSON.parse(localStorage.getItem(k) || JSON.stringify(def)); } catch (e) { return def; } }
+function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+
+function loadRecords()    { return loadJSON(KEYS.RECORDS, []); }
+function saveRecords(v)   { saveJSON(KEYS.RECORDS, v); }
+function loadWaiting()    { return loadJSON(KEYS.WAITING, {}); }
+function saveWaiting(v)   { saveJSON(KEYS.WAITING, v); }
+function loadWashing()    { return loadJSON(KEYS.WASHING, {}); }
+function saveWashing(v)   { saveJSON(KEYS.WASHING, v); }
+function loadNextOrders() { return loadJSON(KEYS.NEXTORDER, []); }
+function saveNextOrders(v){ saveJSON(KEYS.NEXTORDER, v); }
+function loadFavs(role)   { return loadJSON(role === 'production' ? KEYS.FAVS_PROD : KEYS.FAVS_WASH, []); }
+function saveFavs(role, v){ saveJSON(role === 'production' ? KEYS.FAVS_PROD : KEYS.FAVS_WASH, v); }
+
+/* ============================================================
+ * 데이터 마이그레이션
+ * v2.7 → v2.6: 그룹명 '제조' → '포터블 및 제조팀'
+ * v2.6 → v2.7: 그룹명 '초격차' → '세정 자동' + 라인명 '세정초격차 N호' → '세정 자동 N호'
+ * ============================================================ */
+function migrateData_v27() {
+  const FLAG_V26 = 'seceokAI_v26_groupRename_done';
+  const FLAG_V27 = 'seceokAI_v27_chogyeokcha_done';
+
+  // === v2.6 마이그레이션 (제조 → 포터블 및 제조팀) ===
+  if (localStorage.getItem(FLAG_V26) !== '1') {
+    const NEW = '포터블 및 제조팀';
+    const OLD = '제조';
+    const recs = loadRecords();
+    let touched = 0;
+    recs.forEach(r => { if (r && r.group === OLD) { r.group = NEW; touched++; } });
+    if (touched > 0) saveRecords(recs);
+
+    const waiting = loadWaiting();
+    let waitingChanged = false;
+    Object.keys(waiting).forEach(k => {
+      if (waiting[k] && waiting[k].group === OLD) { waiting[k].group = NEW; waitingChanged = true; }
+    });
+    if (waitingChanged) saveWaiting(waiting);
+
+    const washing = loadWashing();
+    let washingChanged = false;
+    Object.keys(washing).forEach(k => {
+      if (washing[k] && washing[k].group === OLD) { washing[k].group = NEW; washingChanged = true; }
+    });
+    if (washingChanged) saveWashing(washing);
+
+    const filterRaw = localStorage.getItem(KEYS.FILTER);
+    if (filterRaw) {
+      try {
+        const f = JSON.parse(filterRaw);
+        if (f && f.group === OLD) { f.group = NEW; localStorage.setItem(KEYS.FILTER, JSON.stringify(f)); }
+      } catch (e) {}
+    }
+    localStorage.setItem(FLAG_V26, '1');
+    if (touched > 0 || waitingChanged || washingChanged) {
+      console.log(`[v2.6] '제조' → '포터블 및 제조팀' 변환 완료 (기록 ${touched}건)`);
+    }
+  }
+
+  // === v2.7 마이그레이션 (초격차 → 세정 자동, 라인명도) ===
+  if (localStorage.getItem(FLAG_V27) !== '1') {
+    const G_OLD = '초격차', G_NEW = '세정 자동';
+    // 라인명 변환 함수: '세정초격차 1호' → '세정 자동 1호'
+    function renameLine(name) {
+      if (!name) return name;
+      // suffix(#2 등)는 유지하면서 변환
+      const m = name.match(/^(.+?)(#\d+)?$/);
+      if (!m) return name;
+      const baseName = m[1];
+      const suffix = m[2] || '';
+      const newBase = baseName.replace(/^세정초격차\s*/, '세정 자동 ');
+      return newBase + suffix;
+    }
+
+    // 1) records
+    const recs = loadRecords();
+    let touched = 0;
+    recs.forEach(r => {
+      if (r && r.group === G_OLD) { r.group = G_NEW; touched++; }
+      if (r && r.line && r.line.includes('세정초격차')) {
+        r.line = r.line.replace(/세정초격차\s*/g, '세정 자동 ');
+        touched++;
+      }
+    });
+    if (touched > 0) saveRecords(recs);
+
+    // 2) waiting (키 자체가 라인명이라 키 재구성 필요)
+    const waiting = loadWaiting();
+    const newWaiting = {};
+    let waitingChanged = false;
+    Object.keys(waiting).forEach(k => {
+      const v = waiting[k];
+      if (v && v.group === G_OLD) v.group = G_NEW;
+      if (v && v.line && v.line.includes('세정초격차')) {
+        v.line = v.line.replace(/세정초격차\s*/g, '세정 자동 ');
+      }
+      const newKey = renameLine(k);
+      newWaiting[newKey] = v;
+      if (newKey !== k || (v && v.group === G_NEW && waiting[k].group !== G_NEW)) waitingChanged = true;
+    });
+    if (waitingChanged) saveWaiting(newWaiting);
+
+    // 3) washing (동일 처리)
+    const washing = loadWashing();
+    const newWashing = {};
+    let washingChanged = false;
+    Object.keys(washing).forEach(k => {
+      const v = washing[k];
+      if (v && v.group === G_OLD) v.group = G_NEW;
+      if (v && v.line && v.line.includes('세정초격차')) {
+        v.line = v.line.replace(/세정초격차\s*/g, '세정 자동 ');
+      }
+      const newKey = renameLine(k);
+      newWashing[newKey] = v;
+      if (newKey !== k) washingChanged = true;
+    });
+    if (washingChanged) saveWashing(newWashing);
+
+    // 4) 즐겨찾기 (라인명 배열)
+    [KEYS.FAVS_PROD, KEYS.FAVS_WASH].forEach(key => {
+      const favsRaw = localStorage.getItem(key);
+      if (favsRaw) {
+        try {
+          const favs = JSON.parse(favsRaw);
+          const newFavs = favs.map(renameLine);
+          localStorage.setItem(key, JSON.stringify(newFavs));
+        } catch (e) {}
+      }
+    });
+
+    // 5) 필터
+    const filterRaw = localStorage.getItem(KEYS.FILTER);
+    if (filterRaw) {
+      try {
+        const f = JSON.parse(filterRaw);
+        if (f && f.group === G_OLD) { f.group = G_NEW; localStorage.setItem(KEYS.FILTER, JSON.stringify(f)); }
+      } catch (e) {}
+    }
+
+    localStorage.setItem(FLAG_V27, '1');
+    if (touched > 0 || waitingChanged || washingChanged) {
+      console.log(`[v2.7] '초격차' → '세정 자동' 변환 완료 (기록 ${touched}건)`);
+    }
+  }
+}
+migrateData_v27();
+
+/* ============================================================
+ * 유틸
+ * ============================================================ */
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+function fmtTime(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function fmtTimeSec(d) { return fmtTime(d) + ':' + pad(d.getSeconds()); }
+function fmtDate(d) { return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+function fmtDateTime(d) { return fmtDate(d) + ' ' + fmtTime(d); }
+function todayKey() { return fmtDate(new Date()); }
+function diffMin(a, b) { return Math.round((b - a) / 60000 * 10) / 10; }
+function findLine(name) { return LINE_MASTER.find(l => l.name === name); }
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.className = 'toast ' + (type || '') + ' show';
+  t.textContent = msg;
+  setTimeout(() => t.className = 'toast ' + (type || ''), 2200);
+}
+
+/* ============================================================
+ * 시계
+ * ============================================================ */
+function tickClock() {
+  const el = document.getElementById('headerClock');
+  if (el) el.textContent = fmtTimeSec(new Date());
+}
+setInterval(tickClock, 1000); tickClock();
+
+/* ============================================================
+ * 로그인 / 역할 전환
+ * ============================================================ */
+let CURRENT_ROLE = null;
+
+function login(role) {
+  CURRENT_ROLE = role;
+  localStorage.setItem(KEYS.ROLE, role);
+  document.getElementById('loginScreen').classList.add('hide');
+  document.getElementById('mainHeader').style.display = 'flex';
+  document.getElementById('mainTabs').style.display = 'flex';
+  document.getElementById('mainContent').style.display = 'block';
+
+  const tag = document.getElementById('roleTag');
+  const labels = { production: '생산라인 및 설비', manufacturing: '포터블 및 제조팀', washroom: '세척실' };
+  tag.textContent = labels[role] || role;
+  tag.className = 'role-tag ' + role;
+
+  buildTabs();
+  renderInitialScreen();
+}
+
+function logout() {
+  CURRENT_ROLE = null;
+  _settingsUnlocked = false;  // 로그아웃 시 설정 잠금 다시 활성화
+  localStorage.removeItem(KEYS.ROLE);
+  document.getElementById('loginScreen').classList.remove('hide');
+  document.getElementById('mainHeader').style.display = 'none';
+  document.getElementById('mainTabs').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'none';
+}
+
+function buildTabs() {
+  const nav = document.getElementById('mainTabs');
+  if (CURRENT_ROLE === 'production') {
+    nav.innerHTML = `
+      <button data-tab="arrival" class="active">📦 도착 등록</button>
+      <button data-tab="settings">🔒 설정</button>
+    `;
+  } else if (CURRENT_ROLE === 'manufacturing') {
+    nav.innerHTML = `
+      <button data-tab="arrival" class="active">📦 도착 등록</button>
+      <button data-tab="mfg-history">📜 내가 보낸 기록</button>
+      <button data-tab="mfg-stats">🏭 제조 통계</button>
+      <button data-tab="settings">🔒 설정</button>
+    `;
+  } else {
+    nav.innerHTML = `
+      <button data-tab="home" class="active">🏠 홈</button>
+      <button data-tab="lines">🚿 라인 선택</button>
+      <button data-tab="priority">🎯 우선순위 <span class="badge hide" id="badgeHigh">0</span></button>
+      <button data-tab="records">📝 오늘 기록</button>
+      <button data-tab="settings">🔒 설정</button>
+    `;
+  }
+  nav.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+}
+
+/* ============================================================
+ * 관리자 암호 (설정 탭 진입 시 1회 인증)
+ * ============================================================ */
+const ADMIN_PW = '1996';
+let _settingsUnlocked = false;  // 세션 동안만 유지 (브라우저 닫으면 다시 잠김)
+
+function switchTab(tabId) {
+  // 설정 탭은 암호 인증이 필요
+  if (tabId === 'settings' && !_settingsUnlocked) {
+    requestAdminPassword(() => {
+      _settingsUnlocked = true;
+      switchTab('settings');  // 인증 성공 후 다시 호출
+    });
+    return;
+  }
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+  document.querySelector(`nav.tabs button[data-tab="${tabId}"]`).classList.add('active');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+
+  if (tabId === 'arrival')      renderArrival();
+  if (tabId === 'home')         renderHome();
+  if (tabId === 'lines')        renderLines();
+  if (tabId === 'priority')     renderPriority();
+  if (tabId === 'records')      renderRecords();
+  if (tabId === 'mfg-history')  renderMfgHistory();
+  if (tabId === 'mfg-stats')    renderMfgStats();
+  if (tabId === 'settings')     renderSettings();
+}
+
+function requestAdminPassword(onSuccess) {
+  const modal = document.getElementById('modalAdminPw');
+  const input = document.getElementById('adminPwInput');
+  const errEl = document.getElementById('adminPwError');
+  input.value = '';
+  errEl.textContent = '';
+  modal.classList.add('open');
+  setTimeout(() => input.focus(), 100);
+
+  const okBtn = document.getElementById('adminPwOk');
+  const cancelBtn = document.getElementById('adminPwCancel');
+  const newOk = okBtn.cloneNode(true);
+  const newCancel = cancelBtn.cloneNode(true);
+  okBtn.parentNode.replaceChild(newOk, okBtn);
+  cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+  const tryUnlock = () => {
+    if (input.value === ADMIN_PW) {
+      modal.classList.remove('open');
+      onSuccess();
+    } else {
+      errEl.textContent = '⚠ 암호가 일치하지 않습니다';
+      input.value = '';
+      input.focus();
+    }
+  };
+  newOk.addEventListener('click', tryUnlock);
+  newCancel.addEventListener('click', () => modal.classList.remove('open'));
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+}
+
+// 로그아웃 시 잠금 해제 상태 리셋
+function _resetAdminLock() { _settingsUnlocked = false; }
+
+function renderInitialScreen() {
+  // 첫 탭에 해당하는 screen을 active로 활성화
+  let firstTab;
+  if (CURRENT_ROLE === 'production') firstTab = 'arrival';
+  else if (CURRENT_ROLE === 'manufacturing') firstTab = 'arrival';
+  else firstTab = 'home';
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + firstTab).classList.add('active');
+
+  if (CURRENT_ROLE === 'production' || CURRENT_ROLE === 'manufacturing') renderArrival();
+  else renderHome();
+}
+
+/* ============================================================
+ * 그룹 필터 + 검색 (공통)
+ * ============================================================ */
+let _filterArrival = { search: '', group: 'ALL' };
+let _filterLines = { search: '', group: 'ALL' };
+
+function buildGroupFilter(containerId, filterObj, onChange) {
+  const c = document.getElementById(containerId);
+  const counts = {};
+  LINE_MASTER.forEach(l => counts[l.group] = (counts[l.group] || 0) + 1);
+  const allChip = `<button class="group-chip ${filterObj.group === 'ALL' ? 'active' : ''}" data-grp="ALL">전체<span class="count">${LINE_MASTER.length}</span></button>`;
+  const chips = GROUPS.map(g =>
+    `<button class="group-chip ${filterObj.group === g ? 'active' : ''}" data-grp="${g}" style="${filterObj.group === g ? `background:${GROUP_COLORS[g]};border-color:${GROUP_COLORS[g]};` : ''}">${g}<span class="count">${counts[g] || 0}</span></button>`
+  ).join('');
+  c.innerHTML = allChip + chips;
+  c.querySelectorAll('.group-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterObj.group = btn.dataset.grp;
+      onChange();
+    });
+  });
+}
+
+function filterLines(filterObj) {
+  return LINE_MASTER.filter(l => {
+    if (filterObj.group !== 'ALL' && l.group !== filterObj.group) return false;
+    if (filterObj.search) {
+      const q = filterObj.search.toLowerCase();
+      if (!l.name.toLowerCase().includes(q) && !l.group.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function clearSearch(inputId) {
+  document.getElementById(inputId).value = '';
+  if (inputId === 'searchArrival') { _filterArrival.search = ''; renderArrival(); }
+  if (inputId === 'searchLines')   { _filterLines.search = ''; renderLines(); }
+}
+
+document.getElementById('searchArrival').addEventListener('input', (e) => {
+  _filterArrival.search = e.target.value.trim(); renderArrival();
+});
+document.getElementById('searchLines').addEventListener('input', (e) => {
+  _filterLines.search = e.target.value.trim(); renderLines();
+});
+
+/* ============================================================
+ * 라인 카드 렌더링 (공통)
+ * ============================================================ */
+function renderLineCard(line, onClick, opts) {
+  opts = opts || {};
+  const waiting = loadWaiting();
+  const washing = loadWashing();
+  // 같은 라인의 모든 대기 건 (suffix 포함)
+  const waitingItems = Object.values(waiting).filter(x => x && x.line === line.name);
+  const washingItems = Object.values(washing).filter(x => x && x.line === line.name);
+  // 가장 먼저 도착한 대기 건과 가장 먼저 시작된 세척 건 (카드에 대표 정보 표시)
+  const w = waitingItems.length > 0
+    ? [...waitingItems].sort((a, b) => new Date(a.arrivedAt) - new Date(b.arrivedAt))[0]
+    : null;
+  const r = washingItems.length > 0
+    ? [...washingItems].sort((a, b) => new Date(a.startedAt) - new Date(b.startedAt))[0]
+    : null;
+
+  let extraClass = '';
+  let extraInfo = '';
+  // 건수 배지: 같은 라인 여러 건이면 [N] 표시
+  const totalCount = waitingItems.length + washingItems.length;
+  const countBadge = totalCount >= 2
+    ? `<span class="count-badge" title="대기 ${waitingItems.length}건 + 세척중 ${washingItems.length}건">×${totalCount}</span>`
+    : '';
+
+  if (r) {
+    extraClass = 'washing';
+    const startedAt = new Date(r.startedAt);
+    const elapsed = diffMin(startedAt, new Date());
+    extraInfo = `<div class="meta" style="color: var(--sky); font-weight: 600;">⏱ ${elapsed}분 진행</div>`;
+    if (r.requiredTime) {
+      extraInfo += `<div class="meta" style="font-size: 10px; color: var(--navy);">🎯 ${fmtTime(new Date(r.requiredTime))}까지</div>`;
+    }
+    if (waitingItems.length > 0) {
+      extraInfo += `<div class="meta" style="font-size: 10px; color: var(--orange); font-weight: 700;">+ 대기 ${waitingItems.length}건</div>`;
+    }
+  } else if (w) {
+    extraClass = 'waiting';
+    const arrivedAt = new Date(w.arrivedAt);
+    const elapsed = diffMin(arrivedAt, new Date());
+    extraInfo = `<div class="meta" style="color: #B8860B; font-weight: 600;">⏰ ${elapsed}분 대기${waitingItems.length > 1 ? ` (외 ${waitingItems.length - 1}건)` : ''}</div>`;
+    if (w.requiredTime) {
+      extraInfo += `<div class="meta" style="font-size: 10px; color: var(--navy); font-weight: 600;">🎯 ${fmtTime(new Date(w.requiredTime))}까지</div>`;
+    }
+    if (w.productType) {
+      extraInfo += `<div class="meta" style="font-size: 10px; color: var(--gray);">${w.productType}</div>`;
+    }
+  }
+
+  const favs = loadFavs(CURRENT_ROLE);
+  const isFav = favs.includes(line.name);
+  const starHtml = opts.showStar !== false
+    ? `<span class="star ${isFav ? 'on' : ''}" onclick="event.stopPropagation(); toggleFav('${line.name.replace(/'/g, "\\'")}')">★</span>`
+    : '';
+
+  const card = document.createElement('div');
+  card.className = `line-card ${extraClass}`;
+  card.innerHTML = `
+    ${starHtml}
+    ${countBadge}
+    <span class="group-badge" style="background: ${GROUP_COLORS[line.group]};">${line.group}</span>
+    <div class="line-name">${line.name}</div>
+    <div class="meta">${line.category} · 기준 ${line.base}분</div>
+    ${extraInfo}
+  `;
+  card.addEventListener('click', () => onClick(line));
+  return card;
+}
+
+function toggleFav(lineName) {
+  const favs = loadFavs(CURRENT_ROLE);
+  const idx = favs.indexOf(lineName);
+  if (idx >= 0) { favs.splice(idx, 1); }
+  else { favs.unshift(lineName); if (favs.length > 8) favs.pop(); }
+  saveFavs(CURRENT_ROLE, favs);
+  if (CURRENT_ROLE === 'production') renderArrival();
+  else renderLines();
+}
+
+function autoAddFav(lineName) {
+  const favs = loadFavs(CURRENT_ROLE);
+  if (!favs.includes(lineName)) {
+    favs.unshift(lineName);
+    if (favs.length > 8) favs.pop();
+    saveFavs(CURRENT_ROLE, favs);
+  }
+}
+</script>
+
+<script>
+/* ============================================================
+ * [생산라인] 도착 등록 화면
+ * ============================================================ */
+function renderArrival() {
+  buildGroupFilter('groupFilterArrival', _filterArrival, renderArrival);
+
+  // 즐겨찾기
+  const favsBox = document.getElementById('favsArrival');
+  const favs = loadFavs('production');
+  if (favs.length === 0) {
+    favsBox.innerHTML = '<div style="text-align:center; color: #7A4F00; font-size:16px; padding:18px; word-break: keep-all;">도착 등록을 한 번 하면 여기에 자동으로 표시됩니다</div>';
+  } else {
+    const grid = document.createElement('div');
+    grid.className = 'line-grid';
+    favs.forEach(name => {
+      const line = findLine(name);
+      if (line) grid.appendChild(renderLineCard(line, () => openArrivalModal(line)));
+    });
+    favsBox.innerHTML = '';
+    favsBox.appendChild(grid);
+  }
+
+  // 전체 라인 (필터 적용)
+  const filtered = filterLines(_filterArrival);
+  document.getElementById('lineCountArrival').textContent = `${filtered.length}개 / ${LINE_MASTER.length}개`;
+  const grid = document.getElementById('lineGridArrival');
+  grid.innerHTML = '';
+  filtered.forEach(line => grid.appendChild(renderLineCard(line, () => openArrivalModal(line))));
+}
+
+let _arrivalLine = null;
+
+// 카테고리에 해당하는 제품 옵션을 드롭다운에 채우기 (catFilter === 'ALL'이면 전체)
+function fillProductTypeSelect(catFilter) {
+  const sel = document.getElementById('arrivalProductType');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— 선택하세요 —</option>';
+
+  if (catFilter === 'ALL') {
+    // 라인 기본 카테고리 먼저 (★) + 나머지
+    const lineCategory = _arrivalLine ? _arrivalLine.category : null;
+    if (lineCategory) {
+      const sameCat = PRODUCT_TYPES.filter(p => p.cat === lineCategory);
+      if (sameCat.length > 0) {
+        const og = document.createElement('optgroup');
+        og.label = `★ 이 라인 기본 (${lineCategory} ${CATEGORY_MASTER[lineCategory].name})`;
+        sameCat.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = `${p.cat}|${p.label}`;
+          opt.textContent = `[${p.cat}] ${p.label}`;
+          og.appendChild(opt);
+        });
+        sel.appendChild(og);
+      }
+    }
+    ['C1','C2','C3','C4','C5'].forEach(c => {
+      if (c === lineCategory) return;
+      const items = PRODUCT_TYPES.filter(p => p.cat === c);
+      if (items.length === 0) return;
+      const og = document.createElement('optgroup');
+      og.label = `${c} ${CATEGORY_MASTER[c].name}`;
+      items.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = `${p.cat}|${p.label}`;
+        opt.textContent = `[${p.cat}] ${p.label}`;
+        og.appendChild(opt);
+      });
+      sel.appendChild(og);
+    });
+  } else {
+    // 특정 카테고리만 표시
+    const items = PRODUCT_TYPES.filter(p => p.cat === catFilter);
+    items.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = `${p.cat}|${p.label}`;
+      opt.textContent = p.label;
+      sel.appendChild(opt);
+    });
+  }
+}
+
+// 카테고리 chip 클릭 핸들러 (이벤트 위임 - 모달 열릴 때마다 재바인딩 안 해도 됨)
+document.addEventListener('click', (e) => {
+  const chip = e.target.closest('#arrivalCatChips .cat-chip');
+  if (!chip) return;
+  const cat = chip.dataset.cat;
+  document.querySelectorAll('#arrivalCatChips .cat-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  fillProductTypeSelect(cat);
+});
+function openArrivalModal(line) {
+  // 이미 도착 대기 중이면 안내 후 추가 등록 여부 확인
+  const waiting = loadWaiting();
+  const existingKeys = Object.keys(waiting).filter(k => waiting[k] && waiting[k].line === line.name);
+  if (existingKeys.length > 0) {
+    // 가장 먼저 도착한 건의 경과시간 표시
+    const earliest = existingKeys
+      .map(k => waiting[k])
+      .sort((a, b) => new Date(a.arrivedAt) - new Date(b.arrivedAt))[0];
+    const elapsed = diffMin(new Date(earliest.arrivedAt), new Date());
+    const ok = confirm(`이미 ${existingKeys.length}건 등록됨 (가장 먼저 ${elapsed}분 전).\n\n추가로 등록하시겠습니까?`);
+    if (!ok) return;
+  }
+  // 세척 진행 중인지 확인 — 추가 도착도 허용 (확인만)
+  const washing = loadWashing();
+  if (washing[line.name]) {
+    const ok = confirm('이 라인은 현재 세척 진행 중입니다.\n\n다음 차수로 추가 등록하시겠습니까?');
+    if (!ok) return;
+  }
+  _arrivalLine = line;
+  document.getElementById('arrivalLineLabel').textContent = `${line.name} (${line.group})`;
+  document.getElementById('arrivalItem').value = '';
+  document.getElementById('arrivalUnitCount').value = 1;
+  document.getElementById('arrivalCarriers').value = 1;
+  document.getElementById('arrivalNote').value = '';
+
+  // 점도/제품 — 카테고리 chip + 드롭다운 2단계 선택
+  // 라인의 기본 카테고리를 추천(suggested) 표시 + 자동 활성화
+  const chips = document.querySelectorAll('#arrivalCatChips .cat-chip');
+  chips.forEach(chip => {
+    chip.classList.remove('active', 'suggested');
+    if (chip.dataset.cat === line.category) chip.classList.add('suggested');
+  });
+  // 라인의 기본 카테고리를 자동 선택 (사용자가 다른 chip 누르면 해제됨)
+  const defaultChip = document.querySelector(`#arrivalCatChips .cat-chip[data-cat="${line.category}"]`);
+  if (defaultChip) defaultChip.classList.add('active');
+  // 드롭다운 채우기
+  fillProductTypeSelect(line.category);
+  document.getElementById('arrivalCategoryHint').textContent = '';
+
+  // 필요시간 기본값: 현재 시각 + (라인 base * 점도 가중치 + 버퍼) + 30분 여유
+  const cat = CATEGORY_MASTER[line.category];
+  const defaultMin = Math.round(line.base * cat.weight) + cat.buffer + 30;
+  const def = new Date(Date.now() + defaultMin * 60000);
+  document.getElementById('arrivalRequiredTime').value = pad(def.getHours()) + ':' + pad(def.getMinutes());
+
+  openModal('modalArrival');
+}
+
+// 셀렉트 변경 시 카테고리 힌트 업데이트
+document.addEventListener('DOMContentLoaded', () => {
+  // 스플래시 제어: 2.5초 후 DOM에서 제거 (CSS 애니메이션과 매칭)
+  const splash = document.getElementById('splashScreen');
+  if (splash) {
+    // 2.5초 = CSS의 fadeOut(0.5s) + delay(2.0s)
+    setTimeout(() => splash.remove(), 2600);
+    // 클릭하면 즉시 스킵
+    splash.addEventListener('click', () => {
+      splash.style.animation = 'splashFadeOut 0.3s ease-in forwards';
+      setTimeout(() => splash.remove(), 350);
+    });
+  }
+
+  const sel = document.getElementById('arrivalProductType');
+  if (sel) {
+    sel.addEventListener('change', (e) => {
+      const v = e.target.value;
+      if (!v) { document.getElementById('arrivalCategoryHint').textContent = ''; return; }
+      const [cat, label] = v.split('|');
+      const c = CATEGORY_MASTER[cat];
+      const w = (c.weight * 100 - 100).toFixed(0);
+      const sign = c.weight >= 1 ? '+' : '';
+      document.getElementById('arrivalCategoryHint').innerHTML =
+        `→ <strong>${cat} ${c.name}</strong>으로 분류 · 세척 가중치 ${sign}${w}% · 버퍼 ${c.buffer}분`;
+    });
+  }
+});
+
+function confirmArrival() {
+  if (!_arrivalLine) return;
+  const item = document.getElementById('arrivalItem').value.trim();
+  const unitCount = parseInt(document.getElementById('arrivalUnitCount').value) || 1;
+  const carriers = parseInt(document.getElementById('arrivalCarriers').value) || 1;
+  const note = document.getElementById('arrivalNote').value.trim();
+  const productType = document.getElementById('arrivalProductType').value;
+  const requiredTime = document.getElementById('arrivalRequiredTime').value;  // "HH:MM"
+
+  if (!productType) { showToast('점도/제품을 선택하세요', 'error'); return; }
+  if (!requiredTime) { showToast('필요 시간을 입력하세요', 'error'); return; }
+
+  const [actualCat, productLabel] = productType.split('|');
+
+  // 필요시간을 오늘 날짜의 ISO로 변환 (이미 지난 시각이면 내일로)
+  const now = new Date();
+  const [hh, mm] = requiredTime.split(':').map(Number);
+  let required = new Date(now);
+  required.setHours(hh, mm, 0, 0);
+  if (required <= now) {
+    // 이미 지난 시각 → 내일로 (야간 작업 등 대비)
+    required.setDate(required.getDate() + 1);
+  }
+
+  const waiting = loadWaiting();
+  // 동일 라인 여러 건 등록 지원 — 키 충돌 시 #2, #3, ... suffix 자동 부여
+  let key = _arrivalLine.name;
+  if (waiting[key]) {
+    let n = 2;
+    while (waiting[`${_arrivalLine.name}#${n}`]) n++;
+    key = `${_arrivalLine.name}#${n}`;
+  }
+  waiting[key] = {
+    line: _arrivalLine.name,    // 원본 라인명 (suffix 없음)
+    waitingKey: key,            // 실제 저장 키 (suffix 포함)
+    group: _arrivalLine.group,
+    category: actualCat,
+    lineCategory: _arrivalLine.category,
+    productType: productLabel,
+    base: _arrivalLine.base,
+    item: item,
+    unitCount: unitCount,
+    carriers: carriers,
+    note: note,
+    requiredTime: required.toISOString(),
+    arrivedAt: new Date().toISOString(),
+    arrivedBy: CURRENT_ROLE === 'manufacturing' ? 'manufacturing' : 'production'
+  };
+  saveWaiting(waiting);
+  autoAddFav(_arrivalLine.name);
+  closeModal('modalArrival');
+  const countMsg = unitCount > 1 ? ` · ${unitCount}개` : '';
+  // suffix가 있으면 N건째로 안내
+  const suffix = key === _arrivalLine.name ? '' : ` (${parseInt(key.split('#')[1])}건째)`;
+  showToast(`✅ ${_arrivalLine.name}${suffix} 도착 등록 완료 (${actualCat}${countMsg} · ${fmtTime(required)}까지)`, 'success');
+  renderArrival();
+}
+
+/* ============================================================
+ * [세척실] 홈 화면
+ * ============================================================ */
+function renderHome() {
+  const waiting = loadWaiting();
+  const washing = loadWashing();
+  const todayRecs = loadRecords().filter(r => r.date === todayKey());
+
+  // 요약 카드
+  document.getElementById('sumWaiting').textContent = Object.keys(waiting).length;
+  document.getElementById('sumRunning').textContent = Object.keys(washing).length;
+  document.getElementById('sumDone').textContent = todayRecs.length;
+  document.getElementById('sumRework').textContent = todayRecs.filter(r => r.rework === 'Y').length;
+
+  // KPI
+  const totalWait = todayRecs.reduce((s, r) => s + (r.waitMin || 0), 0);
+  const avgWait = todayRecs.length > 0 ? (totalWait / todayRecs.length).toFixed(1) : '0';
+  const totalWash = todayRecs.reduce((s, r) => s + (r.washMin || 0), 0);
+  const avgWash = todayRecs.length > 0 ? (totalWash / todayRecs.length).toFixed(1) : '0';
+  document.getElementById('kpiAvgWait').textContent = avgWait;
+  document.getElementById('kpiAvgWash').textContent = avgWash;
+  document.getElementById('kpiTotalWait').textContent = Math.round(totalWait);
+
+  // ★ AP 필요시간 준수율 계산
+  const recsWithRequired = todayRecs.filter(r => r.delayMin !== null && r.delayMin !== undefined);
+  if (recsWithRequired.length > 0) {
+    const onTime = recsWithRequired.filter(r => r.delayMin <= 0).length;
+    const rate = ((onTime / recsWithRequired.length) * 100).toFixed(0);
+    document.getElementById('kpiOnTimeRate').textContent = rate + '%';
+  } else {
+    document.getElementById('kpiOnTimeRate').textContent = '—';
+  }
+
+  // 진행 중 라인 (대기 + 세척중) 통합 표시
+  const grid = document.getElementById('activeLines');
+  grid.innerHTML = '';
+
+  const activeNames = new Set([...Object.keys(waiting), ...Object.keys(washing)]);
+  if (activeNames.size === 0) {
+    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align:center; padding:40px; color: var(--gray); background:white; border-radius:12px;">현재 진행 중인 라인이 없습니다.<br>[라인 선택] 탭에서 직접 시작할 수 있습니다.</div>';
+    updateHighBadge();
+    return;
+  }
+
+  // 정렬: 세척중 우선, 그 다음 대기 시간 긴 순
+  const sortedActive = Array.from(activeNames).map(name => {
+    const line = findLine(name);
+    const w = waiting[name];
+    const r = washing[name];
+    const sortKey = r ? -1 : -diffMin(new Date(w.arrivedAt), new Date());
+    return { line, name, sortKey };
+  }).filter(x => x.line).sort((a, b) => a.sortKey - b.sortKey);
+
+  sortedActive.forEach(({ line }) => {
+    grid.appendChild(renderLineCard(line, () => openRunningModal(line.name), { showStar: false }));
+  });
+  updateHighBadge();
+
+  // 필터 패널이 열려있으면 재렌더링 (자동갱신 시 데이터 동기화)
+  if (_homeFilter) renderHomeFilter(_homeFilter);
+}
+
+/* ============================================================
+ * 홈 화면 - 카드 클릭 필터링
+ * ============================================================ */
+let _homeFilter = null;  // 'waiting' | 'washing' | 'done' | 'rework' | null
+
+function setHomeFilter(filterType) {
+  // 같은 카드 다시 클릭 → 해제
+  if (_homeFilter === filterType) {
+    clearHomeFilter();
+    return;
+  }
+  _homeFilter = filterType;
+  // 카드 active 상태 업데이트
+  const row = document.getElementById('homeSummaryRow');
+  if (row) row.classList.add('has-active');
+  document.querySelectorAll('#homeSummaryRow .summary-card').forEach(c => {
+    c.classList.toggle('is-active', c.dataset.filter === filterType);
+  });
+  renderHomeFilter(filterType);
+}
+
+function clearHomeFilter() {
+  _homeFilter = null;
+  const row = document.getElementById('homeSummaryRow');
+  if (row) row.classList.remove('has-active');
+  document.querySelectorAll('#homeSummaryRow .summary-card').forEach(c => {
+    c.classList.remove('is-active');
+  });
+  const panel = document.getElementById('homeFilterPanel');
+  if (panel) panel.style.display = 'none';
+}
+
+function renderHomeFilter(filterType) {
+  const panel = document.getElementById('homeFilterPanel');
+  const titleEl = document.getElementById('filterPanelTitle');
+  const bodyEl = document.getElementById('filterPanelBody');
+  if (!panel || !bodyEl) return;
+  panel.style.display = 'block';
+
+  const waiting = loadWaiting();
+  const washing = loadWashing();
+  const todayRecs = loadRecords().filter(r => r.date === todayKey());
+
+  let title = '';
+  let items = [];
+
+  if (filterType === 'waiting') {
+    title = `💧 대기 중 항목 (${Object.keys(waiting).length}건)`;
+    items = Object.values(waiting)
+      .map(w => ({ ...w, ...calcPriority({ ...w, _waitingMode: true }) }))
+      .sort((a, b) => {
+        if (a.prio_rank !== b.prio_rank) return a.prio_rank - b.prio_rank;
+        return new Date(a.arrivedAt) - new Date(b.arrivedAt);
+      })
+      .map(w => {
+        const elapsed = diffMin(new Date(w.arrivedAt), new Date());
+        const reqInfo = w.requiredTime ? ` · 🎯 ${fmtTime(new Date(w.requiredTime))}까지` : '';
+        const productInfo = w.productType ? ` · ${w.productType}` : '';
+        const unitInfo = w.unitCount && w.unitCount > 1 ? ` · ×${w.unitCount}개` : '';
+        return {
+          prio: w.priority || 'LOW',
+          line: w.line,
+          action: 'start',
+          dataAttrs: `data-action="start" data-line="${w.line}"`,
+          meta: `${w.group} · ${w.category}${productInfo}${unitInfo}<br><strong>도착 ${fmtTime(new Date(w.arrivedAt))}</strong> · 대기 <strong>${elapsed}분</strong>${reqInfo}`
+        };
+      });
+  } else if (filterType === 'washing') {
+    title = `🚿 세척 중 항목 (${Object.keys(washing).length}건)`;
+    items = Object.values(washing)
+      .sort((a, b) => new Date(a.startedAt) - new Date(b.startedAt))
+      .map(w => {
+        const elapsed = diffMin(new Date(w.startedAt), new Date());
+        const reqInfo = w.requiredTime ? ` · 🎯 ${fmtTime(new Date(w.requiredTime))}까지` : '';
+        const productInfo = w.productType ? ` · ${w.productType}` : '';
+        return {
+          prio: 'RUN',
+          prioLabel: '진행',
+          line: w.line,
+          action: 'finish',
+          dataAttrs: `data-action="finish" data-line="${w.line}"`,
+          meta: `${w.group} · ${w.category}${productInfo}<br><strong>시작 ${fmtTime(new Date(w.startedAt))}</strong> · 진행 <strong>${elapsed}분</strong>${reqInfo}`
+        };
+      });
+  } else if (filterType === 'done') {
+    title = `✅ 오늘 완료 항목 (${todayRecs.length}건)`;
+    items = todayRecs
+      .sort((a, b) => new Date(b.endTime) - new Date(a.endTime))
+      .map(r => {
+        const productInfo = r.productType ? ` · ${r.productType}` : '';
+        const delayInfo = r.delayMin !== null && r.delayMin !== undefined
+          ? (r.delayMin > 0 ? ` · <span style="color:var(--red)">+${r.delayMin}분 지연</span>` : ` · <span style="color:var(--green)">${Math.abs(r.delayMin)}분 여유</span>`)
+          : '';
+        return {
+          prio: 'DONE',
+          prioLabel: '완료',
+          line: r.line,
+          action: 'detail',
+          dataAttrs: `data-action="detail" data-record-id="${r.id}"`,
+          meta: `${r.group} · ${r.category}${productInfo}<br><strong>종료 ${fmtTime(new Date(r.endTime))}</strong> · 대기 ${r.waitMin || 0}분 · 세척 <strong>${r.washMin || 0}분</strong>${delayInfo}`
+        };
+      });
+  } else if (filterType === 'rework') {
+    const reworkRecs = todayRecs.filter(r => r.rework === 'Y');
+    title = `🔄 재세척 항목 (${reworkRecs.length}건)`;
+    items = reworkRecs
+      .sort((a, b) => new Date(b.endTime) - new Date(a.endTime))
+      .map(r => ({
+        prio: 'REWORK',
+        prioLabel: '재세척',
+        line: r.line,
+        action: 'detail',
+        dataAttrs: `data-action="detail" data-record-id="${r.id}"`,
+        meta: `${r.group} · ${r.category}<br><strong>${fmtTime(new Date(r.endTime))} 종료</strong> · 사유: ${r.note || '—'}`
+      }));
+  }
+
+  titleEl.textContent = title;
+
+  if (items.length === 0) {
+    bodyEl.innerHTML = '<div class="filter-empty">해당 항목이 없습니다</div>';
+    return;
+  }
+
+  bodyEl.innerHTML = items.map(it => `
+    <div class="filter-item" ${it.dataAttrs}>
+      <span class="item-prio ${it.prio}">${it.prioLabel || it.prio}</span>
+      <div class="item-info">
+        <div class="item-line">${it.line}</div>
+        <div class="item-meta">${it.meta}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// 필터 패널 항목 클릭 → 액션 실행
+document.addEventListener('click', (e) => {
+  const item = e.target.closest('#filterPanelBody .filter-item[data-action]');
+  if (!item) return;
+  const action = item.dataset.action;
+  const lineName = item.dataset.line;
+  const recordId = item.dataset.recordId;
+
+  if (action === 'start') {
+    // 대기 → 세척 시작 모달 열기 (LINE_MASTER에서 라인 정보 찾아서)
+    const line = LINE_MASTER.find(l => l.name === lineName);
+    if (line) {
+      clearHomeFilter();  // 필터 닫고
+      openStartModal(line, true);
+    }
+  } else if (action === 'finish') {
+    // 세척 중 → 진행 모달 (종료 가능)
+    clearHomeFilter();
+    openRunningModal(lineName);
+  } else if (action === 'detail') {
+    // 완료/재세척 → 상세 정보 모달
+    showRecordDetail(parseInt(recordId, 10));
+  }
+});
+
+// 완료/재세척 항목 상세 모달 (간단한 정보 표시)
+function showRecordDetail(recordId) {
+  const recs = loadRecords();
+  const r = recs.find(x => x.id === recordId);
+  if (!r) {
+    showToast('기록을 찾을 수 없습니다', 'warn');
+    return;
+  }
+  const arrived = r.arrivedAt ? fmtTime(new Date(r.arrivedAt)) : '—';
+  const started = r.startTime ? fmtTime(new Date(r.startTime)) : '—';
+  const ended = r.endTime ? fmtTime(new Date(r.endTime)) : '—';
+  const required = r.requiredTime ? fmtTime(new Date(r.requiredTime)) : '—';
+  const delayLabel = r.delayMin === null || r.delayMin === undefined ? '—'
+    : r.delayMin > 0 ? `+${r.delayMin}분 지연` : `${Math.abs(r.delayMin)}분 여유`;
+  const delayColor = (r.delayMin || 0) > 0 ? 'var(--red)' : 'var(--green)';
+  const reworkBadge = r.rework === 'Y'
+    ? `<span style="display:inline-block; padding:3px 10px; background:var(--red); color:white; border-radius:999px; font-size:12px; font-weight:800; margin-left:8px;">재세척</span>`
+    : '';
+
+  const body = `
+    <div style="display:grid; grid-template-columns: max-content 1fr; gap:10px 18px; font-size:15px; line-height:1.5;">
+      <strong style="color:var(--gray-600);">라인</strong>
+      <div style="font-weight:800; color:var(--navy); font-size:17px;">${r.line}${reworkBadge}</div>
+
+      <strong style="color:var(--gray-600);">그룹·점도</strong>
+      <div>${r.group} · ${r.category}${r.productType ? ' · ' + r.productType : ''}</div>
+
+      ${r.item ? `<strong style="color:var(--gray-600);">품목</strong><div>${r.item}</div>` : ''}
+
+      <strong style="color:var(--gray-600);">도착</strong>
+      <div>${arrived}</div>
+
+      ${required !== '—' ? `<strong style="color:var(--gray-600);">필요시간</strong><div>🎯 ${required}까지</div>` : ''}
+
+      <strong style="color:var(--gray-600);">시작 → 종료</strong>
+      <div>${started} → ${ended}</div>
+
+      <strong style="color:var(--gray-600);">대기 / 세척</strong>
+      <div>대기 <strong>${r.waitMin || 0}분</strong> · 세척 <strong>${r.washMin || 0}분</strong></div>
+
+      ${r.delayMin !== null && r.delayMin !== undefined ? `<strong style="color:var(--gray-600);">지연/여유</strong><div style="color:${delayColor}; font-weight:700;">${delayLabel}</div>` : ''}
+
+      ${r.workers ? `<strong style="color:var(--gray-600);">작업자</strong><div>${r.workers}명</div>` : ''}
+      ${r.note ? `<strong style="color:var(--gray-600);">메모</strong><div>${r.note}</div>` : ''}
+    </div>
+  `;
+  openRecordDetailModal('📝 세척 기록 상세', body);
+}
+
+// 간단한 상세 모달 (재사용 가능한 동적 모달)
+function openRecordDetailModal(title, htmlBody) {
+  // 기존 모달 있으면 제거
+  const existing = document.getElementById('modalRecordDetail');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'modalRecordDetail';
+  modal.className = 'modal-backdrop open';
+  modal.innerHTML = `
+    <div class="modal" style="max-width: 540px;">
+      <h3>${title}</h3>
+      <div style="padding: 8px 0 16px 0;">${htmlBody}</div>
+      <div style="display:flex; justify-content:flex-end;">
+        <button class="btn btn-primary" onclick="document.getElementById('modalRecordDetail').remove()">닫기</button>
+      </div>
+    </div>
+  `;
+  // 백드롭 클릭 시 닫기
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+  document.body.appendChild(modal);
+}
+
+// 카드 클릭 이벤트 위임 (DOMContentLoaded 후 한 번 바인딩)
+document.addEventListener('click', (e) => {
+  const card = e.target.closest('#homeSummaryRow .summary-card[data-filter]');
+  if (!card) return;
+  setHomeFilter(card.dataset.filter);
+});
+
+setInterval(() => {
+  if (CURRENT_ROLE === 'washroom') {
+    const activeTab = document.querySelector('nav.tabs button.active')?.dataset.tab;
+    if (activeTab === 'home') renderHome();
+    if (activeTab === 'priority') renderPriority();
+  } else if (CURRENT_ROLE === 'production') {
+    const activeTab = document.querySelector('nav.tabs button.active')?.dataset.tab;
+    if (activeTab === 'arrival') renderArrival();
+  }
+}, 15000);
+
+/* ============================================================
+ * [세척실] 라인 선택 화면
+ * ============================================================ */
+function renderLines() {
+  buildGroupFilter('groupFilterLines', _filterLines, renderLines);
+
+  const favsBox = document.getElementById('favsLines');
+  const favs = loadFavs('washroom');
+  if (favs.length === 0) {
+    favsBox.innerHTML = '<div style="text-align:center; color: #7A4F00; font-size:16px; padding:18px; word-break: keep-all;">세척 시작을 한 번 하면 여기에 자동으로 표시됩니다</div>';
+  } else {
+    const grid = document.createElement('div');
+    grid.className = 'line-grid';
+    favs.forEach(name => {
+      const line = findLine(name);
+      if (line) grid.appendChild(renderLineCard(line, () => onLineClick(line)));
+    });
+    favsBox.innerHTML = '';
+    favsBox.appendChild(grid);
+  }
+
+  const filtered = filterLines(_filterLines);
+  document.getElementById('lineCountLines').textContent = `${filtered.length}개 / ${LINE_MASTER.length}개`;
+  const grid = document.getElementById('lineGridLines');
+  grid.innerHTML = '';
+  filtered.forEach(line => grid.appendChild(renderLineCard(line, () => onLineClick(line))));
+}
+
+function onLineClick(line) {
+  const washing = loadWashing();
+  const waiting = loadWaiting();
+  // 같은 라인의 대기 건이 있는지 (line 필드 기준 — suffix 키 포함)
+  const hasWaiting = Object.values(waiting).some(w => w && w.line === line.name);
+  // 같은 라인의 세척중 건 키
+  const washingKeys = Object.keys(washing).filter(k => washing[k] && washing[k].line === line.name);
+
+  if (hasWaiting) {
+    // 대기 건이 있으면 시작 모달 (자동으로 최우선 건 선택)
+    openStartModal(line, true);
+  } else if (washingKeys.length > 0) {
+    // 대기는 없고 세척중만 있으면 진행 모달
+    openRunningModal(washingKeys[0]);
+  } else {
+    openStartModal(line, false); // 신규 시작 (도착 없이)
+  }
+}
+
+/* ============================================================
+ * 세척 시작 모달
+ * ============================================================ */
+let _startLine = null;
+let _startFromWaiting = false;
+let _startWaitingKey = null;  // 동일 라인 여러 건 시 어느 키를 시작할지
+
+// 동일 라인의 모든 대기 건 중 우선순위 최상위 1건 선택
+function pickTopPriorityWaitingKey(lineName, waiting) {
+  const keys = Object.keys(waiting).filter(k => waiting[k] && waiting[k].line === lineName);
+  if (keys.length === 0) return null;
+  if (keys.length === 1) return keys[0];
+  // calcPriority로 정렬 (prio_rank 작을수록 높은 우선순위, 동률이면 먼저 도착한 것)
+  const items = keys.map(k => {
+    const w = waiting[k];
+    const p = calcPriority({ ...w, _waitingMode: true });
+    return { key: k, w, ...p };
+  });
+  items.sort((a, b) => {
+    if (a.prio_rank !== b.prio_rank) return a.prio_rank - b.prio_rank;
+    // 동률: 필요시간이 더 임박한 것 우선, 그 다음 먼저 도착한 것
+    if (a.hasRequired && b.hasRequired) {
+      return new Date(a.required) - new Date(b.required);
+    }
+    return new Date(a.w.arrivedAt) - new Date(b.w.arrivedAt);
+  });
+  return items[0].key;
+}
+
+function openStartModal(line, fromWaiting) {
+  _startLine = line;
+  _startFromWaiting = fromWaiting;
+
+  const waiting = loadWaiting();
+  // 동일 라인 여러 건 자동 선택
+  _startWaitingKey = pickTopPriorityWaitingKey(line.name, waiting);
+  const w = _startWaitingKey ? waiting[_startWaitingKey] : null;
+
+  // 같은 라인 추가 건 수 (안내용)
+  const sameLineCount = Object.keys(waiting).filter(k => waiting[k] && waiting[k].line === line.name).length;
+  const multiBadge = sameLineCount > 1 ? ` <small style="color:var(--orange);font-weight:600;">[${sameLineCount}건 중 최우선 자동선택]</small>` : '';
+  document.getElementById('startLineLabel').innerHTML = `${line.name} (${line.group} · ${line.category})${multiBadge}`;
+
+  if (fromWaiting && w) {
+    const waitMin = diffMin(new Date(w.arrivedAt), new Date());
+    document.getElementById('startWaitingInfo').style.display = 'block';
+    document.getElementById('startWaitMin').textContent = `${waitMin}분`;
+    document.getElementById('startArrivalAt').textContent = `도착: ${fmtTime(new Date(w.arrivedAt))}`;
+    document.getElementById('startItem').value = w.item || '';
+
+    // 필요시간 정보
+    if (w.requiredTime) {
+      const required = new Date(w.requiredTime);
+      const cat = CATEGORY_MASTER[w.category] || CATEGORY_MASTER.C2;
+      const pred = Math.round(line.base * cat.weight);
+      const needStartBy = new Date(required.getTime() - (pred + cat.buffer) * 60000);
+      const remainMin = Math.round((needStartBy - new Date()) / 60000);
+      document.getElementById('startRequiredInfo').style.display = 'block';
+      document.getElementById('startRequiredAt').textContent = `${fmtTime(required)}까지 완료`;
+      const hint = remainMin <= 0
+        ? `⚠ 시작 ${Math.abs(remainMin)}분 초과 - 즉시 시작 필요`
+        : `예상 세척 ${pred}분 + 버퍼 ${cat.buffer}분 → ${remainMin}분 내 시작 권장`;
+      document.getElementById('startRequiredHint').textContent = hint;
+    } else {
+      document.getElementById('startRequiredInfo').style.display = 'none';
+    }
+    // 제품타입 정보
+    if (w.productType) {
+      document.getElementById('startProductInfo').style.display = 'block';
+      document.getElementById('startProductLabel').textContent =
+        `${w.category} ${CATEGORY_MASTER[w.category].name} · ${w.productType}`;
+    } else {
+      document.getElementById('startProductInfo').style.display = 'none';
+    }
+  } else {
+    document.getElementById('startWaitingInfo').style.display = 'none';
+    document.getElementById('startRequiredInfo').style.display = 'none';
+    document.getElementById('startProductInfo').style.display = 'none';
+    document.getElementById('startItem').value = '';
+  }
+  document.getElementById('startWorkers').value = 1;
+  openModal('modalStart');
+}
+
+function confirmStart() {
+  if (!_startLine) return;
+  const item = document.getElementById('startItem').value.trim();
+  const workers = parseInt(document.getElementById('startWorkers').value) || 1;
+
+  const waiting = loadWaiting();
+  const washing = loadWashing();
+  const now = new Date();
+
+  // 이전에 선택된 키 사용 (동일 라인 여러 건 중 최우선 건)
+  const wKey = _startWaitingKey || _startLine.name;
+  const w = waiting[wKey];
+  const arrivedAt = w ? w.arrivedAt : null;
+  const waitMin = w ? diffMin(new Date(w.arrivedAt), now) : 0;
+
+  // washing 키도 충돌 방지 (이미 같은 라인이 세척 중일 수 있음)
+  let washKey = _startLine.name;
+  if (washing[washKey]) {
+    let n = 2;
+    while (washing[`${_startLine.name}#${n}`]) n++;
+    washKey = `${_startLine.name}#${n}`;
+  }
+
+  washing[washKey] = {
+    line: _startLine.name,
+    washingKey: washKey,
+    group: _startLine.group,
+    category: w ? w.category : _startLine.category,
+    lineCategory: _startLine.category,
+    productType: w ? w.productType : '',
+    base: _startLine.base,
+    item: item || (w ? w.item : ''),
+    unitCount: w ? (w.unitCount || 1) : 1,
+    arrivedBy: w ? (w.arrivedBy || 'production') : 'production',
+    workers: workers,
+    carriers: w ? w.carriers : null,
+    arrivalNote: w ? w.note : '',
+    requiredTime: w ? w.requiredTime : null,
+    arrivedAt: arrivedAt,
+    waitMin: waitMin,
+    startedAt: now.toISOString(),
+  };
+  saveWashing(washing);
+
+  // 대기 목록에서 제거 (선택된 키만)
+  if (w) {
+    delete waiting[wKey];
+    saveWaiting(waiting);
+  }
+
+  autoAddFav(_startLine.name);
+  closeModal('modalStart');
+  // 잔여 동일 라인 건수 안내
+  const remaining = Object.keys(waiting).filter(k => waiting[k] && waiting[k].line === _startLine.name).length;
+  const remMsg = remaining > 0 ? ` · 같은 라인 ${remaining}건 남음` : '';
+  showToast(`▶ ${_startLine.name} 세척 시작${waitMin > 0 ? ` (대기 ${waitMin}분)` : ''}${remMsg}`, 'success');
+  renderHome();
+  if (document.getElementById('tab-lines').classList.contains('active')) renderLines();
+}
+
+/* ============================================================
+ * 진행 중/대기 모달 (통합)
+ * ============================================================ */
+let _runningLineName = null;
+let _runningInterval = null;
+
+function openRunningModal(lineName) {
+  _runningLineName = lineName;
+  const waiting = loadWaiting();
+  const washing = loadWashing();
+  const r = washing[lineName];
+  const w = waiting[lineName];
+
+  if (!r && !w) { renderHome(); return; }
+
+  const line = findLine(lineName);
+  const panel = document.getElementById('runningPanel');
+  const isWashing = !!r;
+  const data = r || w;
+
+  panel.className = 'running-panel ' + (isWashing ? 'washing' : 'waiting');
+
+  document.getElementById('runLineLabel').textContent = lineName;
+  const tag = document.getElementById('runGroupTag');
+  tag.textContent = `${line.group} · ${line.category} · 기준 ${line.base}분`;
+  tag.style.background = GROUP_COLORS[line.group];
+
+  const statusLabel = document.getElementById('runStatusLabel');
+  const startTime = isWashing ? new Date(r.startedAt) : new Date(w.arrivedAt);
+  statusLabel.textContent = isWashing ? '🚿 세척 진행 시간' : '📦 도착 후 대기 시간';
+
+  // 메타 정보
+  const meta = document.getElementById('runMeta');
+  if (isWashing) {
+    let metaHTML = `
+      <div>세척 시작<span>${fmtTime(new Date(r.startedAt))}</span></div>
+      <div>작업자<span>${r.workers}명</span></div>
+    `;
+    if (r.arrivedAt) {
+      metaHTML += `<div>도착<span>${fmtTime(new Date(r.arrivedAt))}</span></div>`;
+      metaHTML += `<div>대기시간<span style="color: #B8860B;">${r.waitMin}분</span></div>`;
+    }
+    if (r.item) metaHTML += `<div>품목<span>${r.item}</span></div>`;
+    meta.innerHTML = metaHTML;
+
+    document.getElementById('runReworkRow').style.display = 'flex';
+    document.getElementById('runReworkToggle').classList.remove('on');
+    document.getElementById('runNote').style.display = 'block';
+    document.getElementById('runNote').value = '';
+  } else {
+    let metaHTML = `<div>도착 시각<span>${fmtTime(new Date(w.arrivedAt))}</span></div>`;
+    if (w.item) metaHTML += `<div>품목<span>${w.item}</span></div>`;
+    if (w.unitCount && w.unitCount > 1) metaHTML += `<div>통/단위 수<span>${w.unitCount}개</span></div>`;
+    if (w.carriers) metaHTML += `<div>운반 인원<span>${w.carriers}명</span></div>`;
+    if (w.note) metaHTML += `<div>특이<span style="font-size:13px;">${w.note}</span></div>`;
+    meta.innerHTML = metaHTML;
+    document.getElementById('runReworkRow').style.display = 'none';
+    document.getElementById('runNote').style.display = 'none';
+  }
+
+  // 액션 버튼
+  const btns = document.getElementById('runActionButtons');
+  if (isWashing) {
+    btns.innerHTML = `<button class="btn btn-stop" onclick="confirmEnd()">■ 세척 종료</button>`;
+  } else {
+    btns.innerHTML = `
+      <button class="btn" style="background: var(--red); color: white;" onclick="cancelWaiting()">도착 취소</button>
+      <button class="btn btn-start" onclick="startFromWaiting()">▶ 세척 시작</button>
+    `;
+  }
+
+  function updateTimer() {
+    const elapsed = new Date() - startTime;
+    const totalSec = Math.floor(elapsed / 1000);
+    const mm = Math.floor(totalSec / 60);
+    const ss = totalSec % 60;
+    document.getElementById('runTimer').textContent = pad(mm) + ':' + pad(ss);
+  }
+  updateTimer();
+  if (_runningInterval) clearInterval(_runningInterval);
+  _runningInterval = setInterval(updateTimer, 1000);
+
+  openModal('modalRunning');
+}
+
+function startFromWaiting() {
+  const line = findLine(_runningLineName);
+  if (!line) return;
+  closeModal('modalRunning');
+  openStartModal(line, true);
+}
+
+function cancelWaiting() {
+  openConfirm('도착 등록 취소', `${_runningLineName} 도착 등록을 취소하시겠습니까?`, () => {
+    const waiting = loadWaiting();
+    delete waiting[_runningLineName];
+    saveWaiting(waiting);
+    closeModal('modalRunning');
+    showToast('도착 등록 취소됨', 'warn');
+    renderHome();
+    if (document.getElementById('tab-lines').classList.contains('active')) renderLines();
+  });
+}
+
+function confirmEnd() {
+  const washing = loadWashing();
+  const r = washing[_runningLineName];
+  if (!r) return;
+  const startedAt = new Date(r.startedAt);
+  const endedAt = new Date();
+  const washMin = diffMin(startedAt, endedAt);
+  const totalMin = r.arrivedAt ? diffMin(new Date(r.arrivedAt), endedAt) : washMin;
+  const rework = document.getElementById('runReworkToggle').classList.contains('on') ? 'Y' : 'N';
+  const note = document.getElementById('runNote').value.trim();
+
+  const requiredTime = r.requiredTime ? new Date(r.requiredTime) : null;
+  const delayMin = requiredTime ? Math.round((endedAt - requiredTime) / 60000) : null;
+  // delayMin > 0 = 지연 (필요 시간 초과)
+  // delayMin < 0 = 여유 (필요 시간 전 완료)
+
+  const record = {
+    id: Date.now(),
+    date: fmtDate(startedAt),
+    line: r.line,
+    group: r.group,
+    category: r.category,
+    productType: r.productType || '',
+    item: r.item || '',
+    unitCount: r.unitCount || 1,
+    arrivedBy: r.arrivedBy || 'production',
+    arrivedAt: r.arrivedAt,
+    requiredTime: r.requiredTime,
+    startTime: startedAt.toISOString(),
+    endTime: endedAt.toISOString(),
+    waitMin: r.waitMin,
+    washMin: washMin,
+    totalMin: totalMin,
+    delayMin: delayMin,           // ★ AP가 명시한 시간 대비 지연/여유 (BY27 협상 핵심)
+    workers: r.workers,
+    carriers: r.carriers,
+    rework: rework,
+    arrivalNote: r.arrivalNote || '',
+    note: note,
+  };
+  const records = loadRecords();
+  records.push(record);
+  saveRecords(records);
+
+  delete washing[_runningLineName];
+  saveWashing(washing);
+
+  if (_runningInterval) clearInterval(_runningInterval);
+  closeModal('modalRunning');
+  showToast(`✅ ${r.line} 세척 완료 (대기 ${r.waitMin}분 / 세척 ${washMin}분)`, 'success');
+  renderHome();
+}
+
+/* ============================================================
+ * 우선순위
+ * ============================================================ */
+function calcPriority(item) {
+  // item: 다음 오더 (NextOrder) 또는 대기 중인 라인 (waiting)
+  const cat = CATEGORY_MASTER[item.category] || CATEGORY_MASTER.C2;
+  const pred = Math.round(item.base * cat.weight);
+  const buffer = cat.buffer;
+  const now = new Date();
+
+  if (item._waitingMode) {
+    const arrivedAt = new Date(item.arrivedAt);
+    const waitMin = diffMin(arrivedAt, now);
+
+    // ★ v2.1: 필요 시간이 있으면 그것 기준으로 우선순위 계산 (BY27 협상 핵심)
+    if (item.requiredTime) {
+      const required = new Date(item.requiredTime);
+      // 필요 시간 - 예상 세척시간 - 버퍼 = 시작해야 할 마지막 시각
+      const needStartBy = new Date(required.getTime() - (pred + buffer) * 60000);
+      const remainMin = Math.round((needStartBy - now) / 60000);
+      let priority, prio_rank;
+      if (remainMin <= 0) { priority = 'HIGH'; prio_rank = 1; }
+      else if (remainMin <= 15) { priority = 'HIGH'; prio_rank = 1; }
+      else if (remainMin <= 45) { priority = 'MEDIUM'; prio_rank = 2; }
+      else { priority = 'LOW'; prio_rank = 3; }
+      return {
+        pred, buffer, waitMin, priority, prio_rank, isWaiting: true,
+        hasRequired: true, required, needStartBy, remainMin
+      };
+    }
+
+    // 필요 시간 없으면 기존 방식: 대기시간 자체로 우선순위
+    let priority, prio_rank;
+    if (waitMin >= 30) { priority = 'HIGH'; prio_rank = 1; }
+    else if (waitMin >= 10) { priority = 'MEDIUM'; prio_rank = 2; }
+    else { priority = 'LOW'; prio_rank = 3; }
+    return { pred, buffer, waitMin, priority, prio_rank, isWaiting: true, hasRequired: false };
+  }
+
+  const nextStart = new Date(item.nextStart);
+  const needBy = new Date(nextStart.getTime() - (pred + buffer) * 60000);
+  const remainMin = Math.round((needBy - now) / 60000);
+  let priority, prio_rank;
+  if (item.preWash === 'Y') { priority = 'HIGH'; prio_rank = 0; }
+  else if (remainMin <= 0)   { priority = 'HIGH'; prio_rank = 1; }
+  else if (remainMin <= 30)  { priority = 'MEDIUM'; prio_rank = 2; }
+  else                       { priority = 'LOW'; prio_rank = 3; }
+  return { pred, buffer, needBy, remainMin, priority, prio_rank, isWaiting: false };
+}
+
+function renderPriority() {
+  // 다음 오더 셀렉트 업데이트
+  const sel = document.getElementById('noLine');
+  sel.innerHTML = LINE_MASTER.map(l => `<option value="${l.name}">[${l.group}] ${l.name}</option>`).join('');
+
+  const list = document.getElementById('priorityList');
+  const orders = loadNextOrders();
+  const waiting = loadWaiting();
+
+  // 대기 중인 라인을 우선순위 큐에 통합
+  const waitingItems = Object.values(waiting).map(w => ({
+    ...w,
+    isWaitingItem: true,
+    _waitingMode: true,
+  }));
+
+  const allItems = [
+    ...orders.map(o => ({ ...o, isWaitingItem: false })),
+    ...waitingItems,
+  ];
+
+  if (allItems.length === 0) {
+    list.innerHTML = '<div style="text-align:center; padding:40px 20px; color:var(--gray); background:white; border-radius:12px;">대기 중이거나 등록된 다음 오더가 없습니다.<br>[+ 다음 오더 등록] 버튼으로 추가하세요.</div>';
+    updateHighBadge();
+    return;
+  }
+
+  const enriched = allItems.map(o => ({ ...o, ...calcPriority(o) }));
+  enriched.sort((a, b) => a.prio_rank - b.prio_rank ||
+    ((a.remainMin ?? -a.waitMin) - (b.remainMin ?? -b.waitMin)));
+
+  list.innerHTML = enriched.map(o => {
+    const groupColor = GROUP_COLORS[o.group] || '#999';
+    // 동일 라인 N건째 표시 (suffix가 있는 경우)
+    let multiSuffix = '';
+    if (o.waitingKey && o.waitingKey.includes('#')) {
+      const n = parseInt(o.waitingKey.split('#')[1]);
+      if (!isNaN(n)) multiSuffix = ` <span style="font-size:11px; color:var(--orange); font-weight:800;">(${n}건째)</span>`;
+    }
+    if (o.isWaiting) {
+      const productInfo = o.productType ? ` · ${o.productType}` : '';
+      const requiredInfo = o.hasRequired
+        ? `<br>⏰ <strong>${fmtTime(o.required)}까지 필요</strong> · 예상 세척 ${o.pred}분 · 시작 필요 ${fmtTime(o.needStartBy)}`
+        : '';
+      const remainTxt = o.hasRequired
+        ? (o.remainMin <= 0 ? `시작 ${Math.abs(o.remainMin)}분 초과` : `${o.remainMin}분 후 시작`)
+        : `${o.waitMin}분 대기`;
+      return `
+        <div class="priority-card ${o.priority}">
+          <div class="group-bar" style="background: ${groupColor};"></div>
+          <div class="info">
+            <div class="name">📦 ${o.line}${multiSuffix}${o.unitCount && o.unitCount > 1 ? ` <span style="font-size:14px; color: #0D9488; font-weight:800;">×${o.unitCount}개</span>` : ''} <span style="font-size:11px; color:var(--gray);">(${o.group} · ${o.category}${productInfo})</span></div>
+            <div class="detail">
+              도착 ${fmtTime(new Date(o.arrivedAt))} · 대기 ${o.waitMin}분 · 운반 ${o.carriers || 1}명${o.item ? ' · ' + o.item : ''}
+              ${requiredInfo}
+            </div>
+          </div>
+          <div class="remain">${remainTxt}</div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+            <span class="prio-label">${o.priority}</span>
+          </div>
+        </div>
+      `;
+    } else {
+      const remainTxt = o.remainMin <= 0 ? `${o.remainMin}분 (초과)` : `${o.remainMin}분`;
+      return `
+        <div class="priority-card ${o.priority}">
+          <div class="group-bar" style="background: ${groupColor};"></div>
+          <div class="info">
+            <div class="name">🎯 ${o.line} <span style="font-size:11px; color:var(--gray);">(${o.group} · ${o.category}${o.item ? ' · ' + o.item : ''})</span></div>
+            <div class="detail">
+              다음 오더 ${fmtTime(new Date(o.nextStart))} · 예상 세척 ${o.pred}분 · 시작 필요 ${fmtTime(o.needBy)}${o.preWash === 'Y' ? ' · ⚠ PreWash' : ''}
+            </div>
+          </div>
+          <div class="remain">${remainTxt}</div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+            <span class="prio-label">${o.priority}</span>
+            <button class="btn btn-secondary" style="padding:3px 8px; min-width:auto; font-size:11px;" onclick="deleteNextOrder(${o.id})">삭제</button>
+          </div>
+        </div>
+      `;
+    }
+  }).join('');
+
+  updateHighBadge();
+}
+
+function updateHighBadge() {
+  const orders = loadNextOrders();
+  const waiting = loadWaiting();
+  const allItems = [
+    ...orders.map(o => ({ ...o, isWaitingItem: false })),
+    ...Object.values(waiting).map(w => ({ ...w, _waitingMode: true })),
+  ];
+  const highCount = allItems.filter(o => calcPriority(o).priority === 'HIGH').length;
+  const badge = document.getElementById('badgeHigh');
+  if (badge) {
+    badge.textContent = highCount;
+    badge.classList.toggle('hide', highCount === 0);
+  }
+}
+
+function openNextOrderModal() {
+  const d = new Date(Date.now() + 2 * 3600 * 1000);
+  const iso = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())
+            + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  document.getElementById('noNextStart').value = iso;
+  document.getElementById('noItem').value = '';
+  openModal('modalNextOrder');
+}
+
+function confirmNextOrder() {
+  const lineName = document.getElementById('noLine').value;
+  const line = findLine(lineName);
+  if (!line) { showToast('라인을 선택하세요', 'error'); return; }
+  const item = document.getElementById('noItem').value.trim();
+  const nextStart = document.getElementById('noNextStart').value;
+  const preWash = document.getElementById('noPreWash').value;
+  if (!nextStart) { showToast('시작시간을 입력하세요', 'error'); return; }
+  const orders = loadNextOrders();
+  orders.push({
+    id: Date.now(), line: line.name, group: line.group,
+    category: line.category, base: line.base, item,
+    nextStart: new Date(nextStart).toISOString(), preWash
+  });
+  saveNextOrders(orders);
+  closeModal('modalNextOrder');
+  renderPriority();
+  showToast('다음 오더 등록 완료', 'success');
+}
+
+function clearNextOrders() {
+  const orders = loadNextOrders();
+  if (orders.length === 0) { showToast('삭제할 오더가 없습니다'); return; }
+  openConfirm('다음 오더 전체 삭제', '등록된 다음 오더를 모두 삭제하시겠습니까? (대기 중인 라인은 유지됩니다)', () => {
+    saveNextOrders([]);
+    renderPriority();
+    showToast('전체 삭제 완료', 'success');
+  });
+}
+
+function deleteNextOrder(id) {
+  saveNextOrders(loadNextOrders().filter(o => o.id !== id));
+  renderPriority();
+}
+</script>
+
+<script>
+/* ============================================================
+ * 오늘 기록
+ * ============================================================ */
+function renderRecords() {
+  const list = document.getElementById('recordsList');
+  const today = todayKey();
+  document.getElementById('recordsDate').textContent = today;
+  renderStatsChart();
+
+  const records = loadRecords()
+    .filter(r => r.date === today)
+    .sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+
+  if (records.length === 0) {
+    list.innerHTML = '<div class="empty">오늘 기록이 아직 없습니다.</div>';
+    return;
+  }
+
+  list.innerHTML = records.map(r => {
+    const groupColor = GROUP_COLORS[r.group] || '#999';
+    const arrived = r.arrivedAt ? `📦 ${fmtTime(new Date(r.arrivedAt))} → ` : '';
+    const start = `▶ ${fmtTime(new Date(r.startTime))}`;
+    const end = ` → ■ ${fmtTime(new Date(r.endTime))}`;
+    const requiredInfo = r.requiredTime
+      ? `<div class="timeline" style="color: var(--navy); font-weight: 600;">🎯 ${fmtTime(new Date(r.requiredTime))}까지 (${r.delayMin > 0 ? `<span style="color:var(--red)">+${r.delayMin}분 지연</span>` : `<span style="color:var(--green)">${r.delayMin}분 여유</span>`})</div>`
+      : '';
+    return `
+      <div class="record-item">
+        <div class="group-bar" style="background: ${groupColor};"></div>
+        <div class="info">
+          <div class="product">${r.line}${r.unitCount && r.unitCount > 1 ? ` <span style="font-size:13px; color:#0D9488; font-weight:800;">×${r.unitCount}개</span>` : ''} <span style="font-size:11px; color:var(--gray);">[${r.group}]${r.productType ? ' · ' + r.productType : ''}</span></div>
+          <div class="item">${r.item ? r.item + ' · ' : ''}작업자 ${r.workers}명${r.note ? ' · ' + r.note : ''}</div>
+          <div class="timeline">${arrived}${start}${end}</div>
+          ${requiredInfo}
+        </div>
+        <div class="durations">
+          ${r.waitMin > 0 ? `<span class="dur-chip wait">대기 ${r.waitMin}분</span>` : ''}
+          <span class="dur-chip wash">세척 ${r.washMin}분</span>
+        </div>
+        <div class="tags">
+          <span class="tag cat">${r.category}</span>
+          ${r.rework === 'Y' ? '<span class="tag rework">재세척</span>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ============================================================
+ * CSV 내보내기 (엑셀 v3 호환 + 대기시간 컬럼 추가)
+ * ============================================================ */
+function exportCSV() {
+  const records = loadRecords();
+  if (records.length === 0) {
+    showToast('내보낼 기록이 없습니다', 'error');
+    return;
+  }
+
+  // v2.1 컬럼: ProductType, Required_Time, Delay_Min (BY27 협상용)
+  // v2.7 컬럼: Unit_Count, Arrived_By (제조 분리 + 통 개수)
+  const header = [
+    'Date', 'Line', 'Group', 'Category', 'ProductType', 'Item',
+    'Unit_Count', 'Arrived_By',
+    'Arrival_Time', 'Required_Time', 'Start_Time', 'End_Time',
+    'Wait_Min', 'Wash_Min', 'Total_Min', 'Delay_Min',
+    'Workers', 'Carriers', 'Rework_Flag',
+    'Arrival_Note', 'Special_Note'
+  ];
+
+  function fmt(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())
+         + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+
+  const rows = records.map(r => [
+    r.date, r.line, r.group, r.category, r.productType || '', r.item || '',
+    r.unitCount || 1, r.arrivedBy || 'production',
+    fmt(r.arrivedAt), fmt(r.requiredTime), fmt(r.startTime), fmt(r.endTime),
+    r.waitMin || 0, r.washMin || 0, r.totalMin || 0,
+    (r.delayMin !== null && r.delayMin !== undefined) ? r.delayMin : '',
+    r.workers, r.carriers || '', r.rework,
+    r.arrivalNote || '', r.note || ''
+  ]);
+
+  const csv = [header, ...rows].map(row =>
+    row.map(c => {
+      const s = String(c);
+      if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return '"' + s.replace(/"/g, '""') + '"';
+      }
+      return s;
+    }).join(',')
+  ).join('\n');
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `세척기록_${todayKey()}_${records.length}건.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast(`CSV 내보내기 완료 (${records.length}건)`, 'success');
+}
+
+/* ============================================================
+ * [제조팀] 기록 / 통계 / CSV
+ * ============================================================ */
+function isMfgRecord(r) { return r && r.arrivedBy === 'manufacturing'; }
+
+function renderMfgHistory() {
+  const records = loadRecords().filter(isMfgRecord);
+  document.getElementById('mfgHistoryCount').textContent = records.length + '건';
+
+  const box = document.getElementById('mfgHistoryList');
+  if (records.length === 0) {
+    box.innerHTML = '<div class="empty">아직 포터블 및 제조팀이 보낸 기록이 없습니다.</div>';
+    return;
+  }
+
+  const sorted = [...records].sort((a, b) => new Date(b.arrivedAt) - new Date(a.arrivedAt));
+  box.innerHTML = sorted.map(r => {
+    const arrivedAt = new Date(r.arrivedAt);
+    const startTime = new Date(r.startTime);
+    const endTime = new Date(r.endTime);
+    let delayCell = '';
+    if (r.delayMin !== null && r.delayMin !== undefined) {
+      delayCell = r.delayMin > 0
+        ? `<span class="tag rework">+${r.delayMin}분 지연</span>`
+        : `<span class="tag" style="background: var(--green-light); color: var(--green);">${r.delayMin}분 여유</span>`;
+    }
+    return `
+      <div class="record-item">
+        <div class="group-bar" style="background: #0D9488;"></div>
+        <div class="info">
+          <div class="product">${r.line}${r.unitCount && r.unitCount > 1 ? ` <span style="font-size:13px; color:#0D9488; font-weight:800;">×${r.unitCount}개</span>` : ''} <span style="font-size:11px; color:var(--gray);">[${r.group} · ${r.category}]${r.productType ? ' · ' + r.productType : ''}</span></div>
+          <div class="item">${r.item || '품목 미입력'}${r.note ? ' · ' + r.note : ''}</div>
+          <div class="timeline">📅 ${r.date} · 🛢️ ${fmtTime(arrivedAt)} → ▶ ${fmtTime(startTime)} → ■ ${fmtTime(endTime)}</div>
+        </div>
+        <div class="durations">
+          <span class="dur-chip wait">대기 ${r.waitMin || 0}분</span>
+          <span class="dur-chip wash">세척 ${r.washMin || 0}분</span>
+        </div>
+        <div class="tags">${delayCell}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function exportMfgCSV() {
+  const records = loadRecords().filter(isMfgRecord);
+  if (records.length === 0) { showToast('내보낼 제조 기록이 없습니다', 'error'); return; }
+
+  const header = [
+    'Date', 'Line', 'Group', 'Category', 'ProductType', 'Item',
+    'Unit_Count',
+    'Arrival_Time', 'Required_Time', 'Start_Time', 'End_Time',
+    'Wait_Min', 'Wash_Min', 'Total_Min', 'Delay_Min',
+    'Note'
+  ];
+  function fmt(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())
+         + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+  const rows = records.map(r => [
+    r.date, r.line, r.group, r.category, r.productType || '', r.item || '',
+    r.unitCount || 1,
+    fmt(r.arrivedAt), fmt(r.requiredTime), fmt(r.startTime), fmt(r.endTime),
+    r.waitMin || 0, r.washMin || 0, r.totalMin || 0,
+    (r.delayMin !== null && r.delayMin !== undefined) ? r.delayMin : '',
+    r.note || ''
+  ]);
+  const csv = [header, ...rows].map(row =>
+    row.map(c => {
+      const s = String(c);
+      if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return '"' + s.replace(/"/g, '""') + '"';
+      }
+      return s;
+    }).join(',')
+  ).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `포터블및제조팀_세척기록_${todayKey()}_${records.length}건.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`CSV 내보내기 완료 (${records.length}건)`, 'success');
+}
+
+function renderMfgStats() {
+  const today = todayKey();
+  const waiting = loadWaiting();
+  const records = loadRecords();
+
+  const todayMfg = records.filter(r => r.date === today && isMfgRecord(r));
+  const waitingMfg = Object.values(waiting).filter(isMfgRecord);
+
+  // 통 개수 합산 (1건 = N개)
+  const sumUnits = (arr) => arr.reduce((s, r) => s + (r.unitCount || 1), 0);
+
+  const todayDoneCount = sumUnits(todayMfg);
+  const waitingCount = sumUnits(waitingMfg);
+  const totalArrived = todayDoneCount + waitingCount;
+  const totalLoss = todayMfg.reduce((s, r) => s + (r.waitMin || 0), 0);
+
+  document.getElementById('mfgStatToday').textContent = totalArrived;
+  document.getElementById('mfgStatWaiting').textContent = waitingCount;
+  document.getElementById('mfgStatDone').textContent = todayDoneCount;
+  document.getElementById('mfgStatLoss').textContent = Math.round(totalLoss);
+
+  // 점도별 KPI (통 개수 기준)
+  const cats = ['C1', 'C2', 'C3', 'C4', 'C5'];
+  const counts = {};
+  cats.forEach(c => counts[c] = 0);
+  todayMfg.forEach(r => { if (counts[r.category] !== undefined) counts[r.category] += (r.unitCount || 1); });
+  waitingMfg.forEach(r => { if (counts[r.category] !== undefined) counts[r.category] += (r.unitCount || 1); });
+
+  document.getElementById('mfgCategoryKPI').innerHTML = cats.map(c => {
+    const meta = CATEGORY_MASTER[c];
+    return `
+      <div class="kpi-cell">
+        <div class="kpi-val">${counts[c]}</div>
+        <div class="kpi-label">${c} ${meta.name}</div>
+      </div>
+    `;
+  }).join('');
+
+  // 최근 7일 추이
+  const sevenDays = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+    const dayRecs = records.filter(r => r.date === key && isMfgRecord(r));
+    const days = ['일','월','화','수','목','금','토'];
+    const totalUnits = sumUnits(dayRecs);
+    sevenDays.push({
+      label: `${pad(d.getMonth()+1)}/${pad(d.getDate())} (${days[d.getDay()]})`,
+      count: totalUnits,
+      events: dayRecs.length,
+      loss: dayRecs.reduce((s, r) => s + (r.waitMin || 0), 0),
+      avgWash: dayRecs.length > 0 ? (dayRecs.reduce((s, r) => s + (r.washMin || 0), 0) / dayRecs.length).toFixed(1) : '—',
+    });
+  }
+
+  document.getElementById('mfg7daysList').innerHTML = sevenDays.map(d => `
+    <div class="stat-row">
+      <span class="key">${d.label}</span>
+      <span class="val">${d.count}개 (${d.events}건) · 대기LOSS ${Math.round(d.loss)}분 · 평균 세척 ${d.avgWash}분</span>
+    </div>
+  `).join('');
+}
+function exportToExcel() {
+  const records = loadRecords();
+  if (records.length === 0) {
+    showToast('내보낼 기록이 없습니다', 'error');
+    return;
+  }
+
+  const header = [
+    'Date', 'Line', 'Group', 'Category', 'ProductType', 'Item',
+    'Arrival_Time', 'Required_Time', 'Start_Time', 'End_Time',
+    'Wait_Min', 'Wash_Min', 'Total_Min', 'Delay_Min',
+    'Workers', 'Carriers', 'Rework_Flag',
+    'Arrival_Note', 'Special_Note'
+  ];
+
+  function fmt(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())
+         + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+
+  const csv = [header, ...records.map(r => [
+    r.date, r.line, r.group, r.category, r.productType || '', r.item || '',
+    fmt(r.arrivedAt), fmt(r.requiredTime), fmt(r.startTime), fmt(r.endTime),
+    r.waitMin || 0, r.washMin || 0, r.totalMin || 0,
+    (r.delayMin !== null && r.delayMin !== undefined) ? r.delayMin : '',
+    r.workers, r.carriers || '', r.rework,
+    r.arrivalNote || '', r.note || ''
+  ])].map(row =>
+    row.map(c => {
+      const s = String(c);
+      if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return '"' + s.replace(/"/g, '""') + '"';
+      }
+      return s;
+    }).join(',')
+  ).join('\n');
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `세척기록_${todayKey()}_${records.length}건.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast(`엑셀 다운로드 완료 (${records.length}건)`, 'success');
+}
+
+/* ============================================================
+ * 통계 차트 렌더링
+ * ============================================================ */
+function renderStatsChart() {
+  const records = loadRecords()
+    .filter(r => r.date === todayKey())
+    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+  if (records.length === 0) {
+    document.getElementById('statsChart').innerHTML = '<div style="text-align:center; padding:20px; color:var(--gray-500);">오늘 기록이 없어 차트를 표시할 수 없습니다</div>';
+    return;
+  }
+
+  const lineStats = {};
+  records.forEach(r => {
+    if (!lineStats[r.line]) {
+      lineStats[r.line] = { count: 0, totalWash: 0, avgWash: 0 };
+    }
+    lineStats[r.line].count++;
+    lineStats[r.line].totalWash += r.washMin || 0;
+  });
+  Object.keys(lineStats).forEach(line => {
+    lineStats[line].avgWash = Math.round(lineStats[line].totalWash / lineStats[line].count);
+  });
+
+  const groupStats = {};
+  records.forEach(r => {
+    if (!groupStats[r.group]) {
+      groupStats[r.group] = { count: 0, totalWait: 0, avgWait: 0 };
+    }
+    groupStats[r.group].count++;
+    groupStats[r.group].totalWait += r.waitMin || 0;
+  });
+  Object.keys(groupStats).forEach(g => {
+    groupStats[g].avgWait = Math.round(groupStats[g].totalWait / groupStats[g].count);
+  });
+
+  const hourStats = {};
+  records.forEach(r => {
+    const hour = new Date(r.startTime).getHours();
+    hourStats[hour] = (hourStats[hour] || 0) + 1;
+  });
+
+  let html = '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px;">';
+
+  html += '<div style="background:linear-gradient(135deg, #F0F6FC, #DDEBF7); border-radius:12px; padding:16px; border-left:4px solid var(--sky);">';
+  html += '<div style="font-weight:800; color:var(--navy); margin-bottom:12px; font-size:16px;">📊 라인별 평균 세척 시간</div>';
+  const topLines = Object.entries(lineStats)
+    .sort((a, b) => b[1].avgWash - a[1].avgWash)
+    .slice(0, 5);
+  topLines.forEach(([line, stat]) => {
+    const pct = Math.round((stat.avgWash / Math.max(...Object.values(lineStats).map(s => s.avgWash))) * 100);
+    html += `<div style="margin-bottom:8px; font-size:13px;">`;
+    html += `<div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>${line}</span><strong>${stat.avgWash}분</strong></div>`;
+    html += `<div style="background:rgba(91,155,213,0.2); height:8px; border-radius:4px; overflow:hidden;">`;
+    html += `<div style="background:var(--sky); height:100%; width:${pct}%;"></div></div></div>`;
+  });
+  html += '</div>';
+
+  html += '<div style="background:linear-gradient(135deg, #FFF9E0, #FFF2CC); border-radius:12px; padding:16px; border-left:4px solid var(--yellow);">';
+  html += '<div style="font-weight:800; color:#7A4F00; margin-bottom:12px; font-size:16px;">⏰ 그룹별 평균 대기 시간</div>';
+  Object.entries(groupStats).forEach(([group, stat]) => {
+    const pct = Math.round((stat.avgWait / Math.max(...Object.values(groupStats).map(s => s.avgWait))) * 100);
+    html += `<div style="margin-bottom:8px; font-size:13px;">`;
+    html += `<div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>${group}</span><strong>${stat.avgWait}분</strong></div>`;
+    html += `<div style="background:rgba(224,168,0,0.2); height:8px; border-radius:4px; overflow:hidden;">`;
+    html += `<div style="background:var(--yellow); height:100%; width:${pct}%;"></div></div></div>`;
+  });
+  html += '</div>';
+
+  html += '<div style="background:linear-gradient(135deg, #F4F9EE, #E2EFDA); border-radius:12px; padding:16px; border-left:4px solid var(--green);">';
+  html += '<div style="font-weight:800; color:var(--green); margin-bottom:12px; font-size:16px;">📈 시간대별 처리 건수</div>';
+  const hours = Object.entries(hourStats).sort((a, b) => a[0] - b[0]);
+  const maxHourCount = Math.max(...hours.map(h => h[1]));
+  hours.forEach(([hour, count]) => {
+    const pct = Math.round((count / maxHourCount) * 100);
+    html += `<div style="margin-bottom:8px; font-size:13px;">`;
+    html += `<div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span>${hour}시</span><strong>${count}건</strong></div>`;
+    html += `<div style="background:rgba(84,130,53,0.2); height:8px; border-radius:4px; overflow:hidden;">`;
+    html += `<div style="background:var(--green); height:100%; width:${pct}%;"></div></div></div>`;
+  });
+  html += '</div>';
+
+  html += '</div>';
+  document.getElementById('statsChart').innerHTML = html;
+}
+
+/* ============================================================
+ * JSON 백업 / 복구
+ * ============================================================ */
+function exportJSON() {
+  const data = {
+    version: '2.1',
+    exportedAt: new Date().toISOString(),
+    records: loadRecords(),
+    waiting: loadWaiting(),
+    washing: loadWashing(),
+    nextOrders: loadNextOrders(),
+    favsProduction: loadFavs('production'),
+    favsWashroom: loadFavs('washroom'),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `세척AI_v2_백업_${todayKey()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('JSON 백업 완료', 'success');
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.records) saveRecords(data.records);
+      if (data.waiting) saveWaiting(data.waiting);
+      if (data.washing) saveWashing(data.washing);
+      if (data.nextOrders) saveNextOrders(data.nextOrders);
+      if (data.favsProduction) saveFavs('production', data.favsProduction);
+      if (data.favsWashroom) saveFavs('washroom', data.favsWashroom);
+      showToast('복구 완료', 'success');
+      renderInitialScreen();
+      renderSettings();
+    } catch (err) {
+      showToast('복구 실패: 파일 형식 오류', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ============================================================
+ * 설정
+ * ============================================================ */
+function renderSettings() {
+  document.getElementById('statTotal').textContent = loadRecords().length + '건';
+  document.getElementById('statToday').textContent = loadRecords().filter(r => r.date === todayKey()).length + '건';
+  document.getElementById('statWaiting').textContent = Object.keys(loadWaiting()).length + '건';
+  document.getElementById('statWashing').textContent = Object.keys(loadWashing()).length + '건';
+  document.getElementById('statFavs').textContent = loadFavs(CURRENT_ROLE).length + '개';
+}
+
+function showResetConfirm() {
+  openConfirm('전체 초기화',
+    '모든 기록·대기·세척중·다음오더·즐겨찾기 데이터가 삭제됩니다. 복구 불가능합니다.',
+    () => {
+      Object.values(KEYS).forEach(k => { if (k !== KEYS.ROLE) localStorage.removeItem(k); });
+      showToast('초기화 완료', 'success');
+      renderInitialScreen();
+      renderSettings();
+    }
+  );
+}
+
+function showDeleteLastConfirm() {
+  const records = loadRecords().filter(r => r.date === todayKey());
+  if (records.length === 0) { showToast('삭제할 기록이 없습니다'); return; }
+  const last = records.sort((a, b) => new Date(b.startTime) - new Date(a.startTime))[0];
+
+  // 관리자 암호 인증 후 진행
+  const proceed = () => {
+    openConfirm('마지막 기록 삭제',
+      `${last.line} · 세척 ${last.washMin}분 기록을 삭제하시겠습니까?`,
+      () => {
+        saveRecords(loadRecords().filter(r => r.id !== last.id));
+        renderRecords();
+        renderHome();
+        showToast('삭제 완료', 'success');
+      }
+    );
+  };
+  if (_settingsUnlocked) proceed();
+  else requestAdminPassword(() => { _settingsUnlocked = true; proceed(); });
+}
+
+/* ============================================================
+ * 모달 유틸
+ * ============================================================ */
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  if (id === 'modalRunning' && _runningInterval) {
+    clearInterval(_runningInterval); _runningInterval = null;
+  }
+}
+function openConfirm(title, body, onOk) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmBody').textContent = body;
+  const btn = document.getElementById('confirmOkBtn');
+  const newBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(newBtn, btn);
+  newBtn.addEventListener('click', () => { closeModal('modalConfirm'); onOk(); });
+  openModal('modalConfirm');
+}
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+  m.addEventListener('click', (e) => {
+    if (e.target === m && m.id !== 'modalRunning') {
+      m.classList.remove('open');
+    }
+  });
+});
+
+
+/* ============================================================
+ * ☁️ SYNC — Cloudflare Worker 실시간 연동
+ * ============================================================ */
+const SYNC = {
+  WORKER_URL: 'https://wash-db.hodoo0831.workers.dev',
+  lastServerAt: 0,
+  pushing: false,
+  pushTimer: null,
+  pollTimer: null,
+  status: 'idle',
+  _origSave: {},
+
+  async pullOnBoot() {
+    this.setStatus('syncing', '☁️ 서버 동기화 중...');
+    try {
+      const r = await fetch(this.WORKER_URL + '/api/state', { cache: 'no-store' });
+      const j = await r.json();
+      if (j.ok) {
+        if (j.updatedAt > 0) {
+          localStorage.setItem(KEYS.WAITING, JSON.stringify(j.data.waiting || {}));
+          localStorage.setItem(KEYS.WASHING, JSON.stringify(j.data.washing || {}));
+          localStorage.setItem(KEYS.RECORDS, JSON.stringify(j.data.records || []));
+        }
+        this.lastServerAt = j.updatedAt || 0;
+        this.setStatus('idle');
+      } else {
+        this.setStatus('error');
+      }
+    } catch (e) {
+      console.warn('[SYNC] boot pull failed', e);
+      this.setStatus('offline');
+    }
+  },
+
+  schedulePush() {
+    if (this.pushTimer) clearTimeout(this.pushTimer);
+    this.pushTimer = setTimeout(() => this.push(), 400);
+  },
+
+  async push() {
+    if (this.pushing) { this.schedulePush(); return; }
+    this.pushing = true;
+    this.setStatus('syncing', '↑ 저장 중');
+    try {
+      const body = {
+        waiting: JSON.parse(localStorage.getItem(KEYS.WAITING) || '{}'),
+        washing: JSON.parse(localStorage.getItem(KEYS.WASHING) || '{}'),
+        records: JSON.parse(localStorage.getItem(KEYS.RECORDS) || '[]')
+      };
+      const r = await fetch(this.WORKER_URL + '/api/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const j = await r.json();
+      if (j.ok) {
+        this.lastServerAt = j.updatedAt || Date.now();
+        this.setStatus('idle');
+      } else {
+        this.setStatus('error');
+      }
+    } catch (e) {
+      console.warn('[SYNC] push failed', e);
+      this.setStatus('offline');
+    }
+    this.pushing = false;
+  },
+
+  async pullIfNewer() {
+    try {
+      const r = await fetch(this.WORKER_URL + '/api/state', { cache: 'no-store' });
+      const j = await r.json();
+      if (j.ok && j.updatedAt > this.lastServerAt) {
+        localStorage.setItem(KEYS.WAITING, JSON.stringify(j.data.waiting || {}));
+        localStorage.setItem(KEYS.WASHING, JSON.stringify(j.data.washing || {}));
+        localStorage.setItem(KEYS.RECORDS, JSON.stringify(j.data.records || []));
+        this.lastServerAt = j.updatedAt;
+        // 활성 탭 재렌더
+        const activeBtn = document.querySelector('nav.tabs button.active');
+        if (activeBtn && activeBtn.dataset.tab && typeof switchTab === 'function') {
+          const t = activeBtn.dataset.tab;
+          if (t === 'home' && typeof renderHome === 'function') renderHome();
+          else if (t === 'arrival' && typeof renderArrival === 'function') renderArrival();
+          else if (t === 'lines' && typeof renderLines === 'function') renderLines();
+          else if (t === 'priority' && typeof renderPriority === 'function') renderPriority();
+          else if (t === 'records' && typeof renderRecords === 'function') renderRecords();
+        }
+      }
+      this.setStatus('idle');
+    } catch (e) {
+      this.setStatus('offline');
+    }
+  },
+
+  startPolling() {
+    if (this.pollTimer) return;
+    this.pollTimer = setInterval(() => this.pullIfNewer(), 10000); // 10초
+  },
+
+  installBadge() {
+    const header = document.querySelector('header');
+    if (!header || document.getElementById('syncBadge')) return;
+    const badge = document.createElement('div');
+    badge.id = 'syncBadge';
+    badge.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-left:12px;background:rgba(255,255,255,0.15);color:white;transition:all 0.2s;white-space:nowrap;';
+    badge.textContent = '☁️ 연동 대기';
+    // 헤더의 첫 자식 옆에 배치
+    const firstChild = header.querySelector('.brand') || header.firstElementChild;
+    if (firstChild && firstChild.parentNode) {
+      firstChild.parentNode.insertBefore(badge, firstChild.nextSibling);
+    } else {
+      header.appendChild(badge);
+    }
+  },
+
+  setStatus(s, customText) {
+    this.status = s;
+    const badge = document.getElementById('syncBadge');
+    if (!badge) return;
+    const map = {
+      idle:    { text: '☁️ 연동 중',    bg: 'rgba(76,175,80,0.9)',  color: 'white' },
+      syncing: { text: '↕ 동기화 중',  bg: 'rgba(255,193,7,0.9)',  color: '#4A2E00' },
+      error:   { text: '⚠ 오류',       bg: 'rgba(220,53,69,0.9)',  color: 'white' },
+      offline: { text: '📵 오프라인',  bg: 'rgba(120,120,120,0.9)', color: 'white' }
+    };
+    const style = map[s] || map.idle;
+    badge.textContent = customText || style.text;
+    badge.style.background = style.bg;
+    badge.style.color = style.color;
+  },
+
+  wrapSaves() {
+    if (typeof saveWaiting === 'function') {
+      this._origSave.waiting = saveWaiting;
+      window.saveWaiting = (v) => { this._origSave.waiting(v); this.schedulePush(); };
+    }
+    if (typeof saveWashing === 'function') {
+      this._origSave.washing = saveWashing;
+      window.saveWashing = (v) => { this._origSave.washing(v); this.schedulePush(); };
+    }
+    if (typeof saveRecords === 'function') {
+      this._origSave.records = saveRecords;
+      window.saveRecords = (v) => { this._origSave.records(v); this.schedulePush(); };
+    }
+  }
+};
+
+/* ============================================================
+ * 초기 로드 (Worker 동기화 후)
+ * ============================================================ */
+(async function boot() {
+  // Worker에서 최신 state 가져오기 (스플래시 표시되는 동안)
+  await SYNC.pullOnBoot();
+
+  // saveXxx 함수 wrap (Worker로 push하도록)
+  SYNC.wrapSaves();
+
+  // 저장된 역할로 자동 로그인
+  const savedRole = localStorage.getItem(KEYS.ROLE);
+  if (savedRole) {
+    login(savedRole);
+  }
+
+  // 헤더에 동기화 뱃지 삽입 (login 후 헤더 렌더됨)
+  setTimeout(() => {
+    SYNC.installBadge();
+    SYNC.setStatus(SYNC.status);
+    SYNC.startPolling();
+  }, 100);
+
+  // 전체 초기화 함수도 push 유도
+  if (typeof showResetConfirm === 'function') {
+    const _origReset = showResetConfirm;
+    window.showResetConfirm = function() {
+      openConfirm('전체 초기화',
+        '모든 기록·대기·세척중·다음오더·즐겨찾기 데이터가 삭제됩니다. 복구 불가능합니다.',
+        () => {
+          Object.values(KEYS).forEach(k => { if (k !== KEYS.ROLE) localStorage.removeItem(k); });
+          SYNC.schedulePush();
+          showToast('초기화 완료', 'success');
+          renderInitialScreen();
+          renderSettings();
+        }
+      );
+    };
+  }
+})();
+</script>
+
+</body>
+</html>

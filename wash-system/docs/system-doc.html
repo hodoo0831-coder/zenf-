@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>세척실 AI 통합 시스템 · 구조 및 구축 과정</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0F2A44;
+    --navy-dim: #1F3B58;
+    --ivory: #F7F4EC;
+    --ivory-warm: #EDE6D3;
+    --accent: #DC2626;
+    --accent-dim: #B91C1C;
+    --sky: #5B9BD5;
+    --sky-dim: #457B9D;
+    --gray: #6C757D;
+    --gray-light: #ADB5BD;
+    --line: #D4CFC0;
+    --paper: #FEFCF7;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', 'Noto Sans KR', -apple-system, sans-serif;
+    background: var(--ivory);
+    color: var(--navy);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 20px;
+  }
+
+  .display, h1, h2, h3 {
+    font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 500;
+  }
+
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    background: var(--paper);
+    padding: 60px 56px;
+    border-radius: 4px;
+    box-shadow: 0 4px 40px rgba(15,42,68,0.08);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Blueprint grid subtle background */
+  .container::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(15,42,68,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(15,42,68,0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .container > * { position: relative; z-index: 1; }
+
+  /* ============ HEADER ============ */
+  header.doc-head {
+    padding-bottom: 32px;
+    border-bottom: 2px solid var(--navy);
+    margin-bottom: 48px;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gray);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .doc-head h1 {
+    font-size: 48px;
+    line-height: 1.05;
+    margin-bottom: 8px;
+  }
+  .doc-head .sub {
+    font-size: 20px;
+    color: var(--sky-dim);
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  .meta-row {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--gray);
+  }
+  .meta-row span strong { color: var(--navy); }
+
+  /* ============ SECTION ============ */
+  section { margin-bottom: 64px; }
+  .section-title {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+  .section-title h2 {
+    font-size: 28px;
+    margin: 0;
+  }
+  .section-desc {
+    font-size: 15px;
+    color: var(--gray);
+    margin-left: auto;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+
+  /* ============ OVERVIEW STATS ============ */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  .stat {
+    background: var(--paper);
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-unit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ============ TIMELINE ============ */
+  .timeline {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 32px;
+    position: relative;
+  }
+  .phase {
+    display: contents;
+  }
+  .phase-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray-light);
+    padding-top: 4px;
+    position: relative;
+  }
+  .phase-num::after {
+    content: '';
+    position: absolute;
+    top: 24px; left: 12px; bottom: -32px;
+    width: 1px;
+    background: var(--line);
+  }
+  .phase:last-child .phase-num::after { display: none; }
+
+  .phase-body {
+    padding-bottom: 32px;
+  }
+  .phase-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 6px;
+    font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif;
+  }
+  .phase-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    background: var(--navy);
+    color: var(--ivory);
+    padding: 2px 8px;
+    border-radius: 2px;
+    margin-left: 8px;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
+  }
+  .phase-desc {
+    color: var(--gray);
+    font-size: 14px;
+    margin-bottom: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .phase-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 24px;
+    font-size: 13px;
+    padding: 12px 16px;
+    background: var(--ivory);
+    border-left: 3px solid var(--sky);
+  }
+  .phase-detail dt {
+    color: var(--gray);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .phase-detail dd { color: var(--navy); font-weight: 500; }
+
+  /* ============ ARCHITECTURE SVG ============ */
+  .arch-frame {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 32px 24px;
+    position: relative;
+  }
+  .arch-frame::before {
+    content: 'ARCHITECTURE';
+    position: absolute;
+    top: -8px; left: 24px;
+    background: var(--paper);
+    padding: 0 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray);
+    letter-spacing: 0.2em;
+  }
+  .arch-svg { width: 100%; height: auto; display: block; }
+
+  .arch-legend {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gray);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-line { width: 24px; height: 2px; }
+
+  /* ============ COMPONENT CARDS ============ */
+  .components {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .comp {
+    padding: 24px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    position: relative;
+  }
+  .comp-icon {
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+  .comp-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+    font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif;
+  }
+  .comp-url {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 12px;
+    word-break: break-all;
+  }
+  .comp-desc {
+    font-size: 13px;
+    color: var(--gray);
+    line-height: 1.6;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .comp-role {
+    position: absolute;
+    top: 24px; right: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-light);
+    letter-spacing: 0.1em;
+  }
+
+  /* ============ STACK ============ */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 12px 32px;
+    font-size: 14px;
+    padding: 20px 24px;
+    background: var(--navy);
+    color: var(--ivory);
+    align-items: center;
+  }
+  .stack-grid dt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--sky);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .stack-grid dd { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+  /* ============ FOOTER ============ */
+  footer.doc-foot {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 2px solid var(--navy);
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gray);
+    letter-spacing: 0.05em;
+  }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    body { padding: 16px 8px; }
+    .container { padding: 32px 20px; }
+    .doc-head h1 { font-size: 32px; }
+    .doc-head .sub { font-size: 16px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat-num { font-size: 28px; }
+    .components { grid-template-columns: 1fr; }
+    .timeline { grid-template-columns: 40px 1fr; gap: 16px; }
+    .phase-detail { grid-template-columns: 1fr; }
+    .stack-grid { grid-template-columns: 1fr; gap: 4px 0; }
+    .stack-grid dd { margin-bottom: 12px; }
+    .section-title { flex-wrap: wrap; }
+    .section-desc { margin-left: 0; margin-top: 4px; font-size: 13px; width: 100%; }
+    footer.doc-foot { flex-direction: column; gap: 4px; }
+  }
+
+  @media print {
+    body { padding: 0; background: white; }
+    .container { box-shadow: none; padding: 32px; max-width: none; }
+    section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ============ HEADER ============ -->
+  <header class="doc-head">
+    <div class="eyebrow">ZENIEL × AMOREPACIFIC DAEJEON · 사업3팀</div>
+    <h1>세척실 AI 통합 시스템</h1>
+    <div class="sub">구조 및 구축 과정 · System Architecture &amp; Build Journey</div>
+    <div class="meta-row">
+      <span>DOC · <strong>v1.0</strong></span>
+      <span>DEPLOY · <strong>2026.08.07</strong></span>
+      <span>STATUS · <strong>LIVE</strong></span>
+      <span>OWNER · <strong>사업3팀 이민아</strong></span>
+    </div>
+  </header>
+
+  <!-- ============ OVERVIEW ============ -->
+  <section id="overview">
+    <div class="section-title">
+      <span class="section-num">01</span>
+      <h2>개요</h2>
+      <span class="section-desc">한눈에 보는 시스템 규모</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">3</div>
+        <div class="stat-unit">Deployed URLs</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">2</div>
+        <div class="stat-unit">Frontend Sites</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">1</div>
+        <div class="stat-unit">Backend Worker</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">5s</div>
+        <div class="stat-unit">Sync Interval</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TIMELINE ============ -->
+  <section id="timeline">
+    <div class="section-title">
+      <span class="section-num">02</span>
+      <h2>구축 과정</h2>
+      <span class="section-desc">5개 단계로 진행된 시스템 개발</span>
+    </div>
+
+    <div class="timeline">
+
+      <div class="phase">
+        <div class="phase-num">01</div>
+        <div class="phase-body">
+          <div class="phase-title">기획 &amp; 설계<span class="phase-tag">PLANNING</span></div>
+          <div class="phase-desc">기존 단일 태블릿용 앱(localStorage 기반)을 다기기 실시간 연동 구조로 재설계.</div>
+          <dl class="phase-detail">
+            <dt>패턴 참조</dt><dd>P-BOX / 오리콘 구조</dd>
+            <dt>핵심 결정</dt><dd>Worker + D1 백엔드 도입</dd>
+            <dt>화면 분리</dt><dd>작업자용 / 관리자용</dd>
+            <dt>인증</dt><dd>관리자 zeniel1996</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-num">02</div>
+        <div class="phase-body">
+          <div class="phase-title">백엔드 구축<span class="phase-tag">BACKEND</span></div>
+          <div class="phase-desc">Cloudflare에 D1 데이터베이스와 Worker를 배포. 상태 저장·조회 API 구현.</div>
+          <dl class="phase-detail">
+            <dt>D1 DB</dt><dd>wash-data</dd>
+            <dt>Worker</dt><dd>wash-db</dd>
+            <dt>주요 API</dt><dd>GET / POST /api/state</dd>
+            <dt>저장방식</dt><dd>State Blob (JSON)</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-num">03</div>
+        <div class="phase-body">
+          <div class="phase-title">작업자용 앱 개발<span class="phase-tag">WORKER APP</span></div>
+          <div class="phase-desc">기존 v2.7 앱에 Worker 동기화 레이어 주입. 오프라인 fallback과 자동 재전송 구현.</div>
+          <dl class="phase-detail">
+            <dt>기반 앱</dt><dd>세척실 AI v2.7</dd>
+            <dt>Push 트리거</dt><dd>saveWaiting/Washing/Records</dd>
+            <dt>Pull 주기</dt><dd>10초</dd>
+            <dt>오프라인</dt><dd>localStorage 유지</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-num">04</div>
+        <div class="phase-body">
+          <div class="phase-title">관리자용 대시보드 개발<span class="phase-tag">ADMIN</span></div>
+          <div class="phase-desc">기존 v3.4 대시보드에 진입 게이트와 Worker pull 로직 주입. 5초마다 자동 갱신.</div>
+          <dl class="phase-detail">
+            <dt>기반 앱</dt><dd>관리 대시보드 v3.4</dd>
+            <dt>비번 게이트</dt><dd>zeniel1996</dd>
+            <dt>Pull 주기</dt><dd>5초 (읽기 전용)</dd>
+            <dt>표시 문구</dt><dd>☁️ Cloud 실시간 연동</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-num">05</div>
+        <div class="phase-body">
+          <div class="phase-title">배포 &amp; 운영<span class="phase-tag">DEPLOY</span></div>
+          <div class="phase-desc">Netlify Drop으로 두 개 사이트 별도 배포. Cloudflare Worker와 연동 완료.</div>
+          <dl class="phase-detail">
+            <dt>작업자용</dt><dd>wash-worker.netlify.app</dd>
+            <dt>관리자용</dt><dd>wash-admin.netlify.app</dd>
+            <dt>백엔드</dt><dd>wash-db.hodoo0831.workers.dev</dd>
+            <dt>Uptime</dt><dd>Netlify + Cloudflare (SLA 99%+)</dd>
+          </dl>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ ARCHITECTURE DIAGRAM ============ -->
+  <section id="architecture">
+    <div class="section-title">
+      <span class="section-num">03</span>
+      <h2>시스템 구조</h2>
+      <span class="section-desc">데이터 흐름 다이어그램</span>
+    </div>
+
+    <div class="arch-frame">
+      <svg class="arch-svg" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+        <!-- Definitions -->
+        <defs>
+          <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#DC2626"/>
+          </marker>
+          <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#457B9D"/>
+          </marker>
+        </defs>
+
+        <!-- Layer Labels (left side) -->
+        <text x="20" y="80" font-family="JetBrains Mono, monospace" font-size="10" fill="#6C757D" letter-spacing="0.15em">INPUT</text>
+        <text x="20" y="240" font-family="JetBrains Mono, monospace" font-size="10" fill="#6C757D" letter-spacing="0.15em">HOSTING</text>
+        <text x="20" y="380" font-family="JetBrains Mono, monospace" font-size="10" fill="#6C757D" letter-spacing="0.15em">BACKEND</text>
+
+        <!-- Horizontal guide lines (blueprint style) -->
+        <line x1="80" y1="80" x2="880" y2="80" stroke="#E5DFCE" stroke-width="1" stroke-dasharray="2,4"/>
+        <line x1="80" y1="240" x2="880" y2="240" stroke="#E5DFCE" stroke-width="1" stroke-dasharray="2,4"/>
+        <line x1="80" y1="380" x2="880" y2="380" stroke="#E5DFCE" stroke-width="1" stroke-dasharray="2,4"/>
+
+        <!-- ========= INPUT LAYER ========= -->
+        <!-- Touchscreen 1: 생산도급 -->
+        <g transform="translate(120, 40)">
+          <rect x="0" y="0" width="150" height="80" fill="#FEFCF7" stroke="#0F2A44" stroke-width="1.5" rx="2"/>
+          <rect x="8" y="8" width="134" height="52" fill="#0F2A44" rx="1"/>
+          <text x="75" y="30" font-family="Space Grotesk, sans-serif" font-size="11" font-weight="600" fill="#F7F4EC" text-anchor="middle">📺 터치스크린 1</text>
+          <text x="75" y="46" font-family="JetBrains Mono, monospace" font-size="9" fill="#5B9BD5" text-anchor="middle">생산도급</text>
+          <text x="75" y="74" font-family="Noto Sans KR, sans-serif" font-size="10" fill="#6C757D" text-anchor="middle">도착 알림 등록</text>
+        </g>
+
+        <!-- Touchscreen 2: 세척실 -->
+        <g transform="translate(315, 40)">
+          <rect x="0" y="0" width="150" height="80" fill="#FEFCF7" stroke="#0F2A44" stroke-width="1.5" rx="2"/>
+          <rect x="8" y="8" width="134" height="52" fill="#0F2A44" rx="1"/>
+          <text x="75" y="30" font-family="Space Grotesk, sans-serif" font-size="11" font-weight="600" fill="#F7F4EC" text-anchor="middle">📺 터치스크린 2</text>
+          <text x="75" y="46" font-family="JetBrains Mono, monospace" font-size="9" fill="#5B9BD5" text-anchor="middle">세척실</text>
+          <text x="75" y="74" font-family="Noto Sans KR, sans-serif" font-size="10" fill="#6C757D" text-anchor="middle">세척 시작 / 완료</text>
+        </g>
+
+        <!-- Admin PC -->
+        <g transform="translate(660, 40)">
+          <rect x="0" y="0" width="150" height="80" fill="#FEFCF7" stroke="#DC2626" stroke-width="1.5" rx="2"/>
+          <rect x="8" y="8" width="134" height="52" fill="#B91C1C" rx="1"/>
+          <text x="75" y="30" font-family="Space Grotesk, sans-serif" font-size="11" font-weight="600" fill="#F7F4EC" text-anchor="middle">💻 관리자 PC</text>
+          <text x="75" y="46" font-family="JetBrains Mono, monospace" font-size="9" fill="#FCA5A5" text-anchor="middle">사무실</text>
+          <text x="75" y="74" font-family="Noto Sans KR, sans-serif" font-size="10" fill="#6C757D" text-anchor="middle">🔒 zeniel1996</text>
+        </g>
+
+        <!-- ========= HOSTING LAYER (Netlify) ========= -->
+        <!-- Worker site -->
+        <g transform="translate(140, 200)">
+          <rect x="0" y="0" width="290" height="80" fill="#FEFCF7" stroke="#457B9D" stroke-width="1.5" rx="2"/>
+          <text x="16" y="24" font-family="JetBrains Mono, monospace" font-size="9" fill="#6C757D" letter-spacing="0.1em">NETLIFY · WORKER SITE</text>
+          <text x="16" y="46" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="700" fill="#0F2A44">wash-worker.netlify.app</text>
+          <text x="16" y="66" font-family="Noto Sans KR, sans-serif" font-size="10" fill="#6C757D">index.html · 작업자용 앱 (게이트 없음)</text>
+        </g>
+
+        <!-- Admin site -->
+        <g transform="translate(495, 200)">
+          <rect x="0" y="0" width="290" height="80" fill="#FEFCF7" stroke="#DC2626" stroke-width="1.5" rx="2"/>
+          <text x="16" y="24" font-family="JetBrains Mono, monospace" font-size="9" fill="#6C757D" letter-spacing="0.1em">NETLIFY · ADMIN SITE</text>
+          <text x="16" y="46" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="700" fill="#0F2A44">wash-admin.netlify.app</text>
+          <text x="16" y="66" font-family="Noto Sans KR, sans-serif" font-size="10" fill="#6C757D">dashboard.html · 관리자 (읽기 전용)</text>
+        </g>
+
+        <!-- ========= BACKEND LAYER ========= -->
+        <!-- Cloud shape -->
+        <g transform="translate(240, 340)">
+          <path d="M 60 30
+                   Q 30 30, 30 55
+                   Q 10 55, 10 75
+                   Q 10 95, 40 95
+                   L 380 95
+                   Q 420 95, 420 70
+                   Q 440 70, 440 50
+                   Q 440 25, 400 25
+                   Q 390 5, 360 10
+                   Q 340 -5, 310 15
+                   Q 290 5, 260 15
+                   Q 200 5, 180 25
+                   Q 140 15, 120 30
+                   Q 90 25, 60 30 Z"
+                fill="#F7F4EC" stroke="#457B9D" stroke-width="1.5"/>
+          <text x="225" y="55" font-family="JetBrains Mono, monospace" font-size="10" fill="#6C757D" text-anchor="middle" letter-spacing="0.1em">CLOUDFLARE · SERVERLESS</text>
+          <text x="225" y="76" font-family="Space Grotesk, sans-serif" font-size="16" font-weight="700" fill="#0F2A44" text-anchor="middle">wash-db.hodoo0831.workers.dev</text>
+          <text x="225" y="92" font-family="Noto Sans KR, sans-serif" font-size="10" fill="#6C757D" text-anchor="middle">Worker + D1 (wash-data)</text>
+        </g>
+
+        <!-- ========= ARROWS ========= -->
+        <!-- Touchscreens → Worker site (INPUT to HOSTING) -->
+        <line x1="195" y1="120" x2="235" y2="195" stroke="#457B9D" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowBlue)"/>
+        <line x1="390" y1="120" x2="330" y2="195" stroke="#457B9D" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowBlue)"/>
+
+        <!-- Admin PC → Admin site -->
+        <line x1="735" y1="120" x2="670" y2="195" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowRed)"/>
+
+        <!-- Worker site → Cloud (POST /api/state) -->
+        <line x1="285" y1="285" x2="360" y2="345" stroke="#457B9D" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+        <text x="290" y="316" font-family="JetBrains Mono, monospace" font-size="9" fill="#457B9D">POST /api/state</text>
+
+        <!-- Cloud → Admin site (GET /api/state) -->
+        <line x1="530" y1="345" x2="600" y2="285" stroke="#DC2626" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+        <text x="540" y="316" font-family="JetBrains Mono, monospace" font-size="9" fill="#DC2626">GET /api/state</text>
+
+      </svg>
+
+      <div class="arch-legend">
+        <div class="legend-item"><span class="legend-line" style="background:#457B9D;"></span> 데이터 저장 (Write)</div>
+        <div class="legend-item"><span class="legend-line" style="background:#DC2626;"></span> 데이터 조회 (Read)</div>
+        <div class="legend-item"><span class="legend-line" style="border-top: 2px dashed #6C757D; background: transparent;"></span> 사용자 접속</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMPONENTS ============ -->
+  <section id="components">
+    <div class="section-title">
+      <span class="section-num">04</span>
+      <h2>구성 요소</h2>
+      <span class="section-desc">4개 컴포넌트의 역할과 상세</span>
+    </div>
+
+    <div class="components">
+
+      <div class="comp">
+        <div class="comp-role">01 · WORKER APP</div>
+        <div class="comp-icon">📱</div>
+        <div class="comp-name">작업자용 앱</div>
+        <div class="comp-url">wash-worker.netlify.app</div>
+        <div class="comp-desc">현장 터치스크린·태블릿·폰용. 도착 등록, 세척 시작·완료 처리. 저장 시 자동으로 Cloud에 push, 10초마다 다른 기기의 변경 사항 pull.</div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-role">02 · ADMIN</div>
+        <div class="comp-icon">💻</div>
+        <div class="comp-name">관리자용 대시보드</div>
+        <div class="comp-url">wash-admin.netlify.app</div>
+        <div class="comp-desc">PC 접속 전용, zeniel1996 인증. 실시간 대기·세척중·완료 현황과 KPI, 차트 표시. 5초마다 자동 갱신.</div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-role">03 · BACKEND</div>
+        <div class="comp-icon">☁️</div>
+        <div class="comp-name">Cloud Worker</div>
+        <div class="comp-url">wash-db.hodoo0831.workers.dev</div>
+        <div class="comp-desc">Cloudflare Workers 기반 서버리스 API. state 저장·조회·초기화 엔드포인트 제공. 전 세계 엣지 네트워크에서 실행되어 응답 지연 최소화.</div>
+      </div>
+
+      <div class="comp">
+        <div class="comp-role">04 · DATA</div>
+        <div class="comp-icon">🗄️</div>
+        <div class="comp-name">D1 데이터베이스</div>
+        <div class="comp-url">wash-data (SQLite)</div>
+        <div class="comp-desc">Cloudflare D1 SQLite 데이터베이스. state_blob 테이블에 전체 상태 JSON 저장. 향후 wash_records 테이블에 완료 이력 축적 예정.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ STACK ============ -->
+  <section id="stack">
+    <div class="section-title">
+      <span class="section-num">05</span>
+      <h2>기술 스택</h2>
+      <span class="section-desc">사용된 기술 요약</span>
+    </div>
+
+    <dl class="stack-grid">
+      <dt>Frontend</dt>
+      <dd>Vanilla JS · HTML · CSS · localStorage</dd>
+
+      <dt>Backend</dt>
+      <dd>Cloudflare Workers (JavaScript)</dd>
+
+      <dt>Database</dt>
+      <dd>Cloudflare D1 (SQLite)</dd>
+
+      <dt>Hosting</dt>
+      <dd>Netlify (frontend) · Cloudflare (backend)</dd>
+
+      <dt>Sync</dt>
+      <dd>REST API · fetch() · JSON</dd>
+
+      <dt>Cost</dt>
+      <dd>모두 무료 티어 (Free tier)</dd>
+    </dl>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="doc-foot">
+    <span>© 2026 ZENIEL Manufacturing Business Division · 사업3팀</span>
+    <span>DEVELOPED BY 이민아 · DOC v1.0</span>
+  </footer>
+
+</div>
+
+</body>
+</html>

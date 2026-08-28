@@ -1,0 +1,19 @@
+# ZEN Manufacturing Platform — Netlify 배포 설정
+# 빌드 과정 없이 정적 파일을 그대로 서빙 (단일 HTML)
+[build]
+  publish = "."
+  command = ""
+
+# 루트("/")는 index.html(= ZEN_Manufacturing_Platform.html 동일본)로 서빙됨.
+# 구주소 호환: 파일명으로 접근해도 동작하도록 rewrite 보조.
+[[redirects]]
+  from = "/platform"
+  to = "/ZEN_Manufacturing_Platform.html"
+  status = 200
+
+# 보안 헤더 (임베드/클릭재킹 완화, 데모 프로토타입 기준)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

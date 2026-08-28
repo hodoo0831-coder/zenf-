@@ -225,7 +225,8 @@ nav.tabs{position:fixed; left:0; right:0; bottom:0; z-index:30}
 .tally-detail{padding:2px 0 10px 28px}
 .tally-detail .dr{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); font-weight:700; padding:4px 0; border-bottom:1px dashed #eef1ef}
 .tally-detail .dr:last-child{border-bottom:0}
-.scr-mascot{width:78px; height:auto; flex:0 0 auto; margin:-4px -2px 0 0; filter:drop-shadow(0 3px 7px rgba(34,46,55,.14))}
+.mascot-av{width:58px; height:58px; border-radius:50%; overflow:hidden; flex:0 0 auto; border:2px solid #fff; box-shadow:0 3px 9px rgba(34,46,55,.16); background:linear-gradient(160deg,#eef4f8,#dde7ef); margin-top:-2px}
+.scr-mascot{width:80px; height:auto; display:block; margin:-3px 0 0 -11px}
 .empty-mascot{width:96px; height:auto; display:block; margin:0 auto 6px}
 .cele{position:fixed; inset:0; z-index:120; display:none; align-items:center; justify-content:center; background:rgba(20,32,26,.46); backdrop-filter:blur(2px); padding:24px}
 .cele.show{display:flex}
@@ -446,7 +447,7 @@ nav.tabs{position:fixed; left:0; right:0; bottom:0; z-index:30}
         <div class="eyebrow" id="ckEyebrow">작업 전 점검</div>
         <h2 class="t" style="margin-bottom:0">10초 셀프 체크리스트</h2>
         <div class="scr-meta" id="ckMeta"></div>
-      </div><img class="scr-mascot" id="ckMascot" data-m="rule" alt=""></div>
+      </div><span class="mascot-av"><img class="scr-mascot" id="ckMascot" data-m="rule" alt=""></span></div>
       <div style="height:14px"></div>
       <div class="heropick" id="heroPick"></div>
       <section class="card">
@@ -475,7 +476,7 @@ nav.tabs{position:fixed; left:0; right:0; bottom:0; z-index:30}
         <div class="eyebrow">작업 전 안전미팅 · TBM</div>
         <h2 class="t" style="margin-bottom:0">오늘 TBM</h2>
         <div class="scr-meta" id="tbmMeta"></div>
-      </div><img class="scr-mascot" id="tbmMascot" data-m="rule" alt=""></div>
+      </div><span class="mascot-av"><img class="scr-mascot" id="tbmMascot" data-m="rule" alt=""></span></div>
       <div style="height:14px"></div>
       <section class="card">
         <label class="fld">공정명</label>
@@ -524,8 +525,8 @@ nav.tabs{position:fixed; left:0; right:0; bottom:0; z-index:30}
         <div class="eyebrow">위험요소 신고</div>
         <h2 class="t" style="margin-bottom:6px">현장 개선 요청</h2>
         <p class="sub" style="margin-bottom:0">발견 즉시 신고가 사고를 막습니다.</p>
-        <div class="scr-meta"><span class="mchip">사진 3장까지</span><span class="mchip">노션 자동 등록</span></div>
-      </div><img class="scr-mascot" id="rpMascot" data-m="warn" alt=""></div>
+        <div class="scr-meta"><span class="mchip">사진 3장까지</span><span class="mchip">구역·위험도 분류</span></div>
+      </div><span class="mascot-av"><img class="scr-mascot" id="rpMascot" data-m="warn" alt=""></span></div>
       <div style="height:14px"></div>
       <section class="card">
         <label class="fld">신고자 <span style="font-weight:600; color:var(--muted)">(이름)</span></label>
@@ -951,13 +952,7 @@ async function submitReport(){
   state.reports.unshift(rep);
   await sset(K.rep, state.reports);
   $('rTitle').value=''; $('rContent').value=''; $('rReporter').value=''; state.reportPhotos=[]; renderReportPhotos();
-  if(state.config.relayUrl){
-    const ok = await sendToNotion(rep);
-    rep.synced = ok; await sset(K.rep, state.reports);
-    toast(ok ? 'Notion으로 전송했어요 ✅ (반영까지 잠시)' : '저장됨 — 전송 실패, 주소 확인');
-  } else {
-    toast('신고가 저장됐어요. (Notion 연동 전)');
-  }
+  toast('신고가 저장됐어요 ✅ 관리자 콘솔에 실시간 반영됩니다.');
   go('board');
 }
 function fmtKST(iso){
@@ -1053,8 +1048,12 @@ function renderBoard(){
   const maxLv = Math.max(1,...Object.values(lv));
 
   el.innerHTML = `
-    <div class="eyebrow">관리자 대시보드</div>
-    <h2 class="t" style="margin-bottom:14px">현장 안전 현황</h2>
+    <div class="eyebrow">관리자 콘솔</div>
+    <h2 class="t" style="margin-bottom:12px">현장 안전 현황</h2>
+    <div style="display:flex; gap:8px; margin-bottom:14px">
+      <button class="btn ghost" style="flex:1" onclick="exportBoardCsv()">⬇ 엑셀(CSV)</button>
+      <button class="btn g" style="flex:1" onclick="printBoardReport()">🖨 PDF 리포트</button>
+    </div>
     <div class="kpis">
       <div class="kpi dark"><div class="n">${ddays()}<span style="font-size:15px"> 일</span></div><div class="l">무재해 연속</div></div>
       <div class="kpi"><div class="n">${avgCheck}<span style="font-size:15px; color:var(--muted)">%</span></div><div class="l">오늘 점검 완료율</div></div>
@@ -1099,20 +1098,20 @@ function renderBoard(){
         : `<div class="empty"><img class="empty-mascot" src="${MASCOT.thumb}" alt="">처리할 신고가 없습니다.</div>`}
     </section>
 
-    ${emergEditSection()}
-
-    <section class="card">
-      <strong style="font-size:14px">Notion 연동</strong>
-      <p class="sub" style="margin:4px 0 0">중계 주소를 넣으면 모든 신고가 Notion DB로 자동 전송됩니다.</p>
-      <label class="fld">중계기 주소 (Apps Script /exec URL)</label>
-      <input id="relayUrl" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(state.config.relayUrl||'')}">
-      <div style="display:flex; gap:8px; margin-top:10px">
-        <button class="btn g" style="flex:1" onclick="saveRelay()">저장</button>
-        <button class="btn ghost" style="flex:1" onclick="window.open('${NOTION_URL}','_blank')">Notion DB 열기</button>
-      </div>
-      <div class="sub" style="margin-top:8px">${state.config.relayUrl ? '🟢 연동됨 — 새 신고가 Notion으로 전송됩니다.' : '⚪ 미연동 — 지금은 이 기기에만 저장됩니다.'}</div>
-    </section>`;
+    ${emergEditSection()}`;
 }
+/* ===== 리포트 내보내기 (엑셀 CSV · PDF 인쇄) ===== */
+function exportBoardCsv(){
+  const reps=state.reports||[];
+  const head=['신고번호','일시','구역','분류','위험도','제목','내용','상태','신고자'];
+  const rows=reps.map(r=>{const t=fmtKST(r.ts);return [t.no,t.datetime,r.zone,(HERO_LABEL[r.hero]||r.hero),r.level,r.title,(r.content||'').replace(/\n/g,' '),r.status,r.reporter];});
+  const csv=[head,...rows].map(a=>a.map(v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`젠키퍼_현장안전현황_${todayStr()}.csv`; a.click();
+  toast('엑셀(CSV)로 내보냈어요 ✅');
+}
+function printBoardReport(){ toast('리포트를 정리했어요 — 인쇄/PDF 저장 창을 엽니다'); setTimeout(()=>window.print(),350); }
 async function resetIncident(){
   if(!confirm('무재해 카운터를 0일로 초기화할까요?\n(사고/재해 발생 시에만 사용하세요)')) return;
   state.settings.incidentStart = todayStr();
