@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ZEN Manufacturing · 아모레퍼시픽 대전공장</title>
+<title>ZEN Manufacturing · 아모레퍼시픽 헤어앤뷰티 사업장</title>
 <meta name="theme-color" content="#0a1626">
 <style>
   :root{
@@ -592,7 +592,7 @@ html{height:auto;min-height:100%}
       <button class="navToggle" id="navToggle" onclick="toggleNav()" aria-label="메뉴" title="메뉴">☰</button>
       <div>
         <h1 id="vTitle">컨트롤타워</h1>
-        <div class="sub" id="vSub">AP 대전공장 · 8 Agent 통합 대시보드</div>
+        <div class="sub" id="vSub">AP 헤어앤뷰티 사업장 · 8 Agent 통합 대시보드</div>
       </div>
       <div class="right">
         <button class="btn" id="bigBtn" onclick="toggleBig()" title="벽 모니터·전광판용 큰 화면">큰화면</button>
@@ -780,7 +780,7 @@ function localBrief(d){const k=(d&&d.kpi)||{},bits=[];
   if(k.orikon)bits.push(`오리콘 ${fmtN(k.orikon.totalPLT)} PLT(${(k.orikon.totalEA||0).toLocaleString()} EA)·${fmtN(k.orikon.totalMH)} MH`);
   const top=(d&&d.alerts&&d.alerts[0])?d.alerts[0].title+' — '+d.alerts[0].detail:'특이사항 없음';
   return {oneLine:`[통합현황] ${bits.slice(0,2).join(' / ')||'정상 가동'} · 우선 ${top}`,
-    kakao:`📋 AP 대전공장 통합 브리핑 (${((d&&d.asOf)||'').slice(0,16).replace('T',' ')})\n`+bits.map(b=>'• '+b).join('\n')+`\n\n⚠️ 우선조치: ${top}`};
+    kakao:`📋 AP 헤어앤뷰티 사업장 통합 브리핑 (${((d&&d.asOf)||'').slice(0,16).replace('T',' ')})\n`+bits.map(b=>'• '+b).join('\n')+`\n\n⚠️ 우선조치: ${top}`};
 }
 /* ===== 일일 운영 보고문 자동생성 — 8개 Agent 실데이터 종합 ===== */
 function buildDailyBrief(){
@@ -795,7 +795,7 @@ function buildDailyBrief(){
   const dt=todayKR(), bar='━━━━━━━━━━━━━';
   const oneLine=`[AP대전 ${dt}] 달성 ${tp.ach}% · 인력 ${gap>0?'−'+gap+'명':'충족'} · 폭염 ${w.wbgt>=28?w.wbgt+'℃ 경고':'주의'} · 불량 ${df}% · 발주 ${orders.length}건${behind.length?' — 지연 '+behind.join('·'):''}`;
   const msg=[
-    `📋 AP 대전공장 일일 운영보고 (${dt})`, bar,
+    `📋 AP 헤어앤뷰티 사업장 일일 운영보고 (${dt})`, bar,
     `🏭 생산  달성 ${tp.ach}% (목표 ${(tp.t/1000).toFixed(0)}천→실적 ${(tp.a/1000).toFixed(0)}천개)`+(behind.length?`\n    ⚠ 지연 ${behind.join('·')} (달성 70%↓)`:''),
     `👥 인력  투입 ${headCur()}/${headNeed()}명`+(gap>0?` · ${gap}명 부족\n    → 여유라인 재배치 + 잔업 대응`:' · 충족'),
     `🧼 세척  최우선 ${clean.key}(${G.cleanScore(clean)}점)`+(cleanN?` · 필요 ${cleanN}라인 · CIP 2기 병렬`:' · 여유'),
@@ -808,7 +808,19 @@ function buildDailyBrief(){
   ].join('\n');
   return {oneLine,msg};
 }
-function copyDailyBrief(kind){const b=buildDailyBrief(),t=kind==='one'?b.oneLine:b.msg;if(navigator.clipboard)navigator.clipboard.writeText(t);toast(kind==='one'?'관리자 한 줄 복사됨':'메신저 보고문 복사됨');}
+/* 클립보드 복사 — file://·비보안 컨텍스트·비포커스에서도 동작하는 폴백 포함.
+   실패 시 '복사됨' 거짓 안내 대신 실제 결과를 알린다. */
+function copyText(t,okMsg){
+  const fallback=()=>{try{const ta=document.createElement('textarea');ta.value=t;
+    ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;left:-9999px;opacity:0';
+    document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,t.length);
+    const ok=document.execCommand('copy');document.body.removeChild(ta);return ok;}catch(e){return false;}};
+  const done=ok=>toast(ok?(okMsg||'복사됨'):'복사가 차단되었습니다 — 아래 내용을 직접 선택해 복사하세요');
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(t).then(()=>done(true)).catch(()=>done(fallback()));
+  }else{done(fallback());}
+}
+function copyDailyBrief(kind){const b=buildDailyBrief(),t=kind==='one'?b.oneLine:b.msg;copyText(t,kind==='one'?'관리자 한 줄 복사됨':'메신저 보고문 복사됨');}
 function dlDailyBrief(){const b=buildDailyBrief();dl('ZEN_일일운영보고_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.txt',b.oneLine+'\n\n'+b.msg,'text/plain');toast('보고문을 저장했습니다');}
 async function liveRefresh(){
   if(!LIVE.apiBase){LIVE.status='demo';LIVE.brief=localBrief(LIVE.today);if(cur==='home')go('home');return;}
@@ -824,7 +836,7 @@ async function liveRefresh(){
 function liveSetApi(){const el=document.getElementById('liveApi');LIVE.apiBase=(el&&el.value||'').trim();try{localStorage.setItem('zen_live_api',LIVE.apiBase);}catch(e){}LIVE._tried=true;toast(LIVE.apiBase?'라이브 서버 연결 시도…':'연결 해제(기준값)');liveRefresh();}
 function liveDisconnect(){LIVE.apiBase='';try{localStorage.removeItem('zen_live_api');}catch(e){}LIVE.status='demo';LIVE.brief=localBrief(LIVE.today);toast('라이브 연결 해제(기준 스냅샷)');if(cur==='home')go('home');}
 function liveSys(s){LIVE.sys=s;if(cur==='home')go('home');}
-function copyBrief(){const t=(LIVE.brief&&LIVE.brief.kakao)||localBrief(LIVE.today).kakao;if(navigator.clipboard)navigator.clipboard.writeText(t);toast('카톡 보고문을 복사했습니다');}
+function copyBrief(){const t=(LIVE.brief&&LIVE.brief.kakao)||localBrief(LIVE.today).kakao;copyText(t,'카톡 보고문을 복사했습니다');}
 function liveConnectPrompt(){const e=document.getElementById('liveConn');if(e)e.scrollIntoView({behavior:'smooth'});}
 function renderLive(){
   if(LIVE.apiBase&&!LIVE._tried){LIVE._tried=true;setTimeout(liveRefresh,60);}
@@ -1112,7 +1124,7 @@ V.home=()=>{
   const whRate=DB.wh?whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0]):null;
   const hm=(lab,val,vals,col)=>`<div class="m"><div class="ml">${lab}</div><div class="mv tnum">${val}</div><div class="sp">${spark(vals,{color:col,w:104,h:24})}</div></div>`;
   const hero=`<div class="hero">
-    <div class="hl"><div class="k">AI CONTROL TOWER</div><div class="t">통합 운영 현황</div><div class="s">8개 Agent가 실측을 종합해 <b style="color:#0B7A43;text-decoration:underline;text-decoration-color:#8fd8b9">‘판단’까지 자동화</b> · AP 대전공장 가동 6/6 라인 · ${dataSource==='기준값'?'<b style="color:#8a7333">기준 데이터(시드)</b> — 실측 연결 시 자동 전환':'실데이터 '+dataSource}</div></div>
+    <div class="hl"><div class="k">AI CONTROL TOWER</div><div class="t">통합 운영 현황</div><div class="s">8개 Agent가 실측을 종합해 <b style="color:#0B7A43;text-decoration:underline;text-decoration-color:#8fd8b9">‘판단’까지 자동화</b> · AP 헤어앤뷰티 사업장 가동 6/6 라인 · ${dataSource==='기준값'?'<b style="color:#8a7333">기준 데이터(시드)</b> — 실측 연결 시 자동 전환':'실데이터 '+dataSource}</div></div>
     <div class="hm">
       ${hm('생산 달성률',tp.ach+'<small>%</small>',[68,71,70,74,72,73,tp.ach],'#7fe0b0')}
       ${hm('OEE',oee+'<small>%</small>',[79,81,80,82,81,80,oee],'#7fe0b0')}
@@ -1251,7 +1263,7 @@ function opsPrint(d){
     .sign span{border-top:1px solid #9aa8b8;padding-top:6px;min-width:110px;text-align:center}
     .pbtn{position:fixed;top:14px;right:16px;background:#1d3a5f;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit}\n    @media print{body{margin:12mm}.pbtn{display:none}}
   </style></head><body>
-    <button class="pbtn" onclick="window.print()">🖨 인쇄 / PDF 저장</button><div class="hd"><h1>ZEN 일일 운영 보고서</h1><div class="co">ZEN Manufacturing Platform · AP 대전공장 · 제니엘 제조사업부 사업3팀</div></div>
+    <button class="pbtn" onclick="window.print()">🖨 인쇄 / PDF 저장</button><div class="hd"><h1>ZEN 일일 운영 보고서</h1><div class="co">ZEN Manufacturing Platform · AP 헤어앤뷰티 사업장 · 제니엘 제조사업부 사업3팀</div></div>
     <div class="meta">보고 일자 : ${d} (${wd})</div>
     <div class="sum"><div><div class="n">${it.length}</div><div class="l">총 기록</div></div>
       <div><div class="n" style="color:#1c7d49">${done}</div><div class="l">조치 완료</div></div>
@@ -1308,7 +1320,7 @@ function actHome(i,mode){const J=collectJudgments(),x=J[i];if(!x)return;const k=
   if(mode==='ok'){DB.actions[k]=Object.assign(actGet(k),{st:'done',ts:Date.now()});opsLog(`[${x.area}] ${x.r} — 조치 승인·완료 처리`,x.area,'done');saveDB();toast('조치 승인 — 완료 처리되었습니다 (조치 추적 반영)');}
   else{const txt=`[조치 요청] ${x.area} — ${x.r}\n· 근거: ${x.s}\n· 적용 기준: ${x.rule}\n· 권장 조치: ${x.act}\n· 기한: 금일 내\n(ZEN Manufacturing Platform 자동 생성)`;
     DB.actions[k]=Object.assign(actGet(k),{st:'doing',txt,ts:Date.now()});saveDB();
-    try{navigator.clipboard.writeText(txt);}catch(e){} toast('조치 문안 복사됨 — 담당자에게 전달하세요');}
+    copyText(txt,'조치 문안 복사됨 — 담당자에게 전달하세요');}
   go(cur);}
 V.ops=()=>{
   const target={production:'planhub',labor:'labor',clean:'clean',stock:'stock',indirect:'orikonwash',safe:'safe',quality:'qual'};
@@ -1496,8 +1508,8 @@ function actGen(i){
   const dueStr=new Date(curA.due).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
   const txt=`[조치 요청] ${x.area} — ${x.r}\n· 근거: ${x.s}\n· 적용 기준: ${x.rule}\n· 권장 조치: ${x.act}\n· 담당: ${curA.owner}\n· 기한: ${dueStr}\n(ZEN Manufacturing Platform 자동 생성 · ${new Date().toISOString().slice(0,10)})`;
   DB.actions=DB.actions||{};DB.actions[k]=Object.assign(curA,{st:'doing',txt,ts:Date.now()});saveDB();
-  try{navigator.clipboard.writeText(txt);}catch(e){}
-  opsLog(`[${x.area}] ${x.r} — 조치 문안 생성·담당자 전달`,x.area,'info');toast('조치 문안 생성 · 복사됨');go(cur==='track'?'track':cur);
+  opsLog(`[${x.area}] ${x.r} — 조치 문안 생성·담당자 전달`,x.area,'info');
+  copyText(txt,'조치 문안 생성 · 복사됨');go(cur==='track'?'track':cur);
 }
 let trackFilter='전체';
 V.track=()=>{
@@ -1689,7 +1701,7 @@ function exportInsightXlsx(){
   const P=insightPack();
   const wb=XLSX.utils.book_new();
   const sum=XLSX.utils.aoa_to_sheet([
-    ['ZEN 분석·보고 — 경영 요약'],['작성일',P.day],['공장','AP 대전공장 · 제니엘 제조사업부 사업3팀'],['데이터 성격',P.note],[],
+    ['ZEN 분석·보고 — 경영 요약'],['작성일',P.day],['공장','AP 헤어앤뷰티 사업장 · 제니엘 제조사업부 사업3팀'],['데이터 성격',P.note],[],
     ['관리자 한 줄 요약'],[P.brief.oneLine],[],
     ['① 핵심 지표'],
     ['지표','값','판정','근거'],
@@ -1767,7 +1779,7 @@ function exportInsightPdf(){
     @media print{.pbtn{display:none}.head{border-radius:0}}
   </style></head><body>
     <button class="pbtn" onclick="window.print()">🖨 인쇄 / PDF 저장</button>
-    <div class="head"><div class="eb">2026 제2회 ZAIC · ZEN MANUFACTURING PLATFORM</div><h1>분석·보고 — 경영 요약</h1><div class="sub">AP 대전공장 · 제니엘 제조사업부 사업3팀 · ${P.day}</div></div>
+    <div class="head"><div class="eb">2026 제2회 ZAIC · ZEN MANUFACTURING PLATFORM</div><h1>분석·보고 — 경영 요약</h1><div class="sub">AP 헤어앤뷰티 사업장 · 제니엘 제조사업부 사업3팀 · ${P.day}</div></div>
     <div class="wrap">
       <div class="note">${P.note}</div>
       <div class="brief">💬 ${P.brief.oneLine.replace(/</g,'&lt;')}</div>
@@ -1868,7 +1880,7 @@ function exportInsightPpt(){
     pptRect(M,2100000,900000,26000,'0EA75C')
     +pptText(M,2260000,8000000,420000,'2026 제2회 ZAIC',{sz:1400,color:'8FD8B9',b:1})
     +pptText(M,2740000,10800000,1000000,'ZEN 분석·보고',{sz:4400,color:'FFFFFF',b:1})
-    +pptText(M,3760000,10800000,500000,P.day+' · AP 대전공장',{sz:1600,color:'B9C9E2'})
+    +pptText(M,3760000,10800000,500000,P.day+' · AP 헤어앤뷰티 사업장',{sz:1600,color:'B9C9E2'})
     +pptText(M,4160000,10800000,420000,'제니엘 제조사업부 사업3팀',{sz:1300,color:'7F93B3'})
     +pptText(M,PPT_H-620000,10800000,420000,'기준값·가정 산식 기반 추정 · 실시간 현장 입력 아님',{sz:1000,color:'5D7396'})
   ));
@@ -2005,9 +2017,11 @@ function laborStatus(){
     <div class="card"><h3>라인별 인력 현황 <span class="hint">필요 · 현재 · 과부족</span></h3><table class="tb"><thead><tr><th>구역</th><th>필요</th><th>현재</th><th>과부족</th><th>상태</th></tr></thead><tbody>${tbl}</tbody></table></div>
   </div>`;
 };
+/* 실물 앱 열기 — internal: 스킴은 내장 blob으로 해석, 준비 전이면 안내 */
+function openApp(u){const r=(typeof sysResolve==='function')?sysResolve(u):u;if(!r){toast('내장 앱을 준비 중입니다. 잠시 후 다시 눌러주세요.');return;}window.open(r,'_blank');}
 const realAppBar=(items)=>`<div class="card" style="margin-bottom:14px;display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:12px 15px">
   <b style="font-size:13px;letter-spacing:.5px;color:#0B7A43">● 실물 앱</b>
-  ${items.map(x=>`<button onclick="window.open('${x.u}','_blank')" style="border:1.5px solid #A9E4C3;background:var(--tint);color:#0B7A43;font-weight:800;font-size:12.5px;padding:7px 13px;border-radius:999px;cursor:pointer">${x.t}</button>`).join('')}
+  ${items.map(x=>`<button onclick="openApp('${x.u}')" style="border:1.5px solid #A9E4C3;background:var(--tint);color:#0B7A43;font-weight:800;font-size:12.5px;padding:7px 13px;border-radius:999px;cursor:pointer">${x.t}</button>`).join('')}
   <span class="hint" style="margin-left:auto">실제 배포 시스템 — 새 창에서 열림</span></div>`;
 V.clean=()=>{
   const ranked=[...myLines()].map(l=>({l,s:G.cleanScore(l)})).sort((a,b)=>b.s-a.s);
@@ -2022,7 +2036,7 @@ V.clean=()=>{
     {lv:'ok',r:'권장 순서',s:order}]);
   return realAppBar([
     {t:'🖥 세척실 관리자 대시보드',u:LIVE_URL.wash},
-    {t:'📱 세척실 현장용 앱',u:'wash-system/frontend/index.html'}
+    {t:'📱 세척실 현장용 앱',u:'internal:gz:washW'}
   ])+`
   <div class="grid g4" style="margin-bottom:14px">
     <div class="kpi"><div class="ic" data-ic="droplet"></div><div class="lab">세척 필요 라인</div><div class="val ${need.length?'neg':'pos'}">${need.length}<small>건</small></div><div class="delta">75점 이상</div></div>
@@ -2293,7 +2307,7 @@ V.report=()=>{
     ${[['일간 보고서',todayKR(),'📄','t-blue','생성 가능','daily'],['주간 보고서',weekKR(),'🗂','t-blue','생성 가능','weekly'],['월 마감 보고서',prevMonthKR()+' · v4.0','📅','t-green','도구 열기','monthly']].map(r=>`<a class="cardlink" onclick="openReport('${r[5]}')"><div class="card"><div style="display:flex;gap:11px;align-items:center"><div style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#eef4fb;border:1px solid var(--line2);flex:0 0 auto">${r[2]}</div><div style="flex:1;min-width:0"><div style="font-weight:800">${r[0]}</div><div class="mini">${r[1]}</div></div><span class="tag ${r[3]}">${r[4]}</span></div></div></a>`).join('')}
   </div>
   ${dualEmbed('monthly','월 마감 자동 보고서',svic('report',16),monthlyURL(),'74vh','monthlyReport')}
-  ${ledger('일간 생산일보 (문서형)','8개 Agent 데이터 자동 취합 · 정식 문서 양식 — 클릭하여 펼침',`<div style="text-align:right;margin:2px 0 8px"><button class="btn" onclick="exportReport()">⬇ 내보내기</button></div><div class="report-doc"><h4>AP 대전공장 생산일보 — ${todayKR()}</h4><div class="kv">작성: ZEN Report Agent · 자동 생성 · 데이터원: ${dataSource}</div><p><b>1. 생산 실적</b><br>전 라인 목표 ${(tp.t/1000).toFixed(0)}천개 대비 실적 ${(tp.a/1000).toFixed(0)}천개(달성률 ${tp.ach}%). ${topLines||'-'} 정상, ${lowLines||'없음'} 부진.</p><p><b>2. 인력 현황</b><br>필요 ${headNeed()}명 대비 투입 ${headCur()}명(${headNeed()-headCur()}명 부족), 연차 ${DB.work[1].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p><p><b>3. 품질</b><br>평균 불량률 ${df}%(목표 1.5%). 주요 원인 ${DB.paretoNames[0]}·${DB.paretoNames[1]}. 최다 라인 조치 진행.</p><p><b>4. 안전</b><br>WBGT ${DB.safety.wbgt}℃ 폭염 ${DB.safety.wbgt>=28?'경고':'주의'}. 휴식·수분 조치. 무재해 ${DB.safety.noAccident}일.</p><p><b>5. 자재/설비</b><br>${orders.length?orders.map(s=>s.name).join('·')+' 긴급 발주 요청':'자재 발주 이슈 없음'}. 완제품 창고 ${DB.warehouse[0].fill}% 포화. 전 라인 OEE ${oee}%.</p><ul><li><b>금일 조치:</b> 인력 재배치, 발주 ${orders.length}건, 세척 ${myLines().filter(l=>G.cleanScore(l)>=75).length}라인</li><li><b>익일 리스크:</b> 자재 미입고 시 라인 중단 · 폭염 지속</li></ul></div>`)}`;
+  ${ledger('일간 생산일보 (문서형)','8개 Agent 데이터 자동 취합 · 정식 문서 양식 — 클릭하여 펼침',`<div style="text-align:right;margin:2px 0 8px"><button class="btn" onclick="exportReport()">⬇ 내보내기</button></div><div class="report-doc"><h4>AP 헤어앤뷰티 사업장 생산일보 — ${todayKR()}</h4><div class="kv">작성: ZEN Report Agent · 자동 생성 · 데이터원: ${dataSource}</div><p><b>1. 생산 실적</b><br>전 라인 목표 ${(tp.t/1000).toFixed(0)}천개 대비 실적 ${(tp.a/1000).toFixed(0)}천개(달성률 ${tp.ach}%). ${topLines||'-'} 정상, ${lowLines||'없음'} 부진.</p><p><b>2. 인력 현황</b><br>필요 ${headNeed()}명 대비 투입 ${headCur()}명(${headNeed()-headCur()}명 부족), 연차 ${DB.work[1].n}명. 여유 라인 재배치 및 잔업으로 대응 예정.</p><p><b>3. 품질</b><br>평균 불량률 ${df}%(목표 1.5%). 주요 원인 ${DB.paretoNames[0]}·${DB.paretoNames[1]}. 최다 라인 조치 진행.</p><p><b>4. 안전</b><br>WBGT ${DB.safety.wbgt}℃ 폭염 ${DB.safety.wbgt>=28?'경고':'주의'}. 휴식·수분 조치. 무재해 ${DB.safety.noAccident}일.</p><p><b>5. 자재/설비</b><br>${orders.length?orders.map(s=>s.name).join('·')+' 긴급 발주 요청':'자재 발주 이슈 없음'}. 완제품 창고 ${DB.warehouse[0].fill}% 포화. 전 라인 OEE ${oee}%.</p><ul><li><b>금일 조치:</b> 인력 재배치, 발주 ${orders.length}건, 세척 ${myLines().filter(l=>G.cleanScore(l)>=75).length}라인</li><li><b>익일 리스크:</b> 자재 미입고 시 라인 중단 · 폭염 지속</li></ul></div>`)}`;
 };
 
 /* ============ DATA MANAGEMENT (실데이터 연동) ============ */
@@ -2591,7 +2605,7 @@ function dualEmbed(key,name,icoHtml,internalUrl,height,idOverride){
   return `<div class="card" style="margin-top:14px;padding:13px"${idOverride?` id="${idOverride}"`:''}>${head}<iframe class="safe" src="${src.replace(/"/g,'&quot;')}" title="${name}" style="height:${height}" loading="lazy"></iframe>${note}</div>`;
 }
 V.opl=()=>`<div class="card" id="oplGen" style="padding:12px"><h3>OPL 원포인트레슨 자동생성 <span class="hint">점검·이슈 붙여넣기 → 적발(NG)→준수기준(OK) 카드 + 교육 서명부 · 인쇄/PDF</span><span style="margin-left:auto"><button class="btn" onclick="window.open(oplURL(),'_blank')">↗ 새 창</button></span></h3><iframe class="safe" src="${oplURL()}" title="OPL 생성기" style="height:80vh"></iframe><div class="mini" style="margin-top:6px">점검 내용 붙여넣기 → 자동 생성 · 사진 업로드 후 PDF/인쇄.</div></div>`;
-V.safeapp=()=>`<div class="card" style="padding:12px"><h3>안전 관리 (ZEN Keeper) <span class="hint">배포본 연동 · zenkeeper.netlify.app</span><span style="margin-left:auto;display:flex;gap:8px"><button class="btn" onclick="window.open('https://zenkeeper.netlify.app/','_blank')">↗ 새 창</button><button class="btn" onclick="window.open('ZENF_Safety_App_v65.html','_blank')">로컬본</button></span></h3><iframe class="safe" src="https://zenkeeper.netlify.app/" title="ZEN Keeper" loading="lazy"></iframe><div class="mini" style="margin-top:6px">비어 보이면 ‘새 창’으로 여세요.</div></div>`;
+V.safeapp=()=>dualEmbed('safe','안전 관리 (ZEN Keeper)',svic('shield',16),safeAppURL(),'80vh');
 
 /* ============ DATA OPS ============ */
 function syncSrcTag(){
@@ -2710,7 +2724,7 @@ function buildNav(){
     return `<a data-id="${id}" class="${id===cur?'on':''}" onclick="go('${id}')"><span class="ic">${svic(NAV_ICON[id]||'activity',17)}</span><span>${nm(id)}</span>${bd}</a>`;};
   const body=NAV_GROUPS.map(g=>{const ids=g.ids.filter(allow);if(!ids.length)return '';return `<div class="sec">${g.sec}</div>`+ids.map(link).join('');}).join('');
   document.getElementById('nav').innerHTML=`
-    <div class="logo"><div class="t"><span>ZEN</span> Manufacturing</div><div class="s">아모레퍼시픽 대전공장</div></div>
+    <div class="logo"><div class="t"><span>ZEN</span> Manufacturing</div><div class="s">아모레퍼시픽 헤어앤뷰티 사업장</div></div>
     ${body}
     <div class="spacer"></div>
     <div class="user"><div class="av">${R.emoji}</div><div style="flex:1;min-width:0"><div class="nm">${role==='center'?'이민아':'홍길동'} ${R.name}</div><div class="rl">${scopeLabel()}</div><div class="roleswitch">${['field','admin','center'].map(k=>`<span class="rchip ${role===k?'on':''}" onclick="switchRole('${k}')">${ROLES[k].name}</span>`).join('')}</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
