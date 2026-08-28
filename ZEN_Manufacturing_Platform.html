@@ -1027,11 +1027,19 @@ function loadCalc(plan,days,base){
       else if(row&&typeof row==='object'){for(const k in row)row[k]=clean(row[k]);}});
     return r;};})();
 function loadUpload(input){const f=input.files[0];if(!f)return;const rd=new FileReader();
-  rd.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
-    const QC=[5,8,11,14,17,20];const plan={};
-    for(const r of aoa){const code=(String(r[1]||'').match(/\d{4,}/)||[])[0];if(!code)continue;if(!String(r[3]||'').trim())continue;const wk=QC.map(c=>_lnum(r[c])).reduce((a,b)=>a+b,0);plan[code]=(plan[code]||0)+wk;}
-    if(Object.keys(plan).length){loadPlan=plan;loadFilter=null;loadPlanName=f.name.replace(/\.[^.]+$/,'')+' ('+wb.SheetNames[0]+')';toast('주간계획 반영 — '+Object.keys(plan).length+'개 라인 · 예측 재계산됨');go(cur);}
-    else toast('인식 실패 — 리소스코드·수량 형식을 확인하세요');
+  rd.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+    let plan=null,map={};
+    if(typeof isPlanWB==='function'&&isPlanWB(wb)){plan=parsePlan(wb);map=planToLoadMap(plan);}
+    if(!Object.keys(map).length){
+      const ws=wb.Sheets[wb.SheetNames[0]];const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+      const QC=[5,8,11,14,17,20];
+      for(const r of aoa){const code=(String(r[1]||'').match(/\d{4,}/)||[])[0];if(!code)continue;if(!String(r[3]||'').trim())continue;const wk=QC.map(c=>_lnum(r[c])).reduce((a,b)=>a+b,0);map[code]=(map[code]||0)+wk;}
+    }
+    if(!Object.keys(map).length){toast('인식 실패 — 리소스코드·수량 형식을 확인하세요');return;}
+    const s=applyPlanCascade(plan,f.name,map);
+    rerender();
+    toast('주간계획 반영 — '+s.codes+'개 라인'+(s.weeks?' · '+s.weeks+'주':'')+' · 라인 목표 '+s.nLines+'개 갱신 · 과부하 '+s.over+'그룹 · 조치 '+s.opened+'건');
+    go('load');
   }catch(err){toast('읽기 오류: '+err.message);}};
   rd.readAsArrayBuffer(f);}
 function loadView(){
@@ -2344,6 +2352,34 @@ function buildGroups(resources){
     Object.entries(r.daily).forEach(([d,q])=>G.daily[d]=(G.daily[d]||0)+q);});
   return Object.values(gm).sort((a,b)=>b.weekTotal-a.weekTotal);
 }
+/* ===== 주간계획 업로드 → 전 화면 연쇄 반영 ===== */
+const DASH_FROM_CAPA={튜브:'튜브',치약:'치약충전',초격차:'초격차',HnB기타:'HnB',염모:'HnB',멀티:'FnC'};
+function dashKeyFromCapa(row){if(/일회용/.test(row[2]||''))return '일회용';return DASH_FROM_CAPA[row[1]]||null;}
+function planToLoadMap(plan){
+  const m={},wk=(plan&&plan.weeks&&plan.weeks[0])||null;if(!wk)return m;
+  wk.resources.forEach(r=>{const code=(String(r.code||'').match(/\d{4,}/)||[])[0];if(!code)return;m[code]=(m[code]||0)+(r.weekTotal||0);});
+  return m;
+}
+function applyLoadToLines(planMap,days){
+  days=days||loadDays||6;const sums={};
+  CAPA_LINES.forEach(a=>{const k=dashKeyFromCapa(a);if(!k)return;sums[k]=(sums[k]||0)+(planMap[a[0]]||0);});
+  let n=0;DB.lines.forEach(l=>{if(sums[l.key]==null)return;const t=Math.round(sums[l.key]/days);if(t>0){l.target=t;n++;}});
+  return n;
+}
+function applyPlanCascade(plan,fileName,extraLoad){
+  const map=(extraLoad&&Object.keys(extraLoad).length)?extraLoad:planToLoadMap(plan);
+  if(plan&&plan.weeks&&plan.weeks.length){DB.plan=plan;planWeek=0;}
+  if(Object.keys(map).length){
+    loadPlan=map;loadFilter=null;loadPlanName=(fileName||'주간계획').replace(/\.[^.]+$/,'');
+    DB.loadPlan=map;DB.loadPlanName=loadPlanName;DB.loadDays=loadDays;DB.loadBase=loadBase;
+  }
+  const nLines=applyLoadToLines(loadPlan,loadDays);
+  const over=loadCalc(loadPlan,loadDays,loadBase).groups.filter(g=>g.load>=100).length;
+  const opened=syncActionsFromJudgments();
+  if(fileName)dataSource=fileName;
+  saveDB();
+  return {over,opened,nLines,codes:Object.keys(map).length,weeks:(plan&&plan.weeks)?plan.weeks.length:0};
+}
 function parsePlan(wb){
   const weeks=wb.SheetNames.map(sn=>{
     const a=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});
@@ -2547,9 +2583,10 @@ function importFile(file){
         rerender();go('stock');return;
       }
       if(isPlanWB(wb)){
-        DB.plan=parsePlan(wb);planWeek=0;dataSource=file.name;saveDB();
+        const plan=parsePlan(wb);
+        const s=applyPlanCascade(plan,file.name);
         const w=DB.plan.weeks[0];
-        toast('주간 생산계획 인식: '+DB.plan.weeks.length+'주 · '+w.resources.length+'개 리소스 · 총 '+w.resources.reduce((a,r)=>a+r.weekTotal,0).toLocaleString()+'개');
+        toast('주간계획 반영 — '+s.weeks+'주 · '+w.resources.length+'개 리소스 · 총 '+w.resources.reduce((a,r)=>a+r.weekTotal,0).toLocaleString()+'개 · 라인 목표 '+s.nLines+'개 갱신 · 과부하 '+s.over+'그룹 · 조치 '+s.opened+'건');
         rerender();go('plan');return;
       }
       const n=applyRows(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}));
