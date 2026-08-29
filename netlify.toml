@@ -4,12 +4,18 @@
   publish = "."
   command = ""
 
-# 루트("/")는 index.html(= ZEN_Manufacturing_Platform.html 동일본)로 서빙됨.
+# 루트("/")는 index.html(= ZEN_Manufacturing_Platform_11.0.html 동일본)로 서빙됨.
 # 구주소 호환: 파일명으로 접근해도 동작하도록 rewrite 보조.
 [[redirects]]
   from = "/platform"
-  to = "/ZEN_Manufacturing_Platform.html"
+  to = "/ZEN_Manufacturing_Platform_11.0.html"
   status = 200
+
+# 구파일명으로 들어와도 최신본을 서빙
+[[redirects]]
+  from = "/ZEN_Manufacturing_Platform.html"
+  to = "/ZEN_Manufacturing_Platform_11.0.html"
+  status = 301
 
 # 보안 헤더 (임베드/클릭재킹 완화, 데모 프로토타입 기준)
 [[headers]]
