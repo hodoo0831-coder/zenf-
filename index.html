@@ -221,6 +221,16 @@
   .actcol.done h4{background:#1c7d49}
   .actcol h4 .n{margin-left:auto;background:rgba(255,255,255,.22);border:0;border-radius:20px;padding:2px 10px;font-size:12px;color:#fff}
   .actcol .actcard{margin:0 10px 10px}
+  .actcol h4{cursor:pointer;user-select:none}
+  .actcol h4:focus-visible{outline:2px solid #fff;outline-offset:-3px}
+  .actcol h4 .fchev{font-size:10px;line-height:1;transition:transform .2s ease;opacity:.9}
+  .actcol.fold h4{margin-bottom:0}
+  .actcol.fold h4 .fchev{transform:rotate(-90deg)}
+  .actcol.fold{padding-bottom:0}
+  .actbody{display:grid;grid-template-rows:1fr;transition:grid-template-rows .22s ease}
+  .actbody>.actinner{overflow:hidden;min-height:0}
+  .actcol.fold .actbody{grid-template-rows:0fr}
+  @media(prefers-reduced-motion:reduce){.actbody,.actcol h4 .fchev{transition:none}}
   .actcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px;box-shadow:0 2px 8px rgba(18,32,58,.06)}
   .actcard.crit{border-left:4px solid #dc4b4b}
   .actcard.warn{border-left:4px solid #d98a2b}
@@ -1512,6 +1522,12 @@ function actGen(i){
   copyText(txt,'조치 문안 생성 · 복사됨');go(cur==='track'?'track':cur);
 }
 let trackFilter='전체';
+/* 조치 보드 컬럼 접기 — 헤더 클릭/Enter/Space로 토글. 재렌더에도 유지 */
+let actFold={};
+function toggleActCol(k,el){actFold[k]=!actFold[k];
+  const col=el&&el.closest?el.closest('.actcol'):null;
+  if(col)col.classList.toggle('fold',actFold[k]);
+  if(el)el.setAttribute('aria-expanded',actFold[k]?'false':'true');}
 V.track=()=>{
   const tabs=[{k:'now',label:'오늘 조치 보드'},{k:'log',label:'일자별 운영 기록'}];
   const t=vtabActive('track',tabs);
@@ -1571,7 +1587,14 @@ V.trackNow=()=>{
       ${o.a.txt?`<details class="acttxt"><summary style="cursor:pointer;font-weight:800;color:#1c5fa8">생성된 조치 문안</summary><pre style="margin:8px 0 0;white-space:pre-wrap;font-family:inherit;font-size:12px;line-height:1.55">${escHtml(o.a.txt)}</pre></details>`:''}
     </div>`;
   };
-  const col=(title,list,kind)=>`<div class="actcol ${kind}"><h4>${title}<span class="n">${list.length}</span></h4>${list.length?list.map(card).join(''):'<div class="mini" style="padding:12px 14px">없음</div>'}</div>`;
+  const col=(title,list,kind)=>{const f=!!actFold[kind];
+    const body=list.length?list.map(card).join(''):'<div class="mini" style="padding:12px 14px">없음</div>';
+    return `<div class="actcol ${kind}${f?' fold':''}">`
+      +`<h4 role="button" tabindex="0" aria-expanded="${f?'false':'true'}" title="클릭하면 접기/펼치기"`
+      +` onclick="toggleActCol('${kind}',this)"`
+      +` onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleActCol('${kind}',this)}">`
+      +`<span class="fchev">▼</span>${title}<span class="n">${list.length}</span></h4>`
+      +`<div class="actbody"><div class="actinner">${body}</div></div></div>`;};
   const cTodo=shown.filter(o=>o.a.st==='todo'||o.a.st==='hold');
   const cDo=shown.filter(o=>o.a.st==='doing');
   const cDone=shown.filter(o=>o.a.st==='done');
