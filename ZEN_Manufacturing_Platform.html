@@ -127,8 +127,10 @@
 
   .stage{padding:20px 24px 32px;min-width:0}
   .bar{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+  .bar>*{min-width:0}
+  .chead{flex-wrap:wrap}
   .bar h1{font-size:23px;font-weight:800;margin:0;color:var(--navy)}
-  .bar .sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+  .bar .sub{color:var(--muted);font-size:12.5px;margin-top:3px;white-space:normal;overflow-wrap:anywhere}
   .bar .right{margin-left:auto;display:flex;align-items:center;gap:12px}
   .bar .clock{text-align:right;font-size:12.5px;color:var(--navy)}.bar .clock .d{font-weight:700}
   .bar .clock .r{color:var(--green);display:flex;gap:6px;align-items:center;justify-content:flex-end;margin-top:3px;font-size:11px}
@@ -221,6 +223,19 @@
   .actcol.done h4{background:#1c7d49}
   .actcol h4 .n{margin-left:auto;background:rgba(255,255,255,.22);border:0;border-radius:20px;padding:2px 10px;font-size:12px;color:#fff}
   .actcol .actcard{margin:0 10px 10px}
+  .agx{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 12px;font-size:12px;font-weight:700;color:var(--muted)}
+  .agx>b{background:var(--tint);color:#176f42;border:1px solid #cfe8da;border-radius:20px;padding:5px 13px;font-weight:900}
+  .agxi{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line2);border-radius:20px;padding:7px 14px 7px 6px;font:inherit;font-size:12.5px;font-weight:800;color:var(--navy);cursor:pointer;white-space:nowrap}
+  .agxi>i{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:var(--line);color:#5b6d84;font-style:normal;font-size:10px;font-weight:900}
+  .agxi.on{background:#0B7A43;border-color:#0B7A43;color:#fff}
+  .agxi.on>i{background:rgba(255,255,255,.28);color:#fff}
+  .agxn{margin-left:auto;font-weight:600}
+  @media(max-width:760px){.agxn{display:none}}
+  .predlv{margin-left:auto;font-size:10px;font-weight:900;padding:2px 8px;border-radius:20px;background:var(--line);color:#5b6d84}
+  .predlv.crit{background:#E03426;color:#fff}
+  .predlv.warn{background:#E88A00;color:#fff}
+  .actrule{margin:7px 0 0;font-size:11.5px;color:var(--muted);line-height:1.5;word-break:keep-all}
+  .actrule .l{display:inline-block;font-weight:800;color:#5b6d84;border:1px solid var(--line2);border-radius:5px;padding:1px 6px;margin-right:6px;font-size:10.5px}
   .actcol h4{cursor:pointer;user-select:none}
   .actcol h4:focus-visible{outline:2px solid #fff;outline-offset:-3px}
   .actcol h4 .fchev{font-size:10px;line-height:1;transition:transform .2s ease;opacity:.9}
@@ -1033,9 +1048,9 @@ function headCur(){return scoped()?myLines().reduce((a,l)=>a+G.cur(l),0):DB.head
 /* ============ AGENTS / ROLES ============ */
 const AGENTS=[
   {id:'home',name:'컨트롤타워',icon:'🏭',sub:'현재 상태 → 예측 → 판단 → 조치'},
-  {id:'judge',name:'AI 예측·판단',icon:'🧠',sub:'2~4시간 · 익일 · 익주 위험 사전 판단'},
-  {id:'track',name:'조치 추적',icon:'✅',sub:'오늘 조치 · 일자별 운영 기록'},
-  {id:'ops',name:'현장 운영',icon:'⚙️',sub:'생산 · 인력 · 세척 · 창고 · 안전 · 품질'},
+  {id:'judge',name:'판단 기준 · 성과',icon:'🧠',sub:'코드화된 판단 룰 카탈로그 · ZAIC 성과지표'},
+  {id:'track',name:'AI 판단·조치',icon:'✅',sub:'실측 → 기준 대조 → 판단 → 담당·기한 → 결과'},
+  {id:'ops',name:'현장 8 Agent',icon:'⚙️',sub:'생산·계획 · 인력 · 세척 · 창고 · 간접작업 · 안전 · 품질 · 분석·보고'},
   {id:'planhub',name:'생산·계획 Agent',icon:'📈',sub:'금일 실적 · 주간계획 · 부하율 · 지연오더'},
   {id:'labor',name:'인력 Agent',icon:'👥',sub:'출근 · 결원 · 대체인력 · 잔업 추천'},
   {id:'clean',name:'세척 Agent',icon:'🧼',sub:'세척 우선순위 자동 추천 · 자동판단율 목표 95%'},
@@ -1151,27 +1166,14 @@ V.home=()=>{
   ].filter(t=>ROLES[role].allow.includes(t.id));
   const otiles=`<div class="otiles">${tiles.map(t=>`<div class="otile" onclick="go('${t.id}')"><div class="oh"><span class="ico ${tintOf(t.c)}">${svic(t.ic,18)}</span><span class="dot" style="background:${t.c}"></span></div><div class="on">${t.n}</div><div class="ov tnum">${t.v}</div></div>`).join('')}</div>`;
   const lineBars=myLines().map(l=>{const a=G.achieve(l),col=a>=80?'#16a34a':a>=65?'#d97706':'#dc2626';return `<div class="barrow" style="grid-template-columns:70px 1fr 44px;padding:8px 0"><div class="nm" style="font-size:12.5px">${l.key}</div><div>${pbar(a,col)}<div class="mini" style="margin-top:3px">부하 ${G.load(l)}% · 종료 ${l.end}</div></div><div class="vv tnum" style="color:${col};font-size:12.5px">${a}%</div></div>`;}).join('');
-  const alerts=[
-    {ic:'thermometer',cls:DB.safety.wbgt>=28?'r':'a',to:'safe',r:`폭염 ${DB.safety.wbgt>=28?'경고':'주의'} · WBGT ${DB.safety.wbgt}℃`,s:'휴식·수분 조치 · 무재해 '+DB.safety.noAccident+'일',t:'09:28'},
-    {ic:'users',cls:'a',to:'labor',r:'인력 부족 예측',s:'피크 화요일 '+DB.forecast.reduce((m,d)=>Math.max(m,d.v),0)+'명 · 사전 배치 필요',t:'09:25'},
-    {ic:'droplet',cls:'a',to:'clean',r:worst.key+' 라인 세척 우선순위 1위',s:'세척 '+G.cleanScore(worst)+'점 · 완료 지연 예상',t:'09:22'},
-  ];
-  const aItems=alerts.filter(a=>ROLES[role].allow.includes(a.to));
-  const alertBand=aItems.length?`<div class="aband">${aItems.map(a=>`<div class="acard ${a.cls}" onclick="go('${a.to}')"><span class="ico sm ${a.cls}">${svic(a.ic,15)}</span><div class="tx"><div class="r">${a.r}</div><div class="s">${a.s}</div></div><span class="ago">›</span></div>`).join('')}</div>`:'';
   // ===== 작업 예측 · AI 판단 (내일·향후를 코드화된 기준으로) =====
   const fc=DB.forecast,peak=fc.reduce((m,d)=>d.v>m.v?d:m,fc[0]);
   const behind=myLines().filter(l=>G.achieve(l)<65);
-  const preds=[
-    {ic:'users',lv:(()=>{const R=loadCalc(loadPlan,loadDays,loadBase);return R.groups.some(g=>g.gap>0.4)?'warn':'ok';})(),
-     r:(()=>{const R=loadCalc(loadPlan,loadDays,loadBase);const t=+R.groups.filter(g=>g.gap>0.4).reduce((a,g)=>a+g.gap,0).toFixed(1);return t>0?`익주 인력 부족 예측 −${t}명`:'익주 인력 충족 예측';})(),
-     s:(()=>{const R=loadCalc(loadPlan,loadDays,loadBase);const sg=R.groups.filter(g=>g.gap>0.4);return `${loadPlanName} 실계산 · ${sg.length?'과부하 '+sg.map(g=>g.grp).join('·'):'전 그룹 여유'}`;})(),
-     rule:'계획량 ÷ 주CAPA > 100%'},
-    {ic:'clock',lv:behind.length?'warn':'ok',r:`지연 위험 오더 ${behind.length}건`,s:behind.length?`${behind.map(l=>l.key).join('·')} 진척 미달 → 사전 조정`:'현재 지연 위험 없음',rule:'달성률 < 70%'},
-    {ic:'thermometer',lv:DB.safety.wbgt>=28?'crit':'ok',r:`폭염 ${DB.safety.wbgt>=28?'지속 예상':'안정'} · WBGT ${DB.safety.wbgt}℃`,s:'추세 상승 → 시간당 휴식·수분 사전 통보',rule:'WBGT ≥ 28℃'},
-    {ic:'droplet',lv:'warn',r:`${worst.key} 세척 완료 지연 예상`,s:`우선순위 ${G.cleanScore(worst)}점 · CIP 2기 병렬 권장`,rule:'우선순위 ≥ 75점'},
-  ];
-  const predCard=`<div class="card" style="margin-top:16px"><div class="chead" style="margin-bottom:10px">작업 예측 · AI 판단<span class="mtag mp">예측</span><span style="text-transform:none;letter-spacing:0;font-weight:600;color:var(--muted);margin-left:8px">내일·향후를 코드화된 기준으로 사전 판단</span></div>
-    <div class="predgrid">${preds.map(x=>`<div class="pred ${x.lv}"><div class="ph"><span class="ico sm ${x.lv==='crit'?'r':x.lv==='warn'?'a':''}">${svic(x.ic,15)}</span><span class="pr">${x.r}</span></div><div class="ps">${x.s}</div><div class="prule">적용 기준 ${x.rule}</div></div>`).join('')}</div></div>`;
+  /* 홈은 요약만 — 판단 본문은 조치 추적이 원본(단일 소스). 별도 배열을 두면 문구가 갈라진다 */
+  const _rank={crit:0,warn:1,ok:2};
+  const preds=collectJudgments().slice().sort((a,b)=>_rank[a.lv]-_rank[b.lv]).slice(0,4);
+  const predCard=`<div class="card" style="margin-top:16px"><div class="chead" style="margin-bottom:10px">오늘 AI 판단 <span class="mtag mp">요약</span><span style="text-transform:none;letter-spacing:0;font-weight:600;color:var(--muted);margin-left:8px">우선순위 상위 ${preds.length}건</span><button class="btn p" style="margin-left:auto;padding:6px 13px;flex:none" onclick="go('track')">전체 ${collectJudgments().length}건 · 조치 추적 →</button></div>
+    <div class="predgrid">${preds.map(x=>`<div class="pred ${x.lv}"><div class="ph"><span class="ico sm ${x.lv==='crit'?'r':x.lv==='warn'?'a':''}">${svic(x.ic,15)}</span><span class="pr">${escHtml(x.r)}</span><span class="predlv ${x.lv}">${x.lv==='crit'?'긴급':x.lv==='warn'?'경고':'정상'}</span></div><div class="prule">적용 기준 ${escHtml(x.rule)}</div></div>`).join('')}</div></div>`;
   const judgments=collectJudgments(),priority=judgments.find(x=>x.lv==='crit')||judgments.find(x=>x.lv==='warn')||judgments[0];
   const decisionFlow=`<div class="flowhead"><div class="flowstep"><b>1</b>현재 상태</div><span class="flowarrow">→</span><div class="flowstep"><b>2</b>위험 예측</div><span class="flowarrow">→</span><div class="flowstep"><b>3</b>AI 판단</div><span class="flowarrow">→</span><div class="flowstep on"><b>4</b>조치 실행</div></div>
   <div class="decisiongrid">
@@ -1194,7 +1196,6 @@ V.home=()=>{
   </div>
   <div class="chead" style="margin:2px 0 10px">운영 영역 바로가기</div>
   ${otiles}
-  ${alertBand}
   <div class="chead" style="margin:2px 0 10px">실시간 실적 <span class="mtag real">실측</span></div>
   ${renderLive()}
   <div class="card" style="margin-top:16px"><div class="chead" style="margin-bottom:12px">라인별 생산 달성률 <span class="mtag real">실측</span></div>${lineBars}</div>`;
@@ -1337,8 +1338,12 @@ V.ops=()=>{
   const tabs=[{k:'production',label:'생산',ic:'🏭'},{k:'labor',label:'인력',ic:'👥'},{k:'clean',label:'세척',ic:'🧼'},{k:'stock',label:'창고',ic:'📦'},{k:'indirect',label:'간접작업',ic:'🔧'},{k:'safe',label:'안전',ic:'🦺'},{k:'quality',label:'품질',ic:'🧪'}].filter(x=>ROLES[role].allow.includes(target[x.k]));
   const t=vtabActive('ops',tabs);
   const map={production:()=>V.planhub(),labor:()=>V.labor(),clean:()=>V.clean()+renderSysLinks('clean'),stock:()=>V.stock()+renderSysLinks('stock'),indirect:()=>V.orikonwash(),safe:()=>V.safe(),quality:()=>V.qual()};
-  const engines='<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 12px;font-size:12px;font-weight:700;color:var(--muted)"><span style="background:var(--tint);color:#176f42;border:1px solid #cfe8da;border-radius:20px;padding:5px 13px;font-weight:900">⚙️ AI Agent 8기 가동중</span><span>생산·계획 · 인력 · 세척 · 창고 · 간접작업 · 품질 · 안전 · 분석·보고 — 판단은 <b>AI 예측·판단</b>에 집결</span></div>';
-  return engines+vtabsBar('ops',tabs,'opstabs')+(map[t]||map.production)();
+  const AGX=[{k:'production',n:'생산·계획',e:'🏭'},{k:'labor',n:'인력',e:'👥'},{k:'clean',n:'세척',e:'🧼'},{k:'stock',n:'창고',e:'📦'},{k:'indirect',n:'간접작업',e:'🔧'},{k:'safe',n:'안전',e:'🦺'},{k:'quality',n:'품질',e:'🧪'},{k:'insight',n:'분석·보고',e:'📊',go:'insight'}].filter(a=>a.go||tabs.some(x=>x.k===a.k));
+  const engines='<div class="agx"><b>AI Agent 8기 가동중</b>'+AGX.map((a,i)=>{const on=a.k===t;
+    const act=a.go?`go('${a.go}')`:`setVtab('ops','${a.k}')`;
+    return `<button class="agxi${on?' on':''}" onclick="${act}"><i>${i+1}</i>${a.e} ${a.n} Agent</button>`;}).join('')
+    +'<span class="agxn">판단은 <b>AI 판단·조치</b>에 집결</span></div>';
+  return engines+(map[t]||map.production)();
 };
 /* ===== AI 판단 센터 — 전 Agent 자동 판단 통합(실측→기준→판단→조치) ===== */
 function collectJudgments(){
@@ -1570,6 +1575,7 @@ V.trackNow=()=>{
       </div>
       <div class="pr">${escHtml(o.x.r)}</div>
       <div class="ps">${escHtml(o.x.s)}</div>
+      <div class="actrule"><span class="l">적용 기준</span> ${escHtml(o.x.rule||'-')}</div>
       <div class="actreco"><div class="l">AI 권고 조치</div><div class="t">${escHtml(o.x.act)}</div></div>
       ${o.a.cleared&&st!=='done'?'<div class="mini" style="margin-top:8px;color:#1c7d49;font-weight:800">조건 해소됨 — 완료로 닫아 주세요</div>':''}
       ${o.x.lv!=='ok'||st!=='done'?`<div class="ameta">
@@ -1602,14 +1608,16 @@ V.trackNow=()=>{
   return `
   <div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,#16283f,#0e1a2e);border:none;color:#fff">
     <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-      <div><div style="font-size:11px;letter-spacing:2.5px;color:#8fd8b9;font-weight:800">ACTION TRACKER · 탐지 → 담당 → 기한 → 결과</div>
-        <div style="font-size:21px;font-weight:800;margin-top:5px">판단이 티켓이 됩니다 — 담당·기한까지</div>
-        <div style="font-size:12.5px;color:#a6bad8;margin-top:5px">기한 지나면 <b style="color:#ffd08a">기한초과</b>로 표시 · 조건이 정상 복귀하면 해소 표시</div></div>
-      <div style="margin-left:auto;display:flex;gap:24px">
-        <div><div class="tnum" style="font-size:28px;font-weight:800">${openNeed.length}</div><div style="font-size:11px;color:#a6bad8">열린 조치</div></div>
-        <div><div class="tnum" style="font-size:28px;font-weight:800;color:#ffd08a">${doing}</div><div style="font-size:11px;color:#a6bad8">조치중</div></div>
-        <div><div class="tnum" style="font-size:28px;font-weight:800;color:#ff9d9d">${overdue}</div><div style="font-size:11px;color:#a6bad8">기한초과</div></div>
-        <div><div class="tnum" style="font-size:28px;font-weight:800;color:#8fd8b9">${rate}%</div><div style="font-size:11px;color:#a6bad8">조치율 (목표 90%)</div></div>
+      <div><div style="font-size:11px;letter-spacing:2.5px;color:#8fd8b9;font-weight:800">AI DECISION → ACTION</div>
+        <div style="font-size:21px;font-weight:800;margin-top:5px">실측 → 기준 대조 → 판단 → 조치 → 결과</div>
+        <div style="font-size:12.5px;color:#a6bad8;margin-top:5px">8개 Agent의 판단이 <b style="color:#cfe0f2">담당·기한이 붙은 티켓</b>으로 — 기한 지나면 <b style="color:#ffd08a">기한초과</b>, 조건이 정상 복귀하면 해소 표시</div></div>
+      <div style="margin-left:auto;display:flex;gap:20px;flex-wrap:wrap">
+        <div><div class="tnum" style="font-size:26px;font-weight:800">${J.length}</div><div style="font-size:11px;color:#a6bad8">오늘 자동 판단</div></div>
+        <div><div class="tnum" style="font-size:26px;font-weight:800;color:#ff9d9d">${J.filter(x=>x.lv==='crit').length}</div><div style="font-size:11px;color:#a6bad8">긴급</div></div>
+        <div><div class="tnum" style="font-size:26px;font-weight:800">${openNeed.length}</div><div style="font-size:11px;color:#a6bad8">열린 조치</div></div>
+        <div><div class="tnum" style="font-size:26px;font-weight:800;color:#ffd08a">${doing}</div><div style="font-size:11px;color:#a6bad8">조치중</div></div>
+        <div><div class="tnum" style="font-size:26px;font-weight:800;color:#ff9d9d">${overdue}</div><div style="font-size:11px;color:#a6bad8">기한초과</div></div>
+        <div><div class="tnum" style="font-size:26px;font-weight:800;color:#8fd8b9">${rate}%</div><div style="font-size:11px;color:#a6bad8">조치율 (목표 90%)</div></div>
       </div></div></div>
   <div class="card" style="margin-bottom:12px"><h3>필터 <span class="hint">영역 · 상태</span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">${chips}</span></h3></div>
   <div class="actboard">${col('미조치 · 보류',cTodo,'todo')}${col('조치중',cDo,'doing')}${col('완료',cDone,'done')}</div>`;
@@ -1667,9 +1675,9 @@ V.zaic=()=>{
     <div class="mini" style="margin-top:11px">제니엘 제조사업부 사업3팀 — 「제조 현장 통합 운영 AI Agent : 데이터가 아니라 '판단'을 자동화한다」</div></div>`;
 };
 V.judge=()=>{
-  const tabs=[{k:'log',label:'판단 로그'},{k:'rules',label:'판단 룰 '+RULEBOOK.length},{k:'zaic',label:'성과지표'}];
+  const tabs=[{k:'rules',label:'판단 룰 '+RULEBOOK.length},{k:'zaic',label:'성과지표'}];
   const t=vtabActive('judge',tabs);
-  return vtabsBar('judge',tabs)+(t==='rules'?V.rulebook():t==='zaic'?V.zaic():V.judgeLog());
+  return vtabsBar('judge',tabs)+(t==='zaic'?V.zaic():V.rulebook());
 };
 V.insight=()=>{
   const tabs=[{k:'kpi',label:'KPI·LOSS 분석'},{k:'report',label:'월마감 보고서'}];
@@ -2500,7 +2508,7 @@ function parseWarehouse(wb){
 }
 function whTotRate(w){return w.total&&w.total.capa?Math.round(w.total.count/w.total.capa*100):0;}
 V.plan=()=>{
-  if(!DB.plan)return `<div class="card"><h3>주간 생산계획</h3><p class="muted">아직 업로드된 생산계획이 없습니다. <b>데이터 관리 → 파일 가져오기</b>에서 주간 생산계획 엑셀(.xlsx)을 업로드하세요.</p></div>`;
+  if(!DB.plan)return `<div class="card"><h3>주간 생산계획</h3><p class="muted">아직 업로드된 생산계획이 없습니다. 주간 생산계획 엑셀(.xlsx)을 올리면 라인 목표·부하율·지연오더·조치가 한 번에 채워집니다.</p><button class="btn p" onclick="go('data')">데이터 관리에서 업로드 →</button></div>`;
   const wk=DB.plan.weeks[planWeek]||DB.plan.weeks[0];
   const tot=wk.resources.reduce((a,r)=>a+r.weekTotal,0);
   const ords=wk.resources.reduce((a,r)=>a+r.orders.length,0);
@@ -2539,7 +2547,7 @@ V.plan=()=>{
   </div>`;
 };
 V.delay=()=>{
-  if(!DB.plan)return `<div class="card"><h3>지연오더</h3><p class="muted">먼저 <b>데이터 관리</b>에서 주간 생산계획을 업로드하세요.</p></div>`;
+  if(!DB.plan)return `<div class="card"><h3>지연오더</h3><p class="muted">주간 생산계획을 올리면 달성률 미달 오더를 자동으로 걸러 보여줍니다.</p><button class="btn p" onclick="go('data')">데이터 관리에서 업로드 →</button></div>`;
   if(!planHasActual())return `<div class="card"><h3>지연오더 <span class="hint">계획 대비 실적 분석</span></h3>
     <p class="muted" style="line-height:1.8">지연/미달 오더를 계산하려면 <b>실적 데이터</b>가 필요합니다. 실적 파일이 아직 없으면 시뮬레이션으로 계획 대비 달성률을 즉시 확인할 수 있습니다.</p>
     <div style="display:flex;gap:8px;margin-top:10px"><button class="btn p" onclick="simulateActual()">▶ 실적 시뮬레이션 생성</button><button class="btn" onclick="go('data')">실적 파일 업로드 →</button></div></div>`;
@@ -2727,19 +2735,15 @@ function openReport(kind){
 let cur='home';
 const NAV_TOOLS={opl:{name:'OPL 교육자료',icon:'📄'},data:{name:'관리·연동',icon:'🗄'}};
 const NAV_GROUPS=[
-  {sec:'CONTROL TOWER',ids:['home']},
-  {sec:'PREDICT',ids:['judge']},
-  {sec:'ACTION',ids:['track']},
-  {sec:'OPERATIONS',ids:['ops']},
-  {sec:'PERFORMANCE',ids:['insight']},
-  {sec:'MANAGEMENT',ids:['data','opl']},
+  {sec:'현황 · 실측',ids:['home','ops']},
+  {sec:'판단 · 조치',ids:['track','judge']},
+  {sec:'보고 · 관리',ids:['insight','data','opl']},
 ];
 function buildNav(){
   const R=ROLES[role],allow=id=>R.allow.includes(id);
   const nm=id=>{const a=AGENTS.find(x=>x.id===id);return a?a.name:(NAV_TOOLS[id]||{}).name;};
   const ic=id=>{const a=AGENTS.find(x=>x.id===id);return a?a.icon:(NAV_TOOLS[id]||{}).icon;};
   const badges={
-    judge:(()=>{const J=collectJudgments(),c=J.filter(x=>x.lv==='crit').length;return c?{t:''+c,c:'t-red'}:null;})(),
     track:(()=>{const J=collectJudgments(),n=J.filter(x=>x.lv!=='ok'&&actGet(actKey(x)).st==='todo').length;return n?{t:'미조치 '+n,c:'t-red'}:null;})(),
     safe:DB.safety.wbgt>=28?{t:'경고',c:'t-amber'}:null,
   };
