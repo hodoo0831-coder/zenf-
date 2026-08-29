@@ -1,0 +1,4 @@
+# 에이전트 스킬 설치물 (npx skills add higgsfield-ai/skills 로 언제든 재설치)
+.agents/
+skills-lock.json
+.claude/skills/higgsfield-*

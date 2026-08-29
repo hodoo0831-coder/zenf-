@@ -1,0 +1,1590 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ZENIEL 30th SUMMER MOMENTS · 쇼츠 영상 제작기</title>
+<meta name="theme-color" content="#1e88e5">
+<style>
+  :root{
+    --sky:#38b6ff; --sky2:#7fd8ff; --blue:#1e88e5; --blue-d:#0b62c4; --navy:#0d3b66;
+    --ink:#14283d; --muted:#5b7591; --muted2:#8aa3bd;
+    --bg:#eef7ff; --card:#ffffff; --line:#d5e6f7; --line2:#bcd8f2;
+    --yellow:#ffe066; --amber:#f59e0b; --green:#22c55e; --red:#ef4444;
+    --shadow:0 8px 26px rgba(13,59,102,.10);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(900px 520px at 84% -8%, #b9e6ff88 0%, transparent 62%),
+      radial-gradient(760px 460px at 6% 104%, #cdeaff88 0%, transparent 58%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"NanumGothic","Nanum Gothic",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{max-width:1420px;margin:0 auto;padding:18px 20px 40px}
+
+  /* ===== Header ===== */
+  header.top{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:6px 4px 14px}
+  .brand .logo{font-size:22px;font-weight:800;letter-spacing:.2px}
+  .brand .logo b{color:var(--blue-d)}
+  .brand .logo span{color:var(--ink)}
+  .brand .sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+  .title{flex:1;text-align:center;font-size:26px;font-weight:800;letter-spacing:.5px;color:var(--navy);min-width:260px}
+  .title small{display:block;font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:0;margin-top:4px}
+  .dday{border:1px solid var(--line2);background:#fff;border-radius:12px;padding:9px 14px;text-align:right;box-shadow:var(--shadow)}
+  .dday .l{font-size:11.5px;color:var(--muted);font-weight:700}
+  .dday .v{font-size:18px;font-weight:800;color:var(--blue-d);margin-top:2px}
+
+  /* ===== Tabs ===== */
+  nav.tabs{display:flex;gap:8px;margin:4px 0 18px;flex-wrap:wrap}
+  .tab{border:1px solid var(--line2);background:#fff;color:var(--muted);padding:11px 18px;border-radius:12px;
+       font-size:14px;font-weight:700;cursor:pointer;transition:.15s}
+  .tab:hover{border-color:var(--sky);color:var(--blue-d)}
+  .tab.on{background:linear-gradient(180deg,var(--blue),var(--blue-d));border-color:var(--blue-d);color:#fff;box-shadow:var(--shadow)}
+  section.page{display:none}
+  section.page.on{display:block}
+
+  /* ===== Cards ===== */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px}
+  .card h3{margin:0 0 4px;font-size:16.5px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:8px}
+  .card .desc{color:var(--muted);font-size:13px;margin:0 0 14px;line-height:1.6}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px}
+  .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+  @media(max-width:980px){.grid2{grid-template-columns:1fr}}
+
+  .badge{display:inline-block;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px;
+    background:#e7f4ff;color:var(--blue-d);border:1px solid var(--line2)}
+  .badge.y{background:#fff7d6;color:#8a6100;border-color:#f2e0a0}
+  .badge.g{background:#e6f9ef;color:#15803d;border-color:#bce9d0}
+  .badge.r{background:#ffeaea;color:#b91c1c;border-color:#f5c7c7}
+
+  table.sb{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  table.sb th,table.sb td{border:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+  table.sb th{background:#f2f9ff;color:var(--navy);font-weight:800;font-size:12.5px}
+  table.sb td.t{white-space:nowrap;font-weight:800;color:var(--blue-d);width:74px}
+  table.sb td.c{color:var(--ink);font-weight:600}
+
+  ul.tips{margin:10px 0 0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.85}
+  ul.tips b{color:var(--ink)}
+
+  /* ===== Studio ===== */
+  .studio{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+  @media(max-width:1080px){.studio{grid-template-columns:1fr}}
+
+  .drop{border:2px dashed var(--line2);border-radius:14px;background:#f7fbff;padding:26px 18px;text-align:center;cursor:pointer;transition:.15s}
+  .drop:hover,.drop.over{border-color:var(--sky);background:#eef7ff}
+  .drop .ic{font-size:30px}
+  .drop .m{font-weight:800;margin-top:8px;font-size:14.5px}
+  .drop .s{color:var(--muted);font-size:12.5px;margin-top:5px;line-height:1.6}
+
+  .cliplist{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+  .clip{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:12px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#fbfdff}
+  .clip .th{width:76px;height:100px;border-radius:9px;overflow:hidden;background:#dceaf7;display:flex;align-items:center;justify-content:center;position:relative}
+  .clip .th img,.clip .th video{width:100%;height:100%;object-fit:cover}
+  .clip .th .kind{position:absolute;left:4px;top:4px;font-size:10px;font-weight:800;background:#0b62c4d9;color:#fff;padding:2px 6px;border-radius:6px}
+  .clip .body{display:flex;flex-direction:column;gap:7px;min-width:0}
+  .clip .nm{font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .clip .row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .clip .ops{display:flex;flex-direction:column;gap:5px;justify-content:center}
+  .iconbtn{border:1px solid var(--line2);background:#fff;border-radius:8px;width:30px;height:26px;cursor:pointer;font-size:12px;font-weight:800;color:var(--muted)}
+  .iconbtn:hover{border-color:var(--blue);color:var(--blue-d)}
+  .iconbtn.del:hover{border-color:var(--red);color:var(--red)}
+
+  input[type=text],input[type=number],select,textarea{
+    border:1px solid var(--line2);background:#fff;border-radius:9px;padding:8px 10px;font-size:13px;color:var(--ink);
+    font-family:inherit;outline:none;transition:.15s;min-width:0}
+  input[type=text]:focus,input[type=number]:focus,select:focus,textarea:focus{border-color:var(--sky);box-shadow:0 0 0 3px #38b6ff26}
+  input.cap{flex:1;min-width:120px}
+  input.dur{width:74px}
+  label.lab{font-size:12px;font-weight:800;color:var(--muted);display:block;margin:12px 0 6px}
+  .fld{display:flex;gap:8px;align-items:center}
+  .fld input[type=text]{flex:1}
+
+  .btn{border:1px solid var(--line2);background:#fff;color:var(--ink);padding:11px 16px;border-radius:11px;
+       font-size:13.5px;font-weight:800;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center;transition:.15s}
+  .btn:hover{border-color:var(--blue);color:var(--blue-d)}
+  .btn.p{background:linear-gradient(180deg,var(--blue),var(--blue-d));border-color:var(--blue-d);color:#fff}
+  .btn.p:hover{filter:brightness(1.06);color:#fff}
+  .btn.rec{background:linear-gradient(180deg,#ff6b6b,#d92d2d);border-color:#c02626;color:#fff}
+  .btn.rec:hover{filter:brightness(1.06);color:#fff}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.wide{width:100%}
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+  .stage{position:sticky;top:14px}
+  .phone{width:100%;max-width:330px;margin:0 auto;background:#0d3b66;border-radius:26px;padding:10px;box-shadow:0 14px 40px rgba(13,59,102,.28)}
+  #cv{width:100%;height:auto;display:block;border-radius:18px;background:#0b3358}
+  .meter{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:#fbfdff}
+  .meter .top{display:flex;justify-content:space-between;align-items:baseline}
+  .meter .lab{font-size:12px;font-weight:800;color:var(--muted)}
+  .meter .val{font-size:20px;font-weight:800}
+  .bar{height:8px;border-radius:6px;background:#e3eefa;margin-top:8px;overflow:hidden;position:relative}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sky2),var(--blue));width:0;transition:width .2s}
+  .bar .zone{position:absolute;top:0;bottom:0;background:#22c55e22;border-left:1px dashed #22c55e88;border-right:1px dashed #22c55e88}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.6}
+
+  .out{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fbfdff;display:none}
+  .out.on{display:block}
+  .out video{width:100%;border-radius:10px;background:#000;display:block}
+
+  .note{border-left:3px solid var(--sky);background:#f2f9ff;border-radius:0 10px 10px 0;padding:11px 14px;font-size:12.8px;color:var(--muted);line-height:1.75;margin-top:12px}
+  .note b{color:var(--ink)}
+  .warn{border-left-color:var(--amber);background:#fff9ec}
+
+  ol.chk{margin:6px 0 0;padding-left:0;list-style:none;font-size:13.5px}
+  ol.chk li{display:flex;gap:10px;align-items:flex-start;padding:10px 2px;border-bottom:1px dashed var(--line)}
+  ol.chk li:last-child{border-bottom:0}
+  ol.chk input{width:18px;height:18px;margin-top:1px;accent-color:var(--blue)}
+  ol.chk span{line-height:1.6}
+  ol.chk b{color:var(--navy)}
+
+  pre.mail{background:#f7fbff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.75;
+    white-space:pre-wrap;word-break:break-word;font-family:inherit;color:var(--ink);margin:10px 0 0}
+  .kv{display:grid;grid-template-columns:110px 1fr;gap:8px 14px;font-size:13.5px;line-height:1.7}
+  .kv .k{color:var(--muted);font-weight:800}
+  .kv .v{font-weight:700}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;
+    padding:12px 20px;border-radius:12px;font-size:13.5px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo"><b>ZENIEL</b> <span>30th</span></div>
+      <div class="sub">제니엘그룹 창립 30주년 기념 사내 공모전</div>
+    </div>
+    <div class="title">
+      30th SUMMER MOMENTS · 쇼츠 영상 제작기
+      <small>세로 9:16 · 10~20초 · mp4 — 기획부터 파일 저장까지 한 화면에서</small>
+    </div>
+    <div class="dday">
+      <div class="l">접수 마감 2026.08.31(월)</div>
+      <div class="v" id="dday">D-</div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab on" data-p="plan">1 · 기획 &amp; 스토리보드</button>
+    <button class="tab" data-p="make">2 · 영상 만들기</button>
+    <button class="tab" data-p="send">3 · 제출 체크리스트</button>
+  </nav>
+
+  <!-- ============ TAB 1 : PLAN ============ -->
+  <section class="page on" id="p-plan">
+
+    <div class="card">
+      <h3>공모 요강 요약</h3>
+      <p class="desc">포스터 기준 핵심 조건입니다. 아래 조건을 하나라도 벗어나면 심사 전에 걸러질 수 있으니 제작 전에 먼저 확인하세요.</p>
+      <div class="grid3">
+        <div>
+          <div class="kv">
+            <div class="k">주제</div><div class="v">창립 30주년을 축하하는 나만의 여름 이야기</div>
+            <div class="k">응모 대상</div><div class="v">제니엘그룹 전 임직원 (1인 1작품)</div>
+            <div class="k">응모 기간</div><div class="v">7/2(목) ~ 8/31(월)</div>
+          </div>
+        </div>
+        <div>
+          <div class="kv">
+            <div class="k">영상 분량</div><div class="v">10초 ~ 20초 이내</div>
+            <div class="k">화면 비율</div><div class="v">세로 9:16 권장 (1080×1920)</div>
+            <div class="k">형식</div><div class="v">mp4</div>
+            <div class="k">제출처</div><div class="v">ylpark@zeniel.co.kr</div>
+          </div>
+        </div>
+        <div>
+          <div class="kv">
+            <div class="k">심사 기간</div><div class="v">9/1(화) ~ 9/4(금) <span class="badge">전략기획팀 1차 심사 후 온라인 게시</span></div>
+            <div class="k">결과 발표</div><div class="v">9/7(월)</div>
+            <div class="k">시상</div><div class="v">최우수 1명 30만원 · 우수 2명 20만원<br>아이디어 2명 10만원 · 장려 2명 5만원</div>
+          </div>
+        </div>
+      </div>
+      <div class="note warn"><b>온라인 게시 + 사내 투표</b>가 예정되어 있습니다. 즉 “처음 3초에 눈길을 끌고, 끝에 30주년 축하 메시지가 분명히 남는” 구성이 표를 가장 많이 받습니다. 아래 3가지 구성안은 모두 그 원칙으로 짰습니다.</div>
+    </div>
+
+    <div class="grid3">
+
+      <div class="card">
+        <h3>구성안 A <span class="badge g">가장 무난 · 추천</span></h3>
+        <p class="desc"><b>“나의 여름 3컷”</b> — 휴가 사진 3~4장만 있으면 완성. 리듬감 있는 컷 전환 + 마지막 축하 메시지.</p>
+        <table class="sb">
+          <tr><th>시간</th><th>화면</th><th>자막</th></tr>
+          <tr><td class="t">0~2초</td><td class="c">타이틀 카드 (물결 배경)</td><td>2026 제니엘그룹<br>30th SUMMER MOMENTS</td></tr>
+          <tr><td class="t">2~6초</td><td class="c">바다 / 하늘 넓은 컷</td><td>올여름, 나는 여기 있었다</td></tr>
+          <tr><td class="t">6~10초</td><td class="c">음식·발끝·물놀이 등 가까운 컷</td><td>제대로 쉬어본 하루</td></tr>
+          <tr><td class="t">10~14초</td><td class="c">인물 / 뒷모습 / 노을</td><td>충전 완료!</td></tr>
+          <tr><td class="t">14~17초</td><td class="c">아웃트로 카드</td><td>제니엘그룹 창립 30주년을<br>축하합니다 · OO팀 OOO</td></tr>
+        </table>
+        <ul class="tips">
+          <li><b>총 17초</b> — 10~20초 조건 안에서 가장 안정적인 길이</li>
+          <li>컷당 4초를 넘기지 마세요. 넘어가면 지루해집니다</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>구성안 B <span class="badge y">아이디어상 노림</span></h3>
+        <p class="desc"><b>“30이 숨어 있는 여름”</b> — 30이라는 숫자를 여름 풍경 속에서 찾아 이어 붙이는 컨셉. 아이디어상 겨냥.</p>
+        <table class="sb">
+          <tr><th>시간</th><th>화면</th><th>자막</th></tr>
+          <tr><td class="t">0~2초</td><td class="c">손가락으로 3·0 만드는 클로즈업</td><td>서른, 찾았다</td></tr>
+          <tr><td class="t">2~5초</td><td class="c">파라솔 30개 / 계단 30칸 / 30도 온도계</td><td>오늘 기온 30도</td></tr>
+          <tr><td class="t">5~9초</td><td class="c">수박 30조각, 커피잔, 영수증 등</td><td>어디에나 30이 있었다</td></tr>
+          <tr><td class="t">9~13초</td><td class="c">모래 위에 30 쓰기 → 파도</td><td>제니엘의 30년처럼</td></tr>
+          <tr><td class="t">13~16초</td><td class="c">아웃트로 카드</td><td>30주년 축하합니다 · OO팀 OOO</td></tr>
+        </table>
+        <ul class="tips">
+          <li>모든 컷에 <b>30</b> 요소가 하나씩 들어가는 게 핵심</li>
+          <li>휴대폰 사진만으로도 충분히 만들 수 있습니다</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>구성안 C <span class="badge">감성 · 스토리</span></h3>
+        <p class="desc"><b>“출근길 → 휴가 → 다시 출근”</b> — 일상과 휴가의 대비. 마지막 한 줄로 회사 축하 메시지를 자연스럽게 얹습니다.</p>
+        <table class="sb">
+          <tr><th>시간</th><th>화면</th><th>자막</th></tr>
+          <tr><td class="t">0~3초</td><td class="c">사무실 / 모니터 / 커피</td><td>7월의 나</td></tr>
+          <tr><td class="t">3~7초</td><td class="c">기차·비행기·도로 (이동 컷)</td><td>그리고 떠났다</td></tr>
+          <tr><td class="t">7~12초</td><td class="c">바다·계곡·숙소 (가장 좋은 컷)</td><td>이 순간을 위해 버텼다</td></tr>
+          <tr><td class="t">12~15초</td><td class="c">웃는 얼굴 / 밝은 사무실 복귀</td><td>다시, 잘 해볼게요</td></tr>
+          <tr><td class="t">15~18초</td><td class="c">아웃트로 카드</td><td>서른 살 제니엘, 축하합니다</td></tr>
+        </table>
+        <ul class="tips">
+          <li>대비(對比)가 강할수록 좋습니다 — 어두운 컷 → 밝은 컷</li>
+          <li>얼굴이 나오면 공감도가 확실히 올라갑니다</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>리얼 영상용 촬영 대본 <span class="badge g">휴대폰 30분이면 촬영 끝</span></h3>
+      <p class="desc">사진 슬라이드가 아니라 <b>실제 촬영본</b>으로 만들려면 아래 6컷만 찍어 오면 됩니다. 각 컷은 <b>5초 이상 넉넉히</b> 찍어두고, 편집기에서 필요한 구간만 잘라 쓰세요. 모두 세로로 촬영합니다.</p>
+      <table class="sb">
+        <tr><th>컷</th><th>무엇을</th><th>어떻게 찍나</th><th>쓸 길이</th><th>자막</th></tr>
+        <tr><td class="t">1</td><td class="c">발끝 POV</td><td>모래·바닷물 위에 선 채로 내 발끝과 파도가 함께 보이게 아래를 향해. 파도가 발에 닿는 순간까지 기다린다</td><td>3초</td><td>올여름, 나는 여기 있었다</td></tr>
+        <tr><td class="t">2</td><td class="c">수평선 팬</td><td>가슴 높이에서 <b>아주 천천히</b> 좌→우 한 방향으로만 돌린다. 2초에 30도 정도 속도</td><td>3초</td><td>숨 한 번 크게 쉬고</td></tr>
+        <tr><td class="t">3</td><td class="c">손 클로즈업</td><td>물방울 맺힌 음료·아이스크림·수박을 든 손. 배경은 흐려지게 피사체에 가까이(20cm) 붙는다</td><td>2.5초</td><td>제대로 쉬어본 하루</td></tr>
+        <tr><td class="t">4</td><td class="c">파도 슬로모</td><td>휴대폰 <b>슬로모션 모드</b>로 부서지는 파도만. 물보라가 튀는 순간을 노린다</td><td>2.5초</td><td>파도처럼, 30년</td></tr>
+        <tr><td class="t">5</td><td class="c">노을 실루엣</td><td>해 지기 1시간 전, 해를 등지고 선 사람 뒷모습. 얼굴이 안 나와도 좋다</td><td>3초</td><td>충전 완료!</td></tr>
+        <tr><td class="t">6</td><td class="c">복귀 컷</td><td>사무실 책상 위 커피, 또는 사원증·출근길 한 컷. 밝게</td><td>2.5초</td><td>다시, 잘 해볼게요</td></tr>
+      </table>
+      <ul class="tips">
+        <li><b>이 순서 그대로</b> 편집기에 넣고 템플릿을 <b>리얼 시네마틱</b>으로 고르면 홍보영상과 같은 자막·오버레이가 얹힙니다</li>
+        <li>영상 클립은 <b>시작(초)</b> 값으로 앞부분을 잘라낼 수 있습니다 — 흔들리는 첫 1초는 버리세요</li>
+        <li>총 16.5초 + 오프닝·엔딩 카드 = 공모 기준 10~20초 안에 들어갑니다</li>
+        <li>흐린 날이면 컷 5를 <b>야간 조명·불꽃놀이</b>로 바꿔도 좋습니다</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>촬영 · 편집 실무 팁</h3>
+      <div class="grid3">
+        <ul class="tips">
+          <li><b>무조건 세로로</b> 촬영하세요. 가로 영상은 9:16으로 넣으면 위아래가 잘리거나 여백이 생깁니다</li>
+          <li><b>한 컷 3~5초</b>씩 넉넉히 찍어두면 편집이 쉬워집니다</li>
+          <li>움직일 땐 <b>천천히 한 방향</b>으로만. 흔들리면 눈이 피곤합니다</li>
+        </ul>
+        <ul class="tips">
+          <li>자막은 <b>한 줄 12자 이내</b>, 화면 아래 1/3 지점에 두면 잘 읽힙니다</li>
+          <li>첫 컷에 가장 좋은 그림을 배치하세요 — <b>3초 안에 승부</b></li>
+          <li>역광은 피하고, 해 지기 1시간 전 빛이 가장 예쁩니다</li>
+        </ul>
+        <ul class="tips">
+          <li><b>타인의 얼굴</b>이 크게 나오면 미리 동의를 받으세요</li>
+          <li>배경음악은 <b>저작권 free</b>만 사용 (유튜브 오디오 보관함 등)</li>
+          <li>상표·브랜드 로고가 크게 잡히지 않게 주의</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 2 : MAKE ============ -->
+  <section class="page" id="p-make">
+    <div class="studio">
+
+      <!-- LEFT : editor -->
+      <div>
+        <div class="card">
+          <h3>① 사진 · 영상 넣기</h3>
+          <p class="desc">휴대폰에서 찍은 사진(jpg/png)과 짧은 영상(mp4/mov)을 그대로 올리면 됩니다. 순서대로 이어붙여 하나의 세로 영상이 됩니다.</p>
+
+          <div class="drop" id="drop">
+            <div class="ic">🏖️</div>
+            <div class="m">여기를 눌러 파일 선택 · 또는 끌어다 놓기</div>
+            <div class="s">사진 3~5장 또는 짧은 영상 2~3개를 권장합니다<br>모든 처리는 이 브라우저 안에서만 이루어지며 어디에도 업로드되지 않습니다</div>
+            <input type="file" id="file" accept="image/*,video/*" multiple hidden>
+          </div>
+
+          <div class="btnrow">
+            <button class="btn p" id="btnCine">🎬 실사풍 시네마 배경 4컷 넣기</button>
+            <button class="btn" id="btnSample">🎨 샘플로 먼저 체험해보기</button>
+            <button class="btn" id="btnClear">🗑 전체 비우기</button>
+          </div>
+
+          <div class="cliplist" id="clips"></div>
+        </div>
+
+        <div class="card">
+          <h3>② 타이틀 · 엔딩 · 스타일</h3>
+          <p class="desc">앞뒤 카드는 심사에서 “주제를 지켰는지” 보여주는 부분입니다. 엔딩에 소속·이름을 꼭 남기세요.</p>
+
+          <div class="grid2">
+            <div>
+              <label class="lab"><input type="checkbox" id="introOn" checked> 오프닝 타이틀 카드 사용</label>
+              <div class="fld" style="margin-bottom:8px"><input type="text" id="introL1" value="2026 제니엘그룹" placeholder="윗줄"></div>
+              <div class="fld"><input type="text" id="introL2" value="30th SUMMER MOMENTS" placeholder="아랫줄"></div>
+              <label class="lab">오프닝 길이(초)</label>
+              <input type="number" id="introDur" value="2" min="0.5" max="5" step="0.5">
+            </div>
+            <div>
+              <label class="lab"><input type="checkbox" id="outroOn" checked> 엔딩 카드 사용</label>
+              <div class="fld" style="margin-bottom:8px"><input type="text" id="outroL1" value="창립 30주년을 축하합니다" placeholder="축하 메시지"></div>
+              <div class="fld"><input type="text" id="outroL2" value="OO사업부 OO팀 홍길동" placeholder="소속 · 이름"></div>
+              <label class="lab">엔딩 길이(초)</label>
+              <input type="number" id="outroDur" value="3" min="0.5" max="5" step="0.5">
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:6px">
+            <div>
+              <label class="lab">템플릿 색감</label>
+              <select id="tpl" style="width:100%">
+                <option value="splash">스플래시 블루 (포스터와 동일 톤)</option>
+                <option value="sunset">선셋 오렌지 (노을 · 감성)</option>
+                <option value="film">필름 블랙 (시네마틱)</option>
+                <option value="cinema">리얼 시네마틱 (홍보영상 스타일)</option>
+              </select>
+            </div>
+            <div>
+              <label class="lab">상단 타이틀 바 (리얼 시네마틱 전용)</label>
+              <div class="fld"><input type="text" id="topbar" value="제니엘 30주년  →  나의 여름  →  다시 현장으로" placeholder="예: 제니엘 30주년 → 나의 여름"></div>
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:6px">
+            <div>
+              <label class="lab">화면 질감</label>
+              <label style="display:flex;gap:8px;align-items:center;font-size:13px;font-weight:700;padding:8px 0">
+                <input type="checkbox" id="film" checked> 필름 질감 (그레인 · 비네팅 · 손떨림)
+              </label>
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:6px">
+            <div>
+              <label class="lab">배경음악 (선택 · 저작권 free만)</label>
+              <div class="fld">
+                <input type="file" id="bgm" accept="audio/*" style="font-size:12px">
+                <button class="iconbtn del" id="bgmClear" title="음악 제거">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="note warn"><b>음악 주의</b> — 가요·팝 등 상용 음원은 사내 게시 시 저작권 문제가 될 수 있습니다. 유튜브 오디오 보관함, 브금대통령 등 <b>사용 허가된 음원</b>만 넣으세요. 음악 없이 자막만으로도 충분히 완성도 있습니다.</div>
+        </div>
+      </div>
+
+      <!-- RIGHT : stage -->
+      <div class="stage">
+        <div class="card" style="padding:16px">
+          <h3>③ 미리보기 &amp; 저장</h3>
+          <div class="phone"><canvas id="cv" width="1080" height="1920"></canvas></div>
+
+          <div class="meter">
+            <div class="top">
+              <div class="lab">전체 길이</div>
+              <div class="val" id="totalV">0.0초</div>
+            </div>
+            <div class="bar"><i id="totalBar"></i><div class="zone" style="left:40%;width:40%"></div></div>
+            <div class="hint" id="totalHint">초록 구간(10~20초)이 공모 기준입니다.</div>
+          </div>
+
+          <div class="btnrow">
+            <button class="btn p wide" id="btnPlay">▶ 미리보기 재생</button>
+          </div>
+          <div class="btnrow">
+            <button class="btn rec wide" id="btnRec">⏺ 영상 파일로 저장하기</button>
+          </div>
+          <div class="hint" id="recHint">저장 버튼을 누르면 영상 길이만큼 실시간으로 녹화됩니다. 녹화 중에는 이 탭을 그대로 두세요.</div>
+
+          <div class="out" id="out">
+            <video id="outv" controls playsinline></video>
+            <div class="btnrow">
+              <a class="btn p wide" id="dl" download>⬇ 파일 다운로드</a>
+            </div>
+            <div class="hint" id="dlHint"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 3 : SEND ============ -->
+  <section class="page" id="p-send">
+    <div class="grid2">
+      <div class="card">
+        <h3>제출 전 최종 체크리스트</h3>
+        <p class="desc">하나씩 눌러가며 확인하세요. 형식 미달로 탈락하는 경우가 가장 아깝습니다.</p>
+        <ol class="chk">
+          <li><input type="checkbox"><span><b>길이 10~20초</b> — 재생해서 직접 재어봤다</span></li>
+          <li><input type="checkbox"><span><b>mp4 형식</b> — 파일 확장자가 .mp4다</span></li>
+          <li><input type="checkbox"><span><b>세로 9:16</b> — 휴대폰에서 꽉 차게 재생된다</span></li>
+          <li><input type="checkbox"><span><b>주제 반영</b> — 창립 30주년 축하 메시지가 화면에 보인다</span></li>
+          <li><input type="checkbox"><span><b>본인 확인</b> — 소속·이름이 영상 또는 메일에 있다</span></li>
+          <li><input type="checkbox"><span><b>1인 1작품</b> — 중복 제출이 아니다</span></li>
+          <li><input type="checkbox"><span><b>저작권</b> — 음악·폰트·이미지가 사용 허가된 것이다</span></li>
+          <li><input type="checkbox"><span><b>초상권</b> — 등장하는 동료·가족의 동의를 받았다</span></li>
+          <li><input type="checkbox"><span><b>휴대폰 재생 확인</b> — 실제 폰으로 열어 소리·화질을 확인했다</span></li>
+          <li><input type="checkbox"><span><b>기한</b> — 2026년 8월 31일(월) 이내에 발송한다</span></li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>제출 메일 양식</h3>
+        <p class="desc">아래 내용을 복사해 <b>ylpark@zeniel.co.kr</b> 로 보내면서 mp4 파일을 첨부하세요. 용량이 크면 사내 메일 대신 웹하드/드라이브 링크를 함께 적어주세요.</p>
+        <pre class="mail" id="mailBody">받는 사람 : ylpark@zeniel.co.kr
+제목 : [30th SUMMER MOMENTS 응모] OO사업부 OO팀 홍길동
+
+안녕하세요, OO사업부 OO팀 홍길동입니다.
+제니엘그룹 창립 30주년 기념 '30th SUMMER MOMENTS' 쇼츠 영상 공모전에 응모합니다.
+
+· 성명 / 소속 : 홍길동 / OO사업부 OO팀
+· 연락처 : 010-0000-0000
+· 작품 제목 : 나의 여름 3컷
+· 영상 길이 : 17초
+· 형식 / 비율 : mp4 / 9:16 세로
+· 한 줄 소개 : 올여름 휴가에서 찾은 서른 번째 여름을 담았습니다.
+
+· 사용 음원 : 저작권 free 음원 (출처 : 유튜브 오디오 보관함)
+· 촬영 동의 : 영상에 등장하는 인물의 게시 동의를 받았습니다.
+
+첨부 : summer_moments_홍길동.mp4
+
+감사합니다.</pre>
+        <div class="btnrow">
+          <button class="btn p" id="copyMail">📋 메일 양식 복사</button>
+        </div>
+        <div class="note"><b>파일명 추천</b> — <code>30th_summer_홍길동_OO팀.mp4</code> 처럼 이름을 넣어두면 담당자가 정리하기 쉽고, 심사에서 누락될 확률이 줄어듭니다.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>일정</h3>
+      <table class="sb">
+        <tr><th>단계</th><th>일자</th><th>내용</th></tr>
+        <tr><td class="c">응모</td><td class="c">2026.07.02(목) ~ 08.31(월)</td><td>ylpark@zeniel.co.kr 로 mp4 전송</td></tr>
+        <tr><td class="c">심사</td><td class="c">09.01(화) ~ 09.04(금)</td><td>전략기획팀 1차 심사 후 온라인 게시 · 투표</td></tr>
+        <tr><td class="c">발표</td><td class="c">09.07(월)</td><td>결과 발표 (시상 일자는 별도 공지 예정)</td></tr>
+      </table>
+    </div>
+  </section>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= 공통 ================= */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const toastEl = $('#toast');
+let toastT = null;
+function toast(msg){
+  toastEl.textContent = msg; toastEl.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(()=>toastEl.classList.remove('on'), 2200);
+}
+
+/* D-day */
+(function(){
+  const end = new Date(2026,7,31,23,59,59);
+  const d = Math.ceil((end - new Date())/86400000);
+  $('#dday').textContent = d > 0 ? ('D-' + d) : (d === 0 ? 'D-DAY' : '접수 마감');
+})();
+
+/* 탭 */
+$$('.tab').forEach(t=>t.addEventListener('click',()=>{
+  $$('.tab').forEach(x=>x.classList.remove('on'));
+  $$('.page').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on'); $('#p-'+t.dataset.p).classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+}));
+
+$('#copyMail').addEventListener('click', async ()=>{
+  try{ await navigator.clipboard.writeText($('#mailBody').textContent); toast('메일 양식을 복사했습니다'); }
+  catch(e){ toast('복사 실패 — 직접 드래그해 복사해주세요'); }
+});
+
+/* ================= 렌더 엔진 ================= */
+const W = 1080, H = 1920, FPS = 30, FADE = 0.35;
+const cv = $('#cv');
+let ctx = cv.getContext('2d');
+let TGT = cv;
+/* 절차적 장면을 오프스크린에 그릴 때 렌더 타깃을 잠시 바꾼다 */
+function withTarget(canvas, fn){
+  const pc = ctx, pt = TGT;
+  ctx = canvas.getContext('2d'); TGT = canvas;
+  try { fn(); } finally { ctx = pc; TGT = pt; }
+}
+const FONT = '"NanumGothicExtraBold","NanumGothic","Nanum Gothic","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+
+const TEMPLATES = {
+  splash:{ bg:['#8fdcff','#1173cf'], ink:'#ffffff', accent:'#ffe066', chip:'rgba(7,44,86,.55)', sub:'#dff2ff' },
+  sunset:{ bg:['#ffd08a','#e8543f'], ink:'#ffffff', accent:'#fff2c2', chip:'rgba(92,26,10,.5)',  sub:'#ffeede' },
+  film:  { bg:['#242424','#000000'], ink:'#ffffff', accent:'#7fd8ff', chip:'rgba(0,0,0,.6)',     sub:'#cfd8e3' },
+  cinema:{ bg:['#0e1a24','#05080c'], ink:'#ffffff', accent:'#25d07a', chip:'rgba(10,22,34,.82)',  sub:'#c9dbe8', cine:true }
+};
+
+const S = {
+  clips: [],
+  intro: { on:true, l1:'2026 제니엘그룹', l2:'30th SUMMER MOMENTS', dur:2 },
+  outro: { on:true, l1:'창립 30주년을 축하합니다', l2:'OO사업부 OO팀 홍길동', dur:3 },
+  tpl: 'splash',
+  topbar: '제니엘 30주년  →  나의 여름  →  다시 현장으로',
+  film: true,
+  bgmEl: null
+};
+let TL = { segs:[], total:0 };
+let uid = 0;
+
+function buildTL(){
+  const segs = [];
+  if (S.intro.on) segs.push({ kind:'intro', dur:+S.intro.dur || 2 });
+  S.clips.forEach(c => segs.push({ kind:'media', dur:+c.dur || 3, clip:c }));
+  if (S.outro.on) segs.push({ kind:'outro', dur:+S.outro.dur || 3 });
+  let t = 0;
+  segs.forEach(s => { s.start = t; t += s.dur; s.end = t; });
+  TL = { segs, total:t };
+  return TL;
+}
+
+/* ---- 그리기 유틸 ---- */
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+}
+function wrapText(text, font, maxW){
+  ctx.font = font;
+  const out = []; let line = '';
+  for (const ch of String(text)){
+    if (ch === '\n'){ out.push(line); line=''; continue; }
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxW && line){ out.push(line); line = (ch===' '?'':ch); }
+    else line = test;
+  }
+  if (line) out.push(line);
+  return out;
+}
+const ease = p => p<0 ? 0 : p>1 ? 1 : 1-Math.pow(1-p,3);
+
+function drawBG(tp){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, tp.bg[0]); g.addColorStop(1, tp.bg[1]);
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+}
+function drawMedia(clip, p, alpha){
+  if (clip.type === 'proc'){
+    const q = Math.min(1, Math.max(0, p));
+    let z = 1, dx = 0;
+    if (clip.motion === 'in')  z = 1.00 + 0.09*q;
+    if (clip.motion === 'out') z = 1.09 - 0.09*q;
+    if (clip.motion === 'pan'){ z = 1.07; dx = (q-0.5)*70; }
+    const paint = () => {
+      ctx.save();
+      ctx.translate(W/2 + dx, H/2); ctx.scale(z, z); ctx.translate(-W/2, -H/2);
+      PROC[clip.scene](q, NOW);
+      ctx.restore();
+    };
+    if (alpha >= 0.999){ paint(); return; }
+    /* 반투명으로 겹쳐 그리면 장면 내부의 lighter·screen 합성이 뒤 화면과
+       섞여 이중노출이 된다. 오프스크린에 불투명하게 완성한 뒤 합성한다. */
+    const c = off('xfade', W, H);
+    c.getContext('2d').clearRect(0,0,W,H);
+    withTarget(c, paint);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.drawImage(c, 0, 0); ctx.restore();
+    return;
+  }
+  const el = clip.el; if(!el) return;
+  const w = el.videoWidth || el.naturalWidth || el.width;
+  const h = el.videoHeight || el.naturalHeight || el.height;
+  if(!w || !h) return;
+  const q = Math.min(1, Math.max(0, p));
+  let zoom = 1.04, dx0 = 0;
+  if (clip.motion === 'in')  zoom = 1.04 + 0.11*q;
+  if (clip.motion === 'out') zoom = 1.15 - 0.11*q;
+  if (clip.motion === 'pan'){ zoom = 1.12; dx0 = (q-0.5)*90; }
+  const sc = Math.max(W/w, H/h) * zoom;
+  const dw = w*sc, dh = h*sc;
+  ctx.globalAlpha = alpha;
+  try{ ctx.drawImage(el, (W-dw)/2 + dx0, (H-dh)/2, dw, dh); }catch(e){}
+  ctx.globalAlpha = 1;
+}
+function drawCaption(text, tp, alpha){
+  if(!text) return;
+  ctx.save();
+  const font = '800 62px ' + FONT;
+  const lines = wrapText(text, font, W-200);
+  const lh = 82, padX = 44, padY = 28;
+  let maxW = 0; lines.forEach(l => maxW = Math.max(maxW, ctx.measureText(l).width));
+  const boxW = Math.min(W-100, maxW + padX*2);
+  const boxH = lines.length*lh + padY*2 - 18;
+  const x = (W-boxW)/2, y = H - 470 - boxH;
+
+  ctx.globalAlpha = alpha;
+  const sh = ctx.createLinearGradient(0, y-140, 0, H);
+  sh.addColorStop(0,'rgba(0,0,0,0)'); sh.addColorStop(1,'rgba(0,0,0,.42)');
+  ctx.fillStyle = sh; ctx.fillRect(0, y-140, W, H-(y-140));
+
+  ctx.fillStyle = tp.chip; roundRect(x,y,boxW,boxH,26); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 2; ctx.stroke();
+
+  ctx.font = font; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 2;
+  lines.forEach((l,i) => ctx.fillText(l, W/2, y+padY+i*lh));
+  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+function drawLetterbox(){
+  ctx.save(); ctx.fillStyle='#000';
+  ctx.fillRect(0,0,W,74); ctx.fillRect(0,H-74,W,74);
+  ctx.restore();
+}
+function drawTopBar(tp, alpha, override){
+  const txt = override || S.topbar; if(!txt) return;
+  const font = '800 34px ' + FONT;
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.font = font; ctx.textAlign='left'; ctx.textBaseline='middle';
+  const w = ctx.measureText(txt).width + 56, x = 56, y = 168;
+  ctx.fillStyle = tp.chip; roundRect(x, y-32, Math.min(w, W-112), 64, 8); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.fillText(txt, x+28, y+1);
+  ctx.restore();
+}
+function drawCaptionCine(text, tp, alpha, grow){
+  if(!text) return;
+  ctx.save();
+  const font = '800 58px ' + FONT;
+  const lines = wrapText(text, font, W-190);
+  const lh = 76;
+  const baseY = H - 430 - (lines.length-1)*lh;
+  // 하단 그라데이션
+  const sh = ctx.createLinearGradient(0, baseY-190, 0, H);
+  sh.addColorStop(0,'rgba(0,0,0,0)'); sh.addColorStop(1,'rgba(0,0,0,.66)');
+  ctx.fillStyle = sh; ctx.fillRect(0, baseY-190, W, H-(baseY-190));
+  ctx.globalAlpha = alpha;
+  // 액센트 라인
+  ctx.fillStyle = tp.accent;
+  ctx.fillRect(70, baseY - 54, 300*Math.min(1,grow), 5);
+  // 본문
+  ctx.font = font; ctx.textAlign='left'; ctx.textBaseline='top';
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor='rgba(0,0,0,.55)'; ctx.shadowBlur=14; ctx.shadowOffsetY=2;
+  lines.forEach((l,i)=> ctx.fillText(l, 70, baseY + i*lh));
+  ctx.restore();
+}
+
+function drawWave(tp, ph){
+  ctx.save();
+  ctx.globalAlpha = .35; ctx.fillStyle = tp.ink;
+  for (let k=0;k<3;k++){
+    ctx.beginPath();
+    const yBase = H*0.72 + k*70;
+    ctx.moveTo(0,yBase);
+    for (let x=0;x<=W;x+=20) ctx.lineTo(x, yBase + Math.sin((x/W)*Math.PI*3 + ph + k)*22);
+    ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
+    ctx.globalAlpha = .10 - k*0.025;
+    ctx.fill();
+  }
+  ctx.restore();
+}
+function drawBadge30(tp, cy, sc, alpha){
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.translate(W/2, cy); ctx.scale(sc,sc);
+  ctx.beginPath(); ctx.arc(0,0,132,0,Math.PI*2);
+  ctx.fillStyle = tp.cine ? 'rgba(10,24,34,.42)' : tp.accent; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = tp.cine ? 4 : 6; ctx.stroke();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = tp.cine ? 16 : 0;
+  ctx.fillStyle = tp.cine ? '#ffffff' : '#0d3b66'; ctx.font = '900 96px ' + FONT;
+  ctx.fillText('30', 0, -12);
+  ctx.font = '800 30px ' + FONT; ctx.fillText('YEARS', 0, 62);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+function cardScrim(tp){
+  if (!tp.cine) return;
+  ctx.save();
+  const g = ctx.createLinearGradient(0, H*0.18, 0, H*0.88);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(.38,'rgba(0,0,0,.44)');
+  g.addColorStop(.72,'rgba(0,0,0,.40)'); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, H*0.18, W, H*0.70);
+  ctx.restore();
+}
+function drawIntro(lt, dur, tp){
+  if (!tp.cine) drawWave(tp, lt*1.6); else cardScrim(tp);
+  const a = ease(lt/0.5), sc = 0.9 + 0.1*ease(lt/0.6);
+  if (S.intro.badge !== false) drawBadge30(tp, H*0.34, sc, a);
+  const a2 = ease((lt-0.25)/0.55), up = (1-a2)*26;
+  ctx.save(); ctx.globalAlpha = a2; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(0,0,0,.28)'; ctx.shadowBlur=14; ctx.shadowOffsetY=3;
+  ctx.fillStyle = tp.sub; ctx.font = '800 54px ' + FONT;
+  ctx.fillText(S.intro.l1 || '', W/2, H*0.52 + up);
+  ctx.fillStyle = tp.ink; 
+  const l2 = S.intro.l2 || '';
+  const f2 = l2.length > 18 ? '900 76px ' : '900 92px ';
+  wrapText(l2, f2+FONT, W-140).forEach((l,i)=>{
+    ctx.font = f2+FONT;
+    ctx.fillText(l, W/2, H*0.62 + i*104 + up);
+  });
+  ctx.restore();
+}
+function drawOutro(lt, dur, tp){
+  if (!tp.cine) drawWave(tp, 2 + lt*1.2); else cardScrim(tp);
+  const a = ease(lt/0.5);
+  if (S.outro.badge !== false) drawBadge30(tp, H*0.33, 0.92 + 0.08*a, a);
+  const a2 = ease((lt-0.3)/0.6);
+  ctx.save(); ctx.globalAlpha = a2; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(0,0,0,.28)'; ctx.shadowBlur=14; ctx.shadowOffsetY=3;
+  ctx.fillStyle = tp.ink; 
+  let y = H*0.53;
+  wrapText(S.outro.l1 || '', '900 70px '+FONT, W-160).forEach(l=>{
+    ctx.font = '900 70px '+FONT; ctx.fillText(l, W/2, y); y += 96;
+  });
+  ctx.globalAlpha = a2*0.95; ctx.fillStyle = tp.sub; ctx.font = '800 46px '+FONT;
+  ctx.fillText(S.outro.l2 || '', W/2, y + 26);
+  ctx.restore();
+}
+/* ================= 절차적 실사풍 배경 =================
+   사물을 그리는 대신 카메라에 실제로 찍히는 현상을 시뮬레이션한다.
+   윤슬 · 보케 · 블룸 · 아웃포커스 · 색수차 · 헤일레이션.            */
+let NOW = 0;
+const OFF = {};
+function off(key,w,h){
+  let c = OFF[key];
+  if (!c) c = OFF[key] = document.createElement('canvas');
+  if (c.width !== w || c.height !== h){ c.width = w; c.height = h; }
+  return c;
+}
+function prng(seed){ let s = seed>>>0; return () => { s = (s*1664525 + 1013904223)>>>0; return s/4294967296; }; }
+
+const NOISE = {};
+function noiseTex(seed,w,h){
+  const k = seed+'_'+w+'x'+h;
+  if (NOISE[k]) return NOISE[k];
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'), im = x.createImageData(w,h), r = prng(seed);
+  for (let i=0;i<im.data.length;i+=4){
+    const v = r()*255;
+    im.data[i] = im.data[i+1] = im.data[i+2] = v; im.data[i+3] = 255;
+  }
+  x.putImageData(im,0,0);
+  return (NOISE[k] = c);
+}
+/* 오프스크린 레이어를 블러 + 합성으로 얹는다 (블러 연산 1회) */
+function blit(c, blurPx, mode, alpha){
+  ctx.save();
+  ctx.globalCompositeOperation = mode || 'lighter';
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  if (blurPx) ctx.filter = 'blur(' + blurPx + 'px)';
+  ctx.drawImage(c, 0, 0, W, H);
+  ctx.filter = 'none';
+  ctx.restore();
+}
+/* 수면 윤슬 — 수평선에서 카메라 쪽으로 원근이 살아 있게 */
+function surfaceGlitter(seed, count, hzR, cxR, spread, sizeBase, t){
+  const w = 540, h = 960;
+  const c = off('sg'+seed, w, h), x = c.getContext('2d');
+  x.clearRect(0,0,w,h);
+  x.globalCompositeOperation = 'lighter';
+  x.fillStyle = '#fff6de';
+  const hz = h*hzR, cx = w*cxR;
+  const r = prng(seed);
+  for (let i=0;i<count;i++){
+    const u  = Math.pow(r(), 1.9);                 // 0=수평선, 1=카메라 앞
+    const lat = (r()-0.5);
+    const y  = hz + (h-hz)*u;
+    const x0 = cx + lat*w*spread*(0.18 + u*1.9);
+    if (x0 < -40 || x0 > w+40) continue;
+    const ph = r()*6.283, sp = 1.1 + r()*3.6, jit = r();
+    // 기둥 중심에서 멀수록 어두워진다
+    const fall = Math.max(0, 1 - Math.abs(lat)*1.75);
+    let a = Math.sin(t*sp + ph)*0.5 + 0.5;
+    a = a*a*a * (0.25 + fall*0.95);
+    if (a < 0.035) continue;
+    const sc = sizeBase*(0.22 + u*2.4)*(0.55 + jit*0.95);
+    x.globalAlpha = Math.min(1, a);
+    x.beginPath();
+    x.ellipse(x0, y + Math.sin(t*0.7 + ph)*(1+u*4), sc*(1.7+u*1.2), sc*0.5, 0, 0, 6.3);
+    x.fill();
+  }
+  return c;
+}
+/* 잔물결 — 수면에 가로로 눕는 미세한 선 */
+function ripples(seed, count, hzR, t){
+  const w = 540, h = 960;
+  const c = off('rp'+seed, w, h), x = c.getContext('2d');
+  x.clearRect(0,0,w,h);
+  x.globalCompositeOperation = 'lighter';
+  x.strokeStyle = 'rgba(255,255,255,.5)'; x.lineCap='round';
+  const hz = h*hzR, r = prng(seed);
+  for (let i=0;i<count;i++){
+    const u = Math.pow(r(), 1.8);
+    const y = hz + (h-hz)*u + Math.sin(t*0.9 + i)*1.5*u;
+    const len = (12 + r()*70)*(0.3 + u*2.0);
+    const x0 = r()*w;
+    x.globalAlpha = (0.05 + r()*0.16)*(0.35 + u*0.8);
+    x.lineWidth = 0.7 + u*2.4;
+    x.beginPath(); x.moveTo(x0,y); x.lineTo(x0+len,y); x.stroke();
+  }
+  return c;
+}
+/* 큰 보케 원 */
+function bokehLayer(seed, count, minR, maxR, t, speed){
+  const w = 540, h = 960;
+  const c = off('bk'+seed, w, h), x = c.getContext('2d');
+  x.clearRect(0,0,w,h);
+  x.globalCompositeOperation = 'lighter';
+  const r = prng(seed);
+  for (let i=0;i<count;i++){
+    const rad = minR + r()*(maxR-minR);
+    const x0 = r()*w, y0 = r()*h, ph = r()*6.283, vx = 0.4 + r()*0.9;
+    const bx = ((x0 + t*speed*vx) % (w + rad*2) + (w + rad*2)) % (w + rad*2) - rad;
+    const by = y0 - t*speed*0.35 + Math.sin(t*0.5 + ph)*10;
+    const yy = ((by % (h + rad*2)) + (h + rad*2)) % (h + rad*2) - rad;
+    const a = 0.10 + (Math.sin(t*0.8 + ph)*0.5 + 0.5)*0.22;
+    const g = x.createRadialGradient(bx,yy,rad*0.05,bx,yy,rad);
+    g.addColorStop(0,   'rgba(255,238,205,' + (a*0.75) + ')');
+    g.addColorStop(0.72,'rgba(255,226,180,' + (a*0.55) + ')');
+    g.addColorStop(0.93,'rgba(255,248,225,' + (a*1.00) + ')');
+    g.addColorStop(1,   'rgba(255,240,210,0)');
+    x.fillStyle = g;
+    x.beginPath(); x.arc(bx,yy,rad,0,6.3); x.fill();
+  }
+  return c;
+}
+/* 태양 + 블룸 + 아나모픽 스트릭 */
+function sunGlow(cx, cy, coreR, warm, inten){
+  const k = inten == null ? 1 : inten;
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  const g = ctx.createRadialGradient(cx,cy,coreR*0.2,cx,cy,coreR*7.5);
+  g.addColorStop(0,   'rgba(255,252,238,' + (1*k) + ')');
+  g.addColorStop(0.08,'rgba(255,246,215,' + (.95*k) + ')');
+  g.addColorStop(0.22, warm ? 'rgba(255,190,120,' + (.55*k) + ')' : 'rgba(255,225,170,' + (.5*k) + ')');
+  g.addColorStop(1,   'rgba(255,180,110,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx,cy,coreR*7.5,0,6.3); ctx.fill();
+  ctx.fillStyle = 'rgba(255,253,244,' + (.98*k) + ')';
+  ctx.beginPath(); ctx.arc(cx,cy,coreR,0,6.3); ctx.fill();
+  ctx.filter = 'blur(14px)';
+  const st = ctx.createLinearGradient(cx-W,cy,cx+W,cy);
+  st.addColorStop(0,'rgba(255,215,160,0)');
+  st.addColorStop(.5,'rgba(255,240,205,' + (.42*k) + ')');
+  st.addColorStop(1,'rgba(255,215,160,0)');
+  ctx.fillStyle = st; ctx.fillRect(0, cy-9, W, 18);
+  ctx.filter = 'none';
+  ctx.restore();
+}
+/* 구름 — 노이즈 2옥타브를 블러해서 유기적인 형태로 */
+function clouds(t, alpha, y0, y1){
+  const c = off('cl', 128, 220), x = c.getContext('2d');
+  x.clearRect(0,0,128,220);
+  x.globalCompositeOperation = 'source-over';
+  x.globalAlpha = 1;
+  x.drawImage(noiseTex(7311,64,110), (t*3)%64 - 64, 0, 128, 220);
+  x.drawImage(noiseTex(7311,64,110), (t*3)%64,      0, 128, 220);
+  x.globalCompositeOperation = 'multiply';
+  x.drawImage(noiseTex(913,24,42), (t*1.1)%24 - 24, 10, 128, 220);
+  x.drawImage(noiseTex(913,24,42), (t*1.1)%24,      10, 128, 220);
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  ctx.globalAlpha = alpha;
+  ctx.filter = 'blur(26px)';
+  ctx.drawImage(c, 0, y0, W, y1-y0);
+  ctx.filter = 'none';
+  ctx.restore();
+}
+/* 색수차 — 하이라이트에 미세한 RGB 분리 */
+function chroma(){
+  const c = off('ca', 270, 480), x = c.getContext('2d');
+  x.clearRect(0,0,270,480);
+  x.drawImage(TGT, 0,0, 270,480);
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha = .10; ctx.filter = 'blur(3px)';
+  ctx.drawImage(c, -3, 0, W, H);
+  ctx.drawImage(c,  3, 0, W, H);
+  ctx.filter = 'none';
+  ctx.restore();
+}
+
+const PROC = {
+  /* 1. 한낮 바다 — 수평선 역광, 윤슬 기둥 */
+  glitter: function(p, t){
+    const HZ = H*0.30;
+    let g = ctx.createLinearGradient(0,0,0,HZ);
+    g.addColorStop(0,'#2273a6'); g.addColorStop(.5,'#5aa8cd'); g.addColorStop(1,'#a4d3e6');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,HZ);
+    sunGlow(W*0.56, HZ-205, 34, false, .42);
+    // 수평선 헤이즈
+    ctx.save(); ctx.globalCompositeOperation='screen'; ctx.filter='blur(30px)';
+    ctx.fillStyle='rgba(226,244,252,.30)'; ctx.fillRect(0,HZ-12,W,18);
+    ctx.filter='none'; ctx.restore();
+    // 수면
+    let s2 = ctx.createLinearGradient(0,HZ,0,H);
+    s2.addColorStop(0,'#2e7fa6'); s2.addColorStop(.30,'#1c6d99'); s2.addColorStop(1,'#062f4c');
+    ctx.fillStyle = s2; ctx.fillRect(0,HZ,W,H-HZ);
+    blit(ripples(21, 900, 0.30, t), 1.2, 'lighter', .55);
+    blit(surfaceGlitter(101, 900, 0.30, 0.56, 0.55, 1.5, t), 0.9, 'lighter', .95);
+    blit(surfaceGlitter(202, 260, 0.30, 0.56, 0.75, 3.4, t), 5,   'lighter', .75);
+    blit(surfaceGlitter(303,  60, 0.34, 0.56, 1.10, 9.0, t), 20,  'lighter', .55);
+    // 근경 아웃포커스
+    ctx.save(); ctx.globalAlpha=.42; ctx.filter='blur(34px)';
+    const ng = ctx.createLinearGradient(0,H-330,0,H);
+    ng.addColorStop(0,'rgba(6,42,68,0)'); ng.addColorStop(1,'rgba(6,42,68,.92)');
+    ctx.fillStyle = ng; ctx.fillRect(0,H-330,W,330);
+    ctx.filter='none'; ctx.restore();
+    chroma();
+  },
+  /* 2. 오후 보케 — 아웃포커스된 반짝임 */
+  bokeh: function(p, t){
+    const g = ctx.createLinearGradient(0,0,W*0.5,H);
+    g.addColorStop(0,'#d98b4e'); g.addColorStop(.38,'#a4492f');
+    g.addColorStop(.74,'#54222c'); g.addColorStop(1,'#1d0f1c');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+    blit(bokehLayer(511, 18, 44, 130, t, 9),  8,  'lighter', .60);
+    blit(bokehLayer(622,  8, 110, 240, t, 5), 24, 'lighter', .40);
+    blit(surfaceGlitter(733, 220, 0.05, 0.5, 1.2, 2.0, t), 3, 'lighter', .30);
+    // 광원 방향 헤일레이션
+    ctx.save(); ctx.globalCompositeOperation='screen'; ctx.filter='blur(90px)';
+    const hg = ctx.createRadialGradient(W*0.30,H*0.24,10,W*0.30,H*0.24,W*0.85);
+    hg.addColorStop(0,'rgba(255,214,150,.55)'); hg.addColorStop(1,'rgba(255,190,120,0)');
+    ctx.fillStyle=hg; ctx.fillRect(0,0,W,H); ctx.filter='none'; ctx.restore();
+    chroma();
+  },
+  /* 3. 노을 — 하늘 그라데이션 + 구름 + 반사 기둥 */
+  sunset: function(p, t){
+    const HZ = H*0.615;
+    const g = ctx.createLinearGradient(0,0,0,HZ);
+    g.addColorStop(0,'#241a4d'); g.addColorStop(.26,'#7a3f76');
+    g.addColorStop(.55,'#e0644f'); g.addColorStop(.80,'#ff9b52'); g.addColorStop(1,'#ffd189');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,HZ);
+    clouds(t, .30, H*0.06, H*0.55);
+    sunGlow(W*0.5, HZ-30, 68, true);
+    const sg = ctx.createLinearGradient(0,HZ,0,H);
+    sg.addColorStop(0,'#b8613f'); sg.addColorStop(.28,'#6d3d55'); sg.addColorStop(1,'#160f28');
+    ctx.fillStyle = sg; ctx.fillRect(0,HZ,W,H-HZ);
+    ctx.save(); ctx.beginPath(); ctx.rect(0,HZ,W,H-HZ); ctx.clip();
+    blit(ripples(31, 700, 0.615, t), 1.4, 'lighter', .40);
+    blit(surfaceGlitter(844, 700, 0.615, 0.5, 0.42, 2.0, t), 1.2, 'lighter', .95);
+    blit(surfaceGlitter(955, 180, 0.615, 0.5, 0.62, 4.6, t), 7,   'lighter', .70);
+    blit(surfaceGlitter(966,  40, 0.68,  0.5, 0.95, 11,  t), 22,  'lighter', .45);
+    ctx.restore();
+    chroma();
+  },
+  /* 4. 물가 — 밀려드는 물결과 젖은 모래, 얕은 심도 */
+  shore: function(p, t){
+    // 멀리 아웃포커스된 바다
+    const seaH = H*0.19;
+    const sea = ctx.createLinearGradient(0,0,0,seaH);
+    sea.addColorStop(0,'#2f86ad'); sea.addColorStop(1,'#79bccb');
+    ctx.fillStyle = sea; ctx.fillRect(0,0,W,seaH);
+    ctx.save(); ctx.filter='blur(26px)';
+    ctx.fillStyle='rgba(255,255,255,.55)'; ctx.fillRect(0,seaH-18,W,30);
+    ctx.filter='none'; ctx.restore();
+
+    // 모래 — 젖은 곳에서 마른 곳으로 이어지는 한 장의 그라데이션
+    const sd = ctx.createLinearGradient(0,seaH-20,0,H);
+    sd.addColorStop(0,'#a98a5c'); sd.addColorStop(.16,'#c8a877');
+    sd.addColorStop(.42,'#ddc192'); sd.addColorStop(.75,'#e6cb9d'); sd.addColorStop(1,'#c2a06a');
+    ctx.fillStyle = sd; ctx.fillRect(0,seaH-20,W,H-seaH+20);
+    // 결이 고운 모래 알갱이
+    ctx.save(); ctx.globalCompositeOperation='overlay';
+    ctx.globalAlpha=.13; ctx.filter='blur(.6px)';
+    ctx.drawImage(noiseTex(4242,620,1100), 0, seaH-20, W, H-seaH+20);
+    ctx.globalAlpha=.10; ctx.filter='blur(9px)';
+    ctx.drawImage(noiseTex(818,90,160), 0, seaH-20, W, H-seaH+20);
+    ctx.filter='none'; ctx.restore();
+
+    // 젖은 면 — 어둡고 반질한 띠
+    ctx.save();
+    const wet = ctx.createLinearGradient(0,seaH,0,H*0.56);
+    wet.addColorStop(0,'rgba(70,58,42,.42)'); wet.addColorStop(.65,'rgba(90,74,52,.22)');
+    wet.addColorStop(1,'rgba(120,100,70,0)');
+    ctx.fillStyle = wet; ctx.fillRect(0,seaH,W,H*0.56-seaH);
+    ctx.globalCompositeOperation='screen'; ctx.filter='blur(46px)'; ctx.globalAlpha=.30;
+    const sheen = ctx.createLinearGradient(0,seaH,0,H*0.46);
+    sheen.addColorStop(0,'rgba(255,246,224,.9)'); sheen.addColorStop(1,'rgba(255,246,224,0)');
+    ctx.fillStyle = sheen; ctx.fillRect(0,seaH,W,H*0.46-seaH);
+    ctx.filter='none'; ctx.restore();
+
+    // 파도 가장자리 — 얇은 포말 레이스 두 겹
+    const edge = (yBase, amp, freq, phase, lw, blurPx, alpha, sheetA) => {
+      const c = off('ed'+Math.round(yBase), 540, 300), x = c.getContext('2d');
+      x.clearRect(0,0,540,300);
+      const yy = px => 150 + Math.sin(px/freq + phase)*amp + Math.sin(px/(freq*0.31) - phase*1.3)*amp*0.34;
+      // 물이 덮은 면
+      x.fillStyle = 'rgba(186,214,214,' + sheetA + ')';
+      x.beginPath(); x.moveTo(0,yy(0));
+      for (let px=0; px<=540; px+=6) x.lineTo(px, yy(px));
+      x.lineTo(540,0); x.lineTo(0,0); x.closePath(); x.fill();
+      // 포말 선
+      x.strokeStyle = 'rgba(255,255,255,.95)'; x.lineWidth = lw; x.lineCap='round';
+      x.beginPath();
+      for (let px=0; px<=540; px+=6){ const v = yy(px); if (px===0) x.moveTo(px,v); else x.lineTo(px,v); }
+      x.stroke();
+      // 흩어진 거품
+      const r = prng(Math.round(yBase)+7);
+      x.fillStyle = 'rgba(255,255,255,.8)';
+      for (let i=0;i<90;i++){
+        const px = r()*540, off2 = (r()-0.5)*26;
+        x.globalAlpha = .25 + r()*0.5;
+        x.beginPath(); x.arc(px, yy(px)+off2, 1.2 + r()*3.4, 0, 6.3); x.fill();
+      }
+      ctx.save();
+      ctx.filter = 'blur(' + blurPx + 'px)';
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(c, 0, yBase-150, W, 300);
+      ctx.filter='none'; ctx.restore();
+    };
+    edge(H*0.30 + Math.sin(t*0.5)*30,      13, 46, t*1.5,      7,  4,  .95, .34);
+    edge(H*0.56 + Math.sin(t*0.42+2.1)*44, 20, 60, t*1.2+1.4, 12, 17,  .70, .26);
+
+    // 젖은 면 스페큘러
+    ctx.save(); ctx.beginPath(); ctx.rect(0,seaH,W,H*0.42); ctx.clip();
+    blit(surfaceGlitter(77, 220, 0.05, 0.5, 1.25, 2.2, t), 2.5, 'lighter', .40);
+    ctx.restore();
+
+    // 근경 아웃포커스
+    ctx.save(); ctx.globalAlpha=.62; ctx.filter='blur(42px)';
+    const ng = ctx.createLinearGradient(0,H-430,0,H);
+    ng.addColorStop(0,'rgba(178,146,96,0)'); ng.addColorStop(1,'rgba(158,126,80,.95)');
+    ctx.fillStyle = ng; ctx.fillRect(0,H-430,W,430);
+    ctx.filter='none'; ctx.restore();
+    chroma();
+  }
+};
+const PROC_PRESET = [
+  ['glitter','한낮 바다 · 윤슬',       '올여름, 나는 여기 있었다'],
+  ['shore',  '모래와 파도 · 얕은 심도', '제대로 쉬어본 하루'],
+  ['bokeh',  '오후 보케 · 아웃포커스',  '파도처럼, 서른 번째 여름'],
+  ['sunset', '노을 · 수면 반사',        '충전 완료!']
+];
+
+/* ---- 필름 질감 (그레인 · 비네팅 · 색보정 · 손떨림) ---- */
+let grainTile = null;
+function makeGrain(){
+  const g = document.createElement('canvas'); g.width = g.height = 256;
+  const gx = g.getContext('2d');
+  const im = gx.createImageData(256,256);
+  let seed = 20260831;
+  const rnd = () => { seed = (seed*1664525 + 1013904223) >>> 0; return seed/4294967296; };
+  for (let i=0;i<im.data.length;i+=4){
+    const v = 118 + (rnd()-0.5)*96;
+    im.data[i] = im.data[i+1] = im.data[i+2] = v; im.data[i+3] = 255;
+  }
+  gx.putImageData(im,0,0);
+  return g;
+}
+function shakeOf(t){
+  if (!S.film) return [0,0];
+  return [ Math.sin(t*2.3)*3.4 + Math.sin(t*5.7)*1.5,
+           Math.cos(t*1.9)*3.0 + Math.cos(t*6.1)*1.3 ];
+}
+function drawFilm(t, grade){
+  if (!S.film) return;
+  // 색보정 — 하이라이트를 따뜻하게. 흑백 소재에는 걸지 않는다(세피아로 변한다).
+  if (grade !== false){
+    ctx.save();
+    ctx.globalCompositeOperation = 'soft-light';
+    ctx.globalAlpha = .20; ctx.fillStyle = '#ff9d4d'; ctx.fillRect(0,0,W,H);
+    ctx.restore();
+  }
+  // 비네팅
+  ctx.save();
+  const vg = ctx.createRadialGradient(W/2,H/2,H*0.28,W/2,H/2,H*0.64);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.40)');
+  ctx.fillStyle = vg; ctx.fillRect(0,0,W,H);
+  ctx.restore();
+  // 그레인
+  if (!grainTile) grainTile = makeGrain();
+  ctx.save();
+  ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = .085;
+  const ox = -((t*180)%256), oy = -((t*127)%256);
+  for (let x0=ox; x0<W; x0+=256) for (let y0=oy; y0<H; y0+=256) ctx.drawImage(grainTile,x0,y0);
+  ctx.restore();
+}
+
+function drawFrame(t){
+  NOW = t;
+  const tp = TEMPLATES[S.tpl];
+  drawBG(tp);
+  const segs = TL.segs;
+  if (!segs.length){
+    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font = '800 52px '+FONT;
+    ctx.fillText('사진이나 영상을 넣어주세요', W/2, H/2 - 30);
+    ctx.font = '700 38px '+FONT; ctx.globalAlpha=.8;
+    ctx.fillText('왼쪽에서 파일을 추가하면', W/2, H/2 + 50);
+    ctx.fillText('여기에 미리보기가 나타납니다', W/2, H/2 + 108);
+    ctx.globalAlpha=1;
+    return;
+  }
+  let i = segs.findIndex(s => t >= s.start && t < s.end);
+  if (i < 0) i = segs.length - 1;
+  const s = segs[i], lt = Math.max(0, t - s.start);
+
+  if (s.kind === 'media'){
+    const sh = shakeOf(t);
+    ctx.save(); ctx.translate(sh[0], sh[1]);
+    drawMedia(s.clip, lt/s.dur, 1);
+    const pr = segs[i-1];
+    if (pr && pr.kind === 'media'){
+      /* 절차적 장면끼리는 수평선 높이가 달라 길게 겹치면 지평선이 두 개로
+         보인다. 어느 한쪽이라도 생성 배경이면 전환을 짧게 끊는다. */
+      const fd = (s.clip.type === 'proc' || pr.clip.type === 'proc') ? 0.16 : FADE;
+      if (lt < fd) drawMedia(pr.clip, 1, 1 - lt/fd);
+    }
+    ctx.restore();
+    drawFilm(t, s.clip.grade);
+    const ca = ease(lt/0.4) * (lt > s.dur-0.3 ? Math.max(0,(s.dur-lt)/0.3) : 1);
+    if (tp.cine){
+      drawCaptionCine(s.clip.cap, tp, ca, lt/0.7);
+      drawTopBar(tp, ease(lt/0.5)*0.96, s.clip.top);
+      drawLetterbox();
+    } else {
+      drawCaption(s.clip.cap, tp, ca);
+    }
+  } else if (s.kind === 'intro'){
+    const first = S.clips[0];
+    if (tp.cine && first){
+      /* 정지 프레임으로 보이지 않게 아주 느리게 밀고 들어간다 */
+      const kz = 1 + 0.06*(lt/s.dur);
+      ctx.save();
+      ctx.translate(W/2, H/2); ctx.scale(kz, kz); ctx.translate(-W/2, -H/2);
+      if (first.type === 'proc') PROC[first.scene](0.15, t);
+      else drawMedia(first, 0.15, 1);
+      ctx.restore();
+    }
+    drawIntro(lt, s.dur, tp);
+    drawFilm(t, first ? first.grade : true);
+    if (tp.cine) drawLetterbox();
+  } else {
+    const last = S.clips[S.clips.length-1];
+    if (tp.cine && last){
+      const kz = 1 + 0.06*(lt/s.dur);
+      ctx.save();
+      ctx.translate(W/2, H/2); ctx.scale(kz, kz); ctx.translate(-W/2, -H/2);
+      if (last.type === 'proc') PROC[last.scene](0.85, t);
+      else drawMedia(last, 0.85, 1);
+      ctx.restore();
+    }
+    drawOutro(lt, s.dur, tp);
+    drawFilm(t, last ? last.grade : true);
+    if (tp.cine) drawLetterbox();
+  }
+
+  /* 상시 워터마크 */
+  if (S.watermark !== false){
+  ctx.save();
+  ctx.globalAlpha = .92; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=8;
+  ctx.fillStyle = '#fff'; ctx.font = '800 30px '+FONT;
+  ctx.fillText('ZENIEL  30th  SUMMER  MOMENTS', W/2, H-96);
+  ctx.restore();
+  }
+
+  /* 진행 바 */
+  const p = TL.total ? Math.min(1, t/TL.total) : 0;
+  ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.fillRect(0,0,W,8);
+  ctx.fillStyle = TEMPLATES[S.tpl].accent; ctx.fillRect(0,0,W*p,8);
+}
+
+/* ---- 재생 / 녹화 ---- */
+let playing = false, raf = 0, stopCB = null;
+function resetMedia(){
+  S.clips.forEach(c => { if (c.type === 'video' && c.el){ try{ c.el.pause(); c.el.currentTime = c.start || 0; }catch(e){} } });
+}
+function play(onEnd){
+  if (playing) return;
+  buildTL();
+  if (!TL.total){ toast('먼저 사진이나 영상을 넣어주세요'); return; }
+  playing = true; resetMedia();
+  const t0 = performance.now();
+  let lastSeg = -1;
+  if (S.bgmEl){ try{ S.bgmEl.currentTime = 0; S.bgmEl.play(); }catch(e){} }
+
+  const loop = () => {
+    const t = (performance.now() - t0)/1000;
+    let i = TL.segs.findIndex(s => t >= s.start && t < s.end);
+    if (i < 0) i = TL.segs.length - 1;
+    if (i !== lastSeg){
+      const prev = TL.segs[lastSeg];
+      if (prev && prev.kind === 'media' && prev.clip.type === 'video'){ try{ prev.clip.el.pause(); }catch(e){} }
+      const cur = TL.segs[i];
+      if (cur && cur.kind === 'media' && cur.clip.type === 'video'){
+        try{ cur.clip.el.currentTime = cur.clip.start || 0; cur.clip.el.play(); }catch(e){}
+      }
+      lastSeg = i;
+    }
+    drawFrame(Math.min(t, TL.total - 0.001));
+    if (t >= TL.total){
+      playing = false; resetMedia();
+      if (S.bgmEl){ try{ S.bgmEl.pause(); }catch(e){} }
+      drawFrame(TL.total - 0.001);
+      if (onEnd) onEnd();
+      if (stopCB){ const f = stopCB; stopCB = null; f(); }
+      return;
+    }
+    raf = requestAnimationFrame(loop);
+  };
+  raf = requestAnimationFrame(loop);
+}
+
+function pickMime(){
+  const cands = [
+    'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+    'video/mp4;codecs=avc1.42E01E',
+    'video/mp4',
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm'
+  ];
+  for (const m of cands){
+    try{ if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; }catch(e){}
+  }
+  return '';
+}
+
+let audioCtx = null, audioDest = null, audioSrc = null;
+function audioTrack(){
+  if (!S.bgmEl) return null;
+  try{
+    if (!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioDest = audioCtx.createMediaStreamDestination();
+    }
+    if (!audioSrc){
+      audioSrc = audioCtx.createMediaElementSource(S.bgmEl);
+      audioSrc.connect(audioDest);
+      audioSrc.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioDest.stream.getAudioTracks()[0] || null;
+  }catch(e){ return null; }
+}
+
+async function sniffCodec(blob){
+  try{
+    const buf = new Uint8Array(await blob.slice(0, 131072).arrayBuffer());
+    let str = '';
+    for (let i=0;i<buf.length;i++) str += String.fromCharCode(buf[i]);
+    if (str.indexOf('avcC') >= 0 || str.indexOf('avc1') >= 0) return 'h264';
+    if (str.indexOf('hvc1') >= 0 || str.indexOf('hev1') >= 0) return 'hevc';
+    if (str.indexOf('vp09') >= 0 || str.indexOf('V_VP9') >= 0) return 'vp9';
+    if (str.indexOf('vp08') >= 0 || str.indexOf('V_VP8') >= 0) return 'vp8';
+    if (str.indexOf('av01') >= 0) return 'av1';
+  }catch(e){}
+  return '확인 불가';
+}
+
+function record(){
+  buildTL();
+  if (!TL.total){ toast('먼저 사진이나 영상을 넣어주세요'); return; }
+  if (!window.MediaRecorder || !cv.captureStream){
+    toast('이 브라우저는 저장 기능을 지원하지 않습니다. Chrome 또는 Safari 최신 버전을 사용하세요');
+    return;
+  }
+  const mime = pickMime();
+  const vStream = cv.captureStream(FPS);
+  const tracks = vStream.getVideoTracks();
+  const at = audioTrack(); if (at) tracks.push(at);
+  const stream = new MediaStream(tracks);
+
+  let rec;
+  try{
+    rec = new MediaRecorder(stream, mime ? { mimeType:mime, videoBitsPerSecond: 8000000 } : { videoBitsPerSecond: 8000000 });
+  }catch(e){
+    try{ rec = new MediaRecorder(stream); }catch(e2){ toast('녹화를 시작할 수 없습니다'); return; }
+  }
+
+  const chunks = [];
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop = async () => {
+    const type = rec.mimeType || mime || 'video/webm';
+    const isMp4 = type.indexOf('mp4') >= 0;
+    const blob = new Blob(chunks, { type });
+    const url = URL.createObjectURL(blob);
+    $('#outv').src = url;
+    const a = $('#dl');
+    a.href = url;
+    a.download = '30th_summer_moments.' + (isMp4 ? 'mp4' : 'webm');
+    $('#out').classList.add('on');
+
+    const mb = (blob.size/1048576).toFixed(1);
+    const codec = await sniffCodec(blob);
+    let msg;
+    if (isMp4 && codec === 'h264'){
+      msg = '✅ <b>mp4 (H.264)</b> 로 저장되었습니다 — 공모 조건 그대로입니다. (' + mb + 'MB)<br>다운로드 후 휴대폰에서 한 번 재생해보고 제출하세요.';
+    } else if (isMp4){
+      msg = '⚠ 확장자는 mp4지만 내부 코덱이 <b>' + (codec === 'vp9' ? 'VP9' : codec) + '</b> 입니다. 일부 재생기에서 안 열릴 수 있습니다.<br>' +
+            '<b>공식 Chrome</b>(크로미움 계열 아님) 또는 <b>Safari</b>에서 다시 저장하면 H.264 mp4로 나옵니다. 그래도 같다면 무료 변환(예: CloudConvert)으로 H.264 mp4로 바꿔 제출하세요. (' + mb + 'MB)';
+    } else {
+      msg = '⚠ 이 브라우저는 mp4 녹화를 지원하지 않아 <b>webm</b>으로 저장됩니다. 공모 조건은 mp4이므로 <b>최신 Chrome</b> 또는 <b>Safari</b>에서 다시 저장하거나, webm→mp4 무료 변환(예: CloudConvert)을 거쳐 제출하세요. (' + mb + 'MB)';
+    }
+    const v = $('#outv');
+    v.onloadedmetadata = () => {
+      const d = v.duration;
+      if (isFinite(d) && d > 0){
+        const ok = d >= 10 && d <= 20;
+        $('#dlHint').innerHTML = msg + '<br><b>실제 길이 ' + d.toFixed(1) + '초</b> — ' +
+          (ok ? '공모 기준 10~20초를 만족합니다.' : '⚠ 10~20초 범위를 벗어났습니다. 컷 길이를 조정해 다시 저장하세요.');
+      }
+    };
+    $('#dlHint').innerHTML = msg;
+    $('#btnRec').disabled = false; $('#btnPlay').disabled = false;
+    $('#btnRec').textContent = '⏺ 영상 파일로 저장하기';
+    $('#recHint').textContent = '저장이 끝났습니다. 아래에서 확인 후 다운로드하세요.';
+    toast('영상 저장 완료!');
+    $('#out').scrollIntoView({ behavior:'smooth', block:'nearest' });
+  };
+
+  $('#btnRec').disabled = true; $('#btnPlay').disabled = true;
+  $('#btnRec').textContent = '⏺ 녹화 중…';
+  $('#recHint').textContent = '녹화 중입니다 (' + TL.total.toFixed(1) + '초). 이 탭을 그대로 두세요.';
+  $('#out').classList.remove('on');
+
+  rec.start(200);
+  stopCB = () => setTimeout(()=>{ try{ rec.stop(); }catch(e){} }, 250);
+  play();
+}
+
+/* ================= 클립 관리 ================= */
+function addFiles(files){
+  const list = Array.from(files || []);
+  if (!list.length) return;
+  let pending = 0, added = 0;
+  list.forEach(f => {
+    const isVid = f.type.indexOf('video') === 0;
+    const isImg = f.type.indexOf('image') === 0;
+    if (!isVid && !isImg) return;
+    const url = URL.createObjectURL(f);
+    const clip = { id:++uid, name:f.name, type:isVid?'video':'image', url, cap:'', dur:3.5, start:0, motion:'in', el:null };
+    pending++;
+    if (isVid){
+      const v = document.createElement('video');
+      v.src = url; v.muted = true; v.playsInline = true; v.preload = 'auto';
+      v.onloadedmetadata = () => {
+        clip.el = v;
+        clip.dur = Math.max(1.5, Math.min(5, Math.round((v.duration||3.5)*10)/10));
+        clip.motion = 'none';
+        if (--pending === 0) render();
+      };
+      v.onerror = () => { if (--pending === 0) render(); };
+    } else {
+      const im = new Image();
+      im.src = url;
+      im.onload  = () => { clip.el = im; if (--pending === 0) render(); };
+      im.onerror = () => { if (--pending === 0) render(); };
+    }
+    S.clips.push(clip); added++;
+  });
+  if (added) toast(added + '개를 추가했습니다');
+  render();
+}
+
+function sampleClips(){
+  const palettes = [
+    [['#7fd8ff','#0d6fc4'],'바다'],
+    [['#ffd28a','#ef6b4d'],'노을'],
+    [['#b7f5d8','#12a06a'],'숲'],
+  ];
+  palettes.forEach((p,i) => {
+    const c = document.createElement('canvas'); c.width = 1080; c.height = 1920;
+    const g2 = c.getContext('2d');
+    const gr = g2.createLinearGradient(0,0,900,1920);
+    gr.addColorStop(0,p[0][0]); gr.addColorStop(1,p[0][1]);
+    g2.fillStyle = gr; g2.fillRect(0,0,1080,1920);
+    g2.globalAlpha = .18; g2.fillStyle = '#fff';
+    for (let k=0;k<9;k++){ g2.beginPath(); g2.arc(120+ (k*137)%900, 260 + (k*311)%1400, 60+ (k*37)%110, 0, Math.PI*2); g2.fill(); }
+    g2.globalAlpha = 1; g2.textAlign='center'; g2.fillStyle='rgba(255,255,255,.85)';
+    g2.font = '900 120px sans-serif'; g2.fillText('SAMPLE '+(i+1), 540, 980);
+    const im = new Image();
+    im.onload = () => render();
+    im.src = c.toDataURL('image/jpeg', .9);
+    S.clips.push({ id:++uid, name:'샘플 이미지 ' + p[1], type:'image', url:im.src, cap:['올여름, 나는 여기 있었다','제대로 쉬어본 하루','충전 완료!'][i], dur:3.5, motion:['in','pan','out'][i], el:im });
+  });
+  render(); toast('샘플 3장을 넣었습니다 — 미리보기를 눌러보세요');
+}
+
+function move(id, d){
+  const i = S.clips.findIndex(c => c.id === id);
+  const j = i + d;
+  if (i < 0 || j < 0 || j >= S.clips.length) return;
+  const t = S.clips[i]; S.clips[i] = S.clips[j]; S.clips[j] = t;
+  render();
+}
+function del(id){
+  const i = S.clips.findIndex(c => c.id === id);
+  if (i >= 0){ try{ URL.revokeObjectURL(S.clips[i].url); }catch(e){} S.clips.splice(i,1); render(); }
+}
+
+function renderList(){
+  const box = $('#clips'); box.innerHTML = '';
+  S.clips.forEach((c, idx) => {
+    const el = document.createElement('div'); el.className = 'clip';
+    el.innerHTML =
+      '<div class="th"><span class="kind">' + (c.type === 'video' ? '영상' : c.type === 'proc' ? '생성' : '사진') + '</span></div>' +
+      '<div class="body">' +
+        '<div class="nm">' + (idx+1) + '. ' + c.name.replace(/[<>&]/g,'') + '</div>' +
+        '<div class="row"><input type="text" class="cap" placeholder="이 컷의 자막 (12자 이내 권장)"></div>' +
+        '<div class="row">' +
+          '<input type="number" class="dur" min="1" max="8" step="0.5"> <span style="font-size:12px;color:var(--muted);font-weight:700">초</span>' +
+          (c.type === 'video'
+            ? '<span style="font-size:12px;color:var(--muted);font-weight:700;margin-left:4px">시작</span>' +
+              '<input type="number" class="st" min="0" step="0.5" style="width:70px"> <span style="font-size:12px;color:var(--muted);font-weight:700">초</span>'
+            : '') +
+          '<select class="mot" style="font-size:12px">' +
+            '<option value="in">천천히 확대</option>' +
+            '<option value="out">천천히 축소</option>' +
+            '<option value="pan">좌우 이동</option>' +
+            '<option value="none">움직임 없음</option>' +
+          '</select>' +
+        '</div>' +
+      '</div>' +
+      '<div class="ops">' +
+        '<button class="iconbtn up" title="위로">▲</button>' +
+        '<button class="iconbtn dn" title="아래로">▼</button>' +
+        '<button class="iconbtn del" title="삭제">✕</button>' +
+      '</div>';
+    const th = el.querySelector('.th');
+    if (c.type === 'proc'){ th.style.background = c.thumb || '#0d3b66'; }
+    else if (c.type === 'image'){ const i2 = document.createElement('img'); i2.src = c.url; th.appendChild(i2); }
+    else { const v2 = document.createElement('video'); v2.src = c.url; v2.muted = true; th.appendChild(v2); }
+    const cap = el.querySelector('.cap'); cap.value = c.cap;
+    cap.addEventListener('input', e => { c.cap = e.target.value; drawFrame(midOf(c)); });
+    const du = el.querySelector('.dur'); du.value = c.dur;
+    du.addEventListener('input', e => { c.dur = Math.max(1, Math.min(8, +e.target.value || 3)); updateMeter(); });
+    const st = el.querySelector('.st');
+    if (st){
+      st.value = c.start || 0;
+      st.addEventListener('input', e => {
+        const max = Math.max(0, (c.el && c.el.duration ? c.el.duration : 0) - 0.3);
+        c.start = Math.max(0, Math.min(max || 0, +e.target.value || 0));
+        try{ c.el.currentTime = c.start; }catch(err){}
+      });
+    }
+    const mo = el.querySelector('.mot'); mo.value = c.motion;
+    mo.addEventListener('change', e => { c.motion = e.target.value; drawFrame(midOf(c)); });
+    el.querySelector('.up').addEventListener('click', () => move(c.id,-1));
+    el.querySelector('.dn').addEventListener('click', () => move(c.id, 1));
+    el.querySelector('.del').addEventListener('click', () => del(c.id));
+    box.appendChild(el);
+  });
+}
+function midOf(clip){
+  buildTL();
+  const s = TL.segs.find(x => x.kind === 'media' && x.clip === clip);
+  return s ? s.start + s.dur*0.55 : 0;
+}
+function updateMeter(){
+  buildTL();
+  const t = TL.total;
+  $('#totalV').textContent = t.toFixed(1) + '초';
+  $('#totalBar').style.width = Math.min(100, (t/25)*100) + '%';
+  const ok = t >= 10 && t <= 20;
+  $('#totalV').style.color = t === 0 ? 'var(--muted)' : ok ? 'var(--green)' : 'var(--red)';
+  $('#totalHint').innerHTML = t === 0
+    ? '초록 구간(10~20초)이 공모 기준입니다.'
+    : ok ? '✅ 공모 기준(10~20초)을 만족합니다.'
+    : (t < 10 ? '⚠ 10초 미만입니다. 컷을 추가하거나 길이를 늘리세요.' : '⚠ 20초를 넘었습니다. 컷을 줄이거나 길이를 줄이세요.');
+}
+function render(){
+  renderList(); updateMeter();
+  if (!playing) drawFrame(TL.segs.length ? Math.min(0.9, TL.total*0.3) : 0);
+}
+
+/* ================= 입력 바인딩 ================= */
+$('#drop').addEventListener('click', () => $('#file').click());
+$('#file').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+['dragenter','dragover'].forEach(ev => $('#drop').addEventListener(ev, e => { e.preventDefault(); $('#drop').classList.add('over'); }));
+['dragleave','drop'].forEach(ev => $('#drop').addEventListener(ev, e => { e.preventDefault(); $('#drop').classList.remove('over'); }));
+$('#drop').addEventListener('drop', e => { if (e.dataTransfer) addFiles(e.dataTransfer.files); });
+
+function cineClips(){
+  S.clips.forEach(c => { if (c.url) { try{ URL.revokeObjectURL(c.url); }catch(e){} } });
+  S.clips = [];
+  const TH = { glitter:'linear-gradient(180deg,#63b3d4,#052a42)', shore:'linear-gradient(180deg,#2e93b8,#b1905c)',
+               bokeh:'linear-gradient(180deg,#f0a35a,#2a1526)',  sunset:'linear-gradient(180deg,#7a3f76,#1d1733)' };
+  PROC_PRESET.forEach((d,i) => {
+    S.clips.push({ id:++uid, name:d[1], type:'proc', scene:d[0], url:'', cap:d[2],
+                   dur:3.2, start:0, motion:'none', thumb:TH[d[0]], el:null });
+  });
+  S.tpl = 'cinema'; $('#tpl').value = 'cinema';
+  render();
+  toast('실사풍 배경 4컷을 넣었습니다 — 미리보기를 눌러보세요');
+}
+$('#btnCine').addEventListener('click', cineClips);
+$('#btnSample').addEventListener('click', sampleClips);
+$('#btnClear').addEventListener('click', () => {
+  S.clips.forEach(c => { try{ URL.revokeObjectURL(c.url); }catch(e){} });
+  S.clips = []; render(); toast('모두 비웠습니다');
+});
+
+function bindTxt(id, fn){ const e = $(id); e.addEventListener('input', () => { fn(e.value); if(!playing) drawFrame(preferFrame()); }); }
+function preferFrame(){ buildTL(); return TL.segs.length ? Math.min(0.9, TL.total*0.3) : 0; }
+
+bindTxt('#introL1', v => S.intro.l1 = v);
+bindTxt('#introL2', v => S.intro.l2 = v);
+bindTxt('#outroL1', v => S.outro.l1 = v);
+bindTxt('#outroL2', v => S.outro.l2 = v);
+bindTxt('#topbar',  v => S.topbar  = v);
+$('#introDur').addEventListener('input', e => { S.intro.dur = Math.max(0.5, Math.min(5, +e.target.value || 2)); updateMeter(); });
+$('#outroDur').addEventListener('input', e => { S.outro.dur = Math.max(0.5, Math.min(5, +e.target.value || 3)); updateMeter(); });
+$('#introOn').addEventListener('change', e => { S.intro.on = e.target.checked; render(); });
+$('#outroOn').addEventListener('change', e => { S.outro.on = e.target.checked; render(); });
+$('#tpl').addEventListener('change', e => { S.tpl = e.target.value; if(!playing) drawFrame(preferFrame()); });
+$('#film').addEventListener('change', e => { S.film = e.target.checked; if(!playing) drawFrame(preferFrame()); });
+
+$('#bgm').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const a = new Audio(URL.createObjectURL(f));
+  a.loop = false; a.crossOrigin = 'anonymous';
+  S.bgmEl = a; audioSrc = null;
+  toast('배경음악을 넣었습니다 — 저작권을 꼭 확인하세요');
+});
+$('#bgmClear').addEventListener('click', () => { S.bgmEl = null; audioSrc = null; $('#bgm').value = ''; toast('배경음악을 제거했습니다'); });
+
+$('#btnPlay').addEventListener('click', () => play());
+$('#btnRec').addEventListener('click', record);
+
+/* 초기 렌더 */
+render();
+
+/* 외부 자동화(프레임 단위 렌더링·테스트)용 훅 — 일반 사용에는 영향 없음 */
+window.ZENShorts = {
+  state: S,
+  timeline: () => TL,
+  build: buildTL,
+  drawAt: t => drawFrame(t),
+  refresh: render,
+  canvas: cv
+};
+})();
+</script>
+</body>
+</html>
