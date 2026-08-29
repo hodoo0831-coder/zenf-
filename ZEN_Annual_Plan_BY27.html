@@ -4,126 +4,247 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ZEN Annual Plan · BY27 연간 운영계획</title>
-<meta name="theme-color" content="#0a1626">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1626" media="(prefers-color-scheme: dark)">
+<script>
+  /* FOUC 방지: 스타일 적용 전에 저장된 테마를 먼저 반영한다 */
+  try{ var _t=localStorage.getItem('zen_annual_plan_by27_theme');
+       if(_t==='light'||_t==='dark') document.documentElement.setAttribute('data-theme',_t); }catch(e){}
+</script>
 <style>
+  /* ── 라이트(기본) 팔레트 ─────────────────────────── */
   :root{
-    --bg:#0a1626; --bg2:#0d1c30; --panel:#111f34; --panel2:#0f1b2e; --panel3:#16273f;
-    --line:#1c3350; --line2:#24405f; --ink:#e8f0fb; --muted:#8aa0bd; --muted2:#6d84a3;
-    --blue:#3b82f6; --blue-d:#1d4ed8; --green:#22c55e; --red:#ef4444;
-    --amber:#f59e0b; --purple:#a855f7; --teal:#14b8a6;
-    --shadow:0 8px 28px rgba(0,0,0,.45); --radius:14px;
+    --bg:#eef2f8; --bg-g1:#dce6f7; --bg-g2:#e4ecf9;
+    --panel:#ffffff; --panel2:#eef3fa; --panel3:#e3ebf7;
+    --line:#d6e0ee; --line2:#bfcde2;
+    --ink:#10203a; --muted:#53688a; --muted2:#7488a6;
+    --blue:#2563eb; --blue-d:#1d4ed8; --blue-ink:#ffffff;
+    --green:#15803d; --red:#dc2626; --amber:#b45309; --purple:#7e22ce; --teal:#0f766e;
+    --p1:#2563eb; --p2:#15803d; --p3:#dc2626; --p4:#b45309; --p5:#7e22ce;
+    --pill-ink:#ffffff;
+    --in-bg:#ffffff; --in-k-bg:#f0f8f2; --in-k-line:#a9d5b8;
+    --ok-bg:#dcfce7; --ok-ink:#14532d; --bad-bg:#fee2e2; --bad-ink:#991b1b;
+    --zebra:#f7fafd; --hover:#0000000a; --tab-on:#e0eaff;
+    --shadow:0 2px 10px rgba(20,40,80,.07), 0 8px 24px rgba(20,40,80,.05);
+    --radius:14px;
   }
+  /* ── 다크 팔레트 (시스템 설정 · data-theme=light 로 덮어쓸 수 있음) ── */
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0a1626; --bg-g1:#14284480; --bg-g2:#12203a80;
+      --panel:#111f34; --panel2:#0f1b2e; --panel3:#16273f;
+      --line:#1c3350; --line2:#24405f;
+      --ink:#e8f0fb; --muted:#8aa0bd; --muted2:#6d84a3;
+      --blue:#3b82f6; --blue-d:#1d4ed8; --blue-ink:#ffffff;
+      --green:#22c55e; --red:#ef4444; --amber:#f59e0b; --purple:#a855f7; --teal:#14b8a6;
+      --p1:#3b82f6; --p2:#22c55e; --p3:#ef4444; --p4:#f59e0b; --p5:#a855f7;
+      --pill-ink:#0a1626;
+      --in-bg:#0f1b2e; --in-k-bg:#16281c; --in-k-line:#2c5a38;
+      --ok-bg:#14532d; --ok-ink:#bbf7d0; --bad-bg:#7f1d1d; --bad-ink:#fecaca;
+      --zebra:#0d1a2c; --hover:#ffffff08; --tab-on:#16283f;
+      --shadow:0 8px 28px rgba(0,0,0,.45);
+    }
+  }
+  /* ── 다크 강제 ─────────────────────────────────── */
+  :root[data-theme="dark"]{
+    --bg:#0a1626; --bg-g1:#14284480; --bg-g2:#12203a80;
+    --panel:#111f34; --panel2:#0f1b2e; --panel3:#16273f;
+    --line:#1c3350; --line2:#24405f;
+    --ink:#e8f0fb; --muted:#8aa0bd; --muted2:#6d84a3;
+    --blue:#3b82f6; --blue-d:#1d4ed8; --blue-ink:#ffffff;
+    --green:#22c55e; --red:#ef4444; --amber:#f59e0b; --purple:#a855f7; --teal:#14b8a6;
+    --p1:#3b82f6; --p2:#22c55e; --p3:#ef4444; --p4:#f59e0b; --p5:#a855f7;
+    --pill-ink:#0a1626;
+    --in-bg:#0f1b2e; --in-k-bg:#16281c; --in-k-line:#2c5a38;
+    --ok-bg:#14532d; --ok-ink:#bbf7d0; --bad-bg:#7f1d1d; --bad-ink:#fecaca;
+    --zebra:#0d1a2c; --hover:#ffffff08; --tab-on:#16283f;
+    --shadow:0 8px 28px rgba(0,0,0,.45);
+  }
+
   *{box-sizing:border-box}
   html,body{margin:0}
   body{
     background:
-      radial-gradient(1200px 700px at 78% -10%, #14284480 0%, transparent 60%),
-      radial-gradient(1000px 600px at 8% 110%, #12203a80 0%, transparent 55%),
+      radial-gradient(1200px 700px at 78% -10%, var(--bg-g1) 0%, transparent 60%),
+      radial-gradient(1000px 600px at 8% 110%, var(--bg-g2) 0%, transparent 55%),
       var(--bg);
+    background-attachment:fixed;
     color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
     -webkit-font-smoothing:antialiased; min-height:100vh;
+    transition:background-color .18s ease, color .18s ease;
   }
-  .wrap{max-width:1560px;margin:0 auto;padding:18px 20px 40px}
+  .wrap{max-width:1560px;margin:0 auto;padding:18px 20px 44px}
   a{color:var(--blue)}
 
-  header.top{display:flex;align-items:flex-start;gap:20px;padding:6px 4px 14px;flex-wrap:wrap}
+  /* ── 헤더 ─────────────────────────────────────── */
+  header.top{display:flex;align-items:flex-start;gap:16px;padding:6px 2px 14px;flex-wrap:wrap}
   .brand .logo{font-size:23px;font-weight:800;letter-spacing:.2px}
-  .brand .logo b{color:#fff}
+  .brand .logo b{color:var(--ink)}
   .brand .logo span{color:var(--blue)}
-  .brand .sub{color:var(--muted);font-size:12.5px;margin-top:4px}
+  .brand .sub{color:var(--muted);font-size:12.5px;margin-top:4px;line-height:1.5}
   .top-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .btn{background:var(--panel);border:1px solid var(--line2);color:var(--ink);
-    padding:8px 14px;border-radius:10px;font-size:12.5px;cursor:pointer;font-weight:600}
+    padding:8px 13px;border-radius:10px;font-size:12.5px;cursor:pointer;font-weight:600;
+    font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
   .btn:hover{background:var(--panel3);border-color:var(--blue)}
-  .btn.pri{background:var(--blue-d);border-color:var(--blue)}
-  .saveinfo{font-size:11.5px;color:var(--muted2)}
+  .btn.pri{background:var(--blue-d);border-color:var(--blue);color:#fff}
+  .btn .ic{font-size:14px;line-height:1}
+  .saveinfo{font-size:11.5px;color:var(--muted2);white-space:nowrap}
 
-  nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 18px;
-    border-bottom:1px solid var(--line);padding-bottom:0}
+  /* ── 탭 ───────────────────────────────────────── */
+  nav.tabs{display:flex;gap:4px;margin:6px 0 18px;border-bottom:1px solid var(--line);
+    overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+  nav.tabs::-webkit-scrollbar{height:4px}
+  nav.tabs::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
   nav.tabs button{background:transparent;border:0;border-bottom:2px solid transparent;
-    color:var(--muted);padding:11px 16px;font-size:13.5px;font-weight:700;cursor:pointer;
-    font-family:inherit;border-radius:8px 8px 0 0}
-  nav.tabs button:hover{color:var(--ink);background:#ffffff08}
-  nav.tabs button.on{color:#fff;border-bottom-color:var(--blue);background:#3b82f614}
+    color:var(--muted);padding:11px 15px;font-size:13.5px;font-weight:700;cursor:pointer;
+    font-family:inherit;border-radius:8px 8px 0 0;white-space:nowrap;flex:0 0 auto}
+  nav.tabs button:hover{color:var(--ink);background:var(--hover)}
+  nav.tabs button.on{color:var(--ink);border-bottom-color:var(--blue);background:var(--tab-on)}
   section.page{display:none} section.page.on{display:block}
 
+  /* ── 그리드 ───────────────────────────────────── */
   .grid{display:grid;gap:14px;align-items:start}
   .g4{grid-template-columns:repeat(4,1fr)}
   .g3{grid-template-columns:repeat(3,1fr)}
   .g2{grid-template-columns:repeat(2,1fr)}
-  @media(max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr}.g2{grid-template-columns:1fr}}
-  @media(max-width:640px){.g4{grid-template-columns:1fr}}
+  @media(max-width:1240px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:900px){.g2{grid-template-columns:1fr}}
+  @media(max-width:820px){.g3{grid-template-columns:1fr}}
+  @media(max-width:620px){.g4{grid-template-columns:1fr}}
 
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
     padding:16px 18px;box-shadow:var(--shadow)}
   .card h3{margin:0 0 4px;font-size:14px;letter-spacing:.2px}
-  .card .cap{color:var(--muted);font-size:11.5px}
-  .stat .num{font-size:34px;font-weight:800;line-height:1.1}
-  .stat .lbl{color:var(--muted);font-size:12px;margin-top:6px}
+  .card .cap{color:var(--muted);font-size:11.5px;line-height:1.55}
+  .stat .num{font-size:34px;font-weight:800;line-height:1.1;word-break:keep-all}
+  .stat .lbl{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.5}
 
   .sec-title{font-size:12px;font-weight:800;letter-spacing:2px;color:var(--muted2);
     margin:26px 2px 10px;text-transform:uppercase}
   .sec-title:first-child{margin-top:6px}
 
+  /* ── 표 ───────────────────────────────────────── */
   table{width:100%;border-collapse:collapse;font-size:12.5px}
-  th{background:var(--panel2);color:#fff;font-weight:700;text-align:left;padding:9px 10px;
+  th{background:var(--panel2);color:var(--ink);font-weight:700;text-align:left;padding:9px 10px;
     border:1px solid var(--line);position:sticky;top:0;z-index:2;font-size:11.5px}
-  td{padding:8px 10px;border:1px solid var(--line);vertical-align:middle}
-  tbody tr:nth-child(even) td{background:#ffffff05}
-  .tbl-wrap{overflow:auto;max-height:none;border-radius:12px;border:1px solid var(--line)}
+  td{padding:8px 10px;border:1px solid var(--line);vertical-align:middle;background:var(--panel)}
+  tbody tr:nth-child(even) td{background:var(--zebra)}
+  .tbl-wrap{overflow:auto;border-radius:12px;border:1px solid var(--line);
+    box-shadow:var(--shadow);background:var(--panel)}
   .num-c{text-align:right;font-variant-numeric:tabular-nums}
   .ctr{text-align:center}
 
   .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:10.5px;font-weight:800;
-    color:#0a1626}
+    color:var(--pill-ink)}
   .chip{display:inline-block;padding:3px 9px;border-radius:8px;font-size:11px;font-weight:700;
-    border:1px solid var(--line2);color:var(--muted)}
+    border:1px solid var(--line2);color:var(--muted);white-space:nowrap}
   .diff-Low{color:var(--green)} .diff-Mid{color:var(--amber)} .diff-High{color:var(--red)}
   .lv-高{color:var(--red);font-weight:800} .lv-中{color:var(--amber);font-weight:800}
   .lv-低{color:var(--green);font-weight:800}
 
   input[type=number],input[type=text],select,textarea{
-    background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;
-    padding:6px 8px;font-size:12.5px;font-family:inherit;width:100%}
+    background:var(--in-bg);border:1px solid var(--line2);color:var(--ink);border-radius:8px;
+    padding:6px 8px;font-size:12.5px;font-family:inherit;width:100%;min-width:0}
   input[type=number]{text-align:right;font-variant-numeric:tabular-nums}
-  input:focus,select:focus{outline:none;border-color:var(--blue)}
-  input.k{background:#1a2a1e;border-color:#2c5a38}
-  label.fld{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:600}
+  input:focus,select:focus{outline:2px solid var(--blue);outline-offset:1px;border-color:var(--blue)}
+  input.k{background:var(--in-k-bg);border-color:var(--in-k-line)}
+  label.fld{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:600;line-height:1.5}
   .fld-row{margin-bottom:12px}
 
-  .gantt{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;min-width:180px}
-  .gantt i{height:16px;border-radius:3px;background:#ffffff0d;display:block}
-  .bar{height:8px;background:var(--panel2);border-radius:99px;overflow:hidden;border:1px solid var(--line2)}
+  .gantt{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;min-width:150px}
+  .gantt i{height:16px;border-radius:3px;background:var(--panel3);display:block}
+  .bar{height:8px;background:var(--panel3);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
   .bar>span{display:block;height:100%;background:var(--blue);border-radius:99px}
 
-  .mon{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-  .mon.now{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
+  .mon{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    box-shadow:var(--shadow)}
+  .mon.now{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset, var(--shadow)}
   .mon .mh{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--panel2);
-    border-bottom:1px solid var(--line)}
+    border-bottom:1px solid var(--line);flex-wrap:wrap}
   .mon .mh b{font-size:15px} .mon .mh .q{font-size:10.5px;color:var(--muted2);font-weight:700}
-  .mon .mh .fx{margin-left:auto;font-size:10.5px;font-weight:800;color:#0a1626;
+  .mon .mh .fx{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--pill-ink);
     background:var(--amber);padding:2px 8px;border-radius:999px}
-  .mon .row{display:flex;gap:8px;padding:7px 12px;border-bottom:1px solid #ffffff08;font-size:11.5px}
+  .mon .row{display:flex;gap:8px;padding:7px 12px;border-bottom:1px solid var(--line);font-size:11.5px}
   .mon .row:last-child{border-bottom:0}
   .mon .row i{width:3px;border-radius:2px;flex:0 0 3px}
   .mon .row span{color:var(--ink);line-height:1.45}
 
-  .kpi-in{width:100%;min-width:52px}
+  .kpi-in{width:100%;min-width:50px}
   .ach-ok{color:var(--green);font-weight:800}
   .ach-mid{color:var(--amber);font-weight:800}
   .ach-bad{color:var(--red);font-weight:800}
 
-  .note{font-size:11.5px;color:var(--muted2);line-height:1.6;margin-top:10px}
+  .note{font-size:11.5px;color:var(--muted2);line-height:1.65;margin-top:10px}
   .warn{border-left:3px solid var(--red);padding-left:12px}
   .ok{border-left:3px solid var(--green);padding-left:12px}
-  .big{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+  .big{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;word-break:keep-all}
   .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .sp{margin-left:auto}
-  @media print{
-    body{background:#fff;color:#000} nav.tabs,.top-right{display:none}
-    section.page{display:block!important} .card{box-shadow:none}
+  .scroll-hint{display:none;font-size:11px;color:var(--muted2);margin:0 0 6px 2px}
+
+  /* ── 좁은 화면: 레코드형 표를 카드로 접는다 ─────────── */
+  @media(max-width:860px){
+    .wrap{padding:14px 12px 40px}
+    .brand .logo{font-size:20px}
+    .stat .num{font-size:28px}
+    .big{font-size:22px}
+    nav.tabs button{padding:10px 12px;font-size:12.5px}
+
+    table.stack{font-size:12.5px}
+    table.stack thead{display:none}
+    table.stack,table.stack tbody,table.stack tr,table.stack td{display:block;width:100%}
+    table.stack tr{border:1px solid var(--line);border-radius:12px;margin:0 0 10px;
+      overflow:hidden;background:var(--panel)}
+    table.stack tbody tr:nth-child(even) td{background:var(--panel)}
+    table.stack td{border:0;border-bottom:1px solid var(--line);padding:9px 12px;
+      display:flex;gap:10px;align-items:flex-start;text-align:left!important}
+    table.stack td:last-child{border-bottom:0}
+    table.stack td:empty{display:none}
+    table.stack td::before{content:attr(data-l);flex:0 0 78px;color:var(--muted);
+      font-size:11px;font-weight:700;padding-top:2px;line-height:1.5}
+    table.stack td>*{flex:1 1 auto;min-width:0}
+    table.stack td.hd{background:var(--panel2);font-size:13px}
+    table.stack td.hd::before{display:none}
+    .tbl-wrap.stacked{border:0;background:transparent;box-shadow:none;overflow:visible}
+
+    /* 매트릭스형(KPI) 표는 가로 스크롤 + 첫 두 열 고정 */
+    .tbl-wrap.sticky2 table{min-width:1180px}
+    .tbl-wrap.sticky2 th:nth-child(1),.tbl-wrap.sticky2 td:nth-child(1){position:sticky;left:0;z-index:3}
+    .tbl-wrap.sticky2 th:nth-child(3),.tbl-wrap.sticky2 td:nth-child(3){position:sticky;left:44px;z-index:3;
+      box-shadow:1px 0 0 var(--line2)}
+    .tbl-wrap.sticky2 th:nth-child(2),.tbl-wrap.sticky2 td:nth-child(2){display:none}
+    .tbl-wrap.sticky2 thead th{z-index:4}
+    .scroll-hint{display:block}
   }
+  .nw{display:none}
+  @media(max-width:860px){ .nw{display:inline} table.stack td.wo{display:none!important} }
+
+  @media(max-width:520px){
+    .top-right{width:100%;margin-left:0}
+    .top-right .btn{flex:1 1 auto;justify-content:center}
+    .saveinfo{width:100%;order:99;text-align:right}
+    table.stack td::before{flex-basis:66px;font-size:10.5px}
+  }
+
+  /* ── 인쇄: 항상 라이트, 전 탭 펼침 ─────────────────── */
+  @media print{
+    :root,:root[data-theme="dark"]{
+      --bg:#fff; --bg-g1:transparent; --bg-g2:transparent;
+      --panel:#fff; --panel2:#f2f5fa; --panel3:#e8eef7;
+      --line:#c9d4e3; --line2:#b3c1d6; --ink:#101c30; --muted:#4a5c76; --muted2:#6b7d96;
+      --p1:#1d4ed8; --p2:#15803d; --p3:#b91c1c; --p4:#b45309; --p5:#6b21a8;
+      --pill-ink:#fff; --shadow:none; --zebra:#f5f8fc; --tab-on:#e8eef7; --in-bg:#fff; --in-k-bg:#fff;
+    }
+    body{background:#fff}
+    nav.tabs,.top-right{display:none}
+    section.page{display:block!important;break-inside:auto}
+    .card,.mon,.tbl-wrap{box-shadow:none}
+    .sec-title{break-after:avoid}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
@@ -136,10 +257,11 @@
   </div>
   <div class="top-right">
     <span class="saveinfo" id="saveinfo">—</span>
-    <button class="btn" onclick="doExport()">JSON 내보내기</button>
-    <button class="btn" onclick="document.getElementById('imp').click()">불러오기</button>
+    <button class="btn" id="themeBtn" onclick="cycleTheme()" title="테마 전환 (시스템 → 라이트 → 다크)"></button>
+    <button class="btn" onclick="doExport()"><span class="ic">↓</span>JSON</button>
+    <button class="btn" onclick="document.getElementById('imp').click()"><span class="ic">↑</span>불러오기</button>
     <input type="file" id="imp" accept="application/json" style="display:none" onchange="doImport(this)">
-    <button class="btn" onclick="window.print()">인쇄</button>
+    <button class="btn" onclick="window.print()"><span class="ic">⎙</span>인쇄</button>
     <button class="btn" onclick="resetAll()">초기화</button>
   </div>
 </header>
@@ -156,10 +278,34 @@
 
 </div>
 <script>
-const D = {"meta": {"title": "BY27 연간 운영계획", "subtitle": "제니엘 AP 대전공장 센터 · 생산도급/업무도급 4축", "period": "2027.01 ~ 2027.12", "year": 2027}, "pillars": [{"id": "P1", "name": "생산성·LOSS", "color": "#3B82F6", "desc": "LOSS 귀속 체계로 원청/도급 책임을 분리하고 도급귀책 공수를 줄인다"}, {"id": "P2", "name": "인력·조직", "color": "#22C55E", "desc": "결원·이직을 안정화하고 다능공·관리라인 역량으로 변동에 대응한다"}, {"id": "P3", "name": "품질·안전·노무", "color": "#EF4444", "desc": "중대재해 0, 불법파견 리스크 0을 전제조건으로 관리한다"}, {"id": "P4", "name": "원가·정산·단가", "color": "#F59E0B", "desc": "4축 분리집계를 정착시키고 BY28 협상 근거를 축적한다"}, {"id": "P5", "name": "표준화·디지털", "color": "#A855F7", "desc": "ZEN 플랫폼으로 계획→실적→보고를 단일 데이터로 잇는다"}], "contracts": [{"cust": "아모레퍼시픽", "type": "생산도급", "hc": 153, "rate": 35121, "note": "사용자 제공 · BY26 실적 임률"}, {"cust": "아모레퍼시픽", "type": "업무도급", "hc": 91, "rate": 35121, "note": "AP 임률 준용(가정) · BY27 계약 임률 입력 필요"}, {"cust": "코스비전", "type": "생산도급", "hc": 55, "rate": 0, "note": "별도 임률 · 입력 필요"}, {"cust": "코스비전", "type": "업무도급", "hc": 55, "rate": 0, "note": "별도 임률 · 입력 필요"}], "tasks": [{"id": "A-01", "pillar": "P1", "name": "LOSS 사유코드·귀책룰 BY27 확정", "goal": "귀책 미분류 LOSS 비중 ≤3%", "out": "LOSS 카테고리 정의서 v3 · 월 귀속리포트", "diff": "Mid", "start": 1, "end": 3, "owner": "센터장/생산관리", "only": null, "span": "1~3월"}, {"id": "A-02", "pillar": "P1", "name": "도급귀책 LOSS 3대 항목 저감", "goal": "도급귀책 LOSS 공수 전년比 -15%", "out": "3대 항목(휴식 미복귀·교대준비·초기불량) 개선안", "diff": "Mid", "start": 2, "end": 12, "owner": "생산반장", "only": null, "span": "2~12월"}, {"id": "A-03", "pillar": "P1", "name": "라인별 목표효율 재설정·편차관리", "goal": "효율 GAP ≤2%p 라인 비중 80%↑", "out": "라인별 표준효율표 · 주간 편차관리 시트", "diff": "High", "start": 4, "end": 12, "owner": "센터장/생산관리", "only": null, "span": "4~12월"}, {"id": "B-01", "pillar": "P2", "name": "결원·조기이탈 안정화", "goal": "월평균 결원율 ≤3.0% · 이직률 ≤3.5%", "out": "채용 파이프라인 · 입사 4주 온보딩 체크리스트", "diff": "High", "start": 1, "end": 12, "owner": "인사담당", "only": null, "span": "1~12월"}, {"id": "B-02", "pillar": "P2", "name": "다능공 스킬매트릭스 운영", "goal": "다능공(2공정↑) 보유율 60%", "out": "공정별 스킬매트릭스 · 연 2회 교육", "diff": "Mid", "start": 1, "end": 9, "owner": "교육담당", "only": null, "span": "1~9월"}, {"id": "B-03", "pillar": "P2", "name": "조장·반장 관리라인 역량", "goal": "리더 교육 이수율 100% · 관할인원 표준화", "out": "지휘체계 R&R 정의서 · 월 리더미팅", "diff": "Mid", "start": 1, "end": 12, "owner": "센터장", "only": null, "span": "1~12월"}, {"id": "C-01", "pillar": "P3", "name": "중대재해 Zero·산재 저감", "goal": "중대재해 0건 · 산재 전년比 -30%", "out": "연간 안전보건계획 · 위험성평가 · 아차사고 대장", "diff": "Mid", "start": 1, "end": 12, "owner": "안전담당", "only": null, "span": "1~12월"}, {"id": "C-02", "pillar": "P3", "name": "하절기 온열질환 대응(HeatWatch)", "goal": "온열질환 0건 · 폭염 LOSS 전년比 -20%", "out": "체감온도 휴식 프로토콜 · HeatWatch 운영", "diff": "Low", "start": 4, "end": 9, "owner": "안전담당", "only": null, "span": "4~9월"}, {"id": "C-03", "pillar": "P3", "name": "불법파견(위장도급) 자체진단", "goal": "고위험 항목 0건 · 반기 2회 진단", "out": "진단 130항목 체크리스트 · 지시경로 기록", "diff": "High", "start": 5, "end": 10, "owner": "센터장", "only": [5, 10], "span": "5월·10월"}, {"id": "C-04", "pillar": "P3", "name": "도급귀책 품질클레임 저감", "goal": "도급귀책 클레임 전년比 -30%", "out": "초·중·종물 검사 준수율 · OPL 전개", "diff": "Mid", "start": 2, "end": 12, "owner": "품질담당", "only": null, "span": "2~12월"}, {"id": "D-01", "pillar": "P4", "name": "월마감 4축 분리집계 표준화", "goal": "정산 오류 0건 · 마감 D+3", "out": "마감 체크리스트 · 고객×계약유형 집계 양식", "diff": "Mid", "start": 1, "end": 4, "owner": "정산담당", "only": null, "span": "1~4월"}, {"id": "D-02", "pillar": "P4", "name": "BY28 단가협상 근거 축적", "goal": "10월까지 협상 데이터패키지 완성", "out": "LOSS 귀속 확정치 · 단가 산출내역서", "diff": "High", "start": 8, "end": 11, "owner": "센터장", "only": null, "span": "8~11월"}, {"id": "D-03", "pillar": "P4", "name": "코스비전 세탁실 별도정산 정착", "goal": "분리청구 누락 0건", "out": "비용 분리 산정기준 · 증빙 표준", "diff": "Low", "start": 1, "end": 6, "owner": "정산담당", "only": null, "span": "1~6월"}, {"id": "E-01", "pillar": "P5", "name": "ZEN 플랫폼 현장 정착", "goal": "주간계획 업로드 준수율 95%↑", "out": "업로드 SOP · 조치추적 운영지표", "diff": "Mid", "start": 1, "end": 12, "owner": "센터장", "only": null, "span": "1~12월"}, {"id": "E-02", "pillar": "P5", "name": "본사 월간보고 표준화", "goal": "보고 작성공수 -50%", "out": "월간 경영보고 템플릿 v27(4축 분리)", "diff": "Low", "start": 1, "end": 3, "owner": "센터장", "only": null, "span": "1~3월"}], "kpis": [{"id": "K01", "pillar": "P1", "name": "LOSS율", "formula": "LOSS 공수 ÷ 총 투입공수", "basisLabel": "BY26 LOSS율", "rationale": "기준 × 0.85", "kind": "ratio", "coef": 0.85, "fmt": "0.0%"}, {"id": "K02", "pillar": "P1", "name": "도급귀책 LOSS 공수", "formula": "LOSS 공수 × 도급귀책 비중", "basisLabel": null, "rationale": "기준 × 0.85", "kind": "calc", "coef": 0.85, "fmt": "#,##0"}, {"id": "K03", "pillar": "P1", "name": "원청귀책 LOSS 비중", "formula": "원청귀책 LOSS ÷ 전체 LOSS", "basisLabel": "BY26 원청귀책 LOSS 비중", "rationale": "근거 유지·확대", "kind": "fix", "coef": 0.52, "fmt": "0.0%"}, {"id": "K04", "pillar": "P1", "name": "실효율", "formula": "실적공수 ÷ 표준공수", "basisLabel": "BY26 실효율", "rationale": "기준 + 2.0%p", "kind": "add", "coef": 0.02, "fmt": "0.0%"}, {"id": "K05", "pillar": "P2", "name": "월평균 결원율", "formula": "결원 ÷ 정원", "basisLabel": "BY26 월평균 결원율", "rationale": "3.0% 이하", "kind": "fix", "coef": 0.03, "fmt": "0.0%"}, {"id": "K06", "pillar": "P2", "name": "월평균 이직률", "formula": "퇴사 ÷ 평균 재직", "basisLabel": "BY26 월평균 이직률", "rationale": "3.5% 이하", "kind": "fix", "coef": 0.035, "fmt": "0.0%"}, {"id": "K07", "pillar": "P2", "name": "다능공 보유율", "formula": "2공정 이상 가능 인원 ÷ 총원", "basisLabel": "BY26 다능공 보유율", "rationale": "60% 이상", "kind": "fix", "coef": 0.6, "fmt": "0.0%"}, {"id": "K08", "pillar": "P3", "name": "중대재해", "formula": "발생 건수", "basisLabel": null, "rationale": "0건", "kind": "fix", "coef": 0, "fmt": "#,##0"}, {"id": "K09", "pillar": "P3", "name": "산재 건수", "formula": "발생 건수", "basisLabel": "BY26 산재 건수", "rationale": "기준 × 0.70", "kind": "ratio", "coef": 0.7, "fmt": "#,##0"}, {"id": "K10", "pillar": "P3", "name": "도급귀책 품질클레임", "formula": "도급귀책 판정 건수", "basisLabel": "BY26 도급귀책 품질클레임", "rationale": "기준 × 0.70", "kind": "ratio", "coef": 0.7, "fmt": "#,##0"}, {"id": "K11", "pillar": "P4", "name": "월마감 리드타임", "formula": "마감 완료일 − 월말", "basisLabel": "BY26 월마감 리드타임", "rationale": "3일 이내", "kind": "fix", "coef": 3, "fmt": "#,##0"}, {"id": "K12", "pillar": "P5", "name": "주간계획 업로드 준수율", "formula": "업로드 주차 ÷ 전체 주차", "basisLabel": null, "rationale": "95% 이상", "kind": "fix", "coef": 0.95, "fmt": "0.0%"}], "schedule": {"1": {"P1": "BY27 LOSS 사유코드·귀책룰 확정, 시스템 반영", "P2": "조직·R&R 확정, 연간 교육계획 수립", "P3": "연간 안전보건계획 수립·게시, 위험성평가 연간계획", "P4": "BY27 단가 적용 개시, 청구기준 재확인", "P5": "월간 경영보고 템플릿 v27 배포"}, "2": {"P1": "1월 LOSS 귀속리포트 최초 발행", "P2": "설 연휴 인력운영, 스킬매트릭스 기준 확정", "P3": "1분기 정기 안전보건교육(법정)", "P4": "1월 마감 정산 검증(고객×계약유형 4축)", "P5": "주간계획 업로드 프로세스 현장 정착"}, "3": {"P1": "도급귀책 3대 항목 개선 착수", "P2": "1Q 결원·이직 리뷰, 채용 리드타임 개선", "P3": "위험성평가(정기) 실시", "P4": "1Q 마감 · 본사 경영보고", "P5": "조치추적 운영지표화"}, "4": {"P1": "라인별 목표효율 재설정", "P2": "다능공 교육 1차", "P3": "하절기 대응계획 수립(HeatWatch 세팅·물품)", "P4": "1Q 손익 리뷰, 세탁실 별도정산 점검", "P5": "본사 보고 자동화 1차 적용"}, "5": {"P1": "효율 편차 주간관리 정착", "P2": "조장·반장 리더십 교육 1차", "P3": "불법파견 자체진단 1차(상반기)", "P4": "4월 마감, 물량변동 대응 인력계획", "P5": "플랫폼 사용률 점검·보완"}, "6": {"P1": "상반기 LOSS 실적 집계·검증", "P2": "하계휴가 인력운영 계획 확정", "P3": "HeatWatch 가동, 2Q 안전보건교육", "P4": "상반기 마감 · 2Q 경영보고", "P5": "상반기 운영 리뷰"}, "7": {"P1": "하한기 CAPA 대응 LOSS 관리", "P2": "하계휴가 운영, 대체인력 배치", "P3": "온열질환 예방 집중관리", "P4": "6월 마감, 상반기 손익 분석", "P5": "데이터 정합성 감사"}, "8": {"P1": "폭염 LOSS 귀책 구분기록 강화", "P2": "하반기 채용·결원 보충", "P3": "3Q 안전보건교육, 아차사고 리뷰", "P4": "BY28 협상 데이터 1차 패키지", "P5": "OPL 전개 실적 집계"}, "9": {"P1": "3Q LOSS 실적, 개선효과 검증", "P2": "추석 인력운영, 다능공 교육 2차", "P3": "위험성평가(수시·변경공정)", "P4": "3Q 마감 · 경영보고", "P5": "플랫폼 개선 반영"}, "10": {"P1": "1~9월 LOSS 귀속 확정 데이터 산출", "P2": "차년도 인력·조직 계획 초안", "P3": "불법파견 자체진단 2차(하반기)", "P4": "BY28 단가 산출내역서 작성", "P5": "협상용 데이터 대시보드 완성"}, "11": {"P1": "원청귀책 근거 사유별 정리", "P2": "차년도 인력계획 확정", "P3": "4Q 안전보건교육", "P4": "BY28 단가협상 테이블 대응", "P5": "차년도 보고체계 개편안"}, "12": {"P1": "BY27 LOSS 결산", "P2": "연간 교육 이수 마감, 인사평가", "P3": "연간 안전보건 실적평가", "P4": "연말 마감 · BY27 결산보고", "P5": "BY28 운영계획 확정·배포"}}, "fixed": {"1": "안전보건계획 수립", "2": "설 연휴", "3": "1Q 경영보고", "4": "하절기 준비", "5": "자체진단 1차", "6": "상반기 마감", "7": "하계휴가", "8": "협상 D-3M", "9": "추석·3Q 마감", "10": "자체진단 2차", "11": "BY28 협상", "12": "연말 결산"}, "risks": [{"id": "R1", "cat": "노무", "risk": "불법파견(위장도급) 판정 — 현장 직접 지시·근태 직접관리 적발", "impact": "高", "prob": "中", "action": "지시는 도급사 관리라인 경유 표준화 · 반기 자체진단 130항목 · 지시기록 보존", "owner": "센터장", "cycle": "반기"}, {"id": "R2", "cat": "안전", "risk": "중대재해 발생 — 중대재해처벌법 수사·가동 중단", "impact": "高", "prob": "低", "action": "연간 안전보건계획 · 위험성평가(정기/수시) · 아차사고 신고제", "owner": "안전담당", "cycle": "월"}, {"id": "R3", "cat": "품질", "risk": "도급귀책 클레임 증가 — BY28 단가협상 불리", "impact": "中", "prob": "中", "action": "초·중·종물 검사 준수율 관리 · OPL 즉시 전개", "owner": "품질담당", "cycle": "월"}, {"id": "R4", "cat": "인력", "risk": "결원율 상승 — 잔업·대체 비용 증가, 효율 저하", "impact": "中", "prob": "高", "action": "채용 파이프라인 상시화 · 입사 4주 온보딩 · 다능공 확대", "owner": "인사담당", "cycle": "주"}, {"id": "R5", "cat": "계약", "risk": "BY28 단가 인상 미달 — 손익 악화", "impact": "高", "prob": "中", "action": "LOSS 귀속 근거 축적(1~10월) · 산출내역서 정교화", "owner": "센터장", "cycle": "분기"}, {"id": "R6", "cat": "안전", "risk": "하절기 온열질환 — 가동률 저하·산재", "impact": "中", "prob": "中", "action": "HeatWatch 체감온도 기준 휴식 프로토콜 · 냉방물품 사전확보", "owner": "안전담당", "cycle": "일(하절기)"}, {"id": "R7", "cat": "정산", "risk": "4축 분리집계 오류 — 청구 누락/과청구", "impact": "中", "prob": "中", "action": "마감 체크리스트 · 이중 검증 · 세탁실 별도정산 증빙 표준", "owner": "정산담당", "cycle": "월"}, {"id": "R8", "cat": "데이터", "risk": "플랫폼 미사용 — 계획 근거 데이터 소실", "impact": "中", "prob": "中", "action": "주간 업로드 준수율 KPI화 · 미업로드 주차 소명", "owner": "센터장", "cycle": "주"}], "routine": [{"cycle": "일간", "desc": "조회(관리라인 경유) · 전일 LOSS/결원 확인 · 현장 안전순회 · 이슈 에스컬레이션"}, {"cycle": "주간", "desc": "월: 주간생산계획 업로드·배포 / 수: 조장회의 / 금: 주간 실적·효율 리뷰 및 차주 인력배치"}, {"cycle": "월간", "desc": "월마감 정산(D+3) · 본사 월간 경영보고 · 안전보건협의체 · 교육 이수 점검 · 지연오더 취합"}, {"cycle": "분기", "desc": "분기 경영보고 · 법정 안전보건교육 · 위험성평가 · KPI 목표 대비 실적 리뷰"}, {"cycle": "반기", "desc": "불법파견 자체진단 · 인사평가 · 인력계획 재수립"}, {"cycle": "연간", "desc": "안전보건계획 수립 · 단가협상(BY28) · 차년도 운영계획 확정 · 결산보고"}], "basis": [{"label": "월 기준공수(1인)", "value": 174, "unit": "M·H", "fmt": "0", "src": "가정 · 주40H×4.35주 기준. 실적 반영 시 수정"}, {"label": "연 가동월수", "value": 12, "unit": "개월", "fmt": "0", "src": "가정"}, {"label": "BY26 LOSS율", "value": 0.06, "unit": "%", "fmt": "0.0%", "src": "가정(플레이스홀더) · BY26 MES 실적 입력 필요"}, {"label": "BY26 원청귀책 LOSS 비중", "value": 0.52, "unit": "%", "fmt": "0.0%", "src": "사용자 제공 · BY26 MES 8개월 귀속분석 실적"}, {"label": "BY26 실효율", "value": 0.88, "unit": "%", "fmt": "0.0%", "src": "가정(플레이스홀더) · 라인 실적 입력 필요"}, {"label": "BY27 목표효율", "value": 0.9, "unit": "%", "fmt": "0.0%", "src": "목표값 · 라인별 재설정 후 확정(과제 A-03)"}, {"label": "BY26 월평균 결원율", "value": 0.038, "unit": "%", "fmt": "0.0%", "src": "가정(플레이스홀더) · 실적 입력 필요"}, {"label": "BY26 월평균 이직률", "value": 0.042, "unit": "%", "fmt": "0.0%", "src": "가정(플레이스홀더) · 실적 입력 필요"}, {"label": "BY26 다능공 보유율", "value": 0.45, "unit": "%", "fmt": "0.0%", "src": "가정(플레이스홀더) · 스킬매트릭스 집계 필요"}, {"label": "BY26 산재 건수", "value": 3, "unit": "건", "fmt": "0", "src": "가정(플레이스홀더) · 실적 입력 필요"}, {"label": "BY26 도급귀책 품질클레임", "value": 10, "unit": "건", "fmt": "0", "src": "가정(플레이스홀더) · 실적 입력 필요"}, {"label": "BY26 월마감 리드타임", "value": 5, "unit": "일", "fmt": "0", "src": "가정(플레이스홀더) · 실적 입력 필요"}, {"label": "BY26 단가인상률(생산도급)", "value": 0.0412, "unit": "%", "fmt": "0.00%", "src": "사용자 제공 · AP BY26 협상 실적"}, {"label": "BY26 단가인상률(업무도급)", "value": 0.0482, "unit": "%", "fmt": "0.00%", "src": "사용자 제공 · AP BY26 협상 실적"}, {"label": "도급귀책 LOSS 저감 목표율", "value": 0.15, "unit": "%", "fmt": "0.0%", "src": "목표값 · 과제 A-02"}]};
-const PC = {}; D.pillars.forEach(p=>PC[p.id]=p.color);
+const D = {"meta": {"title": "BY27 연간 운영계획", "subtitle": "제니엘 AP 대전공장 센터 · 생산도급/업무도급 4축", "period": "2027.01 ~ 2027.12", "year": 2027}, "pillars": [{"id": "P1", "name": "생산성·LOSS", "desc": "LOSS 귀속 체계로 원청/도급 책임을 분리하고 도급귀책 공수를 줄인다"}, {"id": "P2", "name": "인력·조직", "desc": "결원·이직을 안정화하고 다능공·관리라인 역량으로 변동에 대응한다"}, {"id": "P3", "name": "품질·안전·노무", "desc": "중대재해 0, 불법파견 리스크 0을 전제조건으로 관리한다"}, {"id": "P4", "name": "원가·정산·단가", "desc": "4축 분리집계를 정착시키고 BY28 협상 근거를 축적한다"}, {"id": "P5", "name": "표준화·디지털", "desc": "ZEN 플랫폼으로 계획→실적→보고를 단일 데이터로 잇는다"}], "contracts": [{"cust": "아모레퍼시픽", "type": "생산도급", "hc": 153, "rate": 35121, "note": "사용자 제공 · BY26 실적 임률"}, {"cust": "아모레퍼시픽", "type": "업무도급", "hc": 91, "rate": 35121, "note": "AP 임률 준용(가정) · BY27 계약 임률 입력 필요"}, {"cust": "코스비전", "type": "생산도급", "hc": 55, "rate": 0, "note": "별도 임률 · 입력 필요"}, {"cust": "코스비전", "type": "업무도급", "hc": 55, "rate": 0, "note": "별도 임률 · 입력 필요"}], "tasks": [{"id": "A-01", "pillar": "P1", "name": "LOSS 사유코드·귀책룰 BY27 확정", "goal": "귀책 미분류 LOSS 비중 ≤3%", "out": "LOSS 카테고리 정의서 v3 · 월 귀속리포트", "diff": "Mid", "start": 1, "end": 3, "owner": "센터장/생산관리", "only": null, "span": "1~3월"}, {"id": "A-02", "pillar": "P1", "name": "도급귀책 LOSS 3대 항목 저감", "goal": "도급귀책 LOSS 공수 전년比 -15%", "out": "3대 항목(휴식 미복귀·교대준비·초기불량) 개선안", "diff": "Mid", "start": 2, "end": 12, "owner": "생산반장", "only": null, "span": "2~12월"}, {"id": "A-03", "pillar": "P1", "name": "라인별 목표효율 재설정·편차관리", "goal": "효율 GAP ≤2%p 라인 비중 80%↑", "out": "라인별 표준효율표 · 주간 편차관리 시트", "diff": "High", "start": 4, "end": 12, "owner": "센터장/생산관리", "only": null, "span": "4~12월"}, {"id": "B-01", "pillar": "P2", "name": "결원·조기이탈 안정화", "goal": "월평균 결원율 ≤3.0% · 이직률 ≤3.5%", "out": "채용 파이프라인 · 입사 4주 온보딩 체크리스트", "diff": "High", "start": 1, "end": 12, "owner": "인사담당", "only": null, "span": "1~12월"}, {"id": "B-02", "pillar": "P2", "name": "다능공 스킬매트릭스 운영", "goal": "다능공(2공정↑) 보유율 60%", "out": "공정별 스킬매트릭스 · 연 2회 교육", "diff": "Mid", "start": 1, "end": 9, "owner": "교육담당", "only": null, "span": "1~9월"}, {"id": "B-03", "pillar": "P2", "name": "조장·반장 관리라인 역량", "goal": "리더 교육 이수율 100% · 관할인원 표준화", "out": "지휘체계 R&R 정의서 · 월 리더미팅", "diff": "Mid", "start": 1, "end": 12, "owner": "센터장", "only": null, "span": "1~12월"}, {"id": "C-01", "pillar": "P3", "name": "중대재해 Zero·산재 저감", "goal": "중대재해 0건 · 산재 전년比 -30%", "out": "연간 안전보건계획 · 위험성평가 · 아차사고 대장", "diff": "Mid", "start": 1, "end": 12, "owner": "안전담당", "only": null, "span": "1~12월"}, {"id": "C-02", "pillar": "P3", "name": "하절기 온열질환 대응(HeatWatch)", "goal": "온열질환 0건 · 폭염 LOSS 전년比 -20%", "out": "체감온도 휴식 프로토콜 · HeatWatch 운영", "diff": "Low", "start": 4, "end": 9, "owner": "안전담당", "only": null, "span": "4~9월"}, {"id": "C-03", "pillar": "P3", "name": "불법파견(위장도급) 자체진단", "goal": "고위험 항목 0건 · 반기 2회 진단", "out": "진단 130항목 체크리스트 · 지시경로 기록", "diff": "High", "start": 5, "end": 10, "owner": "센터장", "only": [5, 10], "span": "5월·10월"}, {"id": "C-04", "pillar": "P3", "name": "도급귀책 품질클레임 저감", "goal": "도급귀책 클레임 전년比 -30%", "out": "초·중·종물 검사 준수율 · OPL 전개", "diff": "Mid", "start": 2, "end": 12, "owner": "품질담당", "only": null, "span": "2~12월"}, {"id": "D-01", "pillar": "P4", "name": "월마감 4축 분리집계 표준화", "goal": "정산 오류 0건 · 마감 D+3", "out": "마감 체크리스트 · 고객×계약유형 집계 양식", "diff": "Mid", "start": 1, "end": 4, "owner": "정산담당", "only": null, "span": "1~4월"}, {"id": "D-02", "pillar": "P4", "name": "BY28 단가협상 근거 축적", "goal": "10월까지 협상 데이터패키지 완성", "out": "LOSS 귀속 확정치 · 단가 산출내역서", "diff": "High", "start": 8, "end": 11, "owner": "센터장", "only": null, "span": "8~11월"}, {"id": "D-03", "pillar": "P4", "name": "코스비전 세탁실 별도정산 정착", "goal": "분리청구 누락 0건", "out": "비용 분리 산정기준 · 증빙 표준", "diff": "Low", "start": 1, "end": 6, "owner": "정산담당", "only": null, "span": "1~6월"}, {"id": "E-01", "pillar": "P5", "name": "ZEN 플랫폼 현장 정착", "goal": "주간계획 업로드 준수율 95%↑", "out": "업로드 SOP · 조치추적 운영지표", "diff": "Mid", "start": 1, "end": 12, "owner": "센터장", "only": null, "span": "1~12월"}, {"id": "E-02", "pillar": "P5", "name": "본사 월간보고 표준화", "goal": "보고 작성공수 -50%", "out": "월간 경영보고 템플릿 v27(4축 분리)", "diff": "Low", "start": 1, "end": 3, "owner": "센터장", "only": null, "span": "1~3월"}], "kpis": [{"id": "K01", "pillar": "P1", "name": "LOSS율", "formula": "LOSS 공수 ÷ 총 투입공수", "basisLabel": "BY26 LOSS율", "rationale": "기준 × 0.85", "kind": "ratio", "coef": 0.85, "fmt": "0.0%"}, {"id": "K02", "pillar": "P1", "name": "도급귀책 LOSS 공수", "formula": "LOSS 공수 × 도급귀책 비중", "basisLabel": null, "rationale": "기준 × 0.85", "kind": "calc", "coef": 0.85, "fmt": "#,##0"}, {"id": "K03", "pillar": "P1", "name": "원청귀책 LOSS 비중", "formula": "원청귀책 LOSS ÷ 전체 LOSS", "basisLabel": "BY26 원청귀책 LOSS 비중", "rationale": "근거 유지·확대", "kind": "fix", "coef": 0.52, "fmt": "0.0%"}, {"id": "K04", "pillar": "P1", "name": "실효율", "formula": "실적공수 ÷ 표준공수", "basisLabel": "BY26 실효율", "rationale": "기준 + 2.0%p", "kind": "add", "coef": 0.02, "fmt": "0.0%"}, {"id": "K05", "pillar": "P2", "name": "월평균 결원율", "formula": "결원 ÷ 정원", "basisLabel": "BY26 월평균 결원율", "rationale": "3.0% 이하", "kind": "fix", "coef": 0.03, "fmt": "0.0%"}, {"id": "K06", "pillar": "P2", "name": "월평균 이직률", "formula": "퇴사 ÷ 평균 재직", "basisLabel": "BY26 월평균 이직률", "rationale": "3.5% 이하", "kind": "fix", "coef": 0.035, "fmt": "0.0%"}, {"id": "K07", "pillar": "P2", "name": "다능공 보유율", "formula": "2공정 이상 가능 인원 ÷ 총원", "basisLabel": "BY26 다능공 보유율", "rationale": "60% 이상", "kind": "fix", "coef": 0.6, "fmt": "0.0%"}, {"id": "K08", "pillar": "P3", "name": "중대재해", "formula": "발생 건수", "basisLabel": null, "rationale": "0건", "kind": "fix", "coef": 0, "fmt": "#,##0"}, {"id": "K09", "pillar": "P3", "name": "산재 건수", "formula": "발생 건수", "basisLabel": "BY26 산재 건수", "rationale": "기준 × 0.70", "kind": "ratio", "coef": 0.7, "fmt": "#,##0"}, {"id": "K10", "pillar": "P3", "name": "도급귀책 품질클레임", "formula": "도급귀책 판정 건수", "basisLabel": "BY26 도급귀책 품질클레임", "rationale": "기준 × 0.70", "kind": "ratio", "coef": 0.7, "fmt": "#,##0"}, {"id": "K11", "pillar": "P4", "name": "월마감 리드타임", "formula": "마감 완료일 − 월말", "basisLabel": "BY26 월마감 리드타임", "rationale": "3일 이내", "kind": "fix", "coef": 3, "fmt": "#,##0"}, {"id": "K12", "pillar": "P5", "name": "주간계획 업로드 준수율", "formula": "업로드 주차 ÷ 전체 주차", "basisLabel": null, "rationale": "95% 이상", "kind": "fix", "coef": 0.95, "fmt": "0.0%"}], "schedule": {"1": {"P1": "BY27 LOSS 사유코드·귀책룰 확정, 시스템 반영", "P2": "조직·R&R 확정, 연간 교육계획 수립", "P3": "연간 안전보건계획 수립·게시, 위험성평가 연간계획", "P4": "BY27 단가 적용 개시, 청구기준 재확인", "P5": "월간 경영보고 템플릿 v27 배포"}, "2": {"P1": "1월 LOSS 귀속리포트 최초 발행", "P2": "설 연휴 인력운영, 스킬매트릭스 기준 확정", "P3": "1분기 정기 안전보건교육(법정)", "P4": "1월 마감 정산 검증(고객×계약유형 4축)", "P5": "주간계획 업로드 프로세스 현장 정착"}, "3": {"P1": "도급귀책 3대 항목 개선 착수", "P2": "1Q 결원·이직 리뷰, 채용 리드타임 개선", "P3": "위험성평가(정기) 실시", "P4": "1Q 마감 · 본사 경영보고", "P5": "조치추적 운영지표화"}, "4": {"P1": "라인별 목표효율 재설정", "P2": "다능공 교육 1차", "P3": "하절기 대응계획 수립(HeatWatch 세팅·물품)", "P4": "1Q 손익 리뷰, 세탁실 별도정산 점검", "P5": "본사 보고 자동화 1차 적용"}, "5": {"P1": "효율 편차 주간관리 정착", "P2": "조장·반장 리더십 교육 1차", "P3": "불법파견 자체진단 1차(상반기)", "P4": "4월 마감, 물량변동 대응 인력계획", "P5": "플랫폼 사용률 점검·보완"}, "6": {"P1": "상반기 LOSS 실적 집계·검증", "P2": "하계휴가 인력운영 계획 확정", "P3": "HeatWatch 가동, 2Q 안전보건교육", "P4": "상반기 마감 · 2Q 경영보고", "P5": "상반기 운영 리뷰"}, "7": {"P1": "하한기 CAPA 대응 LOSS 관리", "P2": "하계휴가 운영, 대체인력 배치", "P3": "온열질환 예방 집중관리", "P4": "6월 마감, 상반기 손익 분석", "P5": "데이터 정합성 감사"}, "8": {"P1": "폭염 LOSS 귀책 구분기록 강화", "P2": "하반기 채용·결원 보충", "P3": "3Q 안전보건교육, 아차사고 리뷰", "P4": "BY28 협상 데이터 1차 패키지", "P5": "OPL 전개 실적 집계"}, "9": {"P1": "3Q LOSS 실적, 개선효과 검증", "P2": "추석 인력운영, 다능공 교육 2차", "P3": "위험성평가(수시·변경공정)", "P4": "3Q 마감 · 경영보고", "P5": "플랫폼 개선 반영"}, "10": {"P1": "1~9월 LOSS 귀속 확정 데이터 산출", "P2": "차년도 인력·조직 계획 초안", "P3": "불법파견 자체진단 2차(하반기)", "P4": "BY28 단가 산출내역서 작성", "P5": "협상용 데이터 대시보드 완성"}, "11": {"P1": "원청귀책 근거 사유별 정리", "P2": "차년도 인력계획 확정", "P3": "4Q 안전보건교육", "P4": "BY28 단가협상 테이블 대응", "P5": "차년도 보고체계 개편안"}, "12": {"P1": "BY27 LOSS 결산", "P2": "연간 교육 이수 마감, 인사평가", "P3": "연간 안전보건 실적평가", "P4": "연말 마감 · BY27 결산보고", "P5": "BY28 운영계획 확정·배포"}}, "fixed": {"1": "안전보건계획 수립", "2": "설 연휴", "3": "1Q 경영보고", "4": "하절기 준비", "5": "자체진단 1차", "6": "상반기 마감", "7": "하계휴가", "8": "협상 D-3M", "9": "추석·3Q 마감", "10": "자체진단 2차", "11": "BY28 협상", "12": "연말 결산"}, "risks": [{"id": "R1", "cat": "노무", "risk": "불법파견(위장도급) 판정 — 현장 직접 지시·근태 직접관리 적발", "impact": "高", "prob": "中", "action": "지시는 도급사 관리라인 경유 표준화 · 반기 자체진단 130항목 · 지시기록 보존", "owner": "센터장", "cycle": "반기"}, {"id": "R2", "cat": "안전", "risk": "중대재해 발생 — 중대재해처벌법 수사·가동 중단", "impact": "高", "prob": "低", "action": "연간 안전보건계획 · 위험성평가(정기/수시) · 아차사고 신고제", "owner": "안전담당", "cycle": "월"}, {"id": "R3", "cat": "품질", "risk": "도급귀책 클레임 증가 — BY28 단가협상 불리", "impact": "中", "prob": "中", "action": "초·중·종물 검사 준수율 관리 · OPL 즉시 전개", "owner": "품질담당", "cycle": "월"}, {"id": "R4", "cat": "인력", "risk": "결원율 상승 — 잔업·대체 비용 증가, 효율 저하", "impact": "中", "prob": "高", "action": "채용 파이프라인 상시화 · 입사 4주 온보딩 · 다능공 확대", "owner": "인사담당", "cycle": "주"}, {"id": "R5", "cat": "계약", "risk": "BY28 단가 인상 미달 — 손익 악화", "impact": "高", "prob": "中", "action": "LOSS 귀속 근거 축적(1~10월) · 산출내역서 정교화", "owner": "센터장", "cycle": "분기"}, {"id": "R6", "cat": "안전", "risk": "하절기 온열질환 — 가동률 저하·산재", "impact": "中", "prob": "中", "action": "HeatWatch 체감온도 기준 휴식 프로토콜 · 냉방물품 사전확보", "owner": "안전담당", "cycle": "일(하절기)"}, {"id": "R7", "cat": "정산", "risk": "4축 분리집계 오류 — 청구 누락/과청구", "impact": "中", "prob": "中", "action": "마감 체크리스트 · 이중 검증 · 세탁실 별도정산 증빙 표준", "owner": "정산담당", "cycle": "월"}, {"id": "R8", "cat": "데이터", "risk": "플랫폼 미사용 — 계획 근거 데이터 소실", "impact": "中", "prob": "中", "action": "주간 업로드 준수율 KPI화 · 미업로드 주차 소명", "owner": "센터장", "cycle": "주"}], "routine": [{"cycle": "일간", "desc": "조회(관리라인 경유) · 전일 LOSS/결원 확인 · 현장 안전순회 · 이슈 에스컬레이션"}, {"cycle": "주간", "desc": "월: 주간생산계획 업로드·배포 / 수: 조장회의 / 금: 주간 실적·효율 리뷰 및 차주 인력배치"}, {"cycle": "월간", "desc": "월마감 정산(D+3) · 본사 월간 경영보고 · 안전보건협의체 · 교육 이수 점검 · 지연오더 취합"}, {"cycle": "분기", "desc": "분기 경영보고 · 법정 안전보건교육 · 위험성평가 · KPI 목표 대비 실적 리뷰"}, {"cycle": "반기", "desc": "불법파견 자체진단 · 인사평가 · 인력계획 재수립"}, {"cycle": "연간", "desc": "안전보건계획 수립 · 단가협상(BY28) · 차년도 운영계획 확정 · 결산보고"}], "basis": [{"label": "월 기준공수(1인)", "value": 174, "unit": "M·H", "fmt": "0", "src": "가정 · 주40H×4.35주 기준. 실적 반영 시 수정"}, {"label": "연 가동월수", "value": 12, "unit": "개월", "fmt": "0", "src": "가정"}, {"label": "BY26 LOSS율", "value": 0.06, "unit": "%", "fmt": "0.0%", "src": "가정(플레이스홀더) · BY26 MES 실적 입력 필요"}, {"label": "BY26 원청귀책 LOSS 비중", "value": 0.52, "unit": "%", "fmt": "0.0%", "src": "사용자 제공 · BY26 MES 8개월 귀속분석 실적"}, {"label": "BY26 실효율", "value": 0.88, "unit": "%", "fmt": "0.0%", "src": "가정(플레이스홀더) · 라인 실적 입력 필요"}, {"label": "BY27 목표효율", "value": 0.9, "unit": "%", "fmt": "0.0%", "src": "목표값 · 라인별 재설정 후 확정(과제 A-03)"}, {"label": "BY26 월평균 결원율", "value": 0.038, "unit": "%", "fmt": "0.0%", "src": "가정(플레이스홀더) · 실적 입력 필요"}, {"label": "BY26 월평균 이직률", "value": 0.042, "unit": "%", "fmt": "0.0%", "src": "가정(플레이스홀더) · 실적 입력 필요"}, {"label": "BY26 다능공 보유율", "value": 0.45, "unit": "%", "fmt": "0.0%", "src": "가정(플레이스홀더) · 스킬매트릭스 집계 필요"}, {"label": "BY26 산재 건수", "value": 3, "unit": "건", "fmt": "0", "src": "가정(플레이스홀더) · 실적 입력 필요"}, {"label": "BY26 도급귀책 품질클레임", "value": 10, "unit": "건", "fmt": "0", "src": "가정(플레이스홀더) · 실적 입력 필요"}, {"label": "BY26 월마감 리드타임", "value": 5, "unit": "일", "fmt": "0", "src": "가정(플레이스홀더) · 실적 입력 필요"}, {"label": "BY26 단가인상률(생산도급)", "value": 0.0412, "unit": "%", "fmt": "0.00%", "src": "사용자 제공 · AP BY26 협상 실적"}, {"label": "BY26 단가인상률(업무도급)", "value": 0.0482, "unit": "%", "fmt": "0.00%", "src": "사용자 제공 · AP BY26 협상 실적"}, {"label": "도급귀책 LOSS 저감 목표율", "value": 0.15, "unit": "%", "fmt": "0.0%", "src": "목표값 · 과제 A-02"}]};
+const PC = {}; D.pillars.forEach(p=>PC[p.id]='var(--'+p.id.toLowerCase()+')');
 const PN = {}; D.pillars.forEach(p=>PN[p.id]=p.name);
 const KEY = 'zen_annual_plan_by27_v1';
+const TKEY = 'zen_annual_plan_by27_theme';
+
+/* ── 테마: 시스템 / 라이트 / 다크 ─────────────────── */
+const THEMES = [['system','◐','시스템'],['light','☀','라이트'],['dark','☾','다크']];
+let theme = 'system';
+function applyTheme(t){
+  theme = t;
+  const root = document.documentElement;
+  if(t==='system') root.removeAttribute('data-theme');
+  else root.setAttribute('data-theme', t);
+  const cur = THEMES.find(x=>x[0]===t) || THEMES[0];
+  const btn = document.getElementById('themeBtn');
+  if(btn){ btn.innerHTML = `<span class="ic">${cur[1]}</span>${cur[2]}`; }
+  try{ localStorage.setItem(TKEY, t); }catch(e){}
+}
+function cycleTheme(){
+  const i = THEMES.findIndex(x=>x[0]===theme);
+  applyTheme(THEMES[(i+1)%THEMES.length][0]);
+}
+(function initTheme(){
+  let t='system';
+  try{ const v=localStorage.getItem(TKEY); if(v==='light'||v==='dark'||v==='system') t=v; }catch(e){}
+  applyTheme(t);
+})();
 
 /* ── 상태 ───────────────────────────────────────── */
 const defState = () => ({
@@ -185,7 +331,7 @@ function save(){
   },220);
 }
 function resetAll(){
-  if(!confirm('입력한 실적·진척·상태를 모두 지우고 초기값으로 되돌립니다. 계속할까요?')) return;
+  if(!confirm('입력한 실적·진척·상태를 모두 지우고 초기값으로 되돌립니다. (테마 설정은 유지) 계속할까요?')) return;
   try{ localStorage.removeItem(KEY); }catch(e){}
   S = defState(); renderAll(); save();
 }
@@ -206,7 +352,6 @@ function doImport(el){
 /* ── 유틸 ───────────────────────────────────────── */
 const B = l => Number(S.basis[l]) || 0;
 const nf  = n => (isFinite(n)? Math.round(n).toLocaleString('ko-KR') : '—');
-const nf1 = n => (isFinite(n)? n.toLocaleString('ko-KR',{maximumFractionDigits:1}) : '—');
 const pct = n => (isFinite(n)? (n*100).toFixed(1)+'%' : '—');
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function won(n){
@@ -278,7 +423,10 @@ function buildTabs(){
     `<button class="${i===0?'on':''}" data-t="${t[0]}" onclick="go('${t[0]}')">${t[1]}</button>`).join('');
 }
 function go(id){
-  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on', b.dataset.t===id));
+  document.querySelectorAll('nav.tabs button').forEach(b=>{
+    const on = b.dataset.t===id; b.classList.toggle('on', on);
+    if(on) b.scrollIntoView({block:'nearest',inline:'nearest'});
+  });
   document.querySelectorAll('section.page').forEach(s=>s.classList.toggle('on', s.id==='p-'+id));
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -318,10 +466,10 @@ function renderOverview(){
     const ts = D.tasks.filter(t=>t.pillar===p.id);
     const pr = ts.reduce((a,t)=>a+(Number(S.taskProg[t.id])||0),0)/ts.length;
     h += `<div class="card">
-      <div class="flex"><span class="pill" style="background:${p.color}">${p.id}</span>
+      <div class="flex"><span class="pill" style="background:${PC[p.id]}">${p.id}</span>
         <b style="font-size:15px">${p.name}</b>
-        <span class="sp" style="font-weight:800;color:${p.color}">${pr.toFixed(0)}%</span></div>
-      <div class="bar" style="margin:10px 0 8px"><span style="width:${pr}%;background:${p.color}"></span></div>
+        <span class="sp" style="font-weight:800;color:${PC[p.id]}">${pr.toFixed(0)}%</span></div>
+      <div class="bar" style="margin:10px 0 8px"><span style="width:${pr}%;background:${PC[p.id]}"></span></div>
       <div class="cap">${esc(p.desc)}</div>
       <div class="note">${ts.map(t=>`${t.id} ${esc(t.name)}`).join(' · ')}</div>
     </div>`;
@@ -331,8 +479,8 @@ function renderOverview(){
   h += `<div class="sec-title">이번 달 (${curM}월) 핵심 업무 · 고정 일정 ${esc(D.fixed[curM])}</div><div class="grid g2">`;
   D.pillars.forEach(p=>{
     h += `<div class="card" style="padding:12px 16px">
-      <div class="flex"><span class="pill" style="background:${p.color}">${p.id}</span>
-      <span style="font-size:13px">${esc(D.schedule[curM][p.id])}</span></div></div>`;
+      <div class="flex"><span class="pill" style="background:${PC[p.id]}">${p.id}</span>
+      <span style="font-size:13px;flex:1 1 200px">${esc(D.schedule[curM][p.id])}</span></div></div>`;
   });
   h += `</div>`;
 
@@ -360,7 +508,7 @@ function renderCalendar(){
       <div class="mh"><b>${m}월</b><span class="q">Q${Math.ceil(m/3)}</span>
         <span class="fx">${esc(D.fixed[m])}</span></div>`;
     D.pillars.forEach(p=>{
-      h += `<div class="row"><i style="background:${p.color}"></i><span>${esc(D.schedule[m][p.id])}</span></div>`;
+      h += `<div class="row"><i style="background:${PC[p.id]}"></i><span>${esc(D.schedule[m][p.id])}</span></div>`;
     });
     h += `</div>`;
   }
@@ -371,7 +519,7 @@ function renderCalendar(){
    ['Q3','데이터 축적','하계휴가·폭염 구간의 LOSS 귀책을 정확히 기록. 협상 1차 패키지(8월)'],
    ['Q4','협상·차년도','10월 데이터 마감 → 11월 BY28 협상 → 12월 결산 및 차년도 계획 확정']
   ].forEach((q,i)=>{
-    const cl=[ 'var(--blue)','var(--green)','var(--amber)','var(--purple)'][i];
+    const cl=['var(--blue)','var(--green)','var(--amber)','var(--purple)'][i];
     h += `<div class="card"><div class="flex"><span class="pill" style="background:${cl}">${q[0]}</span>
       <b>${q[1]}</b></div><div class="note">${q[2]}</div></div>`;
   });
@@ -382,7 +530,7 @@ function renderCalendar(){
 /* ── 중점과제 ───────────────────────────────────── */
 function renderTasks(){
   let h = `<div class="sec-title">중점과제 ${D.tasks.length}건 · 실행 간트</div>
-  <div class="tbl-wrap"><table><thead><tr>
+  <div class="tbl-wrap stacked"><table class="stack"><thead><tr>
     <th style="width:52px">ID</th><th style="width:34px">축</th><th style="min-width:190px">과제명</th>
     <th style="min-width:170px">정량 목표</th><th style="width:56px" class="ctr">난이도</th>
     <th style="width:74px" class="ctr">담당</th><th style="min-width:150px">1~12월</th>
@@ -397,23 +545,23 @@ function renderTasks(){
       g += `<i style="${on?'background:'+PC[t.pillar]:''}"></i>`;
     }
     h += `<tr>
-      <td class="ctr" style="font-weight:800;color:${PC[t.pillar]}">${t.id}</td>
-      <td class="ctr" style="font-weight:800;color:${PC[t.pillar]}">${t.pillar}</td>
-      <td><b>${esc(t.name)}</b><div class="cap" style="margin-top:3px">${esc(t.out)}</div></td>
-      <td>${esc(t.goal)}</td>
-      <td class="ctr diff-${t.diff}" style="font-weight:800">${t.diff}</td>
-      <td class="ctr" style="color:var(--muted)">${esc(t.owner)}</td>
-      <td><div class="gantt">${g}</div>
-          <div class="cap" style="margin-top:4px">${esc(t.span)}</div></td>
-      <td>
+      <td class="ctr hd" data-l="ID" style="font-weight:800;color:${PC[t.pillar]}">${t.id}<span class="nw"> · ${PN[t.pillar]}</span></td>
+      <td class="ctr wo" data-l="축" style="font-weight:800;color:${PC[t.pillar]}">${t.pillar}</td>
+      <td data-l="과제"><div><b>${esc(t.name)}</b><div class="cap" style="margin-top:3px">${esc(t.out)}</div></div></td>
+      <td data-l="목표">${esc(t.goal)}</td>
+      <td class="ctr diff-${t.diff}" data-l="난이도" style="font-weight:800">${t.diff}</td>
+      <td class="ctr" data-l="담당" style="color:var(--muted)">${esc(t.owner)}</td>
+      <td data-l="기간"><div><div class="gantt">${g}</div>
+          <div class="cap" style="margin-top:4px">${esc(t.span)}</div></div></td>
+      <td data-l="진척률"><div>
         <input type="number" min="0" max="100" step="5" value="${pr}" class="kpi-in"
           oninput="setProg('${t.id}',this.value)">
-        <div class="bar" style="margin-top:5px"><span style="width:${pr}%;background:${PC[t.pillar]}"></span></div>
+        <div class="bar" style="margin-top:5px"><span style="width:${pr}%;background:${PC[t.pillar]}"></span></div></div>
       </td>
-      <td><select onchange="setStat('${t.id}',this.value)">
+      <td data-l="상태"><select onchange="setStat('${t.id}',this.value)">
         ${['미착수','진행중','지연','완료','보류'].map(o=>`<option ${o===st?'selected':''}>${o}</option>`).join('')}
       </select></td>
-      <td><input type="text" value="${esc(S.taskMemo[t.id]||'')}" oninput="setMemo('${t.id}',this.value)" placeholder="이슈·다음 액션"></td>
+      <td data-l="메모"><input type="text" value="${esc(S.taskMemo[t.id]||'')}" oninput="setMemo('${t.id}',this.value)" placeholder="이슈·다음 액션"></td>
     </tr>`;
   });
   h += `</tbody></table></div>
@@ -433,8 +581,9 @@ function setMemo(id,v){ S.taskMemo[id]=v; save(); }
 /* ── KPI ────────────────────────────────────────── */
 function renderKpi(){
   let h = `<div class="sec-title">BY27 KPI ${D.kpis.length}개 · 월별 실적 입력</div>
-  <div class="tbl-wrap"><table><thead><tr>
-    <th style="width:46px">ID</th><th style="width:30px">축</th><th style="min-width:150px">KPI</th>
+  <div class="scroll-hint">← 표를 옆으로 밀어 12개월 실적을 입력하세요. ID·KPI 열은 고정됩니다.</div>
+  <div class="tbl-wrap sticky2"><table><thead><tr>
+    <th style="width:44px">ID</th><th style="width:30px">축</th><th style="min-width:150px">KPI</th>
     <th style="width:88px" class="ctr">BY26 기준</th><th style="width:88px" class="ctr">BY27 목표</th>`;
   for(let m=1;m<=12;m++) h += `<th class="ctr" style="width:58px">${m}월</th>`;
   h += `<th style="width:82px" class="ctr">연평균/계</th><th style="width:74px" class="ctr">달성률</th></tr></thead><tbody>`;
@@ -444,7 +593,8 @@ function renderKpi(){
     const isP = isPctKpi(k);
     let cells='';
     for(let m=0;m<12;m++){
-      const v = acts[m]===undefined||acts[m]===null?'':acts[m];
+      const raw = acts[m];
+      const v = (raw===undefined||raw===null||raw==='') ? '' : (isP ? +(raw*100).toFixed(2) : raw);
       cells += `<td><input type="number" step="${isP?'0.1':'1'}" class="kpi-in k" value="${v}"
         oninput="setKpi('${k.id}',${m},this.value)" title="${isP?'% 단위로 입력 (예: 5.1)':'건/일/공수'}"></td>`;
     }
@@ -473,10 +623,10 @@ function renderKpi(){
 }
 function setKpi(id,m,v){
   if(!S.kpiAct[id]) S.kpiAct[id]=new Array(12).fill('');
-  const isP = isPctKpi(D.kpis.find(k=>k.id===id));
+  const k=D.kpis.find(x=>x.id===id);
+  const isP = isPctKpi(k);
   S.kpiAct[id][m] = v===''?'':(isP? Number(v)/100 : Number(v));
   save();
-  const k=D.kpis.find(x=>x.id===id);
   const row=[...document.querySelectorAll('#p-kpi tbody tr')].find(tr=>tr.cells[0].textContent===id);
   if(row){
     const avg=kpiAvg(k), ach=kpiAch(k);
@@ -486,23 +636,24 @@ function setKpi(id,m,v){
     c.className='ctr '+(ach===null?'':(ach>=1?'ach-ok':(ach>=0.9?'ach-mid':'ach-bad')));
   }
 }
+
 /* ── 시뮬레이터 ─────────────────────────────────── */
 function renderSim(){
   const c = calc();
   let h = `<div class="sec-title">계획 전제 입력 — 이 값이 KPI 목표와 금액 효과에 그대로 반영된다</div>
   <div class="grid g2"><div class="card"><h3>계약 4축 · 인원 / 임률</h3>
   <div class="cap">임률이 서로 다른 계약이므로 합계 금액은 대외 제시용으로 쓰지 않는다.</div>
-  <div class="tbl-wrap" style="margin-top:12px"><table><thead><tr>
+  <div class="tbl-wrap stacked" style="margin-top:12px"><table class="stack"><thead><tr>
     <th>구분</th><th class="ctr" style="width:88px">인원(명)</th><th class="ctr" style="width:110px">임률(원/M·H)</th>
     <th class="ctr" style="width:100px">월 총공수</th></tr></thead><tbody>`;
   D.contracts.forEach((ct,i)=>{
-    h += `<tr><td><b>${esc(ct.cust)}</b> ${esc(ct.type)}<div class="cap">${esc(ct.note)}</div></td>
-      <td><input type="number" value="${S.heads['h'+i]}" oninput="setHead(${i},this.value)"></td>
-      <td><input type="number" value="${S.rates['c'+i]||''}" placeholder="미확보" oninput="setRate(${i},this.value)"></td>
-      <td class="num-c">${nf(c.rows[i].total)}</td></tr>`;
+    h += `<tr><td class="hd" data-l="구분"><div><b>${esc(ct.cust)}</b> ${esc(ct.type)}<div class="cap">${esc(ct.note)}</div></div></td>
+      <td data-l="인원"><input type="number" value="${S.heads['h'+i]}" oninput="setHead(${i},this.value)"></td>
+      <td data-l="임률"><input type="number" value="${S.rates['c'+i]||''}" placeholder="미확보" oninput="setRate(${i},this.value)"></td>
+      <td class="num-c" data-l="월 총공수">${nf(c.rows[i].total)}</td></tr>`;
   });
-  h += `<tr><td><b>합계</b></td><td class="num-c"><b>${nf(c.tot.hc)}</b></td>
-    <td class="ctr">—</td><td class="num-c"><b>${nf(c.tot.total)}</b></td></tr>
+  h += `<tr><td class="hd" data-l="구분"><b>합계</b></td><td class="num-c" data-l="인원"><b>${nf(c.tot.hc)}</b></td>
+    <td class="ctr" data-l="임률">—</td><td class="num-c" data-l="월 총공수"><b>${nf(c.tot.total)}</b></td></tr>
     </tbody></table></div></div>`;
 
   h += `<div class="card"><h3>운영 기준값 · 가정</h3>
@@ -514,32 +665,32 @@ function renderSim(){
     const warn = b.src.indexOf('가정')===0;
     h += `<div class="fld-row"><label class="fld" style="${warn?'color:var(--red)':''}">${esc(b.label)}
       <span style="color:var(--muted2);font-weight:400"> · ${esc(b.src)}</span></label>
-      <div class="flex"><input type="number" step="${isP?'0.1':'1'}" value="${isP?(v*100).toFixed(isP&&b.fmt.indexOf('0.00')>=0?2:1):v}"
+      <div class="flex"><input type="number" step="${isP?'0.1':'1'}" value="${isP?(v*100).toFixed(b.fmt.indexOf('0.00')>=0?2:1):v}"
         oninput="setBasis('${esc(b.label)}',this.value,${isP})" style="max-width:150px">
       <span class="chip">${esc(b.unit)}</span></div></div>`;
   });
   h += `</div></div></div>`;
 
   h += `<div class="sec-title">[1] LOSS 비용 — 실제 비조업 공수 기준 (정산·협상 근거)</div>
-  <div class="tbl-wrap"><table><thead><tr>
+  <div class="tbl-wrap stacked"><table class="stack"><thead><tr>
     <th>구분</th><th class="ctr">인원</th><th class="ctr">월 총공수</th><th class="ctr">월 LOSS공수</th>
     <th class="ctr">원청귀책H</th><th class="ctr">도급귀책H</th><th class="ctr">도급귀책 비용/월</th>
     <th class="ctr">연 도급귀책 비용</th><th class="ctr">연 절감액(${pct(c.cut)})</th></tr></thead><tbody>`;
-  c.rows.forEach(r=>{
-    h += `<tr><td>${esc(r.cust)} ${esc(r.type)}</td>
-      <td class="num-c">${nf(r.hc)}</td><td class="num-c">${nf(r.total)}</td>
-      <td class="num-c">${nf(r.lossH)}</td><td class="num-c" style="color:var(--amber)">${nf(r.ownH)}</td>
-      <td class="num-c" style="color:var(--red)">${nf(r.subH)}</td>
-      <td class="num-c">${r.rate?won(r.subCost):'—'}</td>
-      <td class="num-c">${r.rate?won(r.subY):'—'}</td>
-      <td class="num-c" style="font-weight:800;color:var(--green)">${r.rate?won(r.saveY):'—'}</td></tr>`;
-  });
-  h += `<tr><td><b>합계</b></td><td class="num-c"><b>${nf(c.tot.hc)}</b></td>
-    <td class="num-c"><b>${nf(c.tot.total)}</b></td><td class="num-c"><b>${nf(c.tot.lossH)}</b></td>
-    <td class="num-c"><b>${nf(c.tot.ownH)}</b></td><td class="num-c"><b>${nf(c.tot.subH)}</b></td>
-    <td class="num-c"><b>${won(c.tot.subCost)}</b></td><td class="num-c"><b>${won(c.tot.subY)}</b></td>
-    <td class="num-c" style="color:var(--green)"><b>${won(c.tot.saveY)}</b></td></tr>
-    </tbody></table></div>
+  const simRow = (name, r, bold) => {
+    const B_ = v => bold ? `<b>${v}</b>` : v;
+    return `<tr><td class="hd" data-l="구분">${B_(esc(name))}</td>
+      <td class="num-c" data-l="인원">${B_(nf(r.hc))}</td>
+      <td class="num-c" data-l="월 총공수">${B_(nf(r.total))}</td>
+      <td class="num-c" data-l="월 LOSS공수">${B_(nf(r.lossH))}</td>
+      <td class="num-c" data-l="원청귀책H" style="color:var(--amber)">${B_(nf(r.ownH))}</td>
+      <td class="num-c" data-l="도급귀책H" style="color:var(--red)">${B_(nf(r.subH))}</td>
+      <td class="num-c" data-l="비용/월">${B_(r.rate||bold?won(r.subCost):'—')}</td>
+      <td class="num-c" data-l="연 비용">${B_(r.rate||bold?won(r.subY):'—')}</td>
+      <td class="num-c" data-l="연 절감액" style="font-weight:800;color:var(--green)">${B_(r.rate||bold?won(r.saveY):'—')}</td></tr>`;
+  };
+  c.rows.forEach(r=>{ h += simRow(r.cust+' '+r.type, r, false); });
+  h += simRow('합계', {...c.tot, rate:1}, true);
+  h += `</tbody></table></div>
     <div class="note warn">임률 미입력 계약(코스비전 2축)은 0으로 계산된다. AP 임률을 코스비전에 그대로 적용하지 말 것 — 실적·임률은 별도 관리 대상이다.</div>`;
 
   h += `<div class="sec-title">[2] 효율 GAP 환산 — KPI 미달의 기회비용 (추정)</div>
@@ -574,8 +725,8 @@ function renderSim(){
   h += `</div>`;
   document.getElementById('p-sim').innerHTML = h;
 }
-function setHead(i,v){ S.heads['h'+i]=Number(v)||0; save(); renderSim(); renderKpi(); renderOverview(); }
-function setRate(i,v){ S.rates['c'+i]=Number(v)||0; save(); renderSim(); renderKpi(); renderOverview(); }
+function setHead(i,v){ S.heads['h'+i]=Number(v)||0; save(); renderSimSoft(); renderKpi(); renderOverview(); }
+function setRate(i,v){ S.rates['c'+i]=Number(v)||0; save(); renderSimSoft(); renderKpi(); renderOverview(); }
 function setBasis(l,v,isP){ S.basis[l]= isP ? (Number(v)||0)/100 : (Number(v)||0); save();
   renderSimSoft(); renderKpi(); renderOverview(); }
 function setCut(k,v){ S.cut[k]=(Number(v)||0)/100; save(); renderSimSoft(); }
@@ -592,21 +743,22 @@ function renderRisk(){
   const rank = {'高':3,'中':2,'低':1};
   const sorted=[...D.risks].sort((a,b)=>(rank[b.impact]*2+rank[b.prob])-(rank[a.impact]*2+rank[a.prob]));
   let h = `<div class="sec-title">리스크 등록부 ${D.risks.length}건 · 영향×발생 우선순위</div>
-  <div class="tbl-wrap"><table><thead><tr>
+  <div class="tbl-wrap stacked"><table class="stack"><thead><tr>
     <th style="width:46px">ID</th><th style="width:58px">구분</th><th style="min-width:230px">리스크</th>
     <th style="width:52px" class="ctr">영향</th><th style="width:58px" class="ctr">발생</th>
     <th style="min-width:280px">대응 방안</th><th style="width:80px" class="ctr">담당</th>
     <th style="width:70px" class="ctr">점검</th><th style="width:96px">상태</th></tr></thead><tbody>`;
   sorted.forEach(r=>{
     const st=S.riskStatus[r.id]||'미착수';
-    h += `<tr><td class="ctr" style="font-weight:800;color:var(--red)">${r.id}</td>
-      <td class="ctr"><span class="chip">${esc(r.cat)}</span></td>
-      <td><b>${esc(r.risk)}</b></td>
-      <td class="ctr lv-${r.impact}">${r.impact}</td><td class="ctr lv-${r.prob}">${r.prob}</td>
-      <td style="color:#cfe0f5">${esc(r.action)}</td>
-      <td class="ctr" style="color:var(--muted)">${esc(r.owner)}</td>
-      <td class="ctr" style="color:var(--muted)">${esc(r.cycle)}</td>
-      <td><select onchange="setRisk('${r.id}',this.value)">
+    h += `<tr><td class="ctr hd" data-l="ID" style="font-weight:800;color:var(--red)">${r.id}<span class="nw"> · ${esc(r.cat)}</span></td>
+      <td class="ctr wo" data-l="구분"><span class="chip">${esc(r.cat)}</span></td>
+      <td data-l="리스크"><b>${esc(r.risk)}</b></td>
+      <td class="ctr lv-${r.impact}" data-l="영향">${r.impact}</td>
+      <td class="ctr lv-${r.prob}" data-l="발생">${r.prob}</td>
+      <td data-l="대응">${esc(r.action)}</td>
+      <td class="ctr" data-l="담당" style="color:var(--muted)">${esc(r.owner)}</td>
+      <td class="ctr" data-l="점검" style="color:var(--muted)">${esc(r.cycle)}</td>
+      <td data-l="상태"><select onchange="setRisk('${r.id}',this.value)">
         ${['미착수','진행중','완료','보류'].map(o=>`<option ${o===st?'selected':''}>${o}</option>`).join('')}
       </select></td></tr>`;
   });
@@ -632,7 +784,8 @@ function renderRoutine(){
       <div style="margin-top:10px;font-size:13px;line-height:1.7">${esc(r.desc)}</div></div>`;
   });
   h += `</div>
-  <div class="sec-title">본사·원청 결정 요청 사항</div><div class="tbl-wrap"><table><thead><tr>
+  <div class="sec-title">본사·원청 결정 요청 사항</div>
+  <div class="tbl-wrap stacked"><table class="stack"><thead><tr>
     <th style="width:40px" class="ctr">#</th><th style="min-width:220px">요청 사항</th>
     <th style="min-width:320px">사유</th><th style="width:76px" class="ctr">기한</th>
     <th style="width:110px" class="ctr">대상</th></tr></thead><tbody>`;
@@ -642,10 +795,11 @@ function renderRoutine(){
    ['04','상시 채용 파이프라인 본사 지원','결원율 3.0% 목표는 채용 리드타임 단축 없이는 달성 불가. 현장 단독 해결 범위를 넘는다.','1Q 내','본사 HR'],
    ['05','불법파견 자체진단 에스컬레이션 라인 확정','고위험 항목 발견 시 본사 HR 보고·조치 경로를 사전에 정해 둔다.','2Q 내','본사 HR']
   ].forEach(a=>{
-    h += `<tr><td class="ctr" style="font-weight:800;color:var(--amber)">${a[0]}</td>
-      <td><b>${esc(a[1])}</b></td><td style="color:var(--muted)">${esc(a[2])}</td>
-      <td class="ctr"><span class="chip">${esc(a[3])}</span></td>
-      <td class="ctr" style="color:var(--muted)">${esc(a[4])}</td></tr>`;
+    h += `<tr><td class="ctr hd" data-l="#" style="font-weight:800;color:var(--amber)">${a[0]}<span class="nw">. ${esc(a[1])}</span></td>
+      <td class="wo" data-l="요청"><b>${esc(a[1])}</b></td>
+      <td data-l="사유" style="color:var(--muted)">${esc(a[2])}</td>
+      <td class="ctr" data-l="기한"><span class="chip">${esc(a[3])}</span></td>
+      <td class="ctr" data-l="대상" style="color:var(--muted)">${esc(a[4])}</td></tr>`;
   });
   h += `</tbody></table></div>
   <div class="note">요청 5건이 확정되면 시뮬레이터 입력만으로 KPI 목표와 금액 효과가 계약 4축 전체로 확장된다.</div>`;
@@ -654,8 +808,7 @@ function renderRoutine(){
 
 /* ── 부팅 ───────────────────────────────────────── */
 function renderAll(){
-  document.getElementById('subline').textContent =
-    D.meta.subtitle + ' · ' + D.meta.period;
+  document.getElementById('subline').textContent = D.meta.subtitle + ' · ' + D.meta.period;
   renderOverview(); renderCalendar(); renderTasks(); renderKpi(); renderSim(); renderRisk(); renderRoutine();
 }
 buildTabs(); renderAll();
