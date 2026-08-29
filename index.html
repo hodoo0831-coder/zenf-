@@ -232,26 +232,48 @@
   .agxn{margin-left:auto;font-weight:600}
   @media(max-width:760px){.agxn{display:none}}
   .zgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .zbox{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--card);min-width:0}
+  .zbox{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--panel);min-width:0}
   .zbox.zwide{grid-column:1/-1}
   .zh{font-size:13.5px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
   .zsub{font-size:11.5px;color:var(--muted);margin:3px 0 12px;line-height:1.5}
-  .zchart{position:relative;padding-top:17px}
-  .zrow{display:flex;align-items:center;gap:9px;margin-bottom:7px}
-  .zl{flex:0 0 76px;font-size:12px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .ztrack{flex:1;min-width:0;display:flex;height:15px;border-radius:8px;background:var(--bg);overflow:hidden}
-  .ztrack>i{display:block;height:100%}
-  .zv{flex:0 0 40px;text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums}
-  .zd{flex:0 0 62px;text-align:right;font-size:11px;font-weight:700}
-  .zavg{position:absolute;top:17px;bottom:5px;left:85px;right:120px;z-index:1;pointer-events:none}
-  .zavg>b{position:absolute;top:0;bottom:0;border-left:2px dashed #5b6d84}
-  .zavg span{position:absolute;top:-16px;left:0;transform:translateX(-50%);font-size:10px;font-weight:800;color:#5b6d84;white-space:nowrap;background:var(--card);padding:0 3px}
-  .zstack{display:flex;height:22px;border-radius:11px;overflow:hidden;background:var(--bg)}
+  .zfoot{margin-top:10px;line-height:1.55}
+  .zleg{display:flex;gap:13px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:11px;font-weight:700;color:var(--muted)}
+  .zleg>span>i,.zleg>i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .zleg>i{margin-right:0}
+  /* [1] 발산 막대 — 기준선 대비 위/아래 */
+  .dvrow{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+  .zl{flex:0 0 74px;font-size:12px;font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .zv{flex:0 0 38px;text-align:right;font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--navy)}
+  .zd{flex:0 0 62px;text-align:right;font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
+  .dvtrack{flex:1;min-width:0;position:relative;height:15px;background:var(--bg);border-radius:8px}
+  .dvax{position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:#8d9db4;border-radius:1px}
+  .dvbar{position:absolute;top:0;height:100%;min-width:3px}
+  .dvbar.pos{background:#2a78d6;border-radius:0 4px 4px 0}
+  .dvbar.neg{background:#e34948;border-radius:4px 0 0 4px}
+  .dvaxis{display:flex;justify-content:space-between;font-size:10.5px;font-weight:700;color:var(--muted2);padding:3px 118px 0 83px}
+  /* [2] 누적 막대 + 목표선 */
+  .zstackwrap{position:relative;padding-top:15px}
+  .zstack{display:flex;gap:2px;height:22px;border-radius:11px;overflow:hidden;background:var(--bg)}
   .zstack>i{display:block;height:100%}
-  .zleg{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:11px;font-weight:700;color:var(--muted)}
-  .zleg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-  .zfoot{margin-top:9px;line-height:1.55}
-  @media(max-width:900px){.zgrid{grid-template-columns:1fr}.zl{flex-basis:62px}.zd{flex-basis:52px}.zavg{left:71px;right:110px}}
+  .ztarget{position:absolute;top:11px;bottom:-4px;width:2px;background:var(--navy);border-radius:1px}
+  .ztarget span{position:absolute;top:-13px;right:0;font-size:10px;font-weight:800;color:var(--navy);white-space:nowrap;background:var(--panel);padding:0 3px}
+  /* [3] 스탯 타일 — 값 두 개는 막대가 아니라 숫자로 */
+  .ztiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+  .ztile{border:1px solid var(--line2);border-radius:12px;padding:11px 13px;background:var(--bg)}
+  .zt-l{font-size:11.5px;font-weight:800;color:var(--muted)}
+  .zt-v{font-size:26px;font-weight:900;color:var(--navy);letter-spacing:-.5px;line-height:1.1;margin:2px 0 3px}
+  .zt-v small{font-size:11px;font-weight:700;color:var(--muted)}
+  /* [4] 히트맵 — 격자 위 크기 비교 */
+  .hmwrap{overflow-x:auto}
+  .hmap{border-collapse:separate;border-spacing:2px;width:100%;font-size:12px}
+  .hmap th{font-size:11px;font-weight:800;color:var(--muted);padding:3px 6px;white-space:nowrap}
+  .hmap th[scope=row]{text-align:left;color:var(--navy)}
+  .hmap td{text-align:center;padding:7px 6px;border-radius:6px;font-weight:800;font-variant-numeric:tabular-nums}
+  .hmap td.z{background:var(--bg);color:var(--muted2)}
+  .hmap td.hn{background:transparent;color:var(--navy)}
+  .hmap td.hl{background:transparent;color:var(--muted);font-size:11px;white-space:nowrap}
+  .hmap td.hl .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#0EA75C;margin-right:4px;vertical-align:1px}
+  @media(max-width:900px){.zgrid{grid-template-columns:1fr}.zl{flex-basis:60px}.zd{flex-basis:54px}.dvaxis{padding:3px 110px 0 69px}}
   .predlv{margin-left:auto;font-size:10px;font-weight:900;padding:2px 8px;border-radius:20px;background:var(--line);color:#5b6d84}
   .predlv.crit{background:#E03426;color:#fff}
   .predlv.warn{background:#E88A00;color:#fff}
@@ -1644,56 +1666,72 @@ V.trackNow=()=>{
   <div class="actboard">${col('미조치 · 보류',cTodo,'todo')}${col('조치중',cDo,'doing')}${col('완료',cDone,'done')}</div>`;
 };
 /* ── ZAIC 성과지표 (계획서 6대 KPI) ── */
-/* ===== 성과지표 근거 시각화 — 파일 안의 실측/실계산 값만 사용 ===== */
+/* ===== 성과지표 근거 시각화 =====
+   형태는 데이터의 역할로 고른다: 기준선 대비 증감→발산막대, 부분-전체→누적막대,
+   값 두 개→스탯 타일(막대 아님), 격자 위 크기 비교→히트맵.
+   색은 dataviz 검증기 통과값: 발산 #2a78d6↔#e34948, 상태 #1c7d49/#E88A00/#E03426,
+   순차 오디널 #86b6ef→#184f95. 모든 표식에 직접 라벨을 달아 색만으로 읽히지 않게 한다. */
+const HM_RAMP=['#86b6ef','#5598e7','#256abf','#184f95'];
+function hmStep(n,mx){ if(!n)return null; return HM_RAMP[Math.min(HM_RAMP.length-1,Math.floor((n-1)/Math.max(1,mx)*HM_RAMP.length))]; }
 function zaicCharts(){
   const K=(LIVE.today||LIVE_SEED).kpi||{}, pb=K.pbox||{}, ok=K.orikon||{};
-  /* 1) 작업자별 인시생산성 — D1 실측. '월마감에야 보이던 편차'의 근거 */
-  const ws=(pb.workers||[]).slice().sort((a,b)=>b.pltPerMH-a.pltPerMH);
-  const avg=pb.pltPerMH||0, mx=Math.max(avg,...ws.map(w=>w.pltPerMH||0))||1;
-  const wbars=ws.map(w=>{const v=w.pltPerMH||0, dev=avg?Math.round((v/avg-1)*100):0, low=dev<=-30;
-    return `<div class="zrow"><span class="zl">${escHtml(w.name)}</span>
-      <span class="ztrack"><i style="width:${Math.max(2,v/mx*100)}%;background:${low?'#E03426':v>=avg?'#1c7d49':'#E88A00'}"></i></span>
-      <b class="zv" style="color:${low?'#E03426':'var(--navy)'}">${v.toFixed(2)}</b>
-      <span class="zd" style="color:${low?'#E03426':'var(--muted)'}">${dev>0?'+':''}${dev}%</span></div>`;}).join('');
-  const avgPos=avg/mx*100;
-  /* 2) 조치 추적 실계산 */
+
+  /* [1] 발산 막대 — 평균 대비 증감. 값의 역할이 '기준선 대비 위/아래'이므로 길이막대가 아니라 발산형. */
+  const avg=pb.pltPerMH||0;
+  const ws=(pb.workers||[]).slice().sort((a,b)=>b.pltPerMH-a.pltPerMH)
+    .map(w=>({n:w.name,v:w.pltPerMH||0,d:avg?Math.round((w.pltPerMH/avg-1)*100):0}));
+  const span=Math.max(10,...ws.map(w=>Math.abs(w.d)));
+  const dvrows=ws.map(w=>{const pos=w.d>=0, wd=Math.abs(w.d)/span*50, low=w.d<=-30;
+    return `<div class="dvrow" title="${escHtml(w.n)} · ${w.v.toFixed(2)} PLT/MH · 평균 대비 ${w.d>0?'+':''}${w.d}%">
+      <span class="zl">${escHtml(w.n)}</span>
+      <span class="dvtrack"><i class="dvax"></i>
+        <b class="dvbar ${pos?'pos':'neg'}" style="${pos?'left:50%':'right:50%'};width:${wd}%"></b></span>
+      <b class="zv">${w.v.toFixed(2)}</b>
+      <span class="zd" style="color:${low?'#E03426':'var(--muted)'}">${w.d>0?'+':''}${w.d}%${low?' ⚠':''}</span></div>`;}).join('');
+
+  /* [2] 누적 막대 — 부분-전체(탐지 건수의 상태 분포) + 목표선 */
   const J=collectJudgments(), need=J.filter(x=>x.lv!=='ok');
-  const st=k=>need.filter(x=>(actGet(actKey(x)).st||'todo')===k).length;
-  const nDone=st('done'), nDoing=st('doing'), nTodo=need.length-nDone-nDoing;
-  const seg=(n,c,l)=>n?`<i style="width:${n/Math.max(1,need.length)*100}%;background:${c}" title="${l} ${n}건"></i>`:'';
-  /* 3) 판단 룰 구성 — Agent별 · 산출 위치 · 현재 발동 */
-  const live=liveRuleIds();
+  const cnt=k=>need.filter(x=>(actGet(actKey(x)).st||'todo')===k).length;
+  const nDone=cnt('done'), nDoing=cnt('doing'), nTodo=Math.max(0,need.length-nDone-nDoing);
+  const tot=Math.max(1,need.length), rate=Math.round(nDone/tot*100);
+  const seg=(n,c,l)=>n?`<i style="flex:${n};background:${c}" title="${l} ${n}건"></i>`:'';
+
+  /* [3] 스탯 타일 — 값 두 개는 막대 두 개보다 숫자가 낫다 */
+  const pbv=pb.pltPerMH||0, okv=ok.pltPerMH||0;
+  const tile=(nm,v,sub)=>`<div class="ztile"><div class="zt-l">${nm}</div><div class="zt-v">${v.toFixed(2)}<small> PLT/MH</small></div><div class="mini">${sub}</div></div>`;
+
+  /* [4] 히트맵 — Agent × 산출 위치 격자의 크기 비교 */
+  const live=liveRuleIds(), IMPL=[['plat','플랫폼'],['app','연동 앱'],['doc','문서·수기']];
   const ags=Array.from(new Set(RULEBOOK.map(r=>r.agent)));
-  const rmax=Math.max(...ags.map(a=>RULEBOOK.filter(r=>r.agent===a).length));
-  const IMPLC={plat:'#0B7A43',app:'#2f7fd0',doc:'#9aa7b6'};
-  const rbars=ags.map(a=>{const rs=RULEBOOK.filter(r=>r.agent===a);
-    const on=rs.filter(r=>live.has?live.has(r.id):false).length;
-    const cells=['plat','app','doc'].map(k=>{const n=rs.filter(r=>r.impl===k).length;
-      return n?`<i style="width:${n/rmax*100}%;background:${IMPLC[k]}" title="${k} ${n}개"></i>`:'';}).join('');
-    return `<div class="zrow"><span class="zl">${escHtml(a)}</span><span class="ztrack">${cells}</span>
-      <b class="zv">${rs.length}</b><span class="zd">${on?'● 발동 '+on:'—'}</span></div>`;}).join('');
-  const pbv=pb.pltPerMH||0, okv=ok.pltPerMH||0, cmx=Math.max(pbv,okv)||1;
+  const cmax=Math.max(...ags.map(a=>Math.max(...IMPL.map(([k])=>RULEBOOK.filter(r=>r.agent===a&&r.impl===k).length))));
+  const hrows=ags.map(a=>{const rs=RULEBOOK.filter(r=>r.agent===a), on=rs.filter(r=>live.has(r.id)).length;
+    const cells=IMPL.map(([k,lab])=>{const n=rs.filter(r=>r.impl===k).length, bg=hmStep(n,cmax);
+      return `<td class="hc${bg?'':' z'}" style="${bg?`background:${bg};color:${n/cmax>0.5?'#fff':'#0F2038'}`:''}" title="${escHtml(a)} · ${lab} ${n}개">${n||'·'}</td>`;}).join('');
+    return `<tr><th scope="row">${escHtml(a)}</th>${cells}<td class="hn">${rs.length}</td><td class="hl">${on?'<span class="dot"></span>'+on:'—'}</td></tr>`;}).join('');
+  const legend=HM_RAMP.map((c,i)=>`<i style="background:${c}" title="${i+1}단계"></i>`).join('');
+
   return `<div class="card" style="margin-top:16px"><div class="chead" style="margin-bottom:4px">성과 근거 — 실측 데이터 분석</div>
-    <p class="mini" style="margin:0 0 14px">아래 3개 도표는 이 파일에 담긴 D1 실측값과 현재 조치 보드 실계산값만 사용합니다. 임의 수치 없음.</p>
+    <p class="mini" style="margin:0 0 14px">이 파일에 담긴 D1 실측값과 조치 보드 실계산값만 사용합니다. 임의 수치 없음.</p>
     <div class="zgrid">
-      <div class="zbox"><div class="zh">작업자별 인시생산성 <span class="mtag real">실측</span></div>
-        <div class="zsub">P-BOX ${pb.records||0}건 · ${pb.totalMH||0} MH · 단위 PLT/MH</div>
-        <div class="zchart"><div class="zavg"><b style="left:${avgPos}%"><span>평균 ${avg.toFixed(2)}</span></b></div>${wbars}</div>
-        <div class="mini zfoot">평균 대비 <b style="color:#E03426">▼30% 이상</b>이면 편차로 판단(R-24). 월마감 집계 전에는 드러나지 않던 값입니다.</div></div>
+      <div class="zbox"><div class="zh">작업자별 인시생산성 — 평균 대비 <span class="mtag real">실측</span></div>
+        <div class="zsub">P-BOX ${pb.records||0}건 · ${pb.totalMH||0} MH · 평균 <b>${avg.toFixed(2)}</b> PLT/MH 기준</div>
+        <div class="dvchart">${dvrows}</div>
+        <div class="dvaxis"><span>−${span}%</span><span>평균</span><span>+${span}%</span></div>
+        <div class="mini zfoot">평균 대비 <b style="color:#E03426">▼30% 이상(⚠)</b>이면 편차로 판단 — 룰 R-24. 월마감 집계 전에는 드러나지 않던 값입니다.</div></div>
 
       <div class="zbox"><div class="zh">탐지 → 조치 진행 <span class="mtag mp">실계산</span></div>
-        <div class="zsub">오늘 탐지 ${need.length}건 · 조치율 ${need.length?Math.round(nDone/need.length*100):100}% (목표 90%)</div>
-        <div class="zstack">${seg(nDone,'#1c7d49','완료')}${seg(nDoing,'#E88A00','조치중')}${seg(nTodo,'#E03426','미조치')}</div>
+        <div class="zsub">오늘 탐지 <b>${need.length}</b>건 · 조치율 <b>${rate}%</b></div>
+        <div class="zstackwrap"><div class="zstack">${seg(nDone,'#1c7d49','완료')}${seg(nDoing,'#E88A00','조치중')}${seg(nTodo,'#E03426','미조치')}</div>
+          <i class="ztarget" style="left:90%" title="목표 90%"><span>목표 90%</span></i></div>
         <div class="zleg"><span><i style="background:#1c7d49"></i>완료 ${nDone}</span><span><i style="background:#E88A00"></i>조치중 ${nDoing}</span><span><i style="background:#E03426"></i>미조치 ${nTodo}</span></div>
-        <div class="zh" style="margin-top:16px">공정별 생산성 비교 <span class="mtag real">실측</span></div>
-        <div class="zsub">작업 종류가 달라 단순 비교 대상이 아님 — 누계 해석 시 구성비 주의</div>
-        <div class="zrow"><span class="zl">P-BOX</span><span class="ztrack"><i style="width:${pbv/cmx*100}%;background:#0B7A43"></i></span><b class="zv">${pbv.toFixed(2)}</b><span class="zd">${pb.records||0}건</span></div>
-        <div class="zrow"><span class="zl">오리콘</span><span class="ztrack"><i style="width:${okv/cmx*100}%;background:#2f7fd0"></i></span><b class="zv">${okv.toFixed(2)}</b><span class="zd">${ok.records||0}건</span></div></div>
+        <div class="zh" style="margin-top:18px">공정별 생산성 <span class="mtag real">실측</span></div>
+        <div class="ztiles">${tile('P-BOX',pbv,(pb.records||0)+'건 · '+(pb.totalMH||0)+' MH')}${tile('오리콘',okv,(ok.records||0)+'건 · '+(ok.totalMH||0)+' MH')}</div>
+        <div class="mini zfoot">작업 종류가 달라 <b>단순 비교 대상이 아닙니다</b>. 누계 생산성을 볼 때 두 공정의 구성비 변화가 섞이므로 주의가 필요합니다.</div></div>
 
-      <div class="zbox zwide"><div class="zh">판단 룰 ${RULEBOOK.length}개 구성 <span class="mtag mp">코드</span></div>
-        <div class="zsub">Agent별 개수 · 산출 위치 · 현재 발동 중</div>
-        <div class="zchart">${rbars}</div>
-        <div class="zleg"><span><i style="background:#0B7A43"></i>플랫폼 ${RULEBOOK.filter(r=>r.impl==='plat').length}</span><span><i style="background:#2f7fd0"></i>연동 앱 ${RULEBOOK.filter(r=>r.impl==='app').length}</span><span><i style="background:#9aa7b6"></i>문서·수기 ${RULEBOOK.filter(r=>r.impl==='doc').length}</span><span style="margin-left:auto">지금 발동 중 <b>${live.size!=null?live.size:0}</b>개</span></div></div>
+      <div class="zbox zwide"><div class="zh">판단 룰 ${RULEBOOK.length}개 — Agent × 산출 위치 <span class="mtag mp">코드</span></div>
+        <div class="zsub">진한 칸일수록 룰이 많이 몰린 지점 · 오른쪽은 지금 발동 중인 개수</div>
+        <div class="hmwrap"><table class="hmap"><thead><tr><th></th>${IMPL.map(x=>`<th>${x[1]}</th>`).join('')}<th class="hn">합계</th><th class="hl">발동</th></tr></thead><tbody>${hrows}</tbody></table></div>
+        <div class="zleg"><span>적음</span>${legend}<span>많음</span><span style="margin-left:auto">플랫폼 ${RULEBOOK.filter(r=>r.impl==='plat').length} · 연동 앱 ${RULEBOOK.filter(r=>r.impl==='app').length} · 문서·수기 ${RULEBOOK.filter(r=>r.impl==='doc').length} · <b>지금 발동 ${live.size}개</b></span></div></div>
     </div></div>`;
 }
 V.zaic=()=>{
