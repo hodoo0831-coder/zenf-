@@ -142,11 +142,78 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 .poster .p-foot{background:var(--green);color:#fff;font-size:.66em;text-align:center;padding:2.6% 6%;font-weight:600}
 .poster{font-size:clamp(10px,4.4vw,20px)}
 
+/* ===== 관리자: 탭 ===== */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.tabs button{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:12px 8px;font-size:14.5px;font-weight:800;color:var(--muted)}
+.tabs button.on{border-color:var(--navy);background:var(--navy);color:#fff}
+
+/* ===== 관리자: 접수함 ===== */
+.pinbox{display:flex;gap:8px}
+.pinbox input{flex:1}
+.statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center}
+.stat .n{font-size:22px;font-weight:900;color:var(--navy);line-height:1.2}
+.stat .l{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:2px}
+.stat.s-new .n{color:#48688d}
+.stat.s-work .n{color:var(--mid)}
+.stat.s-done .n{color:var(--lo)}
+.inbox-tools{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.inbox-tools .btn{padding:10px 14px;font-size:13.5px}
+.filters{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.filters button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;color:var(--muted)}
+.filters button.on{border-color:var(--navy);background:var(--navy);color:#fff}
+.rlist{margin-top:12px}
+.ritem{background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.ritem .rhead{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;border-left:4px solid #d5dbe0}
+.ritem.sev-긴급 .rhead{border-left-color:var(--hi)}
+.ritem.sev-높음 .rhead{border-left-color:var(--mid)}
+.ritem.sev-보통 .rhead{border-left-color:#48688d}
+.ritem.sev-낮음 .rhead{border-left-color:var(--lo)}
+.ritem .ric{font-size:19px;flex:none}
+.ritem .rmain{flex:1;min-width:0}
+.ritem .rt1{font-size:13.5px;font-weight:800;color:var(--navy);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.ritem .rt2{font-size:12px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:11px;font-weight:800;border-radius:999px;padding:2.5px 9px;color:#fff;flex:none}
+.badge.st-접수{background:#48688d}
+.badge.st-조치중{background:var(--mid)}
+.badge.st-완료{background:var(--lo)}
+.badge.sv{background:#fff;border:1.5px solid currentColor}
+.badge.sv-긴급{color:var(--hi)} .badge.sv-높음{color:var(--mid)} .badge.sv-보통{color:#48688d} .badge.sv-낮음{color:var(--lo)}
+.rbody{display:none;border-top:1px solid var(--line);padding:14px;background:#fafbfb}
+.ritem.open .rbody{display:block}
+.rbody .cttx{font-size:14px;white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.rbody .meta{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7}
+.rbody .rphoto{margin-top:10px;max-width:100%;border-radius:10px;border:1px solid var(--line)}
+.stbtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stbtns button{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:9px 4px;font-size:13px;font-weight:800;color:var(--muted)}
+.stbtns button.on-접수{border-color:#48688d;background:#48688d;color:#fff}
+.stbtns button.on-조치중{border-color:var(--mid);background:var(--mid);color:#fff}
+.stbtns button.on-완료{border-color:var(--lo);background:var(--lo);color:#fff}
+.memo-row{display:flex;gap:8px;margin-top:10px}
+.memo-row textarea{flex:1;min-height:44px}
+.empty{padding:36px 16px;text-align:center;color:var(--muted);font-size:13.5px;background:#fff;border:1px dashed #c3ccd2;border-radius:14px;margin-top:12px}
+
+/* ===== PDF 보고서 (인쇄) ===== */
+.rpt{font-size:13px;color:#1b2d3e}
+.rpt .rpt-hd{border-bottom:3px solid var(--navy);padding-bottom:10px;margin-bottom:14px}
+.rpt h1{font-size:21px;color:var(--navy)}
+.rpt .rpt-sub{font-size:12px;color:#6b7a86;margin-top:3px}
+.rpt table{width:100%;border-collapse:collapse;margin-top:10px}
+.rpt th,.rpt td{border:1px solid #cfd6db;padding:6px 8px;font-size:11.5px;text-align:left;vertical-align:top}
+.rpt th{background:#eef1f1;font-weight:800;white-space:nowrap}
+.rpt .rpt-item{border:1px solid #cfd6db;border-radius:8px;padding:10px 12px;margin-top:10px;page-break-inside:avoid}
+.rpt .rpt-item .h{font-weight:800;color:var(--navy);font-size:13px;margin-bottom:4px}
+.rpt .rpt-item img{max-width:70mm;max-height:55mm;border:1px solid #cfd6db;border-radius:6px;margin-top:6px}
+.rpt .sum{display:flex;gap:10px;margin-top:6px}
+.rpt .sum div{flex:1;border:1px solid #cfd6db;border-radius:8px;padding:8px;text-align:center;font-size:11.5px}
+.rpt .sum b{display:block;font-size:18px}
+
 @media print{
   body{background:#fff}
   body.admin > *:not(#printarea){display:none!important}
   #printarea{display:block!important}
   #printarea .poster{max-width:none;width:100%;height:100vh;aspect-ratio:auto;border:none;box-shadow:none;border-radius:0;margin:0;page-break-after:always;font-size:28px}
+  #printarea .rpt{padding:14mm}
   @page{size:A4 portrait;margin:0}
 }
 #printarea{display:none}
@@ -155,22 +222,6 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 </style>
 </head>
 <body>
-
-<!-- Netlify Forms 감지용 정적 폼 (배포 시 빌드봇이 읽음, 화면에는 안 보임) -->
-<form name="hazard-report" method="POST" action="/" data-netlify="true" netlify-honeypot="bot-field" enctype="multipart/form-data" hidden>
-  <input type="text" name="bot-field">
-  <input type="text" name="report_id">
-  <input type="text" name="type">
-  <input type="text" name="category">
-  <input type="text" name="site">
-  <input type="text" name="location">
-  <input type="text" name="severity">
-  <textarea name="content"></textarea>
-  <input type="text" name="reporter">
-  <input type="text" name="contact">
-  <input type="text" name="submitted_at">
-  <input type="file" name="photo">
-</form>
 
 <header class="appbar">
   <div class="appbar-in">
@@ -271,8 +322,51 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
   </div>
 </main>
 
-<!-- ===================== 관리자: QR 공고문 생성 ===================== -->
+<!-- ===================== 관리자 ===================== -->
 <main class="wrap admin" id="view-admin" style="display:none">
+  <div class="tabs">
+    <button id="tab-btn-inbox" class="on">📬 접수함</button>
+    <button id="tab-btn-poster">📋 QR 공고문</button>
+  </div>
+
+  <!-- ---- 탭 1: 접수함 ---- -->
+  <section id="tab-inbox">
+    <div class="card" id="pin-card">
+      <h2>🔒 관리자 PIN</h2>
+      <div class="pinbox">
+        <input class="fld" id="in-pin" type="password" inputmode="numeric" placeholder="PIN 입력 (기본 1234)">
+        <button class="btn pri" id="btn-pin">확인</button>
+      </div>
+      <div class="hint">PIN은 Netlify 환경변수 <code>ADMIN_PIN</code>으로 변경할 수 있어요. 배포 후 꼭 바꿔주세요.</div>
+    </div>
+
+    <div id="inbox-main" style="display:none">
+      <div class="statrow">
+        <div class="stat"><div class="n" id="st-all">0</div><div class="l">전체</div></div>
+        <div class="stat s-new"><div class="n" id="st-new">0</div><div class="l">접수</div></div>
+        <div class="stat s-work"><div class="n" id="st-work">0</div><div class="l">조치중</div></div>
+        <div class="stat s-done"><div class="n" id="st-done">0</div><div class="l">완료</div></div>
+      </div>
+      <div class="inbox-tools">
+        <button class="btn sec" id="btn-reload">🔄 새로고침</button>
+        <button class="btn sec" id="btn-xlsx">📊 엑셀</button>
+        <button class="btn sec" id="btn-ppt">📽️ PPT</button>
+        <button class="btn sec" id="btn-pdf">📄 PDF</button>
+        <button class="btn sec" id="btn-logout" style="margin-left:auto">잠금</button>
+      </div>
+      <div class="filters" id="inbox-filters">
+        <button data-f="" class="on">전체</button>
+        <button data-f="접수">접수</button>
+        <button data-f="조치중">조치중</button>
+        <button data-f="완료">완료</button>
+        <button data-f="긴급">🚨 긴급만</button>
+      </div>
+      <div class="rlist" id="rlist"></div>
+    </div>
+  </section>
+
+  <!-- ---- 탭 2: QR 공고문 ---- -->
+  <section id="tab-poster" style="display:none">
   <div class="card">
     <h2>📋 QR 공고문 만들기</h2>
     <div class="hint" style="margin:0 0 10px">위치를 한 줄에 하나씩 적으면 위치별 공고문이 만들어져요. QR을 찍으면 해당 위치가 신고 폼에 자동 입력됩니다. 비워두면 위치 없는 공용 공고문 1장이 나와요.</div>
@@ -287,15 +381,7 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
   </div>
 
   <div id="posters"></div>
-
-  <div class="card">
-    <h2>📬 접수된 신고 확인하는 법</h2>
-    <ol class="steps">
-      <li>Netlify 대시보드 → 이 사이트 → <b>Forms</b> 메뉴에서 <code>hazard-report</code> 폼의 제출 내역(사진 포함)을 확인합니다.</li>
-      <li>최초 1회: Forms 메뉴에서 <b>Enable form detection</b>을 켜고 재배포해야 수집이 시작됩니다.</li>
-      <li>Forms → <b>Form notifications</b>에서 이메일 알림을 등록하면 신고가 들어올 때마다 메일로 받아볼 수 있어요.</li>
-    </ol>
-  </div>
+  </section>
 </main>
 
 <div id="printarea"></div>
@@ -2625,6 +2711,7 @@ function route(){
   $("#lnk-admin").textContent=admin?"신고 화면":"관리자";
   $("#lnk-admin").href=admin?"#":"#admin";
   if(admin && !$("#adm-url").value) $("#adm-url").value=defaultReportUrl();
+  if(admin && !inboxLoaded && pin()) unlockTry(pin(),true);
 }
 window.addEventListener("hashchange",route);
 
@@ -2747,7 +2834,8 @@ function buildPayload(){
     content:$("#in-content").value.trim(),
     reporter:anon?"익명":($("#in-name").value.trim()||"미기재"),
     contact:anon?"-":($("#in-contact").value.trim()||"-"),
-    submitted_at:new Date().toLocaleString("ko-KR")
+    submitted_at:new Date().toLocaleString("ko-KR"),
+    photo:(state.photoDataUrl && state.photoDataUrl.length<4500000)?state.photoDataUrl:""
   };
 }
 function validate(){
@@ -2757,23 +2845,23 @@ function validate(){
   if(state.type==="위험 신고" && !state.severity){ toast("긴급한 정도를 선택해 주세요"); return false; }
   return true;
 }
-function toFormData(p,photoFile){
-  var fd=new FormData();
-  fd.append("form-name","hazard-report");
-  Object.keys(p).forEach(function(k){fd.append(k,p[k])});
-  if(photoFile) fd.append("photo",photoFile,p.report_id+".jpg");
-  return fd;
-}
-function postReport(fd){
-  return fetch("/",{method:"POST",body:fd}).then(function(r){
+function postReport(p){
+  return fetch("/api/report",{
+    method:"POST",
+    headers:{"content-type":"application/json"},
+    body:JSON.stringify(p)
+  }).then(function(r){
     if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(j){
+    if(!j.ok) throw new Error(j.error||"fail");
   });
 }
 $("#btn-submit").onclick=function(){
   if(!validate()) return;
   var btn=this; btn.disabled=true; btn.textContent="전송 중…";
   var p=buildPayload();
-  postReport(toFormData(p,state.photoFile)).then(function(){
+  postReport(p).then(function(){
     showDone(p.report_id,false);
   }).catch(function(){
     queueOffline(p);
@@ -2799,26 +2887,17 @@ function queueOffline(p){
   try{
     var q=JSON.parse(localStorage.getItem(QKEY)||"[]");
     var item=Object.assign({},p);
-    if(state.photoDataUrl && state.photoDataUrl.length<1500000) item._photo=state.photoDataUrl;
+    if(item.photo && item.photo.length>=1500000) item.photo="";
     q.push(item);
     localStorage.setItem(QKEY,JSON.stringify(q));
   }catch(e){}
-}
-function dataUrlToFile(du,name){
-  try{
-    var a=du.split(","), bin=atob(a[1]), n=bin.length, u8=new Uint8Array(n);
-    while(n--) u8[n]=bin.charCodeAt(n);
-    return new File([u8],name,{type:"image/jpeg"});
-  }catch(e){ return null; }
 }
 function flushQueue(){
   var q;
   try{ q=JSON.parse(localStorage.getItem(QKEY)||"[]"); }catch(e){ q=[]; }
   if(!q.length) return;
   var item=q[0];
-  var photo=item._photo?dataUrlToFile(item._photo,item.report_id+".jpg"):null;
-  var p=Object.assign({},item); delete p._photo;
-  postReport(toFormData(p,photo)).then(function(){
+  postReport(item).then(function(){
     q.shift();
     localStorage.setItem(QKEY,JSON.stringify(q));
     toast("임시 저장된 신고 전송 완료 ("+item.report_id+")");
@@ -2884,9 +2963,289 @@ function genPosters(){
 }
 $("#btn-gen").onclick=function(){ toast(genPosters()+"장 생성 완료 — 아래에서 미리보기"); };
 $("#btn-print").onclick=function(){
-  if(!$("#printarea").innerHTML) genPosters();
+  genPosters();
   window.print();
 };
+
+/* ---------- 관리자: 탭 ---------- */
+function showTab(t){
+  $("#tab-inbox").style.display=t==="inbox"?"":"none";
+  $("#tab-poster").style.display=t==="poster"?"":"none";
+  $("#tab-btn-inbox").classList.toggle("on",t==="inbox");
+  $("#tab-btn-poster").classList.toggle("on",t==="poster");
+}
+$("#tab-btn-inbox").onclick=function(){showTab("inbox")};
+$("#tab-btn-poster").onclick=function(){showTab("poster")};
+
+/* ---------- 관리자: 접수함 ---------- */
+var PKEY="zk_admin_pin";
+var reports=[], rFilter="", inboxLoaded=false;
+function pin(){ try{return localStorage.getItem(PKEY)||""}catch(e){return ""} }
+function api(path,opt){
+  opt=opt||{};
+  opt.headers=Object.assign({"x-zk-pin":pin()},opt.headers||{});
+  return fetch(path,opt).then(function(r){
+    if(r.status===401){ lock(); throw new Error("pin"); }
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
+  });
+}
+function lock(){
+  try{localStorage.removeItem(PKEY)}catch(e){}
+  inboxLoaded=false;
+  $("#pin-card").style.display="";
+  $("#inbox-main").style.display="none";
+}
+function unlockTry(p,silent){
+  try{localStorage.setItem(PKEY,p)}catch(e){}
+  return api("/api/report").then(function(j){
+    inboxLoaded=true;
+    $("#pin-card").style.display="none";
+    $("#inbox-main").style.display="";
+    reports=j.reports||[];
+    renderInbox();
+  }).catch(function(e){
+    if(silent) return;
+    toast(e.message==="pin"?"PIN이 올바르지 않아요":"서버 연결 실패 — 배포된 주소에서 사용 가능해요");
+  });
+}
+$("#btn-pin").onclick=function(){ var v=$("#in-pin").value.trim(); if(v) unlockTry(v); };
+$("#in-pin").addEventListener("keydown",function(e){ if(e.key==="Enter") $("#btn-pin").click(); });
+$("#btn-logout").onclick=lock;
+$("#btn-reload").onclick=function(){ loadReports(true); };
+function loadReports(say){
+  return api("/api/report").then(function(j){
+    reports=j.reports||[]; renderInbox();
+    if(say) toast("새로고침 완료 — "+reports.length+"건");
+  }).catch(function(){});
+}
+function fmtTime(iso){
+  if(!iso) return "";
+  try{ return new Date(iso).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}); }
+  catch(e){ return iso; }
+}
+function filteredReports(){
+  if(rFilter==="긴급") return reports.filter(function(r){return r.severity==="긴급"});
+  if(rFilter) return reports.filter(function(r){return r.status===rFilter});
+  return reports.slice();
+}
+function countBy(st){ return reports.filter(function(r){return r.status===st}).length; }
+function renderInbox(){
+  $("#st-all").textContent=reports.length;
+  $("#st-new").textContent=countBy("접수");
+  $("#st-work").textContent=countBy("조치중");
+  $("#st-done").textContent=countBy("완료");
+  var list=$("#rlist"); list.innerHTML="";
+  var fs=filteredReports();
+  if(!fs.length){
+    list.innerHTML='<div class="empty">'+(reports.length?"이 조건에 해당하는 건이 없어요.":"아직 접수된 내용이 없어요.<br>QR 공고문을 부착하면 여기로 모입니다.")+'</div>';
+    return;
+  }
+  fs.forEach(function(r){ list.appendChild(ritem(r)); });
+}
+function ritem(r){
+  var d=document.createElement("div");
+  d.className="ritem sev-"+(r.severity||"none");
+  var hz=r.type==="위험 신고";
+  d.innerHTML='<div class="rhead">'
+    +'<span class="ric">'+(hz?"🚨":"💡")+'</span>'
+    +'<div class="rmain"><div class="rt1">'+esc(r.category||"-")
+      +(hz&&r.severity&&r.severity!=="-"?' <span class="badge sv sv-'+esc(r.severity)+'">'+esc(r.severity)+'</span>':'')
+      +(r.hasPhoto?' <span>📷</span>':'')+'</div>'
+    +'<div class="rt2">📍 '+esc(r.location||"-")+' · '+esc(fmtTime(r.received_at))+' · '+esc(r.reporter||"")+'</div></div>'
+    +'<span class="badge st-'+esc(r.status||"접수")+'">'+esc(r.status||"접수")+'</span></div>';
+  d.querySelector(".rhead").onclick=function(){ toggleBody(d,r); };
+  return d;
+}
+function toggleBody(d,r){
+  var b0=d.querySelector(".rbody");
+  if(d.classList.contains("open")){ d.classList.remove("open"); if(b0) b0.remove(); return; }
+  Array.prototype.forEach.call(document.querySelectorAll(".ritem.open"),function(x){
+    x.classList.remove("open"); var bb=x.querySelector(".rbody"); if(bb) bb.remove();
+  });
+  var b=document.createElement("div"); b.className="rbody";
+  b.innerHTML='<div class="cttx">'+esc(r.content||"")+'</div>'
+    +'<div class="meta">접수번호 '+esc(r.id)+' · 제출 '+esc(r.submitted_at||"-")
+    +'<br>제출자 '+esc(r.reporter||"-")+' · 연락처 '+esc(r.contact||"-")+'</div>'
+    +(r.hasPhoto?'<div class="phbox"><button class="btn sec" type="button">📷 사진 보기</button></div>':'')
+    +'<div class="stbtns">'+["접수","조치중","완료"].map(function(s){
+        return '<button type="button" data-s="'+s+'" class="'+(r.status===s?("on-"+s):"")+'">'+s+'</button>';
+      }).join("")+'</div>'
+    +'<div class="memo-row"><textarea class="fld" placeholder="조치 메모 (예: 난간 보강 완료, 자재 발주 중)">'+esc(r.memo||"")+'</textarea><button class="btn navy" type="button">저장</button></div>';
+  var phb=b.querySelector(".phbox button");
+  if(phb) phb.onclick=function(){
+    phb.disabled=true; phb.textContent="불러오는 중…";
+    api("/api/report?photo="+encodeURIComponent(r.id)).then(function(j){
+      if(j.photo){
+        r._photo=j.photo;
+        var img=document.createElement("img"); img.className="rphoto"; img.alt="첨부 사진"; img.src=j.photo;
+        phb.parentNode.replaceChild(img,phb);
+      } else { phb.textContent="사진 없음"; }
+    }).catch(function(){ phb.disabled=false; phb.textContent="📷 사진 보기"; });
+  };
+  Array.prototype.forEach.call(b.querySelectorAll(".stbtns button"),function(sb){
+    sb.onclick=function(){
+      api("/api/report",{method:"POST",headers:{"content-type":"application/json"},
+        body:JSON.stringify({action:"update",id:r.id,status:sb.dataset.s})
+      }).then(function(){ r.status=sb.dataset.s; renderInbox(); toast("상태 변경: "+r.status); })
+        .catch(function(){ toast("변경 실패 — 다시 시도해 주세요"); });
+    };
+  });
+  var ta=b.querySelector(".memo-row textarea");
+  b.querySelector(".memo-row button").onclick=function(){
+    api("/api/report",{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({action:"update",id:r.id,memo:ta.value})
+    }).then(function(){ r.memo=ta.value; toast("메모 저장 완료"); })
+      .catch(function(){ toast("저장 실패 — 다시 시도해 주세요"); });
+  };
+  d.appendChild(b); d.classList.add("open");
+}
+Array.prototype.forEach.call($("#inbox-filters").querySelectorAll("button"),function(fb){
+  fb.onclick=function(){
+    rFilter=fb.dataset.f;
+    Array.prototype.forEach.call($("#inbox-filters").querySelectorAll("button"),function(x){
+      x.classList.toggle("on",x===fb);
+    });
+    renderInbox();
+  };
+});
+
+/* ---------- 내보내기: 엑셀 · PPT · PDF ---------- */
+var loadedScripts={};
+function loadScript(src){
+  if(loadedScripts[src]) return loadedScripts[src];
+  loadedScripts[src]=new Promise(function(res,rej){
+    var s=document.createElement("script"); s.src=src;
+    s.onload=res; s.onerror=function(){ delete loadedScripts[src]; rej(new Error(src)); };
+    document.head.appendChild(s);
+  });
+  return loadedScripts[src];
+}
+function today(){
+  var d=new Date(),p=function(n){return (n<10?"0":"")+n};
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+}
+function fetchPhotos(list,cap){
+  var targets=list.filter(function(r){return r.hasPhoto && !r._photo}).slice(0,cap), i=0;
+  function next(){
+    if(i>=targets.length) return Promise.resolve();
+    var r=targets[i++];
+    return api("/api/report?photo="+encodeURIComponent(r.id))
+      .then(function(j){ r._photo=j.photo||""; })
+      .catch(function(){})
+      .then(next);
+  }
+  return next();
+}
+function catCounts(fs){
+  var m={};
+  fs.forEach(function(r){ var k=r.category||"기타"; m[k]=(m[k]||0)+1; });
+  return Object.keys(m).map(function(k){return [k,m[k]]}).sort(function(a,b){return b[1]-a[1]});
+}
+$("#btn-xlsx").onclick=function(){
+  var fs=filteredReports();
+  if(!fs.length){ toast("내보낼 데이터가 없어요"); return; }
+  toast("엑셀 생성 중…");
+  loadScript("/vendor/xlsx.mini.min.js").then(function(){
+    var rows=fs.map(function(r){return {
+      "접수번호":r.id,"구분":r.type,"유형":r.category,"위치":r.location,
+      "심각도":r.severity,"내용":r.content,"상태":r.status,"조치메모":r.memo||"",
+      "제출자":r.reporter,"연락처":r.contact,"제출시각":r.submitted_at,
+      "서버접수":fmtTime(r.received_at),"사진":r.hasPhoto?"O":"-"
+    }});
+    var ws=XLSX.utils.json_to_sheet(rows);
+    ws["!cols"]=[{wch:16},{wch:9},{wch:14},{wch:12},{wch:7},{wch:50},{wch:7},{wch:30},{wch:8},{wch:14},{wch:20},{wch:13},{wch:5}];
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,"신고내역");
+    XLSX.writeFile(wb,"현장신고_"+today()+".xlsx");
+    toast("엑셀 다운로드 완료");
+  }).catch(function(){ toast("엑셀 모듈 로드 실패 — 배포된 주소에서 사용해 주세요"); });
+};
+$("#btn-ppt").onclick=function(){
+  var fs=filteredReports();
+  if(!fs.length){ toast("내보낼 데이터가 없어요"); return; }
+  toast("PPT 생성 중… (사진 포함, 잠시 걸려요)");
+  Promise.all([loadScript("/vendor/pptxgen.bundle.js"),fetchPhotos(fs,30)]).then(function(){
+    var NAVY="0F2438",GREEN="5B7F52",WHITE="FFFFFF",MUTED="6B7A86",LINE="E4E9EC";
+    var SEVC={"긴급":"C25A52","높음":"CB9447","보통":"48688D","낮음":"4A8A60"};
+    var STC={"접수":"48688D","조치중":"CB9447","완료":"4A8A60"};
+    var P=new PptxGenJS();
+    // 표지
+    var s=P.addSlide(); s.background={color:NAVY};
+    s.addText("현장 위험 신고 · 개선 제안 보고",{x:.55,y:1.7,w:9,h:.85,fontSize:30,bold:true,color:WHITE});
+    s.addText(SITE+"  ·  젠키퍼 ZenKeeper  ·  "+today(),{x:.58,y:2.6,w:9,h:.4,fontSize:14,color:"AFC0CE"});
+    s.addShape("rect",{x:.58,y:3.25,w:1.4,h:.06,fill:{color:GREEN}});
+    s.addText("총 "+fs.length+"건"+(rFilter?"  (필터: "+rFilter+")":""),{x:.58,y:3.5,w:9,h:.4,fontSize:16,bold:true,color:WHITE});
+    // 요약
+    var s2=P.addSlide();
+    s2.addText("접수 현황 요약",{x:.5,y:.35,w:9,h:.5,fontSize:20,bold:true,color:NAVY});
+    var stats=[["전체",reports.length,NAVY],["접수",countBy("접수"),"48688D"],["조치중",countBy("조치중"),"CB9447"],["완료",countBy("완료"),"4A8A60"]];
+    stats.forEach(function(st,i){
+      s2.addShape("roundRect",{x:.5+i*2.4,y:1.0,w:2.15,h:1.15,fill:{color:"F4F6F5"},line:{color:LINE},rectRadius:.08});
+      s2.addText(String(st[1]),{x:.5+i*2.4,y:1.08,w:2.15,h:.6,align:"center",fontSize:26,bold:true,color:st[2]});
+      s2.addText(st[0],{x:.5+i*2.4,y:1.66,w:2.15,h:.35,align:"center",fontSize:12,color:MUTED});
+    });
+    var cc=catCounts(fs).slice(0,8);
+    var tbl=[[{text:"유형",options:{bold:true,fill:{color:"EEF1F1"}}},{text:"건수",options:{bold:true,fill:{color:"EEF1F1"}}}]]
+      .concat(cc.map(function(c){return [{text:c[0]},{text:String(c[1])}]}));
+    s2.addText("유형별 건수",{x:.5,y:2.5,w:9,h:.4,fontSize:14,bold:true,color:NAVY});
+    s2.addTable(tbl,{x:.5,y:2.95,w:5.4,fontSize:11,color:"1B2D3E",border:{pt:.5,color:"CFD6DB"},rowH:.28});
+    // 건별 슬라이드
+    fs.slice(0,30).forEach(function(r,idx){
+      var si=P.addSlide();
+      var hz=r.type==="위험 신고";
+      si.addShape("rect",{x:0,y:0,w:10,h:.75,fill:{color:NAVY}});
+      si.addText((hz?"🚨 ":"💡 ")+(r.category||"-")+"  ·  "+(r.location||"-"),{x:.3,y:.08,w:7.6,h:.6,fontSize:16,bold:true,color:WHITE});
+      si.addText(r.id,{x:7.9,y:.08,w:1.9,h:.6,fontSize:10,color:"AFC0CE",align:"right"});
+      var badges=[];
+      if(hz&&r.severity&&r.severity!=="-") badges.push({t:r.severity,c:SEVC[r.severity]||MUTED});
+      badges.push({t:r.status||"접수",c:STC[r.status]||MUTED});
+      badges.forEach(function(bg,bi){
+        si.addShape("roundRect",{x:.4+bi*1.1,y:.95,w:.95,h:.34,fill:{color:bg.c},rectRadius:.17});
+        si.addText(bg.t,{x:.4+bi*1.1,y:.95,w:.95,h:.34,align:"center",fontSize:10,bold:true,color:WHITE});
+      });
+      si.addText(fmtTime(r.received_at)+"  ·  제출자 "+(r.reporter||"-"),{x:2.7,y:.95,w:6,h:.34,fontSize:10,color:MUTED,valign:"middle"});
+      var hasImg=!!r._photo, tw=hasImg?5.4:9.2;
+      si.addText(r.content||"",{x:.4,y:1.55,w:tw,h:3.1,fontSize:13,color:"1B2D3E",valign:"top"});
+      if(r.memo) si.addText("📝 조치: "+r.memo,{x:.4,y:4.75,w:tw,h:.7,fontSize:11,color:GREEN,valign:"top",bold:true});
+      if(hasImg){
+        try{ si.addImage({data:r._photo,x:6.0,y:1.55,w:3.6,h:3.6,sizing:{type:"contain",w:3.6,h:3.6}}); }catch(e){}
+      }
+      si.addText((idx+1)+" / "+Math.min(fs.length,30),{x:8.6,y:5.25,w:1.2,h:.3,fontSize:9,color:MUTED,align:"right"});
+    });
+    return P.writeFile({fileName:"현장신고_보고_"+today()+".pptx"});
+  }).then(function(){ toast("PPT 다운로드 완료"); })
+    .catch(function(){ toast("PPT 생성 실패 — 배포된 주소에서 사용해 주세요"); });
+};
+$("#btn-pdf").onclick=function(){
+  var fs=filteredReports();
+  if(!fs.length){ toast("내보낼 데이터가 없어요"); return; }
+  toast("PDF 보고서 준비 중… 인쇄 창에서 'PDF로 저장'을 선택하세요");
+  fetchPhotos(fs,30).then(function(){
+    $("#printarea").innerHTML=reportHtml(fs);
+    setTimeout(function(){ window.print(); },150);
+  });
+};
+function reportHtml(fs){
+  var rows=fs.map(function(r){
+    return "<tr><td>"+esc(r.id)+"</td><td>"+esc(r.type)+"</td><td>"+esc(r.category)+"</td><td>"+esc(r.location)
+      +"</td><td>"+esc(r.severity)+"</td><td>"+esc(r.status)+"</td><td>"+esc(fmtTime(r.received_at))+"</td></tr>";
+  }).join("");
+  var items=fs.map(function(r){
+    var hz=r.type==="위험 신고";
+    return '<div class="rpt-item"><div class="h">'+(hz?"🚨":"💡")+" "+esc(r.category||"-")+" · "+esc(r.location||"-")
+      +' <span style="font-weight:400;color:#6b7a86;font-size:11px">('+esc(r.id)+" · "+esc(r.severity||"-")+" · "+esc(r.status)+")</span></div>"
+      +"<div>"+esc(r.content||"")+"</div>"
+      +(r.memo?'<div style="color:#4a6b43;margin-top:4px">📝 조치: '+esc(r.memo)+"</div>":"")
+      +(r._photo?'<img src="'+r._photo+'" alt="">':"")
+      +"</div>";
+  }).join("");
+  return '<div class="rpt"><div class="rpt-hd"><h1>현장 위험 신고 · 개선 제안 보고서</h1>'
+    +'<div class="rpt-sub">'+esc(SITE)+" · 젠키퍼 ZenKeeper · "+today()+" · 총 "+fs.length+"건"+(rFilter?" (필터: "+esc(rFilter)+")":"")+"</div></div>"
+    +'<div class="sum"><div>전체<b>'+reports.length+"</b></div><div>접수<b>"+countBy("접수")+"</b></div><div>조치중<b>"+countBy("조치중")+"</b></div><div>완료<b>"+countBy("완료")+"</b></div></div>"
+    +"<table><tr><th>접수번호</th><th>구분</th><th>유형</th><th>위치</th><th>심각도</th><th>상태</th><th>접수</th></tr>"+rows+"</table>"
+    +items+"</div>";
+}
 
 /* ---------- 시작 ---------- */
 setType("위험 신고");
