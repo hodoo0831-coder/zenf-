@@ -264,6 +264,10 @@
   .zt-v{font-size:26px;font-weight:900;color:var(--navy);letter-spacing:-.5px;line-height:1.1;margin:2px 0 3px}
   .zt-v small{font-size:11px;font-weight:700;color:var(--muted)}
   /* [4] 히트맵 — 격자 위 크기 비교 */
+  .zline{width:100%;height:auto;display:block;margin-top:2px}
+  .zline .axg{stroke:var(--line2);stroke-width:1}
+  .zline .axl{fill:var(--muted2);font-size:10px;font-weight:700}
+  .zline .axv{fill:var(--navy);font-size:11px;font-weight:800}
   .hmwrap{overflow-x:auto}
   .hmap{border-collapse:separate;border-spacing:2px;width:100%;font-size:12px}
   .hmap th{font-size:11px;font-weight:800;color:var(--muted);padding:3px 6px;white-space:nowrap}
@@ -890,6 +894,64 @@ function copyText(t,okMsg){
 }
 function copyDailyBrief(kind){const b=buildDailyBrief(),t=kind==='one'?b.oneLine:b.msg;copyText(t,kind==='one'?'관리자 한 줄 복사됨':'메신저 보고문 복사됨');}
 function dlDailyBrief(){const b=buildDailyBrief();dl('ZEN_일일운영보고_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.txt',b.oneLine+'\n\n'+b.msg,'text/plain');toast('보고문을 저장했습니다');}
+/* ===== 실시간 실적 직결 =====
+   통합 API(zen-integration-api)는 아직 배포되어 있지 않다. 대신 이미 가동 중인
+   현장 앱 Worker(pbox-orikon-db)를 플랫폼이 직접 읽어 KPI를 만든다.
+   집계식은 integration/src/index.js 의 aggregateWork 와 동일 —
+   공동작업("A+B")은 worker_count 로 나눠 개인 실적에 분배한다.
+   실패하면 조용히 기준 시드로 남는다(오프라인 시연 유지). */
+const WORK_API='https://pbox-orikon-db.hodoo0831.workers.dev';
+const _r1=n=>Math.round(n*10)/10;
+function aggWork(rows){
+  const recs=(rows||[]).map(r=>{
+    const ws=String(r.worker||'').split(/[+,·]/).map(x=>x.trim()).filter(Boolean);
+    return {date:String(r.date||r.created_at||'').slice(0,10),workers:ws,wc:(+r.worker_count||0)||ws.length||1,
+      part:r.part||'미구분',type:r.work_type||'기타',
+      plt:+r.qty_plt||0,ea:+r.qty_ea||0,mh:+r.man_hour||0};});
+  const totalPLT=_r1(recs.reduce((a,r)=>a+r.plt,0)), totalEA=recs.reduce((a,r)=>a+r.ea,0);
+  const totalMH=_r1(recs.reduce((a,r)=>a+r.mh,0));
+  const days=new Set(recs.map(r=>r.date).filter(Boolean)).size;
+  const grp=k=>{const m={};recs.forEach(r=>{const x=r[k]||'기타';m[x]=_r1((m[x]||0)+r.plt);});return m;};
+  const wm={};
+  recs.forEach(r=>{const d=r.wc||r.workers.length||1;
+    r.workers.forEach(w=>{const o=wm[w]||(wm[w]={name:w,mh:0,plt:0,ea:0});o.plt+=r.plt/d;o.mh+=r.mh/d;o.ea+=r.ea/d;});});
+  const workers=Object.values(wm).map(w=>({name:w.name,mh:_r1(w.mh),plt:_r1(w.plt),ea:Math.round(w.ea),
+    pltPerMH:w.mh?+(w.plt/w.mh).toFixed(2):0})).sort((a,b)=>b.plt-a.plt);
+  const dm={};recs.forEach(r=>{if(r.date)dm[r.date]=_r1((dm[r.date]||0)+r.plt);});
+  const dmh={};recs.forEach(r=>{if(r.date)dmh[r.date]=_r1((dmh[r.date]||0)+r.mh);});
+  const daily=Object.keys(dm).sort().map(d=>({date:d,plt:dm[d],mh:dmh[d]||0,
+    pltPerMH:dmh[d]?+(dm[d]/dmh[d]).toFixed(2):0}));
+  return {records:recs.length,totalPLT,totalEA,totalMH,days,
+    pltPerMH:totalMH?+(totalPLT/totalMH).toFixed(2):0,
+    eaPerMH:totalMH?Math.round(totalEA/totalMH):0,
+    dailyAvgPLT:days?_r1(totalPLT/days):0,byPart:grp('part'),byType:grp('type'),workers,daily};
+}
+async function fetchSystem(name){
+  const r=await fetch(WORK_API+'/records?system='+encodeURIComponent(name)+'&limit=5000&_t='+Date.now(),{cache:'no-store'});
+  const j=await r.json();
+  if(!j||!j.ok||!Array.isArray(j.records))throw new Error('bad payload');
+  return j.records;
+}
+async function liveDirect(silent){
+  try{
+    const [pb,ok]=await Promise.all([fetchSystem('P-BOX'),fetchSystem('오리콘')]);
+    if(!pb.length&&!ok.length)throw new Error('empty');
+    const P=aggWork(pb), O=aggWork(ok);
+    const worst=P.workers.filter(w=>w.mh>0).sort((a,b)=>a.pltPerMH-b.pltPerMH)[0];
+    LIVE.today={asOf:new Date().toISOString(),kpi:{pbox:P,orikon:O},
+      alerts:worst&&P.pltPerMH&&worst.pltPerMH<P.pltPerMH*0.7
+        ?[{level:'warn',title:'P-BOX 생산성 편차',
+           detail:`${worst.name} ${worst.pltPerMH} PLT/MH (평균 ${P.pltPerMH} 대비 ▼${Math.round((1-worst.pltPerMH/P.pltPerMH)*100)}%)`}]:[]};
+    LIVE.status='live'; dataSource='실시간 현장 앱'; LIVE.brief=localBrief(LIVE.today);
+    syncSrcTag(); if(typeof cur!=='undefined'&&cur)go(cur);
+    if(!silent)toast(`실시간 연결 — P-BOX ${P.records}건 · 오리콘 ${O.records}건`);
+    return true;
+  }catch(e){
+    if(LIVE.status!=='live'){LIVE.status='demo';LIVE.brief=localBrief(LIVE.today);}
+    if(!silent)toast('현장 앱 서버에 닿지 않아 기준 데이터를 유지합니다');
+    return false;
+  }
+}
 async function liveRefresh(){
   if(!LIVE.apiBase){LIVE.status='demo';LIVE.brief=localBrief(LIVE.today);if(cur==='home')go('home');return;}
   const base=LIVE.apiBase.replace(/\/+$/,'');
@@ -1673,6 +1735,31 @@ V.trackNow=()=>{
    순차 오디널 #86b6ef→#184f95. 모든 표식에 직접 라벨을 달아 색만으로 읽히지 않게 한다. */
 const HM_RAMP=['#86b6ef','#5598e7','#256abf','#184f95'];
 function hmStep(n,mx){ if(!n)return null; return HM_RAMP[Math.min(HM_RAMP.length-1,Math.floor((n-1)/Math.max(1,mx)*HM_RAMP.length))]; }
+/* 일자별 인시생산성 추이 — 실시간 연결 시에만 그린다(시드에는 일자 계열이 없음) */
+function zaicTrend(pb){
+  const d=(pb.daily||[]).filter(x=>x.pltPerMH>0);
+  if(d.length<2)return '';
+  const W=900,H=150,PL=44,PR=68,PT=18,PB=26;
+  const vs=d.map(x=>x.pltPerMH), lo=Math.min(...vs), hi=Math.max(...vs);
+  const pad=(hi-lo)||hi||1, y0=Math.max(0,lo-pad*0.25), y1=hi+pad*0.25;
+  const X=i=>PL+(d.length===1?0:i*(W-PL-PR)/(d.length-1));
+  const Y=v=>PT+(1-(v-y0)/((y1-y0)||1))*(H-PT-PB);
+  const pts=d.map((x,i)=>`${X(i).toFixed(1)},${Y(x.pltPerMH).toFixed(1)}`).join(' ');
+  const avg=pb.pltPerMH||0, ay=Y(avg);
+  const dots=d.map((x,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(x.pltPerMH).toFixed(1)}" r="4" fill="#2a78d6" stroke="var(--panel)" stroke-width="2"><title>${x.date} · ${x.pltPerMH} PLT/MH · ${x.plt} PLT / ${x.mh} MH</title></circle>`).join('');
+  const last=d[d.length-1], first=d[0];
+  const ticks=[first,last].map((x,i)=>`<text x="${i?W-PR:PL}" y="${H-6}" text-anchor="${i?'end':'start'}" class="axl">${x.date.slice(5)}</text>`).join('');
+  return `<div class="zbox zwide"><div class="zh">일자별 인시생산성 추이 <span class="mtag real">실시간</span></div>
+    <div class="zsub">P-BOX · ${d.length}일 · 점 위에 올리면 그날 실적</div>
+    <svg class="zline" viewBox="0 0 ${W} ${H}" role="img" aria-label="일자별 인시생산성 추이">
+      <line x1="${PL}" y1="${ay.toFixed(1)}" x2="${W-PR}" y2="${ay.toFixed(1)}" class="axg"/>
+      <text x="${W-PR+4}" y="${(ay+3).toFixed(1)}" class="axl">평균 ${avg.toFixed(2)}</text>
+      <polyline points="${pts}" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}${ticks}
+      <text x="${(W-PR).toFixed(1)}" y="${(Y(last.pltPerMH)-11).toFixed(1)}" text-anchor="end" class="axv">${last.pltPerMH}</text>
+    </svg>
+    <div class="mini zfoot">최근 ${last.date.slice(5)} <b>${last.pltPerMH}</b> PLT/MH · 기간 평균 <b>${avg.toFixed(2)}</b>. 일자별 값은 작업 구성에 따라 흔들리므로 추세로만 읽어주세요.</div></div>`;
+}
 function zaicCharts(){
   const K=(LIVE.today||LIVE_SEED).kpi||{}, pb=K.pbox||{}, ok=K.orikon||{};
 
@@ -1732,6 +1819,7 @@ function zaicCharts(){
         <div class="zsub">진한 칸일수록 룰이 많이 몰린 지점 · 오른쪽은 지금 발동 중인 개수</div>
         <div class="hmwrap"><table class="hmap"><thead><tr><th></th>${IMPL.map(x=>`<th>${x[1]}</th>`).join('')}<th class="hn">합계</th><th class="hl">발동</th></tr></thead><tbody>${hrows}</tbody></table></div>
         <div class="zleg"><span>적음</span>${legend}<span>많음</span><span style="margin-left:auto">플랫폼 ${RULEBOOK.filter(r=>r.impl==='plat').length} · 연동 앱 ${RULEBOOK.filter(r=>r.impl==='app').length} · 문서·수기 ${RULEBOOK.filter(r=>r.impl==='doc').length} · <b>지금 발동 ${live.size}개</b></span></div></div>
+      ${zaicTrend(pb)}
     </div></div>`;
 }
 V.zaic=()=>{
@@ -2933,6 +3021,7 @@ async function doLogin(){
   buildNav();go(cur);applyBig();clockTick();
   syncSrcTag();
   preloadGzDocs();
+  liveDirect(true);
   try{localStorage.setItem('zen_session',JSON.stringify({role,scope:document.getElementById('scopeSel').value,ts:Date.now()}));}catch(e){}
 }
 function _p2(n){return String(n).padStart(2,'0');}
