@@ -150,13 +150,14 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 /* ===== 관리자: 접수함 ===== */
 .pinbox{display:flex;gap:8px}
 .pinbox input{flex:1}
-.statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
-.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center}
-.stat .n{font-size:22px;font-weight:900;color:var(--navy);line-height:1.2}
-.stat .l{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:2px}
+.statrow{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:14px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 4px;text-align:center}
+.stat .n{font-size:21px;font-weight:900;color:var(--navy);line-height:1.2}
+.stat .l{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;white-space:nowrap}
 .stat.s-new .n{color:#48688d}
 .stat.s-work .n{color:var(--mid)}
 .stat.s-done .n{color:var(--lo)}
+.stat.s-long .n{color:#7c6a9c}
 .inbox-tools{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .inbox-tools .btn{padding:10px 14px;font-size:13.5px}
 .filters{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
@@ -175,8 +176,9 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 .ritem .rt2{font-size:12px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .badge{font-size:11px;font-weight:800;border-radius:999px;padding:2.5px 9px;color:#fff;flex:none}
 .badge.st-접수{background:#48688d}
-.badge.st-조치중{background:var(--mid)}
+.badge.st-진행중{background:var(--mid)}
 .badge.st-완료{background:var(--lo)}
+.badge.st-장기과제{background:#7c6a9c}
 .badge.sv{background:#fff;border:1.5px solid currentColor}
 .badge.sv-긴급{color:var(--hi)} .badge.sv-높음{color:var(--mid)} .badge.sv-보통{color:#48688d} .badge.sv-낮음{color:var(--lo)}
 .rbody{display:none;border-top:1px solid var(--line);padding:14px;background:#fafbfb}
@@ -184,11 +186,12 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 .rbody .cttx{font-size:14px;white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .rbody .meta{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7}
 .rbody .rphoto{margin-top:10px;max-width:100%;border-radius:10px;border:1px solid var(--line)}
-.stbtns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.stbtns button{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:9px 4px;font-size:13px;font-weight:800;color:var(--muted)}
+.stbtns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.stbtns button{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:9px 2px;font-size:12.5px;font-weight:800;color:var(--muted);white-space:nowrap}
 .stbtns button.on-접수{border-color:#48688d;background:#48688d;color:#fff}
-.stbtns button.on-조치중{border-color:var(--mid);background:var(--mid);color:#fff}
+.stbtns button.on-진행중{border-color:var(--mid);background:var(--mid);color:#fff}
 .stbtns button.on-완료{border-color:var(--lo);background:var(--lo);color:#fff}
+.stbtns button.on-장기과제{border-color:#7c6a9c;background:#7c6a9c;color:#fff}
 .memo-row{display:flex;gap:8px;margin-top:10px}
 .memo-row textarea{flex:1;min-height:44px}
 .empty{padding:36px 16px;text-align:center;color:var(--muted);font-size:13.5px;background:#fff;border:1px dashed #c3ccd2;border-radius:14px;margin-top:12px}
@@ -372,8 +375,9 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
       <div class="statrow">
         <div class="stat"><div class="n" id="st-all">0</div><div class="l">전체</div></div>
         <div class="stat s-new"><div class="n" id="st-new">0</div><div class="l">접수</div></div>
-        <div class="stat s-work"><div class="n" id="st-work">0</div><div class="l">조치중</div></div>
+        <div class="stat s-work"><div class="n" id="st-work">0</div><div class="l">진행중</div></div>
         <div class="stat s-done"><div class="n" id="st-done">0</div><div class="l">완료</div></div>
+        <div class="stat s-long"><div class="n" id="st-long">0</div><div class="l">장기과제</div></div>
       </div>
       <div class="inbox-tools">
         <button class="btn sec" id="btn-reload">🔄 새로고침</button>
@@ -385,8 +389,9 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
       <div class="filters" id="inbox-filters">
         <button data-f="" class="on">전체</button>
         <button data-f="접수">접수</button>
-        <button data-f="조치중">조치중</button>
+        <button data-f="진행중">진행중</button>
         <button data-f="완료">완료</button>
+        <button data-f="장기과제">장기과제</button>
         <button data-f="긴급">🚨 긴급만</button>
       </div>
       <div class="rlist" id="rlist"></div>
@@ -3061,8 +3066,9 @@ function countBy(st){ return reports.filter(function(r){return r.status===st}).l
 function renderInbox(){
   $("#st-all").textContent=reports.length;
   $("#st-new").textContent=countBy("접수");
-  $("#st-work").textContent=countBy("조치중");
+  $("#st-work").textContent=countBy("진행중");
   $("#st-done").textContent=countBy("완료");
+  $("#st-long").textContent=countBy("장기과제");
   var list=$("#rlist"); list.innerHTML="";
   var fs=filteredReports();
   if(!fs.length){
@@ -3096,7 +3102,7 @@ function toggleBody(d,r){
     +'<div class="meta">접수번호 '+esc(r.id)+' · 제출 '+esc(r.submitted_at||"-")
     +'<br>제출자 '+esc(r.reporter||"-")+' · 연락처 '+esc(r.contact||"-")+'</div>'
     +(r.hasPhoto?'<div class="phbox"><button class="btn sec" type="button">📷 사진 보기</button></div>':'')
-    +'<div class="stbtns">'+["접수","조치중","완료"].map(function(s){
+    +'<div class="stbtns">'+["접수","진행중","완료","장기과제"].map(function(s){
         return '<button type="button" data-s="'+s+'" class="'+(r.status===s?("on-"+s):"")+'">'+s+'</button>';
       }).join("")+'</div>'
     +'<div class="memo-row"><textarea class="fld" placeholder="조치 메모 (예: 난간 보강 완료, 자재 발주 중)">'+esc(r.memo||"")+'</textarea><button class="btn navy" type="button">저장</button></div>';
@@ -3196,7 +3202,7 @@ $("#btn-ppt").onclick=function(){
   Promise.all([loadScript("/vendor/pptxgen.bundle.js"),fetchPhotos(fs,30)]).then(function(){
     var NAVY="0F2438",GREEN="5B7F52",WHITE="FFFFFF",MUTED="6B7A86",LINE="E4E9EC";
     var SEVC={"긴급":"C25A52","높음":"CB9447","보통":"48688D","낮음":"4A8A60"};
-    var STC={"접수":"48688D","조치중":"CB9447","완료":"4A8A60"};
+    var STC={"접수":"48688D","진행중":"CB9447","완료":"4A8A60","장기과제":"7C6A9C"};
     var P=new PptxGenJS();
     // 표지
     var s=P.addSlide(); s.background={color:NAVY};
@@ -3207,11 +3213,11 @@ $("#btn-ppt").onclick=function(){
     // 요약
     var s2=P.addSlide();
     s2.addText("접수 현황 요약",{x:.5,y:.35,w:9,h:.5,fontSize:20,bold:true,color:NAVY});
-    var stats=[["전체",reports.length,NAVY],["접수",countBy("접수"),"48688D"],["조치중",countBy("조치중"),"CB9447"],["완료",countBy("완료"),"4A8A60"]];
+    var stats=[["전체",reports.length,NAVY],["접수",countBy("접수"),"48688D"],["진행중",countBy("진행중"),"CB9447"],["완료",countBy("완료"),"4A8A60"],["장기과제",countBy("장기과제"),"7C6A9C"]];
     stats.forEach(function(st,i){
-      s2.addShape("roundRect",{x:.5+i*2.4,y:1.0,w:2.15,h:1.15,fill:{color:"F4F6F5"},line:{color:LINE},rectRadius:.08});
-      s2.addText(String(st[1]),{x:.5+i*2.4,y:1.08,w:2.15,h:.6,align:"center",fontSize:26,bold:true,color:st[2]});
-      s2.addText(st[0],{x:.5+i*2.4,y:1.66,w:2.15,h:.35,align:"center",fontSize:12,color:MUTED});
+      s2.addShape("roundRect",{x:.5+i*1.85,y:1.0,w:1.7,h:1.15,fill:{color:"F4F6F5"},line:{color:LINE},rectRadius:.08});
+      s2.addText(String(st[1]),{x:.5+i*1.85,y:1.08,w:1.7,h:.6,align:"center",fontSize:24,bold:true,color:st[2]});
+      s2.addText(st[0],{x:.5+i*1.85,y:1.66,w:1.7,h:.35,align:"center",fontSize:11,color:MUTED});
     });
     var cc=catCounts(fs).slice(0,8);
     var tbl=[[{text:"유형",options:{bold:true,fill:{color:"EEF1F1"}}},{text:"건수",options:{bold:true,fill:{color:"EEF1F1"}}}]]
@@ -3270,7 +3276,7 @@ function reportHtml(fs){
   }).join("");
   return '<div class="rpt"><div class="rpt-hd"><h1>현장 위험 신고 · 개선 제안 보고서</h1>'
     +'<div class="rpt-sub">'+esc(SITE)+" · 젠키퍼 ZenKeeper · "+today()+" · 총 "+fs.length+"건"+(rFilter?" (필터: "+esc(rFilter)+")":"")+"</div></div>"
-    +'<div class="sum"><div>전체<b>'+reports.length+"</b></div><div>접수<b>"+countBy("접수")+"</b></div><div>조치중<b>"+countBy("조치중")+"</b></div><div>완료<b>"+countBy("완료")+"</b></div></div>"
+    +'<div class="sum"><div>전체<b>'+reports.length+"</b></div><div>접수<b>"+countBy("접수")+"</b></div><div>진행중<b>"+countBy("진행중")+"</b></div><div>완료<b>"+countBy("완료")+"</b></div><div>장기과제<b>"+countBy("장기과제")+"</b></div></div>"
     +"<table><tr><th>접수번호</th><th>구분</th><th>유형</th><th>위치</th><th>심각도</th><th>상태</th><th>접수</th></tr>"+rows+"</table>"
     +items+"</div>";
 }
