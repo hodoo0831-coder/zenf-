@@ -41,6 +41,7 @@ export default async (req) => {
           statuses.push({
             id: r.id,
             status: r.status,
+            result: r.result || "",
             memo: r.memo || "",
             updated_at: r.updated_at || "",
           });
@@ -55,6 +56,7 @@ export default async (req) => {
       const cur = await s.get("r_" + id, { type: "json" });
       if (!cur) return json({ ok: false, error: "not found" }, 404);
       if (body.status) cur.status = clean(body.status, 20);
+      if (body.result !== undefined) cur.result = clean(body.result, 60);
       if (body.memo !== undefined) cur.memo = clean(body.memo, 2000);
       cur.updated_at = new Date().toISOString();
       await s.setJSON("r_" + id, cur);
@@ -84,6 +86,7 @@ export default async (req) => {
       submitted_at: clean(body.submitted_at, 40),
       received_at: new Date().toISOString(),
       status: "접수",
+      result: "",
       memo: "",
       hasPhoto: !!photo,
     };
