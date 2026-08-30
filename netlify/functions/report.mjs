@@ -29,6 +29,25 @@ export default async (req) => {
       return json({ ok: false, error: "bad json" }, 400);
     }
 
+    // 작업자: 내 신고 상태 조회 (인증 없음 — 상태·메모만 반환, 개인정보 미포함)
+    if (body.action === "mystatus") {
+      const ids = (Array.isArray(body.ids) ? body.ids : [])
+        .slice(0, 50)
+        .map((i) => clean(i, 40).replace(/[^A-Za-z0-9-]/g, ""));
+      const statuses = [];
+      for (const id of ids) {
+        const r = await s.get("r_" + id, { type: "json" });
+        if (r)
+          statuses.push({
+            id: r.id,
+            status: r.status,
+            memo: r.memo || "",
+            updated_at: r.updated_at || "",
+          });
+      }
+      return json({ ok: true, statuses });
+    }
+
     // 관리자: 상태·조치 메모 변경
     if (body.action === "update") {
       if (!authed(req)) return json({ ok: false, error: "pin" }, 401);
@@ -55,6 +74,7 @@ export default async (req) => {
       id,
       type: clean(body.type, 20),
       category: clean(body.category, 40),
+      title: clean(body.title, 100),
       site: clean(body.site, 40),
       location: clean(body.location, 80),
       severity: clean(body.severity, 10),

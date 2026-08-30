@@ -31,7 +31,8 @@ input,select,textarea{font-family:inherit;font-size:16px}
 @keyframes spName{to{opacity:.85}}
 
 /* ===== 공통 레이아웃 ===== */
-.wrap{max-width:520px;margin:0 auto;padding:0 16px 48px}
+.wrap{max-width:520px;margin:0 auto;padding:0 16px 100px}
+body.admin .wrap{padding-bottom:48px}
 header.appbar{background:linear-gradient(160deg,#16365b 0%,#0f2438 72%);color:#fff;padding:calc(16px + env(safe-area-inset-top,0)) 18px 15px;border-radius:0 0 22px 22px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(26,43,53,.1)}
 header.appbar::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(255,255,255,.16),transparent 70%);border-radius:50%;pointer-events:none}
 .appbar-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative;z-index:2}
@@ -47,6 +48,39 @@ header.appbar::after{content:"";position:absolute;right:-40px;top:-40px;width:16
 .card h2::before{content:"—";color:var(--green);font-weight:900;margin-right:1px}
 .card h2 .req{color:var(--hi);font-size:12px}
 .hint{font-size:12px;color:var(--muted);margin-top:6px}
+
+/* 인트로 (젠키퍼 신고 탭 스타일) */
+.intro{padding:20px 2px 2px}
+.intro-label{font-size:12.5px;font-weight:800;color:var(--green);letter-spacing:.3px}
+.intro-label::before{content:"—";margin-right:7px;font-weight:900}
+.intro h1{font-size:23px;font-weight:900;color:var(--navy);letter-spacing:-.3px;margin-top:7px}
+.intro p{font-size:13.5px;color:var(--muted);margin-top:5px}
+.intro-chips{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+.intro-chips span{font-size:11.5px;font-weight:700;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+
+/* 4대 실천 분류 칩 색 (젠키퍼 토큰) */
+.chips button.on.p-젠프{background:#5b7f52;border-color:#5b7f52;color:#fff}
+.chips button.on.p-젠큐{background:#48688d;border-color:#48688d;color:#fff}
+.chips button.on.p-젠클린{background:#bd7c4a;border-color:#bd7c4a;color:#fff}
+.chips button.on.p-젠그린{background:#7a9e63;border-color:#7a9e63;color:#fff}
+.pbadge{font-size:11px;font-weight:800;border-radius:999px;padding:2.5px 9px;color:#fff;flex:none}
+.pbadge.p-젠프{background:#5b7f52}.pbadge.p-젠큐{background:#48688d}
+.pbadge.p-젠클린{background:#bd7c4a}.pbadge.p-젠그린{background:#7a9e63}
+
+/* 하단 탭바 (젠키퍼 네비 스타일) */
+#tabbar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0);box-shadow:0 -4px 14px rgba(15,36,56,.06)}
+#tabbar button{flex:1;border:none;background:none;padding:9px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:700;color:var(--muted)}
+#tabbar button .ti{font-size:19px;line-height:1.2}
+#tabbar button.on{color:var(--green-d)}
+body.admin #tabbar{display:none}
+
+/* 내 신고 */
+.mine-count{font-size:20px;font-weight:900;color:var(--navy);margin:8px 2px 0}
+.mycard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 15px;margin-top:12px;box-shadow:0 2px 7px rgba(34,46,55,.045)}
+.mycard .mrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.mycard .mtitle{font-size:15px;font-weight:800;color:var(--navy);margin-top:8px}
+.mycard .mfoot{font-size:12px;color:var(--muted);margin-top:6px}
+.mycard .mmemo{font-size:12.5px;color:var(--green-d);background:#eef4ec;border-radius:10px;padding:8px 11px;margin-top:9px}
 
 /* 위치 배지 (QR 파라미터 수신 시) */
 .locbadge{margin-top:14px;background:#eef4ec;border:1px solid #cfe0ca;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px}
@@ -93,7 +127,7 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 .photo-thumb .del{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:none;background:rgba(15,36,56,.75);color:#fff;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center}
 
 /* 제출 버튼 */
-.submitbar{position:sticky;bottom:0;padding:12px 0 calc(12px + env(safe-area-inset-bottom,0));background:linear-gradient(to top,var(--bg) 65%,transparent)}
+.submitbar{position:sticky;bottom:calc(56px + env(safe-area-inset-bottom,0));padding:12px 0;background:linear-gradient(to top,var(--bg) 65%,transparent)}
 .btn-submit{width:100%;border:none;border-radius:14px;padding:16px;font-size:16.5px;font-weight:800;color:#fff;background:var(--green);box-shadow:0 4px 14px rgba(91,127,82,.35)}
 .btn-submit:disabled{background:#b9c4bd;box-shadow:none}
 .btn-submit.hz{background:var(--hi);box-shadow:0 4px 14px rgba(194,90,82,.35)}
@@ -185,6 +219,7 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 .badge.st-진행중{background:var(--mid)}
 .badge.st-완료{background:var(--lo)}
 .badge.st-장기과제{background:#7c6a9c}
+.badge.st-전송대기{background:#8aa0b4}
 .badge.sv{background:#fff;border:1.5px solid currentColor}
 .badge.sv-긴급{color:var(--hi)} .badge.sv-높음{color:var(--mid)} .badge.sv-보통{color:#48688d} .badge.sv-낮음{color:var(--lo)}
 .rbody{display:none;border-top:1px solid var(--line);padding:14px;background:#fafbfb}
@@ -285,6 +320,13 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 
 <!-- ===================== 작업자: 신고 폼 ===================== -->
 <main class="wrap" id="view-form">
+  <div class="intro">
+    <div class="intro-label">위험요소 신고 · 개선 제안</div>
+    <h1>보이는 위험, 바로 알려주세요</h1>
+    <p>발견 즉시 신고가 사고를 막습니다.</p>
+    <div class="intro-chips"><span>⏱️ 30초 접수</span><span>📷 사진 첨부</span><span>📬 처리 현황 확인</span></div>
+  </div>
+
   <div class="netbanner" id="netbanner">📶 현재 오프라인입니다 — 제출하면 임시 저장했다가 연결되면 자동 전송해요.</div>
 
   <div class="locbadge" id="locbadge" style="display:none">
@@ -304,8 +346,13 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
   </div>
 
   <div class="card" id="card-cat">
-    <h2 id="cat-title">위험 유형 <span class="req">필수</span></h2>
-    <div class="chips hz" id="chips-cat"></div>
+    <h2 id="cat-title">분류 · 4대 실천 <span class="req">필수</span></h2>
+    <div class="chips" id="chips-cat"></div>
+  </div>
+
+  <div class="card">
+    <h2>제목 <span class="req">필수</span></h2>
+    <input class="fld" id="in-title" maxlength="60" placeholder="예: 통로 적재물로 충돌 위험">
   </div>
 
   <div class="card" id="card-loc">
@@ -360,8 +407,24 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
     <div class="rid" id="done-rid"></div>
     <div class="pendnote" id="done-pend" style="display:none">📶 오프라인이라 기기에 임시 저장했어요. 인터넷이 연결되면 이 페이지가 자동으로 전송합니다. (이 화면을 닫아도 다음 접속 때 전송돼요)</div>
     <div><button class="btn2" id="btn-again">추가로 제출하기</button></div>
+    <div style="margin-top:10px"><button class="btn2" id="btn-gomine" style="border-color:var(--line);color:var(--muted)">내 신고 현황 보기</button></div>
   </div>
 </main>
+
+<!-- ===================== 작업자: 내 신고 ===================== -->
+<main class="wrap" id="view-mine" style="display:none">
+  <div class="intro">
+    <div class="intro-label">내 신고 내역</div>
+    <div class="mine-count" id="mine-count">접수한 0건</div>
+  </div>
+  <div id="mine-list"></div>
+</main>
+
+<!-- 하단 탭바 (작업자) -->
+<nav id="tabbar">
+  <button type="button" id="tb-report" class="on"><span class="ti">⚠️</span>신고하기</button>
+  <button type="button" id="tb-mine"><span class="ti">📋</span>내 신고</button>
+</nav>
 
 <!-- ===================== 관리자 ===================== -->
 <main class="wrap admin" id="view-admin" style="display:none">
@@ -2740,27 +2803,34 @@ var SITE="제니엘";
 var LOGO="data:image/png;base64,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";
 var LOGOW="data:image/png;base64,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";
 var LOCATIONS=["치약 라인","튜브 라인","염모 라인","멀티 라인","직선 라인","세척실","물류창고","자재실","사무동","외부·주차장"];
-var HAZ_CATS=["넘어짐·미끄러짐","끼임·협착","추락","부딪힘·충돌","화재·전기","화학물질","무거운 물건·자세","설비·기계 이상","정리정돈·통로","기타"];
-var IDEA_CATS=["작업방법 개선","안전시설 보완","동선·통로","공구·설비","환경(조명·소음·온도)","기타"];
+var PRACTICES=["젠프 · 안전","젠큐 · 품질","젠클린 · 2S","젠그린 · 환경"];
+function pKey(c){return String(c||"").split(" ")[0]}
 
 var state={type:"위험 신고",category:"",location:"",severity:"",photoFile:null,photoDataUrl:""};
 
 /* ---------- 라우팅 ---------- */
 function route(){
-  var admin=location.hash==="#admin";
+  var admin=location.hash==="#admin", mine=location.hash==="#mine";
   document.body.classList.toggle("admin",admin);
   $("#view-admin").style.display=admin?"":"none";
-  $("#view-form").style.display=admin?"none":"";
+  $("#view-mine").style.display=mine?"":"none";
+  $("#view-form").style.display=(admin||mine)?"none":"";
   $("#view-done").style.display="none";
   $("#hd-sub").textContent=admin?"접수 관리 · QR 공고문":"제니엘 현장 위험 신고 · 개선 제안";
   $("#rt-worker").classList.toggle("on",!admin);
   $("#rt-admin").classList.toggle("on",admin);
+  $("#tb-report").classList.toggle("on",!mine&&!admin);
+  $("#tb-mine").classList.toggle("on",mine);
+  if(mine) refreshMine();
   if(admin && !$("#adm-url").value) $("#adm-url").value=defaultReportUrl();
   if(admin && !inboxLoaded && pin()) unlockTry(pin(),true);
 }
 window.addEventListener("hashchange",route);
-$("#rt-worker").onclick=function(){ location.hash=""; };
-$("#rt-admin").onclick=function(){ location.hash="#admin"; };
+function goHash(h){ if(location.hash!==h){ location.hash=h; } else route(); }
+$("#rt-worker").onclick=function(){ goHash(""); };
+$("#rt-admin").onclick=function(){ goHash("#admin"); };
+$("#tb-report").onclick=function(){ goHash(""); };
+$("#tb-mine").onclick=function(){ goHash("#mine"); };
 
 /* ---------- QR 파라미터로 위치 자동 입력 ---------- */
 var qs=new URLSearchParams(location.search);
@@ -2768,12 +2838,12 @@ var qLoc=(qs.get("loc")||"").trim();
 
 /* ---------- 유형 토글 ---------- */
 function setType(t){
-  state.type=t; state.category="";
+  state.type=t;
   var hz=t==="위험 신고";
   $("#seg-hazard").className=hz?"on-hazard":"";
   $("#seg-idea").className=hz?"":"on-idea";
-  $("#cat-title").innerHTML=(hz?"위험 유형":"제안 분야")+' <span class="req">필수</span>';
   $("#content-title").innerHTML=(hz?"상세 내용":"제안 내용")+' <span class="req">필수</span>';
+  $("#in-title").placeholder=hz?"예: 통로 적재물로 충돌 위험":"예: 자재실 앞 미끄럼 방지 매트 설치";
   $("#in-content").placeholder=hz
     ?"무엇이 · 어디서 · 어떻게 위험한지 적어주세요.\n예) 3번 라인 계단 난간이 흔들려서 잡고 내려가기 불안합니다."
     :"어떻게 바꾸면 더 안전하고 편해질지 적어주세요.\n예) 자재실 앞 통로에 미끄럼 방지 매트를 깔면 좋겠습니다.";
@@ -2781,12 +2851,12 @@ function setType(t){
   var btn=$("#btn-submit");
   btn.textContent=hz?"신고 제출하기":"제안 제출하기";
   btn.classList.toggle("hz",hz);
-  renderChips(hz?HAZ_CATS:IDEA_CATS,hz);
 }
-function renderChips(list,hz){
-  var box=$("#chips-cat"); box.innerHTML=""; box.className="chips"+(hz?" hz":"");
-  list.forEach(function(c){
+function renderPractices(){
+  var box=$("#chips-cat"); box.innerHTML="";
+  PRACTICES.forEach(function(c){
     var b=document.createElement("button"); b.type="button"; b.textContent=c;
+    b.className="p-"+pKey(c);
     b.onclick=function(){
       state.category=c;
       Array.prototype.forEach.call(box.children,function(x){x.classList.toggle("on",x===b)});
@@ -2869,6 +2939,7 @@ function buildPayload(){
     report_id:newRid(),
     type:state.type,
     category:state.category,
+    title:$("#in-title").value.trim(),
     site:SITE,
     location:currentLoc(),
     severity:state.type==="위험 신고"?state.severity:"-",
@@ -2880,7 +2951,8 @@ function buildPayload(){
   };
 }
 function validate(){
-  if(!state.category){ toast(state.type==="위험 신고"?"위험 유형을 선택해 주세요":"제안 분야를 선택해 주세요"); return false; }
+  if(!state.category){ toast("분류(4대 실천)를 선택해 주세요"); return false; }
+  if(!$("#in-title").value.trim()){ toast("제목을 입력해 주세요"); return false; }
   if(!currentLoc()){ toast("발생 위치를 선택해 주세요"); return false; }
   if(!$("#in-content").value.trim()){ toast("내용을 입력해 주세요"); return false; }
   if(state.type==="위험 신고" && !state.severity){ toast("긴급한 정도를 선택해 주세요"); return false; }
@@ -2904,9 +2976,11 @@ $("#btn-submit").onclick=function(){
   var btn=this; btn.disabled=true; btn.textContent="전송 중…";
   var p=buildPayload();
   postReport(p).then(function(){
+    saveMine(p,false);
     showDone(p.report_id,false);
   }).catch(function(){
     queueOffline(p);
+    saveMine(p,true);
     showDone(p.report_id,true);
   }).finally(function(){
     btn.disabled=false;
@@ -2922,6 +2996,54 @@ function showDone(rid,pending){
   window.scrollTo(0,0);
 }
 $("#btn-again").onclick=function(){ location.href=location.pathname+location.search; };
+$("#btn-gomine").onclick=function(){ location.hash="#mine"; };
+
+/* ---------- 내 신고 (이 기기에서 제출한 이력 + 서버 상태 조회) ---------- */
+var MKEY="sv_my_reports";
+function myList(){ try{return JSON.parse(localStorage.getItem(MKEY)||"[]")}catch(e){return []} }
+function saveMine(p,pending){
+  try{
+    var m=myList();
+    m.unshift({id:p.report_id,type:p.type,practice:p.category,title:p.title,loc:p.location,sev:p.severity,ts:Date.now(),status:pending?"전송대기":"접수",memo:""});
+    localStorage.setItem(MKEY,JSON.stringify(m.slice(0,100)));
+  }catch(e){}
+}
+function renderMine(){
+  var m=myList();
+  $("#mine-count").textContent="접수한 "+m.length+"건";
+  var box=$("#mine-list"); box.innerHTML="";
+  if(!m.length){
+    box.innerHTML='<div class="empty">아직 제출한 신고가 없어요.<br>위험을 발견하면 30초만 내주세요!</div>';
+    return;
+  }
+  m.forEach(function(r){
+    var d=document.createElement("div"); d.className="mycard";
+    d.innerHTML='<div class="mrow">'
+      +'<span class="badge st-'+esc(r.status||"접수")+'">'+esc(r.status||"접수")+'</span>'
+      +(r.sev&&r.sev!=="-"?'<span class="badge sv sv-'+esc(r.sev)+'">'+esc(r.sev)+'</span>':'')
+      +(r.practice?'<span class="pbadge p-'+esc(pKey(r.practice))+'">'+esc(pKey(r.practice))+'</span>':'')
+      +'</div>'
+      +'<div class="mtitle">'+esc(r.title||"-")+'</div>'
+      +'<div class="mfoot">📍 '+esc(r.loc||"-")+' · '+esc(fmtTime(new Date(r.ts).toISOString()))+' · '+esc(r.id)+'</div>'
+      +(r.memo?'<div class="mmemo">📝 조치: '+esc(r.memo)+'</div>':'');
+    box.appendChild(d);
+  });
+}
+function refreshMine(){
+  renderMine();
+  var m=myList();
+  var ids=m.filter(function(r){return r.status!=="전송대기"}).map(function(r){return r.id});
+  if(!ids.length) return;
+  fetch("/api/report",{method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({action:"mystatus",ids:ids})
+  }).then(function(r){return r.json()}).then(function(j){
+    if(!j.ok) return;
+    var map={}; (j.statuses||[]).forEach(function(st){map[st.id]=st});
+    m.forEach(function(r){ var st=map[r.id]; if(st){ r.status=st.status; r.memo=st.memo; } });
+    try{localStorage.setItem(MKEY,JSON.stringify(m))}catch(e){}
+    renderMine();
+  }).catch(function(){});
+}
 
 /* ---------- 오프라인 대기열 ---------- */
 var QKEY="sv_report_queue";
@@ -2942,6 +3064,11 @@ function flushQueue(){
   postReport(item).then(function(){
     q.shift();
     localStorage.setItem(QKEY,JSON.stringify(q));
+    try{
+      var m=myList();
+      m.forEach(function(r){ if(r.id===item.report_id && r.status==="전송대기") r.status="접수"; });
+      localStorage.setItem(MKEY,JSON.stringify(m));
+    }catch(e){}
     toast("임시 저장된 신고 전송 완료 ("+item.report_id+")");
     flushQueue();
   }).catch(function(){});
@@ -3092,7 +3219,8 @@ function ritem(r){
   var hz=r.type==="위험 신고";
   d.innerHTML='<div class="rhead">'
     +'<span class="ric">'+(hz?"🚨":"💡")+'</span>'
-    +'<div class="rmain"><div class="rt1">'+esc(r.category||"-")
+    +'<div class="rmain"><div class="rt1">'+esc(r.title||r.category||"-")
+      +(r.category?' <span class="pbadge p-'+esc(pKey(r.category))+'">'+esc(pKey(r.category))+'</span>':'')
       +(hz&&r.severity&&r.severity!=="-"?' <span class="badge sv sv-'+esc(r.severity)+'">'+esc(r.severity)+'</span>':'')
       +(r.hasPhoto?' <span>📷</span>':'')+'</div>'
     +'<div class="rt2">📍 '+esc(r.location||"-")+' · '+esc(fmtTime(r.received_at))+' · '+esc(r.reporter||"")+'</div></div>'
@@ -3108,7 +3236,7 @@ function toggleBody(d,r){
   });
   var b=document.createElement("div"); b.className="rbody";
   b.innerHTML='<div class="cttx">'+esc(r.content||"")+'</div>'
-    +'<div class="meta">접수번호 '+esc(r.id)+' · 제출 '+esc(r.submitted_at||"-")
+    +'<div class="meta">접수번호 '+esc(r.id)+' · '+esc(r.category||"-")+' · 제출 '+esc(r.submitted_at||"-")
     +'<br>제출자 '+esc(r.reporter||"-")+' · 연락처 '+esc(r.contact||"-")+'</div>'
     +(r.hasPhoto?'<div class="phbox"><button class="btn sec" type="button">📷 사진 보기</button></div>':'')
     +'<div class="stbtns">'+["접수","진행중","완료","장기과제"].map(function(s){
@@ -3191,13 +3319,13 @@ $("#btn-xlsx").onclick=function(){
   toast("엑셀 생성 중…");
   loadScript("/vendor/xlsx.mini.min.js").then(function(){
     var rows=fs.map(function(r){return {
-      "접수번호":r.id,"구분":r.type,"유형":r.category,"위치":r.location,
-      "심각도":r.severity,"내용":r.content,"상태":r.status,"조치메모":r.memo||"",
-      "제출자":r.reporter,"연락처":r.contact,"제출시각":r.submitted_at,
-      "서버접수":fmtTime(r.received_at),"사진":r.hasPhoto?"O":"-"
+      "접수번호":r.id,"구분":r.type,"분류":r.category,"제목":r.title||"",
+      "위치":r.location,"심각도":r.severity,"내용":r.content,"상태":r.status,
+      "조치메모":r.memo||"","제출자":r.reporter,"연락처":r.contact,
+      "제출시각":r.submitted_at,"서버접수":fmtTime(r.received_at),"사진":r.hasPhoto?"O":"-"
     }});
     var ws=XLSX.utils.json_to_sheet(rows);
-    ws["!cols"]=[{wch:16},{wch:9},{wch:14},{wch:12},{wch:7},{wch:50},{wch:7},{wch:30},{wch:8},{wch:14},{wch:20},{wch:13},{wch:5}];
+    ws["!cols"]=[{wch:16},{wch:9},{wch:12},{wch:26},{wch:12},{wch:7},{wch:50},{wch:8},{wch:30},{wch:8},{wch:14},{wch:20},{wch:13},{wch:5}];
     var wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,"신고내역");
     XLSX.writeFile(wb,"세이프보이스_신고내역_"+today()+".xlsx");
@@ -3230,16 +3358,16 @@ $("#btn-ppt").onclick=function(){
       s2.addText(st[0],{x:.5+i*1.85,y:1.66,w:1.7,h:.35,align:"center",fontSize:11,color:MUTED});
     });
     var cc=catCounts(fs).slice(0,8);
-    var tbl=[[{text:"유형",options:{bold:true,fill:{color:"EEF1F1"}}},{text:"건수",options:{bold:true,fill:{color:"EEF1F1"}}}]]
+    var tbl=[[{text:"분류",options:{bold:true,fill:{color:"EEF1F1"}}},{text:"건수",options:{bold:true,fill:{color:"EEF1F1"}}}]]
       .concat(cc.map(function(c){return [{text:c[0]},{text:String(c[1])}]}));
-    s2.addText("유형별 건수",{x:.5,y:2.5,w:9,h:.4,fontSize:14,bold:true,color:NAVY});
+    s2.addText("분류별 건수 (4대 실천)",{x:.5,y:2.5,w:9,h:.4,fontSize:14,bold:true,color:NAVY});
     s2.addTable(tbl,{x:.5,y:2.95,w:5.4,fontSize:11,color:"1B2D3E",border:{pt:.5,color:"CFD6DB"},rowH:.28});
     // 건별 슬라이드
     fs.slice(0,30).forEach(function(r,idx){
       var si=P.addSlide();
       var hz=r.type==="위험 신고";
       si.addShape("rect",{x:0,y:0,w:10,h:.75,fill:{color:NAVY}});
-      si.addText((hz?"🚨 ":"💡 ")+(r.category||"-")+"  ·  "+(r.location||"-"),{x:.3,y:.08,w:7.6,h:.6,fontSize:16,bold:true,color:WHITE});
+      si.addText((hz?"🚨 ":"💡 ")+(r.title||r.category||"-")+"  ·  "+(r.location||"-"),{x:.3,y:.08,w:7.6,h:.6,fontSize:15,bold:true,color:WHITE});
       si.addText(r.id,{x:7.9,y:.08,w:1.9,h:.6,fontSize:10,color:"AFC0CE",align:"right"});
       var badges=[];
       if(hz&&r.severity&&r.severity!=="-") badges.push({t:r.severity,c:SEVC[r.severity]||MUTED});
@@ -3272,12 +3400,12 @@ $("#btn-pdf").onclick=function(){
 };
 function reportHtml(fs){
   var rows=fs.map(function(r){
-    return "<tr><td>"+esc(r.id)+"</td><td>"+esc(r.type)+"</td><td>"+esc(r.category)+"</td><td>"+esc(r.location)
+    return "<tr><td>"+esc(r.id)+"</td><td>"+esc(r.category)+"</td><td>"+esc(r.title||"")+"</td><td>"+esc(r.location)
       +"</td><td>"+esc(r.severity)+"</td><td>"+esc(r.status)+"</td><td>"+esc(fmtTime(r.received_at))+"</td></tr>";
   }).join("");
   var items=fs.map(function(r){
     var hz=r.type==="위험 신고";
-    return '<div class="rpt-item"><div class="h">'+(hz?"🚨":"💡")+" "+esc(r.category||"-")+" · "+esc(r.location||"-")
+    return '<div class="rpt-item"><div class="h">'+(hz?"🚨":"💡")+" "+esc(r.title||r.category||"-")+" · "+esc(r.location||"-")
       +' <span style="font-weight:400;color:#6b7a86;font-size:11px">('+esc(r.id)+" · "+esc(r.severity||"-")+" · "+esc(r.status)+")</span></div>"
       +"<div>"+esc(r.content||"")+"</div>"
       +(r.memo?'<div style="color:#4a6b43;margin-top:4px">📝 조치: '+esc(r.memo)+"</div>":"")
@@ -3287,7 +3415,7 @@ function reportHtml(fs){
   return '<div class="rpt"><div class="rpt-hd"><img class="rpt-logo" src="'+LOGO+'" alt="ZENIEL"><h1>세이프보이스 — 현장 신고 · 개선 제안 보고서</h1>'
     +'<div class="rpt-sub">'+esc(SITE)+" · SafeVoice · "+today()+" · 총 "+fs.length+"건"+(rFilter?" (필터: "+esc(rFilter)+")":"")+"</div></div>"
     +'<div class="sum"><div>전체<b>'+reports.length+"</b></div><div>접수<b>"+countBy("접수")+"</b></div><div>진행중<b>"+countBy("진행중")+"</b></div><div>완료<b>"+countBy("완료")+"</b></div><div>장기과제<b>"+countBy("장기과제")+"</b></div></div>"
-    +"<table><tr><th>접수번호</th><th>구분</th><th>유형</th><th>위치</th><th>심각도</th><th>상태</th><th>접수</th></tr>"+rows+"</table>"
+    +"<table><tr><th>접수번호</th><th>분류</th><th>제목</th><th>위치</th><th>심각도</th><th>상태</th><th>접수</th></tr>"+rows+"</table>"
     +items+"</div>";
 }
 
@@ -3304,6 +3432,7 @@ function reportHtml(fs){
   },1300);
 })();
 (function(){ var f=document.createElement("link"); f.rel="icon"; f.href=LOGO; document.head.appendChild(f); })();
+renderPractices();
 setType("위험 신고");
 route();
 updateNet();
