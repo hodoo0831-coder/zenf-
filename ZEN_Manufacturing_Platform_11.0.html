@@ -845,7 +845,7 @@ const ICON={
   target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
   wrench:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2 2-2.6-.6-.6-2.6z"/>',
 };
-const NAV_ICON={home:'factory',judge:'spark',track:'check',ops:'activity',planhub:'clock',prod:'activity',labor:'users',clean:'droplet',stock:'package',orikonwash:'droplet',safe:'shield',qual:'flask',insight:'gauge',kpi:'gauge',report:'report',opl:'report',data:'db'};
+const NAV_ICON={forecast:'clock',reports:'report',home:'factory',judge:'spark',track:'check',ops:'activity',planhub:'clock',prod:'activity',labor:'users',clean:'droplet',stock:'package',orikonwash:'droplet',safe:'shield',qual:'flask',insight:'gauge',kpi:'gauge',report:'report',opl:'report',data:'db'};
 function svic(n,s){s=s||18;return '<svg class="sv" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+(ICON[n]||'')+'</svg>';}
 function tintOf(c){return c==='#16a34a'?'g':c==='#d97706'?'a':c==='#dc2626'?'r':'n';}
 function hydrateIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(function(e){if(e.getAttribute('data-done'))return;e.innerHTML=svic(e.getAttribute('data-ic'),16);e.setAttribute('data-done','1');});}
@@ -1197,7 +1197,9 @@ function headCur(){return scoped()?myLines().reduce((a,l)=>a+G.cur(l),0):DB.head
 
 /* ============ AGENTS / ROLES ============ */
 const AGENTS=[
-  {id:'home',name:'컨트롤타워',icon:'🏭',sub:'현재 상태 → 예측 → 판단 → 조치'},
+  {id:'forecast',name:'계획 · 예측',icon:'🗓',sub:'주간계획 업로드 → 부하율 · 필요인원 · 지연오더 예측'},
+  {id:'home',name:'컨트롤타워',icon:'🏭',sub:'실시간 현황 종합 · 오늘의 판단 요약'},
+  {id:'reports',name:'일간 · 주간 · 월마감',icon:'📄',sub:'주기별 보고서 자동 생성'},
   {id:'judge',name:'판단 기준 · 성과',icon:'🧠',sub:'코드화된 판단 룰 카탈로그 · ZAIC 성과지표'},
   {id:'track',name:'AI 판단·조치',icon:'✅',sub:'실측 → 기준 대조 → 판단 → 담당·기한 → 결과'},
   {id:'ops',name:'현장 8 Agent',icon:'⚙️',sub:'생산·계획 · 인력 · 세척 · 창고 · 간접작업 · 안전 · 품질 · 분석·보고'},
@@ -1208,12 +1210,12 @@ const AGENTS=[
   {id:'orikonwash',name:'간접작업 Agent',icon:'📦',sub:'오리콘·P-BOX 실적 · 5초 자동집계'},
   {id:'safe',name:'안전 Agent',icon:'🦺',sub:'TBM · 폭염 · 위험요인 추천'},
   {id:'qual',name:'품질 Agent',icon:'🔬',sub:'불량 추이 · 원인 분석'},
-  {id:'insight',name:'분석·보고 Agent',icon:'📊',sub:'KPI·LOSS 분석 · 월마감 보고서'},
+  {id:'insight',name:'분석 Agent',icon:'📊',sub:'KPI · LOSS · 원가 분석'},
 ];
 const ROLES={
-  field:{name:'현장',emoji:'🧑‍🏭',allow:['home','ops','planhub','clean','orikonwash','safe','safeapp']},
-  admin:{name:'관리자',emoji:'👔',allow:['home','judge','track','ops','planhub','labor','clean','stock','orikonwash','safe','qual','data','opl','safeapp']},
-  center:{name:'센터',emoji:'🛰️',allow:['home','judge','track','ops','planhub','labor','clean','stock','orikonwash','safe','qual','insight','data','opl','safeapp']},
+  field:{name:'현장',emoji:'🧑‍🏭',allow:['home','forecast','ops','planhub','clean','orikonwash','safe','safeapp']},
+  admin:{name:'관리자',emoji:'👔',allow:['home','forecast','reports','judge','track','ops','planhub','labor','clean','stock','orikonwash','safe','qual','data','opl','safeapp']},
+  center:{name:'센터',emoji:'🛰️',allow:['home','forecast','reports','judge','track','ops','planhub','labor','clean','stock','orikonwash','safe','qual','insight','data','opl','safeapp']},
 };
 let role='center';
 
@@ -1461,10 +1463,70 @@ V.prod=()=>{
   const t=vtabActive('prod',tabs);
   return vtabsBar('prod',tabs)+(t==='pbox'?renderLive():prodStatus());
 };
+/* ===== ① 계획 · 예측 — 흐름의 출발점 =====
+   주간계획 업로드가 여기서 일어나고, 그 결과로 나오는 예측(부하율·필요인원·
+   지연오더)이 한 화면에 모인다. 업로드는 '관리', 결과는 'Agent 탭 안쪽'으로
+   흩어져 있던 것을 한 자리로 합친 것. */
+V.forecast=()=>{
+  const tabs=[{k:'plan',label:'주간계획'},{k:'load',label:'부하율·필요인원'},{k:'delay',label:'지연오더'}];
+  const t=vtabActive('forecast',tabs);
+  const has=!!DB.plan;
+  const head=`<div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,#16283f,#0e1a2e);border:none;color:#fff">
+    <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <div style="min-width:0"><div style="font-size:11px;letter-spacing:2.5px;color:#8fd8b9;font-weight:800">STEP 1 · PLAN → FORECAST</div>
+        <div style="font-size:21px;font-weight:800;margin-top:5px">주간계획을 올리면 예측이 만들어집니다</div>
+        <div style="font-size:12.5px;color:#a6bad8;margin-top:5px">라인 목표 · 그룹 부하율 · 필요인원 · 지연 위험 오더가 한 번에 산출되고, 과부하는 <b style="color:#cfe0f2">조치 티켓</b>으로 넘어갑니다</div></div>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input id="fcFile" type="file" accept=".xlsx,.xls" style="display:none" onchange="loadUpload(this)">
+        <button class="btn p" onclick="document.getElementById('fcFile').click()">⬆ 주간계획 올리기</button>
+        <button class="btn" onclick="go('data')">기준 데이터</button>
+      </div></div>
+    <div class="mini" style="margin-top:10px;color:#8fa6c4">${has?'현재 계획: <b style="color:#cfe0f2">'+escHtml(loadPlanName)+'</b> · 기준: '+escHtml(masterStatus()):'아직 계획이 없습니다 — 내장 샘플 기준으로 표시 중입니다'}</div>
+  </div>`;
+  return head+vtabsBar('forecast',tabs)+(t==='load'?loadView():t==='delay'?V.delay():V.plan());
+};
+
+/* ===== ④ 보고 — 일간 · 주간 · 월마감 ===== */
+V.reports=()=>{
+  const tabs=[{k:'daily',label:'일간 보고'},{k:'weekly',label:'주간 보고'},{k:'monthly',label:'월마감 보고서'}];
+  const t=vtabActive('reports',tabs);
+  return vtabsBar('reports',tabs)+(t==='weekly'?weeklyReport():t==='monthly'?V.report():dailyReport());
+};
+function dailyReport(){
+  const b=buildDailyBrief(), tp=totProd(), oee=avgOEE(), df=avgDefect();
+  const J=collectJudgments().filter(x=>x.lv!=='ok');
+  return `<div class="card" style="margin-bottom:14px"><h3>일간 운영보고 <span class="hint">${todayKR()} · 8개 Agent 자동 취합</span>
+    <span style="margin-left:auto;display:flex;gap:6px"><button class="btn" onclick="copyDailyBrief('one')">한 줄 복사</button><button class="btn p" onclick="copyDailyBrief('msg')">보고문 복사</button></span></h3>
+    <div class="reco" style="margin-bottom:10px"><div class="ic" data-ic="spark"></div><div class="tx"><div class="r">${escHtml(b.oneLine)}</div></div></div>
+    <pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.7;margin:0;background:var(--bg);border-radius:10px;padding:14px 16px">${escHtml(b.msg)}</pre></div>
+  <div class="kstrip">
+    <div class="ki"><div class="l">생산 달성률</div><div class="v tnum">${tp.ach}<small>%</small></div><div class="d muted">${(tp.a/1000).toFixed(0)}천 / ${(tp.t/1000).toFixed(0)}천개</div></div>
+    <div class="ki"><div class="l">OEE</div><div class="v tnum">${oee}<small>%</small></div></div>
+    <div class="ki"><div class="l">불량률</div><div class="v tnum">${df}<small>%</small></div></div>
+    <div class="ki"><div class="l">미조치 판단</div><div class="v tnum" style="color:${J.length?'#dc2626':'#16a34a'}">${J.length}<small>건</small></div><div class="d muted"><a onclick="go('track')" style="color:#3f74b5;cursor:pointer">조치 추적 →</a></div></div>
+  </div>`;
+}
+function weeklyReport(){
+  const R=loadCalc(loadPlan,loadDays,loadBase), g=R.groups;
+  const over=g.filter(x=>x.load>=100), tot=R.rows.filter(r=>r.wk>0);
+  const totWk=tot.reduce((a,r)=>a+r.wk,0), totCap=tot.reduce((a,r)=>a+r.cap*loadDays,0);
+  const netGap=+g.reduce((a,x)=>a+x.gap,0).toFixed(1);
+  const rows=g.map(x=>`<tr><td style="text-align:left">${escHtml(x.grp)}</td><td>${x.load}%</td><td>${x.needAdj}</td><td>${x.avail}</td>
+    <td style="color:${x.gap>0.4?'#dc2626':x.gap<-0.4?'#3f74b5':'var(--muted)'};font-weight:800">${x.gap>0?'+':''}${x.gap}</td></tr>`).join('');
+  return `<div class="card" style="margin-bottom:14px"><h3>주간 운영보고 <span class="hint">${escHtml(loadPlanName)} · ${loadDays}일 기준</span></h3>
+    <div class="kstrip" style="margin-bottom:12px">
+      <div class="ki"><div class="l">주간 계획량</div><div class="v tnum">${(totWk/10000).toFixed(1)}<small>만개</small></div></div>
+      <div class="ki"><div class="l">전체 부하율</div><div class="v tnum">${totCap?Math.round(totWk/totCap*100):0}<small>%</small></div></div>
+      <div class="ki"><div class="l">과부하 그룹</div><div class="v tnum" style="color:${over.length?'#dc2626':'#16a34a'}">${over.length}<small>/${g.length}</small></div><div class="d muted">${over.map(x=>x.grp).join('·')||'없음'}</div></div>
+      <div class="ki"><div class="l">순 인원 과부족</div><div class="v tnum" style="color:${netGap>0?'#dc2626':'#16a34a'}">${netGap>0?'+':''}${netGap}<small>명</small></div></div>
+    </div>
+    <table class="tb"><thead><tr><th style="text-align:left">라인군</th><th>부하율</th><th>필요(부하반영)</th><th>가용</th><th>과부족</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="mini" style="margin-top:9px">부하율 100% 초과 그룹은 잔업·재배치 대상입니다. 상세는 <a onclick="go('forecast')" style="color:#3f74b5;cursor:pointer">계획·예측</a>에서 확인하세요.</div></div>`;
+}
 V.planhub=()=>{
-  const tabs=[{k:'today',label:'금일 실적'},{k:'plan',label:'주간계획'},{k:'load',label:'부하율·필요인원'},{k:'delay',label:'지연오더'}];
-  const t=vtabActive('planhub',tabs);
-  return vtabsBar('planhub',tabs)+(t==='today'?prodStatus():t==='load'?loadView():t==='delay'?V.delay():V.plan());
+  /* 계획·예측(주간계획·부하율·지연오더)은 ① 계획·예측 화면으로 이관.
+     여기는 '오늘 현황'만 남긴다 — 흐름상 2단계(실측)에 속하므로. */
+  return prodStatus()+`<div class="mini" style="margin-top:10px">주간계획·부하율·지연오더 예측은 <a onclick="go('forecast')" style="color:#3f74b5;cursor:pointer;font-weight:700">① 계획·예측</a>에서 봅니다.</div>`;
 };
 
 
@@ -2031,9 +2093,7 @@ V.judge=()=>{
   return vtabsBar('judge',tabs)+(t==='zaic'?V.zaic():V.rulebook());
 };
 V.insight=()=>{
-  const tabs=[{k:'kpi',label:'KPI·LOSS 분석'},{k:'report',label:'월마감 보고서'}];
-  const t=vtabActive('insight',tabs);
-  return insightExportBar()+vtabsBar('insight',tabs)+(t==='report'?V.report():V.kpi());
+  return insightExportBar()+V.kpi();
 };
 /* ============ 분석·보고 내보내기 — 엑셀 · PDF · PPT ============ */
 const CONTRACT_HC={office:90,prod:153,prodDelta:10};
@@ -3127,11 +3187,14 @@ function openReport(kind){
 
 /* ============ ROUTER / NAV / LOGIN ============ */
 let cur='home';
-const NAV_TOOLS={opl:{name:'OPL 교육자료',icon:'📄'},data:{name:'관리·연동',icon:'🗄'}};
+const NAV_TOOLS={opl:{name:'OPL 교육자료',icon:'📄'},data:{name:'기준 · 연동',icon:'🗄'}};
+/* 운영 흐름 그대로: 계획→예측 · 현황→실측 · 판단→조치 · 보고 · (참조)기준·관리 */
 const NAV_GROUPS=[
-  {sec:'현황 · 실측',ids:['home','ops']},
-  {sec:'판단 · 조치',ids:['track','judge']},
-  {sec:'보고 · 관리',ids:['insight','data','opl']},
+  {sec:'① 계획 · 예측',ids:['forecast']},
+  {sec:'② 현황 · 실측',ids:['home','ops']},
+  {sec:'③ 판단 · 조치',ids:['track']},
+  {sec:'④ 보고',ids:['reports','insight']},
+  {sec:'기준 · 관리',ids:['judge','data','opl']},
 ];
 function buildNav(){
   const R=ROLES[role],allow=id=>R.allow.includes(id);
@@ -3150,9 +3213,9 @@ function buildNav(){
     <div class="spacer"></div>
     <div class="user"><div class="av">${R.emoji}</div><div style="flex:1;min-width:0"><div class="nm">${role==='center'?'이민아':'홍길동'} ${R.name}</div><div class="rl">${scopeLabel()}</div><div class="roleswitch">${['field','admin','center'].map(k=>`<span class="rchip ${role===k?'on':''}" onclick="switchRole('${k}')">${ROLES[k].name}</span>`).join('')}</div></div><div class="out" onclick="logout()" title="로그아웃">⎋</div></div>`;
 }
-const GO_REDIR={prod:['planhub','today'],plan:['planhub','plan'],delay:['planhub','delay'],load:['planhub','load'],
+const GO_REDIR={prod:['ops','production'],plan:['forecast','plan'],delay:['forecast','delay'],load:['forecast','load'],
   planhub:['ops','production'],labor:['ops','labor'],clean:['ops','clean'],stock:['ops','stock'],orikonwash:['ops','indirect'],safe:['ops','safe'],qual:['ops','quality'],
-  kpi:['insight','kpi'],report:['insight','report']};
+  kpi:['insight','kpi'],report:['reports','monthly']};
 function go(id){
   let _rg=0;while(GO_REDIR[id]&&_rg++<4){const[a,t]=GO_REDIR[id];vtab[a]=t;id=a;}
   if(!ROLES[role].allow.includes(id)&&!['data','safeapp'].includes(id))id='home';
