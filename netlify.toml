@@ -27,6 +27,12 @@
   to = "/ZEN_SafeVoice.html"
   status = 200
 
+# 관리자 전용 주소 (같은 앱, 경로로 화면 분기)
+[[redirects]]
+  from = "/admin"
+  to = "/ZEN_SafeVoice.html"
+  status = 200
+
 # 보안 헤더 (임베드/클릭재킹 완화, 데모 프로토타입 기준)
 [[headers]]
   for = "/*"

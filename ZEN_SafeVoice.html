@@ -82,6 +82,15 @@ body.admin #tabbar{display:none}
 .mycard .mfoot{font-size:12px;color:var(--muted);margin-top:6px}
 .mycard .mmemo{font-size:12.5px;color:var(--green-d);background:#eef4ec;border-radius:10px;padding:8px 11px;margin-top:9px}
 
+/* 접수함: 썸네일 · 일괄 정리 · 조치 결과 */
+.rthumb{width:42px;height:42px;border-radius:10px;object-fit:cover;flex:none;border:1px solid var(--line)}
+.ghead{margin:20px 2px 2px;font-size:14.5px;font-weight:800;color:var(--navy)}
+.ghead::before{content:"—";color:var(--green);font-weight:900;margin-right:7px}
+.ghead .gcnt{color:var(--muted);font-weight:700;font-size:12.5px;margin-left:5px}
+.dphoto{width:100%;max-height:240px;object-fit:cover;border-radius:12px;margin-top:10px;border:1px solid var(--line)}
+.dcontent{font-size:13.5px;color:var(--ink);margin-top:8px;white-space:pre-wrap}
+.chips.rslt button.on{background:var(--lo);border-color:var(--lo);color:#fff}
+
 /* 위치 배지 (QR 파라미터 수신 시) */
 .locbadge{margin-top:14px;background:#eef4ec;border:1px solid #cfe0ca;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px}
 .locbadge .ico{font-size:20px}
@@ -458,6 +467,10 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
         <button class="btn sec" id="btn-ppt">📽️ PPT</button>
         <button class="btn sec" id="btn-pdf">📄 PDF</button>
         <button class="btn sec" id="btn-logout" style="margin-left:auto">잠금</button>
+      </div>
+      <div class="filters" id="view-toggle">
+        <button data-v="list" class="on">📋 목록</button>
+        <button data-v="digest">🗂️ 일괄 정리</button>
       </div>
       <div class="filters" id="inbox-filters">
         <button data-f="" class="on">전체</button>
@@ -2809,8 +2822,9 @@ function pKey(c){return String(c||"").split(" ")[0]}
 var state={type:"위험 신고",category:"",location:"",severity:"",photoFile:null,photoDataUrl:""};
 
 /* ---------- 라우팅 ---------- */
+var ADMIN_PAGE=/\/admin\/?$/.test(location.pathname);
 function route(){
-  var admin=location.hash==="#admin", mine=location.hash==="#mine";
+  var admin=ADMIN_PAGE||location.hash==="#admin", mine=!admin&&location.hash==="#mine";
   document.body.classList.toggle("admin",admin);
   $("#view-admin").style.display=admin?"":"none";
   $("#view-mine").style.display=mine?"":"none";
@@ -2827,8 +2841,10 @@ function route(){
 }
 window.addEventListener("hashchange",route);
 function goHash(h){ if(location.hash!==h){ location.hash=h; } else route(); }
-$("#rt-worker").onclick=function(){ goHash(""); };
-$("#rt-admin").onclick=function(){ goHash("#admin"); };
+$("#rt-worker").onclick=function(){ if(ADMIN_PAGE){ location.href="/report"; } else { goHash(""); } };
+$("#rt-admin").onclick=function(){ if(!ADMIN_PAGE) goHash("#admin"); };
+// 신고 전용 페이지(/report)에서는 관리자 토글을 숨김 — 관리자는 /admin 으로 접속
+if(!ADMIN_PAGE && location.protocol!=="file:"){ document.querySelector(".role-tg").style.display="none"; }
 $("#tb-report").onclick=function(){ goHash(""); };
 $("#tb-mine").onclick=function(){ goHash("#mine"); };
 
@@ -3025,7 +3041,8 @@ function renderMine(){
       +'</div>'
       +'<div class="mtitle">'+esc(r.title||"-")+'</div>'
       +'<div class="mfoot">📍 '+esc(r.loc||"-")+' · '+esc(fmtTime(new Date(r.ts).toISOString()))+' · '+esc(r.id)+'</div>'
-      +(r.memo?'<div class="mmemo">📝 조치: '+esc(r.memo)+'</div>':'');
+      +((r.result||r.memo)?'<div class="mmemo">'+(r.result?'<b>✅ 조치 결과: '+esc(r.result)+'</b>':'')
+        +(r.memo?((r.result?'<br>':''))+'📝 '+esc(r.memo):'')+'</div>':'');
     box.appendChild(d);
   });
 }
@@ -3039,7 +3056,7 @@ function refreshMine(){
   }).then(function(r){return r.json()}).then(function(j){
     if(!j.ok) return;
     var map={}; (j.statuses||[]).forEach(function(st){map[st.id]=st});
-    m.forEach(function(r){ var st=map[r.id]; if(st){ r.status=st.status; r.memo=st.memo; } });
+    m.forEach(function(r){ var st=map[r.id]; if(st){ r.status=st.status; r.memo=st.memo; r.result=st.result||""; } });
     try{localStorage.setItem(MKEY,JSON.stringify(m))}catch(e){}
     renderMine();
   }).catch(function(){});
@@ -3087,7 +3104,7 @@ function toast(m){
 /* ---------- 관리자: QR 공고문 ---------- */
 function defaultReportUrl(){
   if(location.protocol==="file:") return "https://예시.netlify.app/report";
-  return location.origin+location.pathname.replace(/index\.html$/,"");
+  return location.origin+"/report";
 }
 function qrSvg(text){
   var typeNumber=0; // auto
@@ -3148,7 +3165,8 @@ $("#tab-btn-poster").onclick=function(){showTab("poster")};
 
 /* ---------- 관리자: 접수함 ---------- */
 var PKEY="sv_admin_pin";
-var reports=[], rFilter="", inboxLoaded=false;
+var RESULTS=["즉시 조치 완료","보수·발주 진행","교육·전파 시행","기준·표준 반영","예산 확보 후 조치","해당 없음·반려"];
+var reports=[], rFilter="", inboxLoaded=false, viewMode="list";
 function pin(){ try{return localStorage.getItem(PKEY)||""}catch(e){return ""} }
 function api(path,opt){
   opt=opt||{};
@@ -3173,6 +3191,7 @@ function unlockTry(p,silent){
     $("#inbox-main").style.display="";
     reports=j.reports||[];
     renderInbox();
+    fetchPhotos(reports,40).then(renderInbox);
   }).catch(function(e){
     if(silent) return;
     toast(e.message==="pin"?"PIN이 올바르지 않아요":"서버 연결 실패 — 배포된 주소에서 사용 가능해요");
@@ -3184,7 +3203,11 @@ $("#btn-logout").onclick=lock;
 $("#btn-reload").onclick=function(){ loadReports(true); };
 function loadReports(say){
   return api("/api/report").then(function(j){
-    reports=j.reports||[]; renderInbox();
+    var old={}; reports.forEach(function(r){ if(r._photo) old[r.id]=r._photo; });
+    reports=j.reports||[];
+    reports.forEach(function(r){ if(old[r.id]) r._photo=old[r.id]; });
+    renderInbox();
+    fetchPhotos(reports,40).then(renderInbox);
     if(say) toast("새로고침 완료 — "+reports.length+"건");
   }).catch(function(){});
 }
@@ -3211,7 +3234,38 @@ function renderInbox(){
     list.innerHTML='<div class="empty">'+(reports.length?"이 조건에 해당하는 건이 없어요.":"아직 접수된 내용이 없어요.<br>QR 공고문을 부착하면 여기로 모입니다.")+'</div>';
     return;
   }
+  if(viewMode==="digest"){ renderDigest(fs,list); return; }
   fs.forEach(function(r){ list.appendChild(ritem(r)); });
+}
+function digestCard(r){
+  var hz=r.type==="위험 신고";
+  var d=document.createElement("div"); d.className="mycard";
+  d.innerHTML='<div class="mrow">'
+    +'<span class="badge st-'+esc(r.status||"접수")+'">'+esc(r.status||"접수")+'</span>'
+    +(hz&&r.severity&&r.severity!=="-"?'<span class="badge sv sv-'+esc(r.severity)+'">'+esc(r.severity)+'</span>':'')
+    +(r.category?'<span class="pbadge p-'+esc(pKey(r.category))+'">'+esc(pKey(r.category))+'</span>':'')
+    +'</div>'
+    +'<div class="mtitle">'+(hz?"🚨 ":"💡 ")+esc(r.title||r.category||"-")+'</div>'
+    +'<div class="dcontent">'+esc(r.content||"")+'</div>'
+    +(r._photo?'<img class="dphoto" alt="첨부 사진" src="'+r._photo+'">':(r.hasPhoto?'<div class="hint" style="margin-top:8px">📷 사진 불러오는 중…</div>':''))
+    +'<div class="mfoot">📍 '+esc(r.location||"-")+' · '+esc(fmtTime(r.received_at))+' · '+esc(r.reporter||"-")+' · '+esc(r.id)+'</div>'
+    +((r.result||r.memo)?'<div class="mmemo">'+(r.result?'<b>✅ 조치 결과: '+esc(r.result)+'</b>':'')
+      +(r.memo?((r.result?'<br>':''))+'📝 '+esc(r.memo):'')+'</div>':'');
+  return d;
+}
+function renderDigest(fs,list){
+  var order=["접수","진행중","완료","장기과제"];
+  var grouped={}; fs.forEach(function(r){ var k=order.indexOf(r.status)>=0?r.status:"접수"; (grouped[k]=grouped[k]||[]).push(r); });
+  order.forEach(function(st){
+    var g=grouped[st]; if(!g||!g.length) return;
+    var h=document.createElement("div"); h.className="ghead";
+    h.innerHTML=esc(st)+'<span class="gcnt">'+g.length+'건</span>';
+    list.appendChild(h);
+    g.forEach(function(r){ list.appendChild(digestCard(r)); });
+  });
+  var tip=document.createElement("div"); tip.className="hint"; tip.style.margin="14px 4px 0";
+  tip.textContent="상태 변경·조치 결과 입력은 📋 목록 보기에서 할 수 있어요.";
+  list.appendChild(tip);
 }
 function ritem(r){
   var d=document.createElement("div");
@@ -3222,8 +3276,9 @@ function ritem(r){
     +'<div class="rmain"><div class="rt1">'+esc(r.title||r.category||"-")
       +(r.category?' <span class="pbadge p-'+esc(pKey(r.category))+'">'+esc(pKey(r.category))+'</span>':'')
       +(hz&&r.severity&&r.severity!=="-"?' <span class="badge sv sv-'+esc(r.severity)+'">'+esc(r.severity)+'</span>':'')
-      +(r.hasPhoto?' <span>📷</span>':'')+'</div>'
+      +(r.result?' <span>✅</span>':'')+'</div>'
     +'<div class="rt2">📍 '+esc(r.location||"-")+' · '+esc(fmtTime(r.received_at))+' · '+esc(r.reporter||"")+'</div></div>'
+    +(r._photo?'<img class="rthumb" alt="" src="'+r._photo+'">':(r.hasPhoto?'<span>📷</span>':''))
     +'<span class="badge st-'+esc(r.status||"접수")+'">'+esc(r.status||"접수")+'</span></div>';
   d.querySelector(".rhead").onclick=function(){ toggleBody(d,r); };
   return d;
@@ -3238,9 +3293,14 @@ function toggleBody(d,r){
   b.innerHTML='<div class="cttx">'+esc(r.content||"")+'</div>'
     +'<div class="meta">접수번호 '+esc(r.id)+' · '+esc(r.category||"-")+' · 제출 '+esc(r.submitted_at||"-")
     +'<br>제출자 '+esc(r.reporter||"-")+' · 연락처 '+esc(r.contact||"-")+'</div>'
-    +(r.hasPhoto?'<div class="phbox"><button class="btn sec" type="button">📷 사진 보기</button></div>':'')
+    +(r._photo?'<img class="rphoto" alt="첨부 사진" src="'+r._photo+'">'
+      :(r.hasPhoto?'<div class="phbox"><button class="btn sec" type="button">📷 사진 보기</button></div>':''))
     +'<div class="stbtns">'+["접수","진행중","완료","장기과제"].map(function(s){
         return '<button type="button" data-s="'+s+'" class="'+(r.status===s?("on-"+s):"")+'">'+s+'</button>';
+      }).join("")+'</div>'
+    +'<div class="hint" style="margin-top:12px">✅ 조치 결과 — 선택하면 신고자의 \'내 신고\'에 표시됩니다</div>'
+    +'<div class="chips rslt">'+RESULTS.map(function(v){
+        return '<button type="button" data-r="'+esc(v)+'" class="'+(r.result===v?"on":"")+'">'+esc(v)+'</button>';
       }).join("")+'</div>'
     +'<div class="memo-row"><textarea class="fld" placeholder="조치 메모 (예: 난간 보강 완료, 자재 발주 중)">'+esc(r.memo||"")+'</textarea><button class="btn navy" type="button">저장</button></div>';
   var phb=b.querySelector(".phbox button");
@@ -3254,6 +3314,20 @@ function toggleBody(d,r){
       } else { phb.textContent="사진 없음"; }
     }).catch(function(){ phb.disabled=false; phb.textContent="📷 사진 보기"; });
   };
+  Array.prototype.forEach.call(b.querySelectorAll(".chips.rslt button"),function(rb){
+    rb.onclick=function(){
+      var v=r.result===rb.dataset.r?"":rb.dataset.r;
+      api("/api/report",{method:"POST",headers:{"content-type":"application/json"},
+        body:JSON.stringify({action:"update",id:r.id,result:v})
+      }).then(function(){
+        r.result=v;
+        Array.prototype.forEach.call(b.querySelectorAll(".chips.rslt button"),function(x){
+          x.classList.toggle("on",x.dataset.r===v);
+        });
+        toast(v?("조치 결과: "+v):"조치 결과 해제");
+      }).catch(function(){ toast("저장 실패 — 다시 시도해 주세요"); });
+    };
+  });
   Array.prototype.forEach.call(b.querySelectorAll(".stbtns button"),function(sb){
     sb.onclick=function(){
       api("/api/report",{method:"POST",headers:{"content-type":"application/json"},
@@ -3271,6 +3345,15 @@ function toggleBody(d,r){
   };
   d.appendChild(b); d.classList.add("open");
 }
+Array.prototype.forEach.call($("#view-toggle").querySelectorAll("button"),function(vb){
+  vb.onclick=function(){
+    viewMode=vb.dataset.v;
+    Array.prototype.forEach.call($("#view-toggle").querySelectorAll("button"),function(x){
+      x.classList.toggle("on",x===vb);
+    });
+    renderInbox();
+  };
+});
 Array.prototype.forEach.call($("#inbox-filters").querySelectorAll("button"),function(fb){
   fb.onclick=function(){
     rFilter=fb.dataset.f;
@@ -3321,11 +3404,11 @@ $("#btn-xlsx").onclick=function(){
     var rows=fs.map(function(r){return {
       "접수번호":r.id,"구분":r.type,"분류":r.category,"제목":r.title||"",
       "위치":r.location,"심각도":r.severity,"내용":r.content,"상태":r.status,
-      "조치메모":r.memo||"","제출자":r.reporter,"연락처":r.contact,
+      "조치결과":r.result||"","조치메모":r.memo||"","제출자":r.reporter,"연락처":r.contact,
       "제출시각":r.submitted_at,"서버접수":fmtTime(r.received_at),"사진":r.hasPhoto?"O":"-"
     }});
     var ws=XLSX.utils.json_to_sheet(rows);
-    ws["!cols"]=[{wch:16},{wch:9},{wch:12},{wch:26},{wch:12},{wch:7},{wch:50},{wch:8},{wch:30},{wch:8},{wch:14},{wch:20},{wch:13},{wch:5}];
+    ws["!cols"]=[{wch:16},{wch:9},{wch:12},{wch:26},{wch:12},{wch:7},{wch:50},{wch:8},{wch:16},{wch:30},{wch:8},{wch:14},{wch:20},{wch:13},{wch:5}];
     var wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,"신고내역");
     XLSX.writeFile(wb,"세이프보이스_신고내역_"+today()+".xlsx");
@@ -3379,7 +3462,7 @@ $("#btn-ppt").onclick=function(){
       si.addText(fmtTime(r.received_at)+"  ·  제출자 "+(r.reporter||"-"),{x:2.7,y:.95,w:6,h:.34,fontSize:10,color:MUTED,valign:"middle"});
       var hasImg=!!r._photo, tw=hasImg?5.4:9.2;
       si.addText(r.content||"",{x:.4,y:1.55,w:tw,h:3.1,fontSize:13,color:"1B2D3E",valign:"top"});
-      if(r.memo) si.addText("📝 조치: "+r.memo,{x:.4,y:4.75,w:tw,h:.7,fontSize:11,color:GREEN,valign:"top",bold:true});
+      if(r.result||r.memo) si.addText("✅ "+[r.result,r.memo].filter(Boolean).join("  ·  "),{x:.4,y:4.75,w:tw,h:.7,fontSize:11,color:GREEN,valign:"top",bold:true});
       if(hasImg){
         try{ si.addImage({data:r._photo,x:6.0,y:1.55,w:3.6,h:3.6,sizing:{type:"contain",w:3.6,h:3.6}}); }catch(e){}
       }
@@ -3408,6 +3491,7 @@ function reportHtml(fs){
     return '<div class="rpt-item"><div class="h">'+(hz?"🚨":"💡")+" "+esc(r.title||r.category||"-")+" · "+esc(r.location||"-")
       +' <span style="font-weight:400;color:#6b7a86;font-size:11px">('+esc(r.id)+" · "+esc(r.severity||"-")+" · "+esc(r.status)+")</span></div>"
       +"<div>"+esc(r.content||"")+"</div>"
+      +(r.result?'<div style="color:#4a6b43;margin-top:4px;font-weight:700">✅ 조치 결과: '+esc(r.result)+"</div>":"")
       +(r.memo?'<div style="color:#4a6b43;margin-top:4px">📝 조치: '+esc(r.memo)+"</div>":"")
       +(r._photo?'<img src="'+r._photo+'" alt="">':"")
       +"</div>";
