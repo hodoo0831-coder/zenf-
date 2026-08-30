@@ -11,6 +11,22 @@
   to = "/ZEN_Manufacturing_Platform.html"
   status = 200
 
+# 세이프보이스(현장 위험 신고·개선 제안): /report는 QR용 짧은 주소
+[[redirects]]
+  from = "/report"
+  to = "/ZEN_SafeVoice.html"
+  status = 200
+
+[[redirects]]
+  from = "/r"
+  to = "/ZEN_SafeVoice.html"
+  status = 200
+
+[[redirects]]
+  from = "/safevoice"
+  to = "/ZEN_SafeVoice.html"
+  status = 200
+
 # 보안 헤더 (임베드/클릭재킹 완화, 데모 프로토타입 기준)
 [[headers]]
   for = "/*"

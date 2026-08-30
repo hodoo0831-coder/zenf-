@@ -1,0 +1,8 @@
+{
+  "name": "zenf-suite",
+  "private": true,
+  "description": "ZEN 정적 앱 모음 — netlify/functions 서버리스 함수 의존성",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
