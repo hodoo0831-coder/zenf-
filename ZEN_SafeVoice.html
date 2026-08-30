@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#5b7f52">
-<title>젠키퍼 현장신고 · 제니엘</title>
+<title>세이프보이스 · 제니엘 현장 신고</title>
 <style>
 :root{
   --green:#5b7f52; --green-d:#4a6b43; --lime:#8aad7d;
@@ -256,10 +256,10 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 
 <header class="appbar">
   <div class="appbar-in">
-    <div class="logo">🛡️</div>
+    <div class="logo">📢</div>
     <div>
-      <h1 id="hd-title">현장 위험 신고 · 개선 제안</h1>
-      <div class="sub">젠키퍼 ZenKeeper · 제니엘</div>
+      <h1 id="hd-title">세이프보이스</h1>
+      <div class="sub" id="hd-sub">현장 위험 신고 · 개선 제안 · 제니엘</div>
     </div>
     <div class="spacer"></div>
     <a class="adminlink" href="#admin" id="lnk-admin">관리자</a>
@@ -346,7 +346,7 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
   <div class="done">
     <div class="mark">✓</div>
     <h2 id="done-title">접수되었습니다</h2>
-    <p>소중한 제보 감사합니다.<br>확인 후 신속히 조치하겠습니다.</p>
+    <p>소중한 목소리 감사합니다.<br>확인 후 신속히 조치하겠습니다.</p>
     <div class="rid" id="done-rid"></div>
     <div class="pendnote" id="done-pend" style="display:none">📶 오프라인이라 기기에 임시 저장했어요. 인터넷이 연결되면 이 페이지가 자동으로 전송합니다. (이 화면을 닫아도 다음 접속 때 전송돼요)</div>
     <div><button class="btn2" id="btn-again">추가로 제출하기</button></div>
@@ -2740,7 +2740,8 @@ function route(){
   $("#view-admin").style.display=admin?"":"none";
   $("#view-form").style.display=admin?"none":"";
   $("#view-done").style.display="none";
-  $("#hd-title").textContent=admin?"QR 공고문 생성 · 접수 관리":"현장 위험 신고 · 개선 제안";
+  $("#hd-title").textContent=admin?"세이프보이스 관리자":"세이프보이스";
+  $("#hd-sub").textContent=admin?"접수 관리 · QR 공고문 · 제니엘":"현장 위험 신고 · 개선 제안 · 제니엘";
   $("#lnk-admin").textContent=admin?"신고 화면":"관리자";
   $("#lnk-admin").href=admin?"#":"#admin";
   if(admin && !$("#adm-url").value) $("#adm-url").value=defaultReportUrl();
@@ -2853,7 +2854,7 @@ $("#chk-anon").addEventListener("change",function(){
 /* ---------- 제출 ---------- */
 function newRid(){
   var d=new Date(), p=function(n){return (n<10?"0":"")+n};
-  return "ZK-"+String(d.getFullYear()).slice(2)+p(d.getMonth()+1)+p(d.getDate())+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
+  return "SV-"+String(d.getFullYear()).slice(2)+p(d.getMonth()+1)+p(d.getDate())+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
 }
 function buildPayload(){
   var anon=$("#chk-anon").checked;
@@ -2915,7 +2916,7 @@ function showDone(rid,pending){
 $("#btn-again").onclick=function(){ location.href=location.pathname+location.search; };
 
 /* ---------- 오프라인 대기열 ---------- */
-var QKEY="zk_hazard_queue";
+var QKEY="sv_report_queue";
 function queueOffline(p){
   try{
     var q=JSON.parse(localStorage.getItem(QKEY)||"[]");
@@ -2965,9 +2966,9 @@ function posterHtml(loc,baseUrl,foot){
   try{ svg=qrSvg(url); }catch(e){ svg='<div style="font-size:.6em;color:#c25a52">QR 생성 실패 — 주소가 너무 깁니다</div>'; }
   return '<div class="poster">'
     +'<div class="p-top">'
-      +'<div class="p-brand"><span class="bx">🛡️</span> 젠키퍼 ZenKeeper · 제니엘</div>'
+      +'<div class="p-brand"><span class="bx">📢</span> 세이프보이스 SafeVoice · 제니엘</div>'
       +'<div class="p-title">위험을 보셨나요?<br><span class="accent">30초 신고</span>로 사고를 막습니다</div>'
-      +'<div class="p-sub">위험 신고 · 개선 제안 — 익명 제출 가능, 불이익 없음</div>'
+      +'<div class="p-sub">당신의 목소리가 현장을 바꿉니다 — 익명 제출 가능 · 불이익 없음</div>'
     +'</div>'
     +'<div class="p-mid">'
       +(loc?'<div class="p-loc">📍 '+esc(loc)+'</div>':'')
@@ -3011,12 +3012,12 @@ $("#tab-btn-inbox").onclick=function(){showTab("inbox")};
 $("#tab-btn-poster").onclick=function(){showTab("poster")};
 
 /* ---------- 관리자: 접수함 ---------- */
-var PKEY="zk_admin_pin";
+var PKEY="sv_admin_pin";
 var reports=[], rFilter="", inboxLoaded=false;
 function pin(){ try{return localStorage.getItem(PKEY)||""}catch(e){return ""} }
 function api(path,opt){
   opt=opt||{};
-  opt.headers=Object.assign({"x-zk-pin":pin()},opt.headers||{});
+  opt.headers=Object.assign({"x-sv-pin":pin()},opt.headers||{});
   return fetch(path,opt).then(function(r){
     if(r.status===401){ lock(); throw new Error("pin"); }
     if(!r.ok) throw new Error("HTTP "+r.status);
@@ -3191,7 +3192,7 @@ $("#btn-xlsx").onclick=function(){
     ws["!cols"]=[{wch:16},{wch:9},{wch:14},{wch:12},{wch:7},{wch:50},{wch:7},{wch:30},{wch:8},{wch:14},{wch:20},{wch:13},{wch:5}];
     var wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,"신고내역");
-    XLSX.writeFile(wb,"현장신고_"+today()+".xlsx");
+    XLSX.writeFile(wb,"세이프보이스_신고내역_"+today()+".xlsx");
     toast("엑셀 다운로드 완료");
   }).catch(function(){ toast("엑셀 모듈 로드 실패 — 배포된 주소에서 사용해 주세요"); });
 };
@@ -3206,8 +3207,8 @@ $("#btn-ppt").onclick=function(){
     var P=new PptxGenJS();
     // 표지
     var s=P.addSlide(); s.background={color:NAVY};
-    s.addText("현장 위험 신고 · 개선 제안 보고",{x:.55,y:1.7,w:9,h:.85,fontSize:30,bold:true,color:WHITE});
-    s.addText(SITE+"  ·  젠키퍼 ZenKeeper  ·  "+today(),{x:.58,y:2.6,w:9,h:.4,fontSize:14,color:"AFC0CE"});
+    s.addText("세이프보이스 — 현장 신고 · 개선 제안 보고",{x:.55,y:1.7,w:9,h:.85,fontSize:28,bold:true,color:WHITE});
+    s.addText(SITE+"  ·  SafeVoice  ·  "+today(),{x:.58,y:2.6,w:9,h:.4,fontSize:14,color:"AFC0CE"});
     s.addShape("rect",{x:.58,y:3.25,w:1.4,h:.06,fill:{color:GREEN}});
     s.addText("총 "+fs.length+"건"+(rFilter?"  (필터: "+rFilter+")":""),{x:.58,y:3.5,w:9,h:.4,fontSize:16,bold:true,color:WHITE});
     // 요약
@@ -3247,7 +3248,7 @@ $("#btn-ppt").onclick=function(){
       }
       si.addText((idx+1)+" / "+Math.min(fs.length,30),{x:8.6,y:5.25,w:1.2,h:.3,fontSize:9,color:MUTED,align:"right"});
     });
-    return P.writeFile({fileName:"현장신고_보고_"+today()+".pptx"});
+    return P.writeFile({fileName:"세이프보이스_보고_"+today()+".pptx"});
   }).then(function(){ toast("PPT 다운로드 완료"); })
     .catch(function(){ toast("PPT 생성 실패 — 배포된 주소에서 사용해 주세요"); });
 };
@@ -3274,8 +3275,8 @@ function reportHtml(fs){
       +(r._photo?'<img src="'+r._photo+'" alt="">':"")
       +"</div>";
   }).join("");
-  return '<div class="rpt"><div class="rpt-hd"><h1>현장 위험 신고 · 개선 제안 보고서</h1>'
-    +'<div class="rpt-sub">'+esc(SITE)+" · 젠키퍼 ZenKeeper · "+today()+" · 총 "+fs.length+"건"+(rFilter?" (필터: "+esc(rFilter)+")":"")+"</div></div>"
+  return '<div class="rpt"><div class="rpt-hd"><h1>세이프보이스 — 현장 신고 · 개선 제안 보고서</h1>'
+    +'<div class="rpt-sub">'+esc(SITE)+" · SafeVoice · "+today()+" · 총 "+fs.length+"건"+(rFilter?" (필터: "+esc(rFilter)+")":"")+"</div></div>"
     +'<div class="sum"><div>전체<b>'+reports.length+"</b></div><div>접수<b>"+countBy("접수")+"</b></div><div>진행중<b>"+countBy("진행중")+"</b></div><div>완료<b>"+countBy("완료")+"</b></div><div>장기과제<b>"+countBy("장기과제")+"</b></div></div>"
     +"<table><tr><th>접수번호</th><th>구분</th><th>유형</th><th>위치</th><th>심각도</th><th>상태</th><th>접수</th></tr>"+rows+"</table>"
     +items+"</div>";

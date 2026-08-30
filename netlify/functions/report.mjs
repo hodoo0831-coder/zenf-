@@ -15,7 +15,7 @@ const json = (data, status = 200) =>
     headers: { "content-type": "application/json; charset=utf-8" },
   });
 const authed = (req) =>
-  (req.headers.get("x-zk-pin") || "") === (process.env.ADMIN_PIN || "1234");
+  (req.headers.get("x-sv-pin") || "") === (process.env.ADMIN_PIN || "1234");
 const clean = (v, n) => String(v == null ? "" : v).slice(0, n);
 
 export default async (req) => {
@@ -44,7 +44,7 @@ export default async (req) => {
 
     // 작업자: 신규 접수 (같은 id 재전송은 덮어쓰기 → 오프라인 재전송에 안전)
     const id =
-      clean(body.report_id, 40).replace(/[^A-Za-z0-9-]/g, "") || "ZK-" + Date.now();
+      clean(body.report_id, 40).replace(/[^A-Za-z0-9-]/g, "") || "SV-" + Date.now();
     const photo =
       typeof body.photo === "string" &&
       body.photo.startsWith("data:image/") &&
