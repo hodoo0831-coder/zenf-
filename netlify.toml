@@ -4,12 +4,18 @@
   publish = "."
   command = ""
 
-# 루트("/")는 index.html(= ZEN_Manufacturing_Platform.html 동일본)로 서빙됨.
+# 루트("/")는 index.html(= ZEN_Manufacturing_Platform_11.0.html 동일본)로 서빙됨.
 # 구주소 호환: 파일명으로 접근해도 동작하도록 rewrite 보조.
 [[redirects]]
   from = "/platform"
-  to = "/ZEN_Manufacturing_Platform.html"
+  to = "/ZEN_Manufacturing_Platform_11.0.html"
   status = 200
+
+# 구파일명으로 들어와도 최신본을 서빙
+[[redirects]]
+  from = "/ZEN_Manufacturing_Platform.html"
+  to = "/ZEN_Manufacturing_Platform_11.0.html"
+  status = 301
 
 # 세이프보이스(현장 위험 신고·개선 제안): /report는 QR용 짧은 주소
 [[redirects]]

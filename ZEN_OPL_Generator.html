@@ -161,40 +161,47 @@ WHY: 세척·살균 불량 및 교차오염 위험"></textarea>
       <textarea id="f_why" rows="2" placeholder="접촉면에 세척액·UV가 닿지 않아 *세척·살균 불량 및 교차오염* 위험이 발생합니다."></textarea>
     </div>
 
+    <div class="grp">
+      <h3><span class="dot"></span>③ 이번 교육 <span class="hint" style="display:inline;margin:0">매번 바뀌는 값만</span></h3>
+      <div class="row2">
+        <div><label>교육일자</label><input type="text" id="f_eduDate"></div>
+        <div><label>서명 인원수</label><input type="text" id="f_signRows"></div>
+      </div>
+      <label>교육대상</label><input type="text" id="f_target">
+    </div>
+
     <div class="grp" style="padding:0;overflow:hidden">
       <div style="padding:12px;cursor:pointer;display:flex;align-items:center;gap:6px" onclick="toggleAdv()">
         <span id="advArrow" style="color:var(--gold);font-size:12px">▸</span>
-        <span style="font-size:12px;font-weight:700;color:var(--navy)">상세 설정 (선택)</span>
-        <span class="hint" style="margin:0 0 0 auto">관리번호·작성자·서명부 등</span>
+        <span style="font-size:12px;font-weight:700;color:var(--navy)">내 정보 · 문서 설정</span>
+        <span class="hint" id="meTag" style="margin:0 0 0 auto">한 번 넣으면 다음부터 자동</span>
       </div>
       <div id="advBody" style="display:none;padding:0 12px 12px;border-top:1px solid var(--line)">
         <div class="row2" style="margin-top:10px">
-          <div><label>분류</label>
-            <select id="f_class"><option>개선·문제해결</option><option>안전</option><option>품질</option><option>설비</option><option>세척·위생</option><option>작업표준</option></select>
-          </div>
-          <div><label>관리번호</label><input type="text" id="f_docNo" placeholder="OPL-YYMM-주제-01"></div>
-        </div>
-        <label>부제</label><input type="text" id="f_subtitle">
-        <div class="row2">
-          <div><label>작성일</label><input type="text" id="f_date" placeholder="2026. 08. 10."></div>
           <div><label>작성자</label><input type="text" id="f_author"></div>
-        </div>
-        <div class="row2">
-          <div><label>교육대상</label><input type="text" id="f_target"></div>
           <div><label>소속</label><input type="text" id="f_org"></div>
         </div>
-        <label>핵심 한 줄 <span class="hint" style="display:inline">(비우면 미표시 · 강조 *별표*)</span></label>
-        <textarea id="f_core" rows="2" placeholder="세척이 끝난 부속은 *분리 보관*해야 사각지대가 없습니다."></textarea>
         <div class="row2">
-          <div><label>교육장소</label><input type="text" id="f_eduPlace" placeholder="AP 대전공장 현장"></div>
+          <div><label>교육장소</label><input type="text" id="f_eduPlace"></div>
           <div><label>교육자</label><input type="text" id="f_eduTeacher"></div>
         </div>
         <div class="row2">
-          <div><label>서명 인원수</label><input type="text" id="f_signRows" value="18"></div>
-          <div><label>교육일자</label><input type="text" id="f_eduDate" placeholder="2026.   .   "></div>
+          <div><label>분류</label>
+            <select id="f_class"><option>개선·문제해결</option><option>안전</option><option>품질</option><option>설비</option><option>세척·위생</option><option>작업표준</option></select>
+          </div>
+          <div><label>관리번호 <span class="hint" style="display:inline;margin:0">자동</span></label><input type="text" id="f_docNo"></div>
         </div>
+        <div class="row2">
+          <div><label>작성일 <span class="hint" style="display:inline;margin:0">자동</span></label><input type="text" id="f_date"></div>
+          <div><label>부제</label><input type="text" id="f_subtitle"></div>
+        </div>
+        <label>핵심 한 줄 <span class="hint" style="display:inline">(비우면 미표시 · 강조 *별표*)</span></label>
+        <textarea id="f_core" rows="2" placeholder="세척이 끝난 부속은 *분리 보관*해야 사각지대가 없습니다."></textarea>
         <label>동의 문구</label>
         <textarea id="f_note" rows="2"></textarea>
+        <div class="btnrow" style="margin-top:10px">
+          <button class="btn o sm" style="flex:1" onclick="forgetMe()">저장된 내 정보 지우기</button>
+        </div>
       </div>
     </div>
   </div>
@@ -215,9 +222,9 @@ const S={
   classification:'개선·문제해결',
   docNo:'OPL-2508-설비세척-01',
   date:'2026. 08. 10.',
-  author:'이민아 (대전센터)',
+  author:'이민아 (헤어앤뷰티)',
   target:'세척 담당 작업자',
-  org:'제니엘 제조사업부 · AP 대전공장',
+  org:'제니엘 제조사업부 · AP 헤어앤뷰티 사업장',
   core:'세척·살균이 끝난 부속은 *분리·비겹침 상태*로 보관해야 사각지대 없이 세척·UV살균이 보장됩니다.',
   why:'겹치거나 결합된 상태에서는 접촉면에 세척액·UV가 닿지 않아 *세척·살균 불량 및 교차오염* 위험이 발생합니다.',
   cards:[
@@ -225,7 +232,7 @@ const S={
     {ngTitle:'부속 간 겹침 보관',ng:'부속을 겹쳐 쌓아 접촉면이 세척·건조 사각지대 발생',okTitle:'겹침 없이 보관',ok:'부속끼리 겹치지 않도록 간격을 두고 단독 보관',photo:null},
     {ngTitle:'UV함 사전 결합 보관',ng:'노즐 커버·자재를 결합한 상태로 UV함에 투입',okTitle:'결합 없이 분리 보관',ok:'UV함 보관 시 노즐 커버·자재를 분리 투입',photo:null},
   ],
-  eduPlace:'AP 대전공장 현장', eduTeacher:'이민아 (대전센터)', eduDate:'2026.   .   ',
+  eduPlace:'AP 헤어앤뷰티 사업장 현장', eduTeacher:'이민아 (헤어앤뷰티)', eduDate:'2026.   .   ',
   signRows:18,
   note:'※ 본 OPL 교육 이수자는 위 보관 기준을 숙지하였으며, 현장 적용 및 준수에 동의합니다.'
 };
@@ -317,12 +324,45 @@ function renderPreview(){
     <div class="signote">${esc(S.note)}</div>`;
 }
 
-/* ---- form <-> state ---- */
-function bindForm(){
-  const map={f_title:'title',f_subtitle:'subtitle',f_class:'classification',f_docNo:'docNo',f_date:'date',f_author:'author',f_target:'target',f_org:'org',f_core:'core',f_why:'why',f_eduPlace:'eduPlace',f_eduTeacher:'eduTeacher',f_eduDate:'eduDate',f_signRows:'signRows',f_note:'note'};
-  for(const id in map){const el=document.getElementById(id);el.value=S[map[id]]??'';el.oninput=()=>{S[map[id]]=el.value;renderPreview();};}
+/* ---- 내 정보 기억 ----
+   작성자·소속·교육대상·교육장소·교육자·서명인원·동의문구는 매번 같은 값이라
+   한 번 넣으면 저장해 두고 다음부터 자동으로 채운다. */
+const ME_KEY='zen_opl_me';
+const ME_FIELDS=['author','org','target','eduPlace','eduTeacher','signRows','note'];
+function saveMe(){
+  try{const o={};ME_FIELDS.forEach(k=>o[k]=S[k]);localStorage.setItem(ME_KEY,JSON.stringify(o));
+    const t=document.getElementById('meTag');if(t){t.textContent='저장됨 · 다음부터 자동';t.style.color='#0B7A43';}
+  }catch(e){}
 }
-function fillForm(){const map={f_title:'title',f_subtitle:'subtitle',f_class:'classification',f_docNo:'docNo',f_date:'date',f_author:'author',f_target:'target',f_org:'org',f_core:'core',f_why:'why',f_eduPlace:'eduPlace',f_eduTeacher:'eduTeacher',f_eduDate:'eduDate',f_signRows:'signRows',f_note:'note'};for(const id in map){document.getElementById(id).value=S[map[id]]??'';}}
+function loadMe(){
+  try{const raw=localStorage.getItem(ME_KEY);if(!raw)return false;
+    const o=JSON.parse(raw);ME_FIELDS.forEach(k=>{if(o[k]!=null&&o[k]!=='')S[k]=o[k];});
+    const t=document.getElementById('meTag');if(t){t.textContent='저장된 내 정보 사용 중';t.style.color='#0B7A43';}
+    return true;}catch(e){return false;}
+}
+function forgetMe(){
+  try{localStorage.removeItem(ME_KEY);}catch(e){}
+  const t=document.getElementById('meTag');if(t){t.textContent='한 번 넣으면 다음부터 자동';t.style.color='';}
+  alert('저장된 내 정보를 지웠습니다.');
+}
+/* 붙여넣은 내용에서 분류 자동 추정 — 틀리면 상세에서 바꾸면 된다 */
+function guessClass(txt){
+  const t=(txt||'');
+  if(/세척|살균|위생|CIP|UV/i.test(t))return '세척·위생';
+  if(/안전|보호구|추락|끼임|화재|LOTO/i.test(t))return '안전';
+  if(/불량|이물|품질|검사|규격/i.test(t))return '품질';
+  if(/설비|호퍼|노즐|정비|고장/i.test(t))return '설비';
+  if(/표준|작업순서|SOP|절차/i.test(t))return '작업표준';
+  return '';
+}
+
+/* ---- form <-> state ---- */
+/* 폼 id ↔ 상태 키 (bindForm·fillForm·내 정보 저장이 같은 표를 쓴다) */
+const FMAP={f_title:'title',f_subtitle:'subtitle',f_class:'classification',f_docNo:'docNo',f_date:'date',f_author:'author',f_target:'target',f_org:'org',f_core:'core',f_why:'why',f_eduPlace:'eduPlace',f_eduTeacher:'eduTeacher',f_eduDate:'eduDate',f_signRows:'signRows',f_note:'note'};
+function bindForm(){
+  for(const id in FMAP){const el=document.getElementById(id);if(!el)continue;el.value=S[FMAP[id]]??'';el.oninput=()=>{S[FMAP[id]]=el.value;renderPreview();};}
+}
+function fillForm(){for(const id in FMAP){const el=document.getElementById(id);if(el)el.value=S[FMAP[id]]??'';}}
 
 function setCard(i,k,v){S.cards[i][k]=v;if(k==='ng')S.cards[i].ngTitle=shorten(v,16);if(k==='ok')S.cards[i].okTitle=shorten(v,16);renderPreview();}
 function toggleAdv(){const b=document.getElementById('advBody'),a=document.getElementById('advArrow');const open=b.style.display==='none';b.style.display=open?'block':'none';a.textContent=open?'▾':'▸';}
@@ -369,6 +409,8 @@ function autoGen(){
   S.core=core||'';   // 없으면 미표시
   S.why=why||'';     // 없으면 비움(②에서 입력)
   const t=(S.title||'주제').replace(/[\s·:]/g,'').slice(0,6);S.docNo='OPL-'+ymm()+'-'+t+'-01';
+  S.date=todayKR(); if(!S.eduDate||/^\s*$|\s{2,}/.test(S.eduDate))S.eduDate=todayKR();
+  const g=guessClass(raw); if(g)S.classification=g;
   fillForm();renderCardEdit();renderPreview();
 }
 function deriveTitle(cards){
@@ -381,13 +423,26 @@ function mkCard(ng,ok){
   return {ngTitle:shorten(ng,16),ng:ng,okTitle:shorten(ok,16),ok:ok,photo:null};
 }
 function shorten(s,n){s=(s||'').replace(/[.。]$/,'');return s.length>n?s.slice(0,n):s;}
-function ymm(){return '2508';}
+function ymm(){const d=new Date();return String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,'0');}
+function todayKR(){const d=new Date();return d.getFullYear()+'. '+String(d.getMonth()+1).padStart(2,'0')+'. '+String(d.getDate()).padStart(2,'0')+'.';}
 
 function clearAll(){S.title='';S.subtitle='';S.core='';S.why='';S.cards=[{ngTitle:'',ng:'',okTitle:'',ok:'',photo:null}];document.getElementById('paste').value='';fillForm();renderCardEdit();renderPreview();}
-function loadSample(){location.reload();}
+function loadSample(){if(!confirm('예시 내용으로 되돌립니다. 지금 작성 중인 내용은 사라집니다. 계속할까요?'))return;location.reload();}
 function doPrint(){window.print();}
 
-function init(){bindForm();renderCardEdit();renderPreview();}
+function init(){
+  S.date=todayKR();
+  if(!S.eduDate||/^\s*$|\s{2,}/.test(S.eduDate))S.eduDate=todayKR();
+  loadMe();
+  bindForm();
+  /* 내 정보 칸은 바뀔 때마다 저장 */
+  ME_FIELDS.forEach(k=>{
+    const id=Object.keys(FMAP).find(x=>FMAP[x]===k); if(!id)return;
+    const el=document.getElementById(id); if(!el)return;
+    el.addEventListener('change',saveMe);
+  });
+  renderCardEdit();renderPreview();
+}
 window.addEventListener('resize',renderPreview);
 init();
 </script>

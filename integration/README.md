@@ -44,6 +44,6 @@ P-BOX가 내려주는 실제 JSON 필드명이 다르면 `src/index.js` 의
 → 실제 `/today` 원본 JSON 샘플을 주시면 제가 맞춰 드립니다.
 
 ## 다음 단계
-`/today` 가 살아나면, 대시보드(ZEN_Manufacturing_Platform.html) 홈이
+`/today` 가 살아나면, 대시보드(ZEN_Manufacturing_Platform_11.0.html) 홈이
 이 주소를 fetch 해서 **실데이터가 한 화면에 뜨는 장면**을 만듭니다.
 그 배포 주소를 알려주시면 대시보드에 바로 연결하겠습니다.
