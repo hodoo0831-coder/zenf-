@@ -1225,9 +1225,97 @@ const PLAN_SEED={"32113":80934,"32115":58000,"32116":85440,"32117":75000,"32118"
 /* ===== 주간계획 부하율(실 CAPA·표준인원 연동) ===== */
 let loadPlan=PLAN_SEED, loadDays=6, loadBase='c75', loadFilter=null, loadPlanName='33주 확정(내장 샘플)';
 function _lnum(v){v=String(v).replace(/[, ]/g,'');const m=v.match(/\d+/g);return m?+m[0]:0;}
+/* ===== 라인 마스터(기준 데이터) — CAPA표·인원표 업로드로 갱신 =====
+   CAPA_LINES 는 두 기준 파일(AP 라인별 CAPA / 표준·가용 인원표)을 코드에
+   내장한 초기값이다. 같은 파일을 업로드하면 DB.master 가 그 값을 덮고,
+   부하율·필요인원 계산 전체가 새 기준을 따른다. */
+function LMASTER(){return (DB.master&&DB.master.rows&&DB.master.rows.length)?DB.master.rows:CAPA_LINES;}
+function _mnum(v){const m=String(v==null?'':v).replace(/,/g,'').match(/\d+(?:\.\d+)?/);return m?+m[0]:0;}
+function _mkey(v){return String(v||'').replace(/\s+/g,'').toLowerCase();}
+function _masterClone(){return LMASTER().map(a=>a.slice());}
+function _aoa(ws){return XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});}
+
+/* CAPA표: '3xxxx' 작업장코드 + 우측 기준수량 2열. 여러 시트면 코드 행이 가장 많은(=최신) 시트 */
+function _capaSheet(wb){let best=null,bestN=0;
+  for(const nm of wb.SheetNames){const a=_aoa(wb.Sheets[nm]);let n=0;
+    for(const r of a){const ci=r.findIndex(c=>/^3\d{4}$/.test(String(c).trim()));
+      if(ci>=0&&r.slice(ci+1,ci+6).some(c=>_mnum(c)>100))n++;}
+    if(n>=bestN&&n>=10){best=nm;bestN=n;}}
+  return best;}
+function isCapaWB(wb){return !!_capaSheet(wb);}
+function applyCapaMaster(wb,fname){
+  const a=_aoa(wb.Sheets[_capaSheet(wb)]), rows=_masterClone();
+  const byCode={},byName={};rows.forEach(r=>{byCode[r[0]]=r;byName[_mkey(r[2])]=r;});
+  let upd=0,added=0,miss=[];
+  for(const r of a){
+    const ci=r.findIndex(c=>/^3\d{4}$/.test(String(c).trim())); if(ci<0)continue;
+    const code=String(r[ci]).trim();
+    /* CAPA 수량 = 500 이상 숫자를 담은 셀('오전/16200' 같은 표기 포함).
+       라인명 = 그 앞의 마지막 한글 셀 — '세정초격차 1호'처럼 이름에 든 작은
+       숫자(호수)가 수량으로 오인되지 않도록 500 문턱으로 가른다. */
+    let first=-1;const nums=[];
+    for(let i=ci+1;i<r.length;i++){const cs=String(r[i]).trim();
+      if(/^3\d{4}$/.test(cs))continue;              /* 작업장코드 반복 열 제외 */
+      const n=_mnum(cs);
+      if(n>=500){if(first<0)first=i;if(nums.length<2)nums.push(n);}}
+    if(!nums.length)continue;
+    let ni=-1;
+    for(let i=ci+1;i<first;i++){const c=String(r[i]);
+      if(/[가-힣]/.test(c)&&_mnum(c)<500&&!/^3\d{4}$/.test(c.trim()))ni=i;}
+    if(ni<0)continue;
+    const row=byCode[code]||byName[_mkey(r[ni])];
+    if(row){row[3]=nums[0];row[4]=nums[1]||nums[0];upd++;}
+    else if(nums[0]>0){const grp=guessGrpFromName(String(r[ni]));rows.push([code,grp,String(r[ni]).trim(),nums[0],nums[1]||nums[0],0,0,0,0]);byCode[code]=rows[rows.length-1];added++;}
+    else miss.push(String(r[ni]));
+  }
+  DB.master=Object.assign(DB.master||{},{rows,capaName:fname,capaAt:new Date().toISOString().slice(0,10)});
+  saveDB();return {upd,added,miss};
+}
+function guessGrpFromName(n){
+  if(/^직선|리필|대용량/.test(n))return '직선';
+  if(/초격차/.test(n))return '초격차';
+  if(/멀티|세럼/.test(n))return '멀티';
+  if(/튜브/.test(n))return '튜브';
+  if(/치약/.test(n))return '치약';
+  if(/염모|산화제/.test(n))return '염모';
+  return 'HnB기타';
+}
+
+/* 인원표: '라인명' + '표준 필요' + '가용' 헤더를 가진 시트들 */
+function _staffSheets(wb){const out=[];
+  for(const nm of wb.SheetNames){const a=_aoa(wb.Sheets[nm]);
+    const hr=a.findIndex(r=>r.some(c=>/라인명/.test(String(c)))&&r.some(c=>/표준\s*필요/.test(String(c)))&&r.some(c=>/가용/.test(String(c))));
+    if(hr>=0)out.push({nm,a,hr});}
+  return out;}
+function isStaffWB(wb){return _staffSheets(wb).length>0;}
+function applyStaffMaster(wb,fname){
+  const sheets=_staffSheets(wb), rows=_masterClone();
+  const byName={};rows.forEach(r=>{byName[_mkey(r[2])]=r;});
+  let upd=0;const miss=[];
+  for(const {a,hr} of sheets){
+    const li=a[hr].findIndex(c=>/라인명/.test(String(c)));
+    for(let i=hr+1;i<a.length;i++){
+      const r=a[i], name=String(r[li]||'').trim();
+      if(!name||/^[\d.,\s]+$/.test(name))continue;              /* 빈 행·합계 행 제외 */
+      const row=byName[_mkey(name)];
+      const v=[_mnum(r[li+1]),_mnum(r[li+2]),_mnum(r[li+3]),_mnum(r[li+4])];
+      if(row){row[5]=v[0];row[6]=v[1];row[7]=v[2];row[8]=v[3];upd++;}
+      else miss.push(name);
+    }
+  }
+  DB.master=Object.assign(DB.master||{},{rows,staffName:fname,staffAt:new Date().toISOString().slice(0,10)});
+  saveDB();return {upd,miss:[...new Set(miss)]};
+}
+function masterStatus(){
+  const m=DB.master||{};
+  const capa=m.capaName?`CAPA ${m.capaName} (${m.capaAt})`:'CAPA 내장 기준';
+  const staff=m.staffName?`인원 ${m.staffName} (${m.staffAt})`:'인원 내장 기준';
+  return capa+' · '+staff;
+}
+function masterReset(){delete DB.master;saveDB();rerender();toast('라인 기준을 내장값으로 되돌렸습니다');}
 function loadCalc(plan,days,base){
   days=days||6; base=base||'c75';
-  const rows=CAPA_LINES.map(a=>{const l={code:a[0],grp:a[1],name:a[2],c75:a[3],c105:a[4],needOP:a[5],needW:a[6],avOP:a[7],avW:a[8]};
+  const rows=LMASTER().map(a=>{const l={code:a[0],grp:a[1],name:a[2],c75:a[3],c105:a[4],needOP:a[5],needW:a[6],avOP:a[7],avW:a[8]};
     const cap=l[base]||l.c75, wk=plan[l.code]||0, wcap=cap*days, load=wcap?wk/wcap*100:0;
     const need=l.needOP+l.needW, avail=l.avOP+l.avW, needAdj=Math.round(need*load/100*10)/10;
     return Object.assign(l,{cap,wk,load:Math.round(load),need,avail,needAdj,gap:+(needAdj-avail).toFixed(1)});});
@@ -1244,6 +1332,21 @@ function loadCalc(plan,days,base){
     return r;};})();
 function loadUpload(input){const f=input.files[0];if(!f)return;const rd=new FileReader();
   rd.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+    /* 기준 파일 자동 식별 — 인원표를 먼저 본다(CAPA표 판별식이 더 느슨하므로) */
+    if(typeof isStaffWB==='function'&&isStaffWB(wb)){
+      const st=applyStaffMaster(wb,f.name);
+      if(DB.plan)applyPlanCascade(DB.plan,DB.loadPlanName||'주간계획',DB.loadPlan||{});
+      rerender();
+      toast('인원 기준 반영 — '+st.upd+'개 라인 표준·가용 인원 갱신'+(st.miss.length?' · 미매칭 '+st.miss.length+'건('+st.miss.slice(0,3).join(', ')+(st.miss.length>3?' 외':'')+')':''));
+      go('load');return;
+    }
+    if(typeof isCapaWB==='function'&&isCapaWB(wb)){
+      const cp=applyCapaMaster(wb,f.name);
+      if(DB.plan)applyPlanCascade(DB.plan,DB.loadPlanName||'주간계획',DB.loadPlan||{});
+      rerender();
+      toast('CAPA 기준 반영 — '+cp.upd+'개 라인 갱신'+(cp.added?' · 신규 '+cp.added:'')+' — 부하율·필요인원이 새 기준으로 재계산됩니다');
+      go('load');return;
+    }
     let plan=null,map={};
     if(typeof isPlanWB==='function'&&isPlanWB(wb)){plan=parsePlan(wb);map=planToLoadMap(plan);}
     if(!Object.keys(map).length){
@@ -1267,6 +1370,7 @@ function loadView(){
   const shortG=groups.filter(g=>g.gap>0.4).sort((a,b)=>b.gap-a.gap);
   const surpG=groups.filter(g=>g.gap<-0.4).map(g=>({...g})).sort((a,b)=>a.gap-b.gap);
   const gcol=v=>v>=100?'#dc2626':v>=90?'#d97706':v>=60?'#16a34a':'#3f74b5';
+  const mline=`<div class="mini" style="margin:2px 0 10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">기준: ${masterStatus()}${DB.master?`<button class="btn" style="padding:2px 9px;font-size:11px" onclick="masterReset()">내장값으로</button>`:''}</div>`;
   const dayBtn=d=>`<button class="btn ${loadDays===d?'p':''}" style="padding:5px 10px" onclick="loadDays=${d};go('labor')">${d}일</button>`;
   const baseBtn=(k,lab)=>`<button class="btn ${loadBase===k?'p':''}" style="padding:5px 10px" onclick="loadBase='${k}';go('labor')">${lab}</button>`;
   const gbars=groups.map(g=>{const on=loadFilter===g.grp;return `<div class="barrow" style="grid-template-columns:78px 1fr 52px;padding:7px 6px;cursor:pointer;border-radius:8px;${on?'background:#eef3fc':''}" onclick="loadFilter=(loadFilter==='${g.grp}'?null:'${g.grp}');go('labor')"><div class="nm" style="font-size:12.5px">${g.grp}${on?' ▾':''}</div><div>${pbar(Math.min(100,g.load),gcol(g.load))}<div class="mini" style="margin-top:3px">필요 ${g.needAdj} / 가용 ${g.avail}명 · <span style="color:${g.gap>0?'#dc2626':'#16a34a'}">${g.gap>0?'+'+g.gap+' 부족':g.gap<0?g.gap+' 여유':'적정'}</span></div></div><div class="vv tnum" style="color:${gcol(g.load)};font-size:13px">${g.load}%</div></div>`;}).join('');
@@ -1278,6 +1382,8 @@ function loadView(){
   const filterChip=loadFilter?`<span class="tag t-blue" style="cursor:pointer" onclick="loadFilter=null;go('labor')">${loadFilter} 필터 ✕</span>`:'';
   return `
   <div class="card" style="margin-bottom:14px;padding:13px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div class="chead">주간계획 부하율 · 필요인원</div><span class="tag t-blue">${loadPlanName}</span><span class="mini">호기 CAPA(${base==='c75'?'7.5hr 정규':'10.5hr 잔업'}) × ${loadDays}일</span><span style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="mini">기준</span>${baseBtn('c75','정규')}${baseBtn('c105','잔업')}<span class="mini" style="margin-left:6px">가동</span>${dayBtn(5)}${dayBtn(6)}<label class="btn" style="cursor:pointer" onclick="document.getElementById('loadFile').click()">↑ 주간계획 업로드</label><input id="loadFile" type="file" accept=".xlsx,.xls" style="display:none" onchange="loadUpload(this)"></span></div></div>
+  
+  ${mline}
   <div class="kstrip">
     <div class="ki"><div class="l">전체 부하율</div><div class="v tnum" style="color:${gcol(totLoad)}">${totLoad}<small>%</small></div><div class="d muted">계획 ${(totWk/1000).toFixed(0)}천 ÷ CAPA</div></div>
     <div class="ki"><div class="l">과부하 그룹</div><div class="v tnum" style="color:${over.length?'#dc2626':'#16a34a'}">${over.length}<small>/${groups.length}</small></div><div class="d muted">${over.map(g=>g.grp).slice(0,3).join('·')||'없음'}</div></div>
@@ -2596,7 +2702,7 @@ V.data=()=>{
   const rows=DB.lines.map((l,i)=>`<tr><td>${l.key}</td>${EDIT_COLS.map(c=>`<td><input type="number" step="any" value="${l[c.k]}" oninput="editLine(${i},'${c.k}',this.value)" onchange="editLineCommit(${i},'${c.k}',this)"></td>`).join('')}</tr>`).join('');
   return `
   <div class="grid g2" style="margin-bottom:14px">
-    <div class="card"><h3>① 파일 가져오기 <span class="hint">.xlsx / .csv</span></h3>
+    <div class="card"><h3>① 파일 가져오기 <span class="hint">.xlsx / .csv — 주간계획 · CAPA표 · 인원표 자동 인식</span></h3>
       <div class="drop" id="drop" onclick="document.getElementById('file').click()">
         <div style="font-size:30px">📥</div><div style="font-weight:800;margin-top:6px">엑셀·CSV 파일을 끌어놓거나 클릭</div>
         <div class="mini" style="margin-top:4px">라인 데이터(라인/필요/출근/목표/실적/CAPA/불량%…) 자동 매핑</div>
@@ -2695,7 +2801,7 @@ function planToLoadMap(plan){
 }
 function applyLoadToLines(planMap,days){
   days=days||loadDays||6;const sums={};
-  CAPA_LINES.forEach(a=>{const k=dashKeyFromCapa(a);if(!k)return;sums[k]=(sums[k]||0)+(planMap[a[0]]||0);});
+  LMASTER().forEach(a=>{const k=dashKeyFromCapa(a);if(!k)return;sums[k]=(sums[k]||0)+(planMap[a[0]]||0);});
   let n=0;DB.lines.forEach(l=>{if(sums[l.key]==null)return;const t=Math.round(sums[l.key]/days);if(t>0){l.target=t;n++;}});
   return n;
 }
@@ -2960,6 +3066,20 @@ function importFile(file){
         return;
       }
       const wb=XLSX.read(e.target.result,{type:'binary'});
+      if(isStaffWB(wb)){
+        const st=applyStaffMaster(wb,file.name);
+        if(DB.plan)applyPlanCascade(DB.plan,DB.loadPlanName||'주간계획',DB.loadPlan||{});
+        rerender();
+        toast('인원 기준 반영 — '+st.upd+'개 라인 표준·가용 인원 갱신'+(st.miss.length?' · 미매칭 '+st.miss.length+'건':'')+' — 부하율·필요인원 재계산');
+        go('load');return;
+      }
+      if(isCapaWB(wb)){
+        const cp=applyCapaMaster(wb,file.name);
+        if(DB.plan)applyPlanCascade(DB.plan,DB.loadPlanName||'주간계획',DB.loadPlan||{});
+        rerender();
+        toast('CAPA 기준 반영 — '+cp.upd+'개 라인 갱신'+(cp.added?' · 신규 '+cp.added:'')+' — 부하율·필요인원 재계산');
+        go('load');return;
+      }
       if(isWhWB(wb)){
         DB.wh=parseWarehouse(wb);whWeek=0;dataSource=file.name;saveDB();
         const w=DB.wh.weeks[0];
