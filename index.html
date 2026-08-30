@@ -266,6 +266,14 @@
   /* [4] 히트맵 — 격자 위 크기 비교 */
   .subtog{display:inline-flex;gap:5px;margin-right:8px;padding-right:8px;border-right:1px solid var(--line2)}
   .subtog .btn{padding:5px 13px}
+  /* 보고서 전체화면 오버레이 */
+  #docOv{position:fixed;inset:0;z-index:9000;background:var(--bg);display:flex;flex-direction:column}
+  #docOv .docbar{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line);flex:none}
+  #docOv .docbar b{font-size:13.5px;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  #docOv .docbar .btn{min-height:40px;white-space:nowrap}
+  #docOv iframe{flex:1;width:100%;border:0;background:#fff}
+  @media(max-width:520px){#docOv .docbar b{display:none}}
+  @media print{#docOv{position:static}#docOv .docbar{display:none}}
   .zline{width:100%;height:auto;display:block;margin-top:2px}
   .zline .axg{stroke:var(--line2);stroke-width:1}
   .zline .axl{fill:var(--muted2);font-size:10px;font-weight:700}
@@ -1573,10 +1581,9 @@ function opsPrint(d){
   const done=it.filter(x=>x.st==='done').length, warn=it.filter(x=>x.st==='warn').length;
   const stlab=st=>st==='done'?'조치 완료':st==='warn'?'경고·판단':'자동 집계';
   const rows=it.map(x=>`<tr><td>${x.t}</td><td>${x.area}</td><td style="text-align:left">${x.ev}</td><td class="s-${x.st}">${stlab(x.st)}</td></tr>`).join('');
-  const w=window.open('','_blank','width=900,height=1000');
-  if(!w){toast('팝업을 허용해 주세요');return;}
-  w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>ZEN 일일 운영 보고서 ${d}</title><style>
-    body{font-family:'Pretendard','Malgun Gothic',sans-serif;color:#1b2736;margin:36px 44px}
+  const _html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>ZEN 일일 운영 보고서 ${d}</title><style>
+    body{font-family:'Pretendard','Malgun Gothic',sans-serif;color:#1b2736;margin:36px 44px;min-width:760px}
+    @media print{body{min-width:0}}
     .hd{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:3px solid #1d3a5f;padding-bottom:12px}
     .hd h1{font-size:22px;margin:0}.hd .co{font-size:12px;color:#66788f;font-weight:600}
     .meta{margin-top:12px;font-size:13.5px;font-weight:700}
@@ -1590,9 +1597,9 @@ function opsPrint(d){
     .ft{margin-top:26px;display:flex;justify-content:space-between;align-items:flex-end;font-size:11.5px;color:#66788f}
     .sign{display:flex;gap:26px;font-size:12.5px;font-weight:700;color:#1b2736}
     .sign span{border-top:1px solid #9aa8b8;padding-top:6px;min-width:110px;text-align:center}
-    .pbtn{position:fixed;top:14px;right:16px;background:#1d3a5f;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit}\n    @media print{body{margin:12mm}.pbtn{display:none}}
+    .pbar{position:fixed;top:14px;right:16px;display:flex;gap:8px;z-index:99}.pbtn{background:#1d3a5f;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;min-height:40px}.pbtn.ghost{background:#fff;color:#1d3a5f;border:1.5px solid #cbd6e4}\n    @media print{body{margin:12mm}.pbtn{display:none}}
   </style></head><body>
-    <button class="pbtn" onclick="window.print()">🖨 인쇄 / PDF 저장</button><div class="hd"><h1>ZEN 일일 운영 보고서</h1><div class="co">ZEN Manufacturing Platform · AP 헤어앤뷰티 사업장 · 제니엘 제조사업부 사업3팀</div></div>
+    <div class="hd"><h1>ZEN 일일 운영 보고서</h1><div class="co">ZEN Manufacturing Platform · AP 헤어앤뷰티 사업장 · 제니엘 제조사업부 사업3팀</div></div>
     <div class="meta">보고 일자 : ${d} (${wd})</div>
     <div class="sum"><div><div class="n">${it.length}</div><div class="l">총 기록</div></div>
       <div><div class="n" style="color:#1c7d49">${done}</div><div class="l">조치 완료</div></div>
@@ -1600,9 +1607,8 @@ function opsPrint(d){
     <table><tr><th style="width:52px">시간</th><th style="width:76px">영역</th><th>내용</th><th style="width:78px">상태</th></tr>${rows}</table>
     <div class="ft"><span>본 보고서는 플랫폼 운영 기록에서 자동 생성되었습니다 · 출력 ${new Date().toISOString().slice(0,10)}</span>
       <div class="sign"><span>작성 : ZEN Platform (자동)</span><span>확인 : </span></div></div>
-    <script>setTimeout(()=>{try{window.print()}catch(e){}},350)<\/script>
-  </body></html>`);
-  w.document.close();
+  </body></html>`;
+  openDocView(_html,'ZEN 일일 운영 보고서 '+d);
 }
 function opsExport(){
   const days=opsDays(); const keys=Object.keys(days).sort().reverse();
@@ -2180,6 +2186,43 @@ function exportInsightXlsx(){
   XLSX.writeFile(wb,'ZEN_분석보고_'+new Date().toISOString().slice(0,10)+'.xlsx');
   toast('분석·보고를 엑셀로 내보냈습니다');
 }
+/* ===== 보고서 미리보기 오버레이 =====
+   새 창(window.open)은 부모와 같은 URL을 물려받아 뒤로가기를 가로챌 수 없고,
+   되레 앱이 한 번 더 로드될 수 있다. 앱 안에서 전체화면으로 띄우면
+   닫기·뒤로가기가 모두 자연스럽게 동작한다. 문서는 iframe(srcdoc)으로
+   격리해 보고서 스타일이 앱 CSS와 충돌하지 않게 한다. */
+let _docOpen=false;
+function openDocView(html,title){
+  closeDocView(true);
+  const ov=document.createElement('div');
+  ov.id='docOv';
+  ov.innerHTML=`<div class="docbar">
+      <button class="btn" onclick="closeDocView()">✕ 닫기</button>
+      <b>${escHtml(title||'보고서')}</b>
+      <button class="btn p" style="margin-left:auto" onclick="printDocView()">🖨 인쇄 / PDF 저장</button>
+    </div><iframe id="docFrame" title="${escHtml(title||'보고서')}"></iframe>`;
+  document.body.appendChild(ov);
+  const fr=document.getElementById('docFrame');
+  fr.srcdoc=html;
+  document.body.style.overflow='hidden';
+  _docOpen=true;
+  try{history.pushState({zenDoc:1},'');}catch(e){}
+}
+function printDocView(){
+  const fr=document.getElementById('docFrame');
+  if(!fr){window.print();return;}
+  try{fr.contentWindow.focus();fr.contentWindow.print();}
+  catch(e){window.print();}
+}
+function closeDocView(silent){
+  const ov=document.getElementById('docOv');
+  if(ov)ov.remove();
+  document.body.style.overflow='';
+  if(_docOpen&&!silent){_docOpen=false;try{if(history.state&&history.state.zenDoc)history.back();}catch(e){}}
+  else _docOpen=false;
+}
+window.addEventListener('popstate',function(){ if(document.getElementById('docOv'))closeDocView(true); });
+
 function exportInsightPdf(){
   const P=insightPack();
   const tag=(v,good,warn)=>{const s=_insStatus(v,good,warn);return `<span style="color:${s.c};font-weight:800">${s.t}</span>`;};
@@ -2187,12 +2230,11 @@ function exportInsightPdf(){
     return `<tr style="background:${i%2?'#f7f9fc':'#fff'}"><td><b>${l.key}</b></td><td class="num">${l.target.toLocaleString()}</td><td class="num">${l.actual.toLocaleString()}</td><td class="num" style="color:${s.c};font-weight:800">${l.ach}%</td><td class="num">${l.oee}%</td><td class="num" style="color:${ds.c};font-weight:800">${l.defect}%</td><td style="color:${s.c};font-weight:700">${s.t}</td></tr>`;}).join('');
   const kpiCard=(l,v,c)=>`<div class="kc" style="border-top-color:${c||'#1D3A5F'}"><div class="l">${l}</div><div class="n">${v}</div></div>`;
   const lossCard=(l,v,f)=>`<div class="lc"><div class="l">${l}</div><div class="n">${v}</div><div class="f">${f}</div></div>`;
-  const w=window.open('','_blank','width=980,height=1160');
-  if(!w){toast('팝업을 허용해 주세요');return;}
-  w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>ZEN 분석·보고 ${P.day}</title><style>
+  const _html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>ZEN 분석·보고 ${P.day}</title><style>
     @page{size:A4;margin:16mm 14mm}
     *{box-sizing:border-box}
-    body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#1b2736;margin:0;background:#fff}
+    body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#1b2736;margin:0;background:#fff;min-width:820px}
+    @media print{body{min-width:0}
     .head{background:linear-gradient(120deg,#16283f,#1d3a5f 60%,#153050);color:#fff;padding:26px 34px;border-radius:0 0 14px 14px}
     .head .eb{font-size:10.5px;letter-spacing:3px;color:#8fd8b9;font-weight:800}
     .head h1{font-size:24px;margin:6px 0 4px;font-weight:900}
@@ -2217,10 +2259,10 @@ function exportInsightPdf(){
     .lc.tot{background:#1d3a5f;border-color:#1d3a5f}.lc.tot .l{color:#b9c9e2}.lc.tot .n{color:#fff}.lc.tot .f{color:#8fa6c4}
     .lc.ref{background:#f7f9fc;border-color:#dbe3ee}.lc.ref .l{color:#5f6b7a}.lc.ref .n{color:#42546b}.lc.ref .f{color:#8a97a8}
     .foot{margin-top:26px;padding-top:12px;border-top:1px solid #e2e9f3;font-size:10px;color:#9aa7b8;display:flex;justify-content:space-between}
-    .pbtn{position:fixed;top:14px;right:16px;background:#1d3a5f;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer;font-family:inherit}
-    @media print{.pbtn{display:none}.head{border-radius:0}}
+    .pbar{position:fixed;top:14px;right:16px;display:flex;gap:8px;z-index:99}.pbtn{background:#1d3a5f;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer;font-family:inherit;min-height:40px}.pbtn.ghost{background:#fff;color:#1d3a5f;border:1.5px solid #cbd6e4}
+    @media print{.pbar{display:none}.head{border-radius:0}}
   </style></head><body>
-    <button class="pbtn" onclick="window.print()">🖨 인쇄 / PDF 저장</button>
+    
     <div class="head"><div class="eb">2026 제2회 ZAIC · ZEN MANUFACTURING PLATFORM</div><h1>분석·보고 — 경영 요약</h1><div class="sub">AP 헤어앤뷰티 사업장 · 제니엘 제조사업부 사업3팀 · ${P.day}</div></div>
     <div class="wrap">
       <div class="note">${P.note}</div>
@@ -2245,8 +2287,8 @@ function exportInsightPdf(){
       <div class="foot"><span>ZEN Manufacturing Platform · 자동 생성 문서 — 기준값 기반 추정치이며 실시간 현장 입력이 아닙니다</span><span>${P.day}</span></div>
     </div>
     <script>setTimeout(function(){try{window.print()}catch(e){}},450)<\/script>
-  </body></html>`);
-  w.document.close();
+  </body></html>`;
+  openDocView(_html,'분석·보고 — 경영 요약');
 }
 function _crc32(u8){let c=~0;for(let i=0;i<u8.length;i++){c^=u8[i];for(let k=0;k<8;k++)c=c&1?(c>>>1)^0xEDB88320:c>>>1;}return(~c)>>>0;}
 function _u16(n){return new Uint8Array([n&255,(n>>>8)&255]);}
