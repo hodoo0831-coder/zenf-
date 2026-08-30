@@ -78,15 +78,6 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
 .photo-thumb img{width:100%;height:100%;object-fit:cover}
 .photo-thumb .del{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:none;background:rgba(15,36,56,.75);color:#fff;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center}
 
-/* 익명 토글 */
-.anon-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.switch{position:relative;width:48px;height:28px;flex:none}
-.switch input{opacity:0;width:0;height:0}
-.switch .tr{position:absolute;inset:0;background:#cfd6db;border-radius:999px;transition:.2s}
-.switch .tr:before{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
-.switch input:checked + .tr{background:var(--green)}
-.switch input:checked + .tr:before{transform:translateX(20px)}
-
 /* 제출 버튼 */
 .submitbar{position:sticky;bottom:0;padding:12px 0 calc(12px + env(safe-area-inset-bottom,0));background:linear-gradient(to top,var(--bg) 65%,transparent)}
 .btn-submit{width:100%;border:none;border-radius:14px;padding:16px;font-size:16.5px;font-weight:800;color:#fff;background:var(--green);box-shadow:0 4px 14px rgba(91,127,82,.35)}
@@ -323,17 +314,10 @@ select.fld{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns
   </div>
 
   <div class="card">
-    <div class="anon-row">
-      <div>
-        <h2 style="margin-bottom:2px">익명으로 제출</h2>
-        <div class="hint" style="margin-top:0">이름·연락처를 남기지 않습니다. 불이익은 절대 없어요.</div>
-      </div>
-      <label class="switch"><input type="checkbox" id="chk-anon"><span class="tr"></span></label>
-    </div>
-    <div id="who-box" style="margin-top:12px">
-      <input class="fld" id="in-name" placeholder="이름 (선택)">
-      <input class="fld" id="in-contact" style="margin-top:8px" placeholder="연락처 — 조치 결과를 알려드려요 (선택)">
-    </div>
+    <h2>신고자 정보 <span class="req">필수</span></h2>
+    <input class="fld" id="in-name" placeholder="이름">
+    <input class="fld" id="in-contact" style="margin-top:8px" placeholder="연락처 — 조치 결과를 알려드려요 (선택)">
+    <div class="hint">신고자 정보는 관리자만 볼 수 있으며, 신고로 인한 불이익은 절대 없습니다.</div>
   </div>
 
   <div class="submitbar">
@@ -2846,18 +2830,12 @@ function showThumb(src){
   $("#photo-row").appendChild(d);
 }
 
-/* ---------- 익명 ---------- */
-$("#chk-anon").addEventListener("change",function(){
-  $("#who-box").style.display=this.checked?"none":"";
-});
-
 /* ---------- 제출 ---------- */
 function newRid(){
   var d=new Date(), p=function(n){return (n<10?"0":"")+n};
   return "SV-"+String(d.getFullYear()).slice(2)+p(d.getMonth()+1)+p(d.getDate())+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
 }
 function buildPayload(){
-  var anon=$("#chk-anon").checked;
   return {
     report_id:newRid(),
     type:state.type,
@@ -2866,8 +2844,8 @@ function buildPayload(){
     location:currentLoc(),
     severity:state.type==="위험 신고"?state.severity:"-",
     content:$("#in-content").value.trim(),
-    reporter:anon?"익명":($("#in-name").value.trim()||"미기재"),
-    contact:anon?"-":($("#in-contact").value.trim()||"-"),
+    reporter:$("#in-name").value.trim(),
+    contact:$("#in-contact").value.trim()||"-",
     submitted_at:new Date().toLocaleString("ko-KR"),
     photo:(state.photoDataUrl && state.photoDataUrl.length<4500000)?state.photoDataUrl:""
   };
@@ -2877,6 +2855,7 @@ function validate(){
   if(!currentLoc()){ toast("발생 위치를 선택해 주세요"); return false; }
   if(!$("#in-content").value.trim()){ toast("내용을 입력해 주세요"); return false; }
   if(state.type==="위험 신고" && !state.severity){ toast("긴급한 정도를 선택해 주세요"); return false; }
+  if(!$("#in-name").value.trim()){ toast("이름을 입력해 주세요"); return false; }
   return true;
 }
 function postReport(p){
@@ -2968,7 +2947,7 @@ function posterHtml(loc,baseUrl,foot){
     +'<div class="p-top">'
       +'<div class="p-brand"><span class="bx">📢</span> 세이프보이스 SafeVoice · 제니엘</div>'
       +'<div class="p-title">위험을 보셨나요?<br><span class="accent">30초 신고</span>로 사고를 막습니다</div>'
-      +'<div class="p-sub">당신의 목소리가 현장을 바꿉니다 — 익명 제출 가능 · 불이익 없음</div>'
+      +'<div class="p-sub">당신의 목소리가 현장을 바꿉니다 — 신고자 불이익 없음 · 30초면 충분</div>'
     +'</div>'
     +'<div class="p-mid">'
       +(loc?'<div class="p-loc">📍 '+esc(loc)+'</div>':'')
