@@ -3212,7 +3212,9 @@ function api(path,opt){
   opt.headers=Object.assign({"x-sv-pin":pin()},opt.headers||{});
   return fetch(path,opt).then(function(r){
     if(r.status===401){ lock(); throw new Error("pin"); }
-    if(!r.ok) throw new Error("HTTP "+r.status);
+    if(!r.ok){
+      var e=new Error("HTTP "+r.status); e.status=r.status; throw e;
+    }
     return r.json();
   });
 }
@@ -3233,7 +3235,16 @@ function unlockTry(p,silent){
     fetchPhotos(reports,40).then(renderInbox);
   }).catch(function(e){
     if(silent) return;
-    toast(e.message==="pin"?"PIN이 올바르지 않아요":"서버 연결 실패 — 배포된 주소에서 사용 가능해요");
+    if(e.message==="pin"){ toast("PIN이 올바르지 않아요"); return; }
+    if(location.protocol==="file:"){
+      toast("이 파일을 그냥 열면 접수함이 동작하지 않아요 — 배포된 사이트 주소(…netlify.app/admin)에서 열어주세요");
+    } else if(e.status===404){
+      toast("서버 함수(/api/report)를 찾을 수 없어요 — Netlify 배포·함수 설정을 확인해 주세요");
+    } else if(e.status){
+      toast("서버 오류 (HTTP "+e.status+") — 잠시 후 다시 시도해 주세요");
+    } else {
+      toast("네트워크 연결을 확인해 주세요");
+    }
   });
 }
 $("#btn-pin").onclick=function(){ var v=$("#in-pin").value.trim(); if(v) unlockTry(v); };

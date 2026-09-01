@@ -4,6 +4,13 @@
   publish = "."
   command = ""
 
+# 세이프보이스 접수 API(netlify/functions/report.mjs)가 쓰는 @netlify/blobs를
+# 번들링할 수 있도록 함수 디렉터리·번들러를 명시 (package.json 의존성 설치는
+# Netlify가 빌드 시 자동 수행)
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 # 루트("/")는 index.html(= ZEN_Manufacturing_Platform_11.0.html 동일본)로 서빙됨.
 # 구주소 호환: 파일명으로 접근해도 동작하도록 rewrite 보조.
 [[redirects]]
