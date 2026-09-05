@@ -959,11 +959,17 @@ function aggWork(rows){
     r.workers.forEach(w=>{const o=wm[w]||(wm[w]={name:w,mh:0,plt:0,ea:0});o.plt+=r.plt/d;o.mh+=r.mh/d;o.ea+=r.ea/d;});});
   const workers=Object.values(wm).map(w=>({name:w.name,mh:_r1(w.mh),plt:_r1(w.plt),ea:Math.round(w.ea),
     pltPerMH:w.mh?+(w.plt/w.mh).toFixed(2):0})).sort((a,b)=>b.plt-a.plt);
+  /* 일자별 실투입 — 인력 판단용(같은 사람이 여러 건이면 1명으로) */
+  const bd={};
+  recs.forEach(r=>{if(!r.date)return;const o=bd[r.date]||(bd[r.date]={set:new Set(),mh:0,plt:0});
+    r.workers.forEach(w=>o.set.add(w)); o.mh+=r.mh; o.plt+=r.plt;});
+  const byDay={};Object.keys(bd).forEach(d=>{const o=bd[d];
+    byDay[d]={n:o.set.size,names:[...o.set],mh:_r1(o.mh),plt:_r1(o.plt)};});
   const dm={};recs.forEach(r=>{if(r.date)dm[r.date]=_r1((dm[r.date]||0)+r.plt);});
   const dmh={};recs.forEach(r=>{if(r.date)dmh[r.date]=_r1((dmh[r.date]||0)+r.mh);});
   const daily=Object.keys(dm).sort().map(d=>({date:d,plt:dm[d],mh:dmh[d]||0,
     pltPerMH:dmh[d]?+(dm[d]/dmh[d]).toFixed(2):0}));
-  return {records:recs.length,totalPLT,totalEA,totalMH,days,
+  return {records:recs.length,totalPLT,totalEA,totalMH,days,byDay,
     pltPerMH:totalMH?+(totalPLT/totalMH).toFixed(2):0,
     eaPerMH:totalMH?Math.round(totalEA/totalMH):0,
     dailyAvgPLT:days?_r1(totalPLT/days):0,byPart:grp('part'),byType:grp('type'),workers,daily};
@@ -1160,6 +1166,21 @@ async function whRefresh(silent){
     if(!silent)toast('창고 서버에 닿지 않아 기준 데이터를 유지합니다 — '+whErr);
     return false;
   }
+}
+/* ===== 인력 실측 — 간접작업(P-BOX·오리콘) 실적의 작업자·공수에서 산출 =====
+   라인 생산 인원은 출퇴근·배치를 기록하는 연결 시스템이 없어 여기 포함되지 않는다. */
+function laborLive(){
+  if(LIVE.status!=='live')return null;
+  const K=(LIVE.today||{}).kpi||{}, A=[(K.pbox||{}).byDay||{},(K.orikon||{}).byDay||{}];
+  const days=[...new Set([].concat(...A.map(Object.keys)))].sort();
+  if(!days.length)return null;
+  const at=d=>{const nm=new Set();let mh=0;
+    A.forEach(b=>{const o=b[d];if(!o)return;(o.names||[]).forEach(w=>nm.add(w));mh+=o.mh||0;});
+    return {date:d,n:nm.size,mh:_r1(mh),names:[...nm]};};
+  const last=at(days[days.length-1]);
+  const trend=days.slice(-7).map(at);
+  const avg=trend.length?+(trend.reduce((a,x)=>a+x.n,0)/trend.length).toFixed(1):last.n;
+  return Object.assign(last,{trend,avg,perHead:last.n?_r1(last.mh/last.n):0});
 }
 async function liveDirect(silent){
   try{
@@ -1895,7 +1916,8 @@ function collectJudgments(){
   const _short=_LR.groups.filter(g=>g.gap>0.4), _surp=_LR.groups.filter(g=>g.gap<-0.4);
   const _tot=+_short.reduce((a,g)=>a+g.gap,0).toFixed(1);
   J.push({area:'인력',ic:'users',lv:_tot>0?'warn':'ok',r:`익주 인력 ${_tot>0?'부족 −'+_tot+'명':'충족'}`,
-    s:`${loadPlanName} 실계산 · ${_short.length?'과부하 '+_short.map(g=>g.grp+' +'+g.gap).join('·'):'전 그룹 여유'}`,
+    s:`${loadPlanName} 실계산 · ${_short.length?'과부하 '+_short.map(g=>g.grp+' +'+g.gap).join('·'):'전 그룹 여유'}`
+      +(()=>{const A=laborLive();return A?` — 간접작업 실투입 ${A.n}명 / ${A.mh}MH (${A.date} 실측)`:'';})(),
     rule:'부하율 = 계획량 ÷ 주CAPA > 100%',
     act:_tot>0?(_surp.length?`${_surp[0].grp} 여유 ${Math.abs(_surp[0].gap)}명 → ${_short[0].grp} 재배치`:'잔업·단기인력 검토'):'현 배치 유지'});
   const behind=L.filter(l=>G.achieve(l)<70);
@@ -2795,6 +2817,34 @@ function prodStatus(){
 V.labor=()=>realAppBar([
     {t:'👥 인력 T/O 계산기',u:laborURL()}
   ])+laborStatus()+ledger('인력 부하율·필요 T/O 계산기 (그룹별)','주CAPA·정규인원·보유 TO 108 · 신장율 시뮬 · 계획표 업로드 — 클릭하여 펼침','<iframe class="safe" src="'+laborURL()+'" title="인력 부족·여유 자동계산" style="height:1480px"></iframe>');
+/* 간접작업 실투입 인원 — P-BOX·오리콘 실적에서 실시간 산출 */
+function laborLiveCard(){
+  const A=laborLive();
+  if(!A)return `<div class="card" style="margin-bottom:14px"><h3>간접작업 실투입 인원 <span class="hint">실적 앱 미연결</span></h3>
+    <p class="mini">P-BOX·오리콘 실적이 연결되면 <b>날짜별 실제 투입 인원·공수</b>가 여기 실시간으로 표시됩니다.
+    아래 라인별 배치는 기준·수동 입력값입니다.</p></div>`;
+  const d=A.trend.map(x=>({label:x.date.slice(5),v:x.n}));
+  const dm=Math.max(4,...A.trend.map(x=>x.n));
+  const bars=A.trend.map(x=>{const on=x.date===A.date;
+    return `<div style="flex:1;min-width:34px;display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div style="font-size:11px;font-weight:800;color:${on?'#0B7A43':'var(--mut)'}">${x.n}</div>
+      <div style="width:100%;height:${Math.round(x.n/dm*56)+4}px;border-radius:4px 4px 0 0;background:${on?'#0B7A43':'#A9E4C3'}"></div>
+      <div class="mini" style="font-size:10px">${x.date.slice(5)}</div></div>`;}).join('');
+  const top=[...A.names].slice(0,12).map(n=>`<span class="chip" style="margin:2px 3px 0 0">${n}</span>`).join('');
+  return `<div class="card" style="margin-bottom:14px"><h3>간접작업 실투입 인원
+    <span class="hint">P-BOX·오리콘 실적 실측 · ${A.date} 기준</span>
+    <span class="chip" style="margin-left:auto;background:#DFF6E9;color:#0B7A43">실측</span></h3>
+    <div class="grid g4" style="margin-bottom:12px">
+      <div class="kpi"><div class="lab">실투입 인원</div><div class="val">${A.n}<small>명</small></div><div class="delta">최근 ${A.trend.length}일 평균 ${A.avg}명</div></div>
+      <div class="kpi"><div class="lab">투입 공수</div><div class="val">${A.mh}<small>MH</small></div><div class="delta">1인 ${A.perHead}h</div></div>
+      <div class="kpi"><div class="lab">최근 추이</div><div class="sp" style="margin-top:6px">${spark(A.trend.map(x=>x.n),{color:'#0B7A43',w:104,h:26})}</div></div>
+      <div class="kpi"><div class="lab">집계 기준</div><div class="val" style="font-size:15px">작업자 실명</div><div class="delta">공동작업은 인원수로 분배</div></div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:flex-end;padding:4px 2px 0">${bars}</div>
+    <div class="mini" style="margin-top:12px;line-height:1.7"><b>투입 인원</b> ${top}${A.names.length>12?` <span class="mut2">외 ${A.names.length-12}명</span>`:''}
+      <br><span class="mut2">간접작업(P-BOX·오리콘) 실적에 기록된 인원만 집계됩니다. 라인 생산 인원은 출퇴근·배치를 기록하는 연결 시스템이 없어 아래 기준값으로 표시됩니다.</span></div>
+  </div>`;
+}
 function laborStatus(){
   function people(l){let c=[];for(let i=0;i<l.on;i++)c.push(pi('on'));for(let i=0;i<l.leave;i++)c.push(pi('leave'));for(let i=0;i<l.edu;i++)c.push(pi('edu'));for(let i=0;i<Math.max(0,l.need-G.cur(l));i++)c.push(pi('empty'));return c.join('');}
   const L=myLines();
@@ -2814,8 +2864,9 @@ function laborStatus(){
     <div class="kpi"><div class="ic" data-ic="clock"></div><div class="lab">연차</div><div class="val" style="color:#b8860b">${DB.work[1].n}<small>명</small></div></div>
   </div>
   ${aib}
+  ${laborLiveCard()}
   <div class="grid g2" style="grid-template-columns:1.3fr 1fr">
-    <div class="card"><h3>공장 배치도 <span class="hint">라인별 실시간 인력</span></h3><div class="lines-grid">${boxes}</div></div>
+    <div class="card"><h3>공장 배치도 <span class="hint">라인별 배치 — 기준·수동 입력값</span></h3><div class="lines-grid">${boxes}</div></div>
     <div class="card"><h3>라인별 인력 현황 <span class="hint">필요 · 현재 · 과부족</span></h3><table class="tb"><thead><tr><th>구역</th><th>필요</th><th>현재</th><th>과부족</th><th>상태</th></tr></thead><tbody>${tbl}</tbody></table></div>
   </div>`;
 };
