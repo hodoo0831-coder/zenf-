@@ -1048,6 +1048,46 @@ async function washRefresh(silent){
   }
 }
 let washErr='';
+/* ===== 안전(온열) 실측 직결 =====
+   폭염 판단의 WBGT·기온·습도가 DB.safety 시드로 고정되어 있었다.
+   히트워치가 쓰는 기상 중계 Worker를 플랫폼도 직접 읽는다.
+   산식(습구온도·체감)은 히트워치와 동일한 것을 사용해 두 화면 값이 어긋나지 않게 한다. */
+const KMA_API='https://kma-proxy.hodoo0831.workers.dev';
+const SITE_LOC={lat:36.383,lon:127.408};   /* 사업장 좌표 */
+let HEATLIVE=null, heatErr='';
+function _wetBulb(Ta,RH){return Ta*Math.atan(0.151977*Math.sqrt(RH+8.313659))
+  +Math.atan(Ta+RH)-Math.atan(RH-1.67633)
+  +0.00391838*Math.pow(RH,1.5)*Math.atan(0.023101*RH)-4.686035;}
+function _apparent(Ta,RH){const Tw=_wetBulb(Ta,RH);
+  return -0.2442+0.55399*Tw+0.45535*Ta-0.0022*Tw*Tw+0.00278*Tw*Ta+3.0;}
+async function fetchHeat(ms){
+  const ac=('AbortController' in window)?new AbortController():null;
+  const tm=ac?setTimeout(()=>ac.abort(),ms||12000):null;
+  try{
+    const r=await fetch(KMA_API+'?lat='+SITE_LOC.lat+'&lon='+SITE_LOC.lon,{cache:'no-store',signal:ac?ac.signal:undefined});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    if(j.temp==null||j.rh==null)throw new Error('실황 값 없음');
+    const t=+j.temp, h=+j.rh;
+    return {temp:+t.toFixed(1),humid:Math.round(h),
+            wbgt:+_apparent(t,h).toFixed(1),
+            stamp:(j.baseTime||'').replace(/(\d{2})(\d{2})/,'$1:$2'),at:Date.now()};
+  }finally{ if(tm)clearTimeout(tm); }
+}
+async function heatRefresh(silent){
+  try{
+    HEATLIVE=await fetchHeat(); heatErr='';
+    /* 판단·화면이 모두 DB.safety 를 보므로 실측으로 덮는다(무재해일 등 나머지는 유지) */
+    DB.safety.temp=HEATLIVE.temp; DB.safety.humid=HEATLIVE.humid; DB.safety.wbgt=HEATLIVE.wbgt;
+    if(typeof cur!=='undefined'&&cur)go(cur);
+    if(!silent)toast(`기상 실측 연결 — ${HEATLIVE.temp}℃ · 습도 ${HEATLIVE.humid}% · 체감 ${HEATLIVE.wbgt}℃`);
+    return true;
+  }catch(e){
+    heatErr=liveErrText(e);
+    if(!silent)toast('기상 서버에 닿지 않아 기준 데이터를 유지합니다 — '+heatErr);
+    return false;
+  }
+}
 async function liveDirect(silent){
   try{
     /* 한쪽 시스템이 실패해도 나머지는 살린다 */
@@ -1093,9 +1133,9 @@ async function retryUntil(fn){
   return false;
 }
 async function liveStart(){
-  await Promise.allSettled([retryUntil(liveDirect),retryUntil(washRefresh)]);
+  await Promise.allSettled([retryUntil(liveDirect),retryUntil(washRefresh),retryUntil(heatRefresh)]);
   if(_liveTimer)clearInterval(_liveTimer);
-  _liveTimer=setInterval(()=>{liveDirect(true);washRefresh(true);},60000);
+  _liveTimer=setInterval(()=>{liveDirect(true);washRefresh(true);heatRefresh(true);},60000);
 }
 function liveRetry(){toast('실시간 연결을 다시 시도합니다…');liveDirect(false);}
 async function liveRefresh(){
@@ -1787,7 +1827,7 @@ function collectJudgments(){
     act:_tot>0?(_surp.length?`${_surp[0].grp} 여유 ${Math.abs(_surp[0].gap)}명 → ${_short[0].grp} 재배치`:'잔업·단기인력 검토'):'현 배치 유지'});
   const behind=L.filter(l=>G.achieve(l)<70);
   J.push({area:'생산',ic:'activity',lv:behind.length?'crit':'ok',r:`지연 위험 오더 ${behind.length}건`,s:behind.length?behind.map(l=>l.key+' '+G.achieve(l)+'%').join(' · '):'전 라인 정상 진척',rule:'달성률 < 70%',act:behind.length?'우선순위 재조정 · 투입 강화':'모니터링'});
-  J.push({area:'안전',ic:'thermometer',lv:w.wbgt>=31?'crit':w.wbgt>=28?'warn':'ok',r:`폭염 ${w.wbgt>=31?'위험':w.wbgt>=28?'경고':'주의'} · WBGT ${w.wbgt}℃`,s:`기온 ${w.temp}℃ 습도 ${w.humid}% · 무재해 ${w.noAccident}일`,rule:'WBGT ≥ 28℃',act:w.wbgt>=28?'시간당 휴식·수분 · 옥외작업 단축':'정상 운영'});
+  J.push({area:'안전',ic:'thermometer',lv:w.wbgt>=31?'crit':w.wbgt>=28?'warn':'ok',r:`폭염 ${w.wbgt>=31?'위험':w.wbgt>=28?'경고':'주의'} · WBGT ${w.wbgt}℃`,s:`기온 ${w.temp}℃ 습도 ${w.humid}% · 무재해 ${w.noAccident}일`+(HEATLIVE?` — 기상 실황 ${HEATLIVE.stamp||''} 실측`:''),rule:'WBGT ≥ 28℃',act:w.wbgt>=28?'시간당 휴식·수분 · 옥외작업 단축':'정상 운영'});
   const worst=[...L].sort((a,b)=>G.cleanScore(b)-G.cleanScore(a))[0];
   const _wS=(typeof washStats==='function')?washStats():null, _wm=_wS&&_wS[worst.key];
   const _wsrc=(()=>{
@@ -3317,17 +3357,21 @@ V.safeapp=()=>dualEmbed('safe','안전 관리 (ZEN Keeper)',svic('shield',16),sa
 function syncSrcTag(){
   const t=document.getElementById('srcTag'); if(t){t.textContent='데이터: '+dataSource;t.classList.toggle('live',dataSource!=='기준값');}
   const r=document.getElementById('refreshTag');
+  const _feeds=[]; if(LIVE.status==='live')_feeds.push('실적');
+  if(typeof WASHLIVE!=='undefined'&&WASHLIVE)_feeds.push('세척');
+  if(typeof HEATLIVE!=='undefined'&&HEATLIVE)_feeds.push('기상');
+  if(t){t.textContent='데이터: '+(_feeds.length?_feeds.join('+')+' 실측':dataSource);t.classList.toggle('live',_feeds.length>0);}
   if(r){
-    if(dataSource==='기준값'){
+    if(!_feeds.length){
       const why=liveErr?' · '+liveErr:'';
       r.innerHTML='<span class="dot" style="background:#b9922e"></span> 기준 데이터 · 미연결'
         +'<button class="btn" style="padding:2px 9px;margin-left:7px;font-size:11px" onclick="liveRetry()">다시 연결</button>';
       r.title=why?('실시간 연결 실패'+why):'실시간 연결 시도 전';
     }else{
       const ago=liveAt?Math.round((Date.now()-liveAt)/1000):0;
-      const feeds=[]; if(LIVE.status==='live')feeds.push('실적'); if(WASHLIVE)feeds.push('세척');
-      r.innerHTML='<span class="dot"></span> 자동 갱신 중'+(feeds.length?' · '+feeds.join('+'):'')
-        +(liveErr?' · <b style="color:#b9922e">'+escHtml(liveErr)+'</b>':'');
+      const miss=['실적','세척','기상'].filter(x=>_feeds.indexOf(x)<0);
+      r.innerHTML='<span class="dot"></span> 자동 갱신 중 · '+_feeds.join('+')
+        +(miss.length?' <span style="color:#b9922e">('+miss.join('·')+' 미연결)</span>':'');
       r.title='마지막 갱신 '+(ago<60?ago+'초 전':Math.round(ago/60)+'분 전');
     }
   }
