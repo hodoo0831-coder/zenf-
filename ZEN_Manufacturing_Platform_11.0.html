@@ -904,7 +904,7 @@ function buildDailyBrief(){
   const clean=[...L].sort((a,b)=>G.cleanScore(b)-G.cleanScore(a))[0], cleanN=L.filter(l=>G.cleanScore(l)>=75).length;
   const undone=L.filter(l=>!w.tbmDone.includes(l.key)).map(l=>l.key);
   const orders=DB.stock.filter(s=>G.stock(s).need);
-  const overZones=DB.wh?((DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones.filter(z=>z.rate>=100).length):0;
+  const overZones=whZones().filter(z=>z.rate>=100).length;
   const worstDef=[...L].sort((a,b)=>b.defect-a.defect)[0];
   const dt=todayKR(), bar='━━━━━━━━━━━━━';
   const oneLine=`[AP헤어앤뷰티 ${dt}] 달성 ${tp.ach}% · 인력 ${gap>0?'−'+gap+'명':'충족'} · 폭염 ${w.wbgt>=28?w.wbgt+'℃ 경고':'주의'} · 불량 ${df}% · 발주 ${orders.length}건${behind.length?' — 지연 '+behind.join('·'):''}`;
@@ -1088,6 +1088,79 @@ async function heatRefresh(silent){
     return false;
   }
 }
+/* ===== 창고 적치 실측 직결 =====
+   적치 판단이 주 1회 점검표 업로드(없으면 시드)로만 돌아, 주중 변화를 못 봤다.
+   창고 앱이 쓰는 Worker의 /api/state 를 플랫폼도 읽어 구역별 적치를 실시간으로 받는다.
+   주소는 앱과 마찬가지로 사용자가 등록한다(코드에 하드코딩된 값이 없음). */
+let WH_API='';
+try{WH_API=localStorage.getItem('zen_wh_api')||'';}catch(e){}
+function whSetApi(){const el=document.getElementById('whApi');WH_API=(el&&el.value||'').trim();
+  try{localStorage.setItem('zen_wh_api',WH_API);}catch(e){}
+  if(WH_API)whRefresh(false); else {WHLIVE=null;whErr='';rerender();toast('창고 실시간 연결 해제');}}
+let WHLIVE=null, whErr='';
+/* 창고 앱 구역키 → 플랫폼 시드 구역명
+   (창고 관리자 앱 WZONE 기준: oc1 만 튜브/비튜브로 쪼개진다.
+    occ='OC동 지하 C구역', cloud='클라우드동' 은 플랫폼 시드에 대응 구역이 없어 매핑하지 않는다.) */
+const WH_ZONE_MAP={hnb1:'HnB동 1층',fnc2:'FnC동 튜브',fnc3:'FnC동 염모제',lbox:'L동 박스창고',
+  jig:'J동 공작반 2층',tent:'임가공[천막]',oc1:'1층 종이상자',oc1_tube:'1층 튜브',
+  ocb:'지하 A구역',ocbb:'지하 B구역'};
+const _isTubeLoc=l=>/튜브|4R-?04/.test(String(l||''));
+async function fetchWh(ms){
+  if(!WH_API)throw new Error('주소 미등록');
+  const base=WH_API.replace(/\/+$/,'');
+  const d=new Date(), ymd=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const ac=('AbortController' in window)?new AbortController():null;
+  const tm=ac?setTimeout(()=>ac.abort(),ms||12000):null;
+  try{
+    const r=await fetch(base+'/api/state?date='+ymd,{cache:'no-store',signal:ac?ac.signal:undefined});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    if(!j||!j.ok)throw new Error('응답 형식 오류');
+    return j;
+  }finally{ if(tm)clearTimeout(tm); }
+}
+/* 창고 앱 실측 → 구역명별 적재 수량 */
+function whLiveCounts(){
+  if(!WHLIVE)return null;
+  const items=WHLIVE.items||{}, out={};
+  const add=(nm,v)=>{if(nm)out[nm]=(out[nm]||0)+v;};
+  Object.keys(items).forEach(k=>{
+    const rows=items[k]||[];
+    if(k==='oc1'){ let tube=0,other=0;
+      rows.forEach(x=>{_isTubeLoc(x.loc)?tube+=(+x.qty||0):other+=(+x.qty||0);});
+      add(WH_ZONE_MAP.oc1_tube,tube); add(WH_ZONE_MAP.oc1,other); return; }
+    add(WH_ZONE_MAP[k],rows.reduce((a,x)=>a+(+x.qty||0),0));
+  });
+  return Object.keys(out).length?out:null;
+}
+/* 적치 구역 단일 진입점 — 실측(창고 앱) > 업로드 엑셀 > 기준 시드
+   실측이 안 들어온 구역은 기준값을 유지한다(0 으로 떨어뜨리지 않는다). */
+function whZones(){
+  const src=DB.wh?((DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones):DEFAULT_WH_ZONES;
+  const base=src.map(z=>({name:z.name,count:z.count,capa:z.capa,
+    rate:z.rate!=null?z.rate:(z.capa?Math.round(z.count/z.capa*100):0),live:false}));
+  const lv=(whWeek===0)?whLiveCounts():null; /* 지난 주차를 보는 중이면 실측으로 덮지 않는다 */
+  if(!lv)return base;
+  return base.map(z=>{const c=lv[z.name];
+    if(c==null)return z;
+    return {name:z.name,count:c,capa:z.capa,rate:z.capa?Math.round(c/z.capa*100):0,live:true};});
+}
+function whZoneTotal(zs){const c=zs.reduce((a,z)=>a+z.count,0),p=zs.reduce((a,z)=>a+z.capa,0);
+  return {count:c,capa:p,rate:p?Math.round(c/p*100):0};}
+function whLiveN(){return whZones().filter(z=>z.live).length;}
+async function whRefresh(silent){
+  if(!WH_API){WHLIVE=null;return false;}
+  try{
+    WHLIVE=await fetchWh(); whErr='';
+    if(typeof cur!=='undefined'&&cur)go(cur);
+    if(!silent)toast('창고 실측 연결 — '+whLiveN()+'개 구역 수신');
+    return true;
+  }catch(e){
+    whErr=liveErrText(e);
+    if(!silent)toast('창고 서버에 닿지 않아 기준 데이터를 유지합니다 — '+whErr);
+    return false;
+  }
+}
 async function liveDirect(silent){
   try{
     /* 한쪽 시스템이 실패해도 나머지는 살린다 */
@@ -1133,9 +1206,9 @@ async function retryUntil(fn){
   return false;
 }
 async function liveStart(){
-  await Promise.allSettled([retryUntil(liveDirect),retryUntil(washRefresh),retryUntil(heatRefresh)]);
+  await Promise.allSettled([retryUntil(liveDirect),retryUntil(washRefresh),retryUntil(heatRefresh),retryUntil(whRefresh)]);
   if(_liveTimer)clearInterval(_liveTimer);
-  _liveTimer=setInterval(()=>{liveDirect(true);washRefresh(true);heatRefresh(true);},60000);
+  _liveTimer=setInterval(()=>{liveDirect(true);washRefresh(true);heatRefresh(true);whRefresh(true);},60000);
 }
 function liveRetry(){toast('실시간 연결을 다시 시도합니다…');liveDirect(false);}
 async function liveRefresh(){
@@ -1558,7 +1631,7 @@ V.home=()=>{
   const orders=DB.stock.filter(s=>G.stock(s).need);
   const worst=[...myLines()].sort((a,b)=>G.cleanScore(b)-G.cleanScore(a))[0];
   const cln=myLines().filter(l=>G.cleanScore(l)>=75).length;
-  const whRate=DB.wh?whTotRate(DB.wh.weeks[whWeek]||DB.wh.weeks[0]):null;
+  const whRate=whZoneTotal(whZones()).rate;
   const hm=(lab,val,vals,col)=>`<div class="m"><div class="ml">${lab}</div><div class="mv tnum">${val}</div><div class="sp">${spark(vals,{color:col,w:104,h:24})}</div></div>`;
   const hero=`<div class="hero">
     <div class="hl"><div class="k">AI CONTROL TOWER</div><div class="t">통합 운영 현황</div><div class="s">8개 Agent가 실측을 종합해 <b style="color:#0B7A43;text-decoration:underline;text-decoration-color:#8fd8b9">‘판단’까지 자동화</b> · AP 헤어앤뷰티 사업장 가동 6/6 라인 · ${dataSource==='기준값'?'<b style="color:#8a7333">기준 데이터(시드)</b> — 실측 연결 시 자동 전환':'실데이터 '+dataSource}</div></div>
@@ -1839,9 +1912,11 @@ function collectJudgments(){
     return (bits.length?bits.join(' · '):'대기·진행 없음')+' — 세척실 앱 실측';
   })();
   J.push({area:'세척',ic:'droplet',lv:G.cleanScore(worst)>=75?'warn':'ok',r:`${worst.key} 세척 우선순위 1위`,s:`우선순위 ${G.cleanScore(worst)}점 · ${_wsrc}`,rule:'우선순위 ≥ 75점',act:'CIP 병렬 투입 · 완료 지연 방지'});
-  const zones=(DB.wh?(DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones:DEFAULT_WH_ZONES).map(z=>({name:z.name,rate:z.rate!=null?z.rate:Math.round(z.count/z.capa*100)}));
+  const zones=whZones();
   const gr=whGrowth(), over=zones.filter(z=>z.rate>=100), satPred=zones.filter(z=>z.rate<100&&Math.round(z.rate*(1+gr))>=100);
-  J.push({area:'창고',ic:'package',lv:over.length?'crit':satPred.length?'warn':'ok',r:`적치 초과 ${over.length}구역 · 익주 포화 예측 ${satPred.length}구역`,s:over.length?over.slice(0,3).map(z=>z.name.replace(/\[.*?\]/g,'').trim()+' '+z.rate+'%').join(' · '):'전 구역 여유',rule:'적치율 ≥ 100% / 예측 ≥ 100%',act:over.length?'초과분 여유 구역 재배치·출하 우선':'현 배치 유지'});
+  const _wlN=zones.filter(z=>z.live).length;
+  const _wsrcz=_wlN?`창고 앱 실측 ${_wlN}구역`:(DB.wh?'주간 점검 엑셀':'기준 데이터');
+  J.push({area:'창고',ic:'package',lv:over.length?'crit':satPred.length?'warn':'ok',r:`적치 초과 ${over.length}구역 · 익주 포화 예측 ${satPred.length}구역`,s:(over.length?over.slice(0,3).map(z=>z.name.replace(/\[.*?\]/g,'').trim()+' '+z.rate+'%').join(' · '):'전 구역 여유')+` — ${_wsrcz}`,rule:'적치율 ≥ 100% / 예측 ≥ 100%',act:over.length?'초과분 여유 구역 재배치·출하 우선':'현 배치 유지'});
   const df=avgDefect();
   J.push({area:'품질',ic:'flask',lv:df>1.5?'warn':'ok',r:`불량률 ${df}%`,s:`목표 1.5% ${df>1.5?'초과':'이내'} · 주요 원인 ${(DB.paretoNames&&DB.paretoNames[0])||'-'}`,rule:'불량률 > 1.5%',act:df>1.5?'최다 라인 원인 조치':'현 수준 유지'});
   const pb=LIVE_SEED.kpi.pbox, low=pb.workers.reduce((m,x)=>x.pltPerMH<m.pltPerMH?x:m,pb.workers[0]);
@@ -1961,8 +2036,7 @@ function ruleNow(id){
     const grpMin=R.groups.length?R.groups.reduce((a,g)=>g.load<a.load?g:a,R.groups[0]):null;
     const gapMax=R.groups.length?Math.max(...R.groups.map(g=>Math.abs(g.gap))):0;
     const worst=[...L].sort((a,b)=>G.cleanScore(b)-G.cleanScore(a))[0];
-    const zones=(DB.wh?(DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones:DEFAULT_WH_ZONES)
-      .map(z=>({name:z.name,rate:z.rate!=null?z.rate:Math.round(z.count/z.capa*100)}));
+    const zones=whZones();
     const zmax=zones.length?Math.max(...zones.map(z=>z.rate)):0;
     const achMin=L.length?Math.min(...L.map(l=>G.achieve(l))):100;
     const capMax=L.length?Math.max(...L.map(l=>G.load(l))):0;
@@ -2798,8 +2872,7 @@ function whGrowth(){ // 익주 예측 성장률 — 실데이터면 전체 적�
 }
 function whHeat(r){return r>=100?'#dc4b4b':r>=90?'#e8823a':r>=70?'#e3b341':'#3f9d6b';}
 function whLayout(){
-  const zones=(DB.wh?(DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones:DEFAULT_WH_ZONES)
-    .map(z=>{const rate=z.rate!=null?z.rate:Math.round(z.count/z.capa*100);return {name:z.name,count:z.count,capa:z.capa,rate};});
+  const zones=whZones();
   const g=whGrowth();
   const Z=zones.map(z=>{const pred=Math.max(0,Math.round(z.rate*(1+g)));const free=Math.max(0,z.capa-z.count);
     return {...z,pred,free,st:z.rate>=100?'초과':pred>=100?'포화 임박':z.rate>=90?'주의':'여유'};});
@@ -2834,18 +2907,19 @@ V.stock=()=>{
   let whSection='';
   if(DB.wh){
     const wk=DB.wh.weeks[whWeek]||DB.wh.weeks[0];
-    const tr=whTotRate(wk);
-    const over=wk.zones.filter(z=>z.rate>=100);
-    const maxZone=[...wk.zones].sort((a,b)=>b.rate-a.rate)[0];
+    const wz=whZones(), wt=whZoneTotal(wz), liveN=wz.filter(z=>z.live).length;
+    const tr=wt.rate;
+    const over=wz.filter(z=>z.rate>=100);
+    const maxZone=[...wz].sort((a,b)=>b.rate-a.rate)[0];
     const _dom=Math.max(120,Math.ceil(maxZone.rate/10)*10);
     const whBar=(rate)=>{const col=rate>=100?'#dc4b4b':rate>=90?'#d98a2b':'#4f7cb0';const w=Math.min(100,rate/_dom*100);const mk=(100/_dom*100).toFixed(1);const base=Math.min(w,+mk);const over=Math.max(0,w-mk);return `<div class="pbar" style="position:relative;height:11px"><i style="width:${base}%;background:${rate>=90&&rate<100?col:'#4f7cb0'}"></i><i style="position:absolute;top:0;left:${mk}%;height:100%;width:${over}%;background:#dc4b4b"></i><span style="position:absolute;top:-2px;bottom:-2px;left:${mk}%;width:1.5px;background:#8a99ad"></span></div>`;};
-    const zoneRows=wk.zones.map(z=>{const col=z.rate>=100?'#dc4b4b':z.rate>=90?'#d98a2b':'#4f7cb0';return `<div class="barrow" style="grid-template-columns:160px 1fr 80px"><div class="nm">${z.name}</div><div>${whBar(z.rate)}<div class="mini" style="margin-top:4px">적재 ${z.count} / CAPA ${z.capa}${z.count>z.capa?' · <span style="color:#dc4b4b">초과 '+(z.count-z.capa)+'</span>':''}</div></div><div class="vv" style="color:${col}">${z.rate}%</div></div>`;}).join('');
+    const zoneRows=wz.map(z=>{const col=z.rate>=100?'#dc4b4b':z.rate>=90?'#d98a2b':'#4f7cb0';return `<div class="barrow" style="grid-template-columns:160px 1fr 80px"><div class="nm">${z.name}${z.live?' <span class="chip" style="background:#DFF6E9;color:#0B7A43;font-size:10px;padding:1px 5px">실측</span>':''}</div><div>${whBar(z.rate)}<div class="mini" style="margin-top:4px">적재 ${z.count} / CAPA ${z.capa}${z.count>z.capa?' · <span style="color:#dc4b4b">초과 '+(z.count-z.capa)+'</span>':''}</div></div><div class="vv" style="color:${col}">${z.rate}%</div></div>`;}).join('');
     const trend=[...DB.wh.weeks].reverse().map(w=>({label:w.label,v:whTotRate(w)}));
     const tabs=DB.wh.weeks.map((w,i)=>`<button class="btn ${i===whWeek?'p':''}" style="padding:6px 11px" onclick="whWeek=${i};go('stock')">${w.label}</button>`).join(' ');
     whSection=`
-    <div class="card" style="margin-bottom:16px"><h3>창고 구역별 적치율 <span class="hint">주1회 구역별 점검 · ${wk.label} 기준 · 실 엑셀 연동</span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">${tabs}</span></h3>
+    <div class="card" style="margin-bottom:16px"><h3>창고 구역별 적치율 <span class="hint">${liveN?`창고 앱 실측 ${liveN}구역 실시간 · 나머지 ${wk.label} 점검값`:`주1회 구역별 점검 · ${wk.label} 기준 · 실 엑셀 연동`}</span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">${tabs}</span></h3>
       <div class="grid g4" style="margin-bottom:14px">
-        <div class="kpi"><div class="lab">전체 적치율</div><div class="val" style="color:${tr>=100?'#dc4b4b':tr>=90?'#d98a2b':'#3f74b5'}">${tr}<small>%</small></div><div class="delta">적재 ${wk.total?wk.total.count.toLocaleString():'-'} / CAPA ${wk.total?wk.total.capa.toLocaleString():'-'}</div></div>
+        <div class="kpi"><div class="lab">전체 적치율</div><div class="val" style="color:${tr>=100?'#dc4b4b':tr>=90?'#d98a2b':'#3f74b5'}">${tr}<small>%</small></div><div class="delta">적재 ${wt.count.toLocaleString()} / CAPA ${wt.capa.toLocaleString()}</div></div>
         <div class="kpi"><div class="lab">CAPA 초과 구역</div><div class="val ${over.length?'neg':'pos'}">${over.length}<small>구역</small></div><div class="delta neg">${over.slice(0,2).map(z=>z.name.split(' ')[0]).join(', ')||'없음'}</div></div>
         <div class="kpi"><div class="lab">최고 적치 구역</div><div class="val" style="font-size:16px">${maxZone.name}</div><div class="delta neg">${maxZone.rate}%</div></div>
         <div class="kpi"><div class="lab">점검 주차</div><div class="val">${DB.wh.weeks.length}<small>주</small></div><div class="delta">최신 ${DB.wh.weeks[0].label}</div></div>
@@ -2857,9 +2931,10 @@ V.stock=()=>{
       </div>
     </div>`;
   }else{
-    whSection=`<div class="card" style="margin-bottom:16px"><h3>창고 구역별 적치율 <span class="hint">주1회 점검</span></h3><p class="mini">구역별 적치 점검 엑셀을 <a onclick="go('data')" style="color:#3f74b5;cursor:pointer">데이터 관리</a>에서 업로드하세요.</p></div>`;
+    const _ln=whLiveN();
+    whSection=`<div class="card" style="margin-bottom:16px"><h3>창고 구역별 적치율 <span class="hint">${_ln?`창고 앱 실측 ${_ln}구역 실시간`:'주1회 점검'}</span></h3><p class="mini">${_ln?'창고 현장 입력 앱의 실측을 받고 있습니다. 주차별 추이를 보려면 구역별 적치 점검 엑셀을':'구역별 적치 점검 엑셀을'} <a onclick="go('data')" style="color:#3f74b5;cursor:pointer">기준 · 연동</a>에서 업로드하세요.</p></div>`;
   }
-  const _zs=DB.wh?(DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones.map(z=>({rate:z.rate!=null?z.rate:Math.round(z.count/z.capa*100),count:z.count,capa:z.capa})):DEFAULT_WH_ZONES.map(z=>({rate:Math.round(z.count/z.capa*100),count:z.count,capa:z.capa}));
+  const _zs=whZones();
   const overN=_zs.filter(z=>z.rate>=100).length;
   const trAll=Math.round(_zs.reduce((a,z)=>a+z.count,0)/_zs.reduce((a,z)=>a+z.capa,0)*100);
   const srecos=[];
@@ -3073,7 +3148,15 @@ V.data=()=>{
       </div>
       <div class="mini" style="margin-top:8px">${DB.plan?(planHasActual()?'✅ 실적 연동됨':'생산계획 로드됨 · 실적 대기'):'⚠ 먼저 주간 생산계획을 업로드하세요'}</div>
     </div>
-    <div class="card"><h3>④ MES/DB 연동 <span class="hint">참고</span></h3>
+    <div class="card"><h3>④ 창고 적치 실시간 <span class="hint">창고 앱 Worker 주소</span></h3>
+      <p class="mini" style="line-height:1.7">창고 현장 입력 앱이 쓰는 <b>Worker 주소</b>를 넣으면 구역별 적치 수량을 60초마다 받아 <b>적치 초과 판단</b>이 실시간으로 바뀝니다. 창고 관리자 앱의 <b>클라우드 설정</b>에 넣은 주소와 같은 값입니다.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <input id="whApi" value="${(WH_API||'').replace(/"/g,'&quot;')}" placeholder="https://....workers.dev" style="flex:1;min-width:200px;background:#0b1a2e;border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:9px 10px;font-size:12px">
+        <button class="btn p" onclick="whSetApi()">연결</button>
+      </div>
+      <div class="mini" style="margin-top:8px">${WH_API?(WHLIVE?`✅ 연결됨 · 실측 ${whLiveN()}구역 수신`:`⚠ 주소 등록됨 · 수신 대기${whErr?' ('+whErr+')':''}`):'미등록 — 기준·업로드 데이터로 판단합니다'}</div>
+    </div>
+    <div class="card"><h3>⑤ MES/DB 연동 <span class="hint">참고</span></h3>
       <p class="mini">사내 MES·ERP 직접연동은 백엔드 프록시 필요 · 엑셀/CSV 업로드로 동일 대시보드 구동.</p>
     </div>
   </div>
@@ -3081,7 +3164,7 @@ V.data=()=>{
     <div style="overflow-x:auto"><table class="edit"><thead><tr><th>라인</th>${EDIT_COLS.map(c=>`<th>${c.t}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
     <div class="mini" style="margin-top:10px">전환(0~1): 0 동일제품 · 0.5 제품전환 · 1.0 색상전환+알러지 · 세척 점수식에 직접 반영</div>
   </div>
-  <div class="card" style="margin-top:14px"><h3>⑤ 연동 시스템 (외부 배포 URL · 역할별) <span class="hint">관련 Agent 화면에 임베드 · 현장직=작업자용 / 반장·공장장=관리자용</span></h3>
+  <div class="card" style="margin-top:14px"><h3>⑥ 연동 시스템 (외부 배포 URL · 역할별) <span class="hint">관련 Agent 화면에 임베드 · 현장직=작업자용 / 반장·공장장=관리자용</span></h3>
     <div style="overflow-x:auto"><table class="tb"><thead><tr><th>시스템</th><th style="text-align:left">작업자용 URL</th><th style="text-align:left">관리자용 URL</th><th>표시 위치</th></tr></thead><tbody>
     ${(DB.extSys||[]).map(s=>{const u=s.urls||{};const inp=(which,val)=>`<input style="width:100%;min-width:230px;background:#0b1a2e;border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:7px 9px;font-size:12px" value="${(val||'').replace(/"/g,'&quot;')}" placeholder="https://..." onchange="setSysUrl('${s.id}','${which}',this.value)">`;
       const ag=(Array.isArray(s.agent)?s.agent:[s.agent]).map(a=>AGENTNAME[a]||a).join(' · ');
@@ -3360,6 +3443,7 @@ function syncSrcTag(){
   const _feeds=[]; if(LIVE.status==='live')_feeds.push('실적');
   if(typeof WASHLIVE!=='undefined'&&WASHLIVE)_feeds.push('세척');
   if(typeof HEATLIVE!=='undefined'&&HEATLIVE)_feeds.push('기상');
+  if(typeof WHLIVE!=='undefined'&&WHLIVE&&whLiveN())_feeds.push('적치');
   if(t){t.textContent='데이터: '+(_feeds.length?_feeds.join('+')+' 실측':dataSource);t.classList.toggle('live',_feeds.length>0);}
   if(r){
     if(!_feeds.length){
@@ -3369,7 +3453,7 @@ function syncSrcTag(){
       r.title=why?('실시간 연결 실패'+why):'실시간 연결 시도 전';
     }else{
       const ago=liveAt?Math.round((Date.now()-liveAt)/1000):0;
-      const miss=['실적','세척','기상'].filter(x=>_feeds.indexOf(x)<0);
+      const miss=['실적','세척','기상','적치'].filter(x=>_feeds.indexOf(x)<0);
       r.innerHTML='<span class="dot"></span> 자동 갱신 중 · '+_feeds.join('+')
         +(miss.length?' <span style="color:#b9922e">('+miss.join('·')+' 미연결)</span>':'');
       r.title='마지막 갱신 '+(ago<60?ago+'초 전':Math.round(ago/60)+'분 전');
