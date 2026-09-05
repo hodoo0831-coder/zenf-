@@ -987,6 +987,67 @@ function liveErrText(e){
   if(/Failed to fetch|NetworkError|Load failed/i.test(m))return '네트워크 차단 또는 오프라인 — 브라우저가 요청을 막았을 수 있습니다';
   return m||'알 수 없는 오류';
 }
+/* ===== 세척 실측 직결 =====
+   세척실 앱은 wash-db 와 5초마다 통신하는데 그 값이 플랫폼 판단으로는
+   넘어오지 않아, '세척 우선순위'가 코드에 박힌 시드로 계산되고 있었다.
+   GET /api/state 를 직접 읽어 대기·세척중·완료 실적을 판단 근거로 쓴다.
+   실패하면 조용히 시드를 유지한다(오프라인 시연 보존). */
+const WASH_API='https://wash-db.hodoo0831.workers.dev';
+let WASHLIVE=null;           /* {waiting:[],washing:[],records:[],at} · null이면 미연결 */
+function washLineKey(n){return String(n||'').replace(/\s+/g,'');}
+/* 세척실 라인명 → 플랫폼 라인군 키 */
+function washGrpToLine(g,name){
+  const t=washLineKey(g)+washLineKey(name);
+  if(/튜브/.test(t))return '튜브';
+  if(/치약/.test(t))return '치약충전';
+  if(/일회용/.test(t))return '일회용';
+  if(/초격차|세정자동/.test(t))return '초격차';
+  if(/염모|산화|파우치|멀티|크림|팜플|턴테이블/.test(t))return 'HnB';
+  if(/직선|리필|대용량/.test(t))return 'FnC';
+  return null;
+}
+async function fetchWash(ms){
+  const ac=('AbortController' in window)?new AbortController():null;
+  const tm=ac?setTimeout(()=>ac.abort(),ms||12000):null;
+  try{
+    const r=await fetch(WASH_API+'/api/state?_t='+Date.now(),{cache:'no-store',signal:ac?ac.signal:undefined});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    if(!j||!j.ok||!j.data)throw new Error('응답 형식 오류');
+    const d=j.data;
+    return {waiting:Object.values(d.waiting||{}),washing:Object.values(d.washing||{}),
+            records:Array.isArray(d.records)?d.records:[],at:j.updatedAt||Date.now()};
+  }finally{ if(tm)clearTimeout(tm); }
+}
+/* 라인별 실측 세척 지표 — 대기 건수·최장 대기(분)·최근 완료 경과(h) */
+function washStats(){
+  if(!WASHLIVE)return null;
+  const now=Date.now(), M={};
+  const put=(k)=>M[k]||(M[k]={wait:0,waitMax:0,washing:0,lastEndH:null});
+  WASHLIVE.waiting.forEach(w=>{const k=washGrpToLine(w.group,w.line);if(!k)return;
+    const o=put(k);o.wait++;
+    const t=Date.parse(w.arrivedAt||'');if(t){o.waitMax=Math.max(o.waitMax,Math.round((now-t)/60000));}});
+  WASHLIVE.washing.forEach(w=>{const k=washGrpToLine(w.group,w.line);if(k)put(k).washing++;});
+  WASHLIVE.records.forEach(r=>{const k=washGrpToLine(r.group,r.line);if(!k)return;
+    const t=Date.parse(r.endTime||'');if(!t)return;
+    const h=(now-t)/3600000; const o=put(k);
+    if(o.lastEndH==null||h<o.lastEndH)o.lastEndH=+h.toFixed(1);});
+  return M;
+}
+async function washRefresh(silent){
+  try{
+    WASHLIVE=await fetchWash();
+    washErr='';
+    if(typeof cur!=='undefined'&&cur)go(cur);
+    if(!silent)toast(`세척 실측 연결 — 대기 ${WASHLIVE.waiting.length} · 세척중 ${WASHLIVE.washing.length} · 완료 ${WASHLIVE.records.length}건`);
+    return true;
+  }catch(e){
+    washErr=liveErrText(e);
+    if(!silent)toast('세척실 서버에 닿지 않아 기준 데이터를 유지합니다 — '+washErr);
+    return false;
+  }
+}
+let washErr='';
 async function liveDirect(silent){
   try{
     /* 한쪽 시스템이 실패해도 나머지는 살린다 */
@@ -1021,14 +1082,20 @@ async function liveDirect(silent){
   }
 }
 /* 한 번 실패하고 끝나던 것을 재시도 + 주기 갱신으로 */
-async function liveStart(){
+/* 실적·세척은 서로 다른 서버라 독립이다. 순차로 걸면 한쪽 재시도(최대 19초)가
+   끝날 때까지 다른 쪽이 시작도 못 한다 → 병렬로 각자 재시도한다. */
+async function retryUntil(fn){
   const waits=[0,2000,5000,12000];
   for(let i=0;i<waits.length;i++){
     if(waits[i])await new Promise(r=>setTimeout(r,waits[i]));
-    if(await liveDirect(true))break;
+    if(await fn(true))return true;
   }
+  return false;
+}
+async function liveStart(){
+  await Promise.allSettled([retryUntil(liveDirect),retryUntil(washRefresh)]);
   if(_liveTimer)clearInterval(_liveTimer);
-  _liveTimer=setInterval(()=>liveDirect(true),60000);
+  _liveTimer=setInterval(()=>{liveDirect(true);washRefresh(true);},60000);
 }
 function liveRetry(){toast('실시간 연결을 다시 시도합니다…');liveDirect(false);}
 async function liveRefresh(){
@@ -1221,7 +1288,14 @@ const G={
   oeeQ:l=>+(100-l.defect).toFixed(1),
   oee:l=>+((l.oeeA/100)*(l.oeeP/100)*((100-l.defect)/100)*100).toFixed(1),
   // 세척 우선순위: 색상/제품전환 40% + 주기경과 35%(기준 8h) + 생산부하 25%
-  cleanScore:l=>{const cyc=Math.min(1,l.clElapsed/8);const load=Math.min(1,l.actual/l.capa);
+  /* 세척 우선순위 = 전환 40 + 주기 35 + 부하 25.
+     세척실 앱이 연결되면 '주기'를 실제 마지막 완료 경과시간으로 바꾼다. */
+  cleanElapsed:l=>{const W=(typeof washStats==='function')?washStats():null;
+    const m=W&&W[l.key];
+    if(m&&m.lastEndH!=null)return m.lastEndH;       /* 실측: 마지막 세척 완료 후 경과(h) */
+    if(m&&m.wait>0&&m.lastEndH==null)return 8;      /* 대기만 있고 완료 이력 없음 → 주기 만점 */
+    return l.clElapsed;},                            /* 미연결 시 기준값 */
+  cleanScore:l=>{const cyc=Math.min(1,G.cleanElapsed(l)/8);const load=Math.min(1,l.actual/l.capa);
     return Math.round((0.40*l.clTransfer+0.35*cyc+0.25*load)*100);},
   // 재고: 소진일수·재주문점·발주량(MOQ 반영)
   stock:s=>{const days=+(s.onhand/s.dailyUse).toFixed(1);const rop=+(s.lead*s.dailyUse*1.3).toFixed(0);
@@ -1715,7 +1789,16 @@ function collectJudgments(){
   J.push({area:'생산',ic:'activity',lv:behind.length?'crit':'ok',r:`지연 위험 오더 ${behind.length}건`,s:behind.length?behind.map(l=>l.key+' '+G.achieve(l)+'%').join(' · '):'전 라인 정상 진척',rule:'달성률 < 70%',act:behind.length?'우선순위 재조정 · 투입 강화':'모니터링'});
   J.push({area:'안전',ic:'thermometer',lv:w.wbgt>=31?'crit':w.wbgt>=28?'warn':'ok',r:`폭염 ${w.wbgt>=31?'위험':w.wbgt>=28?'경고':'주의'} · WBGT ${w.wbgt}℃`,s:`기온 ${w.temp}℃ 습도 ${w.humid}% · 무재해 ${w.noAccident}일`,rule:'WBGT ≥ 28℃',act:w.wbgt>=28?'시간당 휴식·수분 · 옥외작업 단축':'정상 운영'});
   const worst=[...L].sort((a,b)=>G.cleanScore(b)-G.cleanScore(a))[0];
-  J.push({area:'세척',ic:'droplet',lv:G.cleanScore(worst)>=75?'warn':'ok',r:`${worst.key} 세척 우선순위 1위`,s:`우선순위 ${G.cleanScore(worst)}점 · 전환·주기·부하 가중 반영`,rule:'우선순위 ≥ 75점',act:'CIP 병렬 투입 · 완료 지연 방지'});
+  const _wS=(typeof washStats==='function')?washStats():null, _wm=_wS&&_wS[worst.key];
+  const _wsrc=(()=>{
+    if(!_wm)return '전환·주기·부하 가중 반영';
+    const bits=[];
+    if(_wm.washing)bits.push(`세척 진행 중 ${_wm.washing}건`);
+    if(_wm.wait){let t='대기 '+_wm.wait+'건'; if(_wm.waitMax)t+=' · 최장 '+_wm.waitMax+'분'; bits.push(t);}
+    if(_wm.lastEndH!=null)bits.push(`마지막 완료 ${_wm.lastEndH}h 전`);
+    return (bits.length?bits.join(' · '):'대기·진행 없음')+' — 세척실 앱 실측';
+  })();
+  J.push({area:'세척',ic:'droplet',lv:G.cleanScore(worst)>=75?'warn':'ok',r:`${worst.key} 세척 우선순위 1위`,s:`우선순위 ${G.cleanScore(worst)}점 · ${_wsrc}`,rule:'우선순위 ≥ 75점',act:'CIP 병렬 투입 · 완료 지연 방지'});
   const zones=(DB.wh?(DB.wh.weeks[whWeek]||DB.wh.weeks[0]).zones:DEFAULT_WH_ZONES).map(z=>({name:z.name,rate:z.rate!=null?z.rate:Math.round(z.count/z.capa*100)}));
   const gr=whGrowth(), over=zones.filter(z=>z.rate>=100), satPred=zones.filter(z=>z.rate<100&&Math.round(z.rate*(1+gr))>=100);
   J.push({area:'창고',ic:'package',lv:over.length?'crit':satPred.length?'warn':'ok',r:`적치 초과 ${over.length}구역 · 익주 포화 예측 ${satPred.length}구역`,s:over.length?over.slice(0,3).map(z=>z.name.replace(/\[.*?\]/g,'').trim()+' '+z.rate+'%').join(' · '):'전 구역 여유',rule:'적치율 ≥ 100% / 예측 ≥ 100%',act:over.length?'초과분 여유 구역 재배치·출하 우선':'현 배치 유지'});
@@ -3242,7 +3325,9 @@ function syncSrcTag(){
       r.title=why?('실시간 연결 실패'+why):'실시간 연결 시도 전';
     }else{
       const ago=liveAt?Math.round((Date.now()-liveAt)/1000):0;
-      r.innerHTML='<span class="dot"></span> 자동 갱신 중'+(liveErr?' · <b style="color:#b9922e">'+escHtml(liveErr)+'</b>':'');
+      const feeds=[]; if(LIVE.status==='live')feeds.push('실적'); if(WASHLIVE)feeds.push('세척');
+      r.innerHTML='<span class="dot"></span> 자동 갱신 중'+(feeds.length?' · '+feeds.join('+'):'')
+        +(liveErr?' · <b style="color:#b9922e">'+escHtml(liveErr)+'</b>':'');
       r.title='마지막 갱신 '+(ago<60?ago+'초 전':Math.round(ago/60)+'분 전');
     }
   }
