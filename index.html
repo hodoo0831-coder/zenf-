@@ -1611,7 +1611,122 @@ function loadUpload(input){const f=input.files[0];if(!f)return;const rd=new File
     go('load');
   }catch(err){toast('읽기 오류: '+err.message);}};
   rd.readAsArrayBuffer(f);}
+/* ===== 생산량 대비 필요 인원 — 일간 =====
+   주간과 같은 식(필요 = 표준인원 × 부하율)을 1일 단위로 적용한다.
+   일 계획량은 주간계획 엑셀의 날짜별 물량(resources[].daily[date])을 그대로 쓴다.
+   균등 배분 같은 추정은 하지 않는다 — 요일별 물량은 실제로 고르지 않다. */
+let loadUnit='week', loadDate='';
+function planWeekObj(){return DB.plan?(DB.plan.weeks[planWeek]||DB.plan.weeks[0]):null;}
+function dayPlanMap(date,useActual){
+  const wk=planWeekObj(), m={}; if(!wk)return m;
+  wk.resources.forEach(r=>{
+    const code=(String(r.code||'').match(/\d{4,}/)||[])[0]; if(!code)return;
+    let q=0;
+    if(useActual)r.orders.forEach(o=>{if(o.date===date&&o.actual!=null)q+=o.actual;});
+    else q=r.daily[date]||0;
+    if(q)m[code]=(m[code]||0)+q;
+  });
+  return m;
+}
+function dayCalc(date,base,useActual){return loadCalc(dayPlanMap(date,useActual),1,base||loadBase);}
+function daySum(R){
+  const act=R.rows.filter(r=>r.wk>0);
+  const qty=act.reduce((a,r)=>a+r.wk,0), cap=act.reduce((a,r)=>a+r.cap,0);
+  const need=+R.groups.reduce((a,g)=>a+g.needAdj,0).toFixed(1);
+  const avail=R.groups.reduce((a,g)=>a+g.avail,0);
+  return {qty,cap,load:cap?Math.round(qty/cap*100):0,need,avail,gap:+(need-avail).toFixed(1),lines:act.length};
+}
+function daySeries(useActual){
+  const wk=planWeekObj(); if(!wk)return [];
+  return wk.dates.map(d=>Object.assign({date:d},daySum(dayCalc(d,loadBase,useActual))));
+}
+/* 일간 필요 인원 화면 */
+function loadDayView(){
+  const gcol=v=>v>=100?'#dc2626':v>=90?'#d97706':v>=60?'#16a34a':'#3f74b5';
+  const unitBtn=(k,lab)=>`<button class="btn ${loadUnit===k?'p':''}" style="padding:5px 10px" onclick="loadUnit='${k}';go('load')">${lab}</button>`;
+  const baseBtn=(k,lab)=>`<button class="btn ${loadBase===k?'p':''}" style="padding:5px 10px" onclick="loadBase='${k}';go('load')">${lab}</button>`;
+  const head=`<div class="card" style="margin-bottom:14px;padding:13px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div class="chead">일간 생산량 대비 필요 인원</div>
+    <span class="mini">호기 CAPA(${loadBase==='c75'?'7.5hr 정규':'10.5hr 잔업'}) × 1일</span>
+    <span style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <span class="mini">단위</span>${unitBtn('week','주간')}${unitBtn('day','일간')}
+      <span class="mini" style="margin-left:6px">기준</span>${baseBtn('c75','정규')}${baseBtn('c105','잔업')}
+      <label class="btn" style="cursor:pointer" onclick="document.getElementById('loadFile2').click()">↑ 주간계획 업로드</label>
+      <input id="loadFile2" type="file" accept=".xlsx,.xls" style="display:none" onchange="loadUpload(this)"></span></div></div>`;
+  const wk=planWeekObj();
+  if(!wk||!wk.dates||!wk.dates.length)return head+`<div class="card"><h3>일자별 계획이 없습니다</h3>
+    <p class="mini" style="line-height:1.8">일간 필요 인원은 <b>주간계획 엑셀의 날짜별 물량</b>으로 계산합니다.
+    지금 적용된 <b>${escHtml(loadPlanName)}</b>은 주 단위 합계만 있어 일자별로 나눌 수 없습니다.<br>
+    <span class="mut2">주간 합계를 가동일수로 나눠 추정할 수도 있지만, 요일별 물량은 실제로 고르지 않아 그렇게 하지 않습니다.
+    날짜 열(YYYY.MM.DD)이 있는 주간계획 엑셀을 올리면 바로 채워집니다.</span></p>
+    <button class="btn p" style="margin-top:8px" onclick="document.getElementById('loadFile2').click()">⬆ 주간계획 올리기</button></div>`;
+  const hasAct=planHasActual();
+  const S=daySeries(false), A=hasAct?daySeries(true):null;
+  if(!loadDate||wk.dates.indexOf(loadDate)<0)loadDate=(S.find(d=>d.qty>0)||S[0]).date;
+  const cur=S.find(d=>d.date===loadDate)||S[0];
+  const curA=A?A.find(d=>d.date===loadDate):null;
+  const R=dayCalc(loadDate,loadBase,false);
+  const WD=['일','월','화','수','목','금','토'];
+  const wdOf=ds=>{const p=ds.split('.');return WD[new Date(+p[0],+p[1]-1,+p[2]).getDay()];};
+  const chips=S.map(d=>`<button class="btn ${d.date===loadDate?'p':''}" style="padding:6px 11px" onclick="loadDate='${d.date}';go('load')">${d.date.slice(5)}(${wdOf(d.date)})</button>`).join(' ');
+
+  /* 일자별 필요 인원 막대 + 가용 기준선 */
+  const mx=Math.max(1,...S.map(d=>Math.max(d.need,d.avail)));
+  const bars=S.map(d=>{const on=d.date===loadDate, hN=Math.round(d.need/mx*88), hA=Math.round(d.avail/mx*88);
+    const col=d.gap>0.4?'#dc4b4b':'#0B7A43';
+    return `<div style="flex:1;min-width:52px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer" onclick="loadDate='${d.date}';go('load')">
+      <div style="font-size:11px;font-weight:800;color:${d.qty?col:'var(--mut)'}">${d.qty?d.need:'-'}</div>
+      <div style="position:relative;width:100%;height:92px;display:flex;align-items:flex-end">
+        <div style="width:100%;height:${d.qty?hN+3:3}px;border-radius:4px 4px 0 0;background:${d.qty?col:'#d8dee6'};opacity:${on?1:.55}"></div>
+        <span title="가용 ${d.avail}명" style="position:absolute;left:0;right:0;bottom:${hA}px;height:0;border-top:2px dashed #4f7cb0"></span>
+      </div>
+      <div class="mini" style="font-size:10px;font-weight:${on?800:600}">${d.date.slice(5)}<br>${wdOf(d.date)}</div></div>`;}).join('');
+
+  /* 그룹별 표 */
+  const gs=R.groups.filter(g=>g.wk>0||g.needAdj>0);
+  const grows=gs.map(g=>`<tr><td style="text-align:left">${g.grp}</td><td style="color:${gcol(g.load)};font-weight:800">${g.load}%</td><td>${g.need}</td><td>${g.avail}</td><td><b>${g.needAdj}</b></td><td class="${g.gap>0?'neg':g.gap<0?'pos':'zero'}">${g.gap>0?'+'+g.gap:g.gap}</td></tr>`).join('')
+    ||`<tr><td colspan="6" class="mini" style="text-align:center;padding:14px">이 날짜에 계획된 물량이 없습니다</td></tr>`;
+  /* 라인별 표 */
+  const lrows=R.rows.filter(r=>r.wk>0).sort((a,b)=>b.load-a.load)
+    .map(r=>`<tr><td style="text-align:left">${r.name}</td><td>${r.grp}</td><td>${r.wk.toLocaleString()}</td><td>${r.cap.toLocaleString()}</td><td style="color:${gcol(r.load)};font-weight:800">${r.load}%</td><td>${r.need}</td><td>${r.avail}</td><td><b>${r.needAdj}</b></td><td class="${r.gap>0?'neg':r.gap<0?'pos':'zero'}">${r.gap>0?'+'+r.gap:r.gap}</td></tr>`).join('')
+    ||`<tr><td colspan="9" class="mini" style="text-align:center;padding:14px">이 날짜에 계획된 물량이 없습니다</td></tr>`;
+
+  const peak=[...S].filter(d=>d.qty).sort((a,b)=>b.need-a.need)[0];
+  const shortDays=S.filter(d=>d.qty&&d.gap>0.4);
+  const actLine=curA?`<div class="mini" style="margin-top:10px;line-height:1.8"><b>실적 기준</b> — 같은 날 실 생산량 ${curA.qty.toLocaleString()}개 기준 필요 인원 <b>${curA.need}명</b>
+    (계획 기준 ${cur.need}명 대비 ${(curA.need-cur.need)>0?'+':''}${(curA.need-cur.need).toFixed(1)}명).
+    <span class="mut2">계획보다 적게 생산했다면 그만큼 인원이 덜 필요했다는 뜻이고, 배치가 과했는지 되짚는 근거가 됩니다.</span></div>`
+    :`<div class="mini" style="margin-top:10px"><span class="mut2">실적 파일을 올리면 같은 날 <b>실 생산량 기준</b> 필요 인원이 나란히 표시됩니다.</span></div>`;
+
+  return head+`
+  <div class="card" style="margin-bottom:14px;padding:12px 14px"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+    <span class="mini" style="font-weight:800">날짜</span>${chips}
+    <span class="tag t-blue" style="margin-left:auto">${escHtml(loadPlanName)} · ${escHtml(wk.name)}</span></div></div>
+  <div class="kstrip">
+    <div class="ki"><div class="l">일 생산 계획량</div><div class="v tnum">${(cur.qty/1000).toFixed(1)}<small>천개</small></div><div class="d muted">가동 라인 ${cur.lines}개</div></div>
+    <div class="ki"><div class="l">일 부하율</div><div class="v tnum" style="color:${gcol(cur.load)}">${cur.load}<small>%</small></div><div class="d muted">계획 ÷ 일CAPA</div></div>
+    <div class="ki"><div class="l">필요 인원</div><div class="v tnum" style="color:#0B7A43">${cur.need}<small>명</small></div><div class="d muted">표준 × 부하율</div></div>
+    <div class="ki"><div class="l">가용 대비</div><div class="v tnum" style="color:${cur.gap>0?'#dc2626':'#16a34a'}">${cur.gap>0?'+'+cur.gap:cur.gap}<small>명</small></div><div class="d muted">가용 ${cur.avail}명</div></div>
+  </div>
+  <div class="grid g2" style="grid-template-columns:1.2fr 1fr;margin-bottom:14px">
+    <div class="card"><h3>일자별 필요 인원 <span class="hint">막대 = 필요 · 점선 = 가용 · 클릭하여 날짜 선택</span></h3>
+      <div style="display:flex;gap:7px;align-items:flex-end;padding:6px 2px 0">${bars}</div>
+      ${actLine}</div>
+    <div class="card"><h3>주중 요약 <span class="hint">계획 기준</span></h3>
+      <div class="reco ${shortDays.length?'crit':'ok'}" style="margin-bottom:8px"><div class="ic" data-ic="users"></div><div class="tx">
+        <div class="r">${shortDays.length?`인원 부족 ${shortDays.length}일`:'주중 전일 인원 충족'}</div>
+        <div class="s">${shortDays.length?shortDays.map(d=>d.date.slice(5)+'('+wdOf(d.date)+') +'+d.gap+'명').join(' · '):'가용 인원으로 계획 소화 가능'}</div></div></div>
+      <div class="reco warn"><div class="ic" data-ic="activity"></div><div class="tx">
+        <div class="r">최대 필요일 — ${peak?peak.date.slice(5)+'('+wdOf(peak.date)+') '+peak.need+'명':'-'}</div>
+        <div class="s">${peak?`부하율 ${peak.load}% · 계획 ${(peak.qty/1000).toFixed(1)}천개 · 이 날 기준으로 T/O를 잡으면 나머지 요일은 여유`:''}</div></div></div>
+      <div class="mini" style="margin-top:10px;line-height:1.7">필요 인원 = <b>표준인원 × (일 계획량 ÷ 일 CAPA)</b>.
+        일 CAPA는 ${loadBase==='c75'?'7.5hr 정규':'10.5hr 잔업'} 기준이며, 위 [기준] 버튼으로 바꿔 비교할 수 있습니다.</div></div>
+  </div>
+  ${ledger('그룹별 일간 필요 인원',loadDate.slice(5)+'('+wdOf(loadDate)+') 기준 · '+gs.length+'개 그룹 — 클릭하여 펼침','<div class="tblscroll"><table class="tb tbsticky"><thead><tr><th style="text-align:left">그룹</th><th>부하율</th><th>표준</th><th>가용</th><th>필요</th><th>과부족</th></tr></thead><tbody>'+grows+'</tbody></table></div>')}
+  ${ledger('라인별 일간 필요 인원',loadDate.slice(5)+'('+wdOf(loadDate)+') 기준 · 가동 '+cur.lines+'개 라인 — 클릭하여 펼침','<input class="tblsearch" oninput="tblFilter(this)" placeholder="라인 검색 (예: 튜브, 염모)…"><div class="tblscroll"><table class="tb tbsticky"><thead><tr><th style="text-align:left">라인</th><th>그룹</th><th>일 계획</th><th>일 CAPA</th><th>부하율</th><th>표준</th><th>가용</th><th>필요</th><th>과부족</th></tr></thead><tbody>'+lrows+'</tbody></table></div>')}`;
+}
 function loadView(){
+  if(loadUnit==='day')return loadDayView();
   const base=loadBase, R=loadCalc(loadPlan,loadDays,base), rows=R.rows, groups=R.groups;
   const active=rows.filter(r=>r.wk>0);
   const totWk=active.reduce((a,r)=>a+r.wk,0), totCap=active.reduce((a,r)=>a+r.cap*loadDays,0), totLoad=totCap?Math.round(totWk/totCap*100):0;
@@ -1621,17 +1736,18 @@ function loadView(){
   const surpG=groups.filter(g=>g.gap<-0.4).map(g=>({...g})).sort((a,b)=>a.gap-b.gap);
   const gcol=v=>v>=100?'#dc2626':v>=90?'#d97706':v>=60?'#16a34a':'#3f74b5';
   const mline=`<div class="mini" style="margin:2px 0 10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">기준: ${masterStatus()}${DB.master?`<button class="btn" style="padding:2px 9px;font-size:11px" onclick="masterReset()">내장값으로</button>`:''}</div>`;
-  const dayBtn=d=>`<button class="btn ${loadDays===d?'p':''}" style="padding:5px 10px" onclick="loadDays=${d};go('labor')">${d}일</button>`;
-  const baseBtn=(k,lab)=>`<button class="btn ${loadBase===k?'p':''}" style="padding:5px 10px" onclick="loadBase='${k}';go('labor')">${lab}</button>`;
-  const gbars=groups.map(g=>{const on=loadFilter===g.grp;return `<div class="barrow" style="grid-template-columns:78px 1fr 52px;padding:7px 6px;cursor:pointer;border-radius:8px;${on?'background:#eef3fc':''}" onclick="loadFilter=(loadFilter==='${g.grp}'?null:'${g.grp}');go('labor')"><div class="nm" style="font-size:12.5px">${g.grp}${on?' ▾':''}</div><div>${pbar(Math.min(100,g.load),gcol(g.load))}<div class="mini" style="margin-top:3px">필요 ${g.needAdj} / 가용 ${g.avail}명 · <span style="color:${g.gap>0?'#dc2626':'#16a34a'}">${g.gap>0?'+'+g.gap+' 부족':g.gap<0?g.gap+' 여유':'적정'}</span></div></div><div class="vv tnum" style="color:${gcol(g.load)};font-size:13px">${g.load}%</div></div>`;}).join('');
+  const dayBtn=d=>`<button class="btn ${loadDays===d?'p':''}" style="padding:5px 10px" onclick="loadDays=${d};go('load')">${d}일</button>`;
+  const baseBtn=(k,lab)=>`<button class="btn ${loadBase===k?'p':''}" style="padding:5px 10px" onclick="loadBase='${k}';go('load')">${lab}</button>`;
+  const unitBtn=(k,lab)=>`<button class="btn ${loadUnit===k?'p':''}" style="padding:5px 10px" onclick="loadUnit='${k}';go('load')">${lab}</button>`;
+  const gbars=groups.map(g=>{const on=loadFilter===g.grp;return `<div class="barrow" style="grid-template-columns:78px 1fr 52px;padding:7px 6px;cursor:pointer;border-radius:8px;${on?'background:#eef3fc':''}" onclick="loadFilter=(loadFilter==='${g.grp}'?null:'${g.grp}');go('load')"><div class="nm" style="font-size:12.5px">${g.grp}${on?' ▾':''}</div><div>${pbar(Math.min(100,g.load),gcol(g.load))}<div class="mini" style="margin-top:3px">필요 ${g.needAdj} / 가용 ${g.avail}명 · <span style="color:${g.gap>0?'#dc2626':'#16a34a'}">${g.gap>0?'+'+g.gap+' 부족':g.gap<0?g.gap+' 여유':'적정'}</span></div></div><div class="vv tnum" style="color:${gcol(g.load)};font-size:13px">${g.load}%</div></div>`;}).join('');
   let reco='';
   for(const s of shortG){let need=s.gap;for(const u of surpG){if(need<=0.4)break;if(u.gap>=-0.4)continue;const mv=Math.min(need,-u.gap);if(mv<0.4)continue;reco+=`<div class="reco"><div class="ic" data-ic="arrow"></div><div class="tx"><div class="r">${u.grp} → ${s.grp} ${Math.round(mv)||1}명 재배치</div><div class="s">${u.grp} 여유 ${(-u.gap).toFixed(0)}명 · ${s.grp} 부족 ${s.gap.toFixed(0)}명(부하 ${s.load}%)</div></div></div>`;u.gap+=mv;need-=mv;}}
   if(!reco)reco='<div class="reco"><div class="ic" data-ic="check"></div><div class="tx"><div class="r">그룹 간 재배치 불필요</div><div class="s">현재 인력 배치로 대응 가능</div></div></div>';
   const shown=active.filter(r=>!loadFilter||r.grp===loadFilter).sort((a,b)=>b.load-a.load);
   const tbl=shown.map(r=>`<tr><td style="text-align:left">${r.name}</td><td>${r.grp}</td><td>${r.wk.toLocaleString()}</td><td>${(r.cap*loadDays).toLocaleString()}</td><td style="color:${gcol(r.load)};font-weight:800">${r.load}%</td><td>${r.need}</td><td>${r.avail}</td><td>${r.needAdj}</td><td class="${r.gap>0?'neg':r.gap<0?'pos':'zero'}">${r.gap>0?'+'+r.gap:r.gap}</td></tr>`).join('');
-  const filterChip=loadFilter?`<span class="tag t-blue" style="cursor:pointer" onclick="loadFilter=null;go('labor')">${loadFilter} 필터 ✕</span>`:'';
+  const filterChip=loadFilter?`<span class="tag t-blue" style="cursor:pointer" onclick="loadFilter=null;go('load')">${loadFilter} 필터 ✕</span>`:'';
   return `
-  <div class="card" style="margin-bottom:14px;padding:13px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div class="chead">주간계획 부하율 · 필요인원</div><span class="tag t-blue">${loadPlanName}</span><span class="mini">호기 CAPA(${base==='c75'?'7.5hr 정규':'10.5hr 잔업'}) × ${loadDays}일</span><span style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="mini">기준</span>${baseBtn('c75','정규')}${baseBtn('c105','잔업')}<span class="mini" style="margin-left:6px">가동</span>${dayBtn(5)}${dayBtn(6)}<label class="btn" style="cursor:pointer" onclick="document.getElementById('loadFile').click()">↑ 주간계획 업로드</label><input id="loadFile" type="file" accept=".xlsx,.xls" style="display:none" onchange="loadUpload(this)"></span></div></div>
+  <div class="card" style="margin-bottom:14px;padding:13px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div class="chead">주간계획 부하율 · 필요인원</div><span class="tag t-blue">${loadPlanName}</span><span class="mini">호기 CAPA(${base==='c75'?'7.5hr 정규':'10.5hr 잔업'}) × ${loadDays}일</span><span style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="mini">단위</span>${unitBtn('week','주간')}${unitBtn('day','일간')}<span class="mini" style="margin-left:6px">기준</span>${baseBtn('c75','정규')}${baseBtn('c105','잔업')}<span class="mini" style="margin-left:6px">가동</span>${dayBtn(5)}${dayBtn(6)}<label class="btn" style="cursor:pointer" onclick="document.getElementById('loadFile').click()">↑ 주간계획 업로드</label><input id="loadFile" type="file" accept=".xlsx,.xls" style="display:none" onchange="loadUpload(this)"></span></div></div>
   
   ${mline}
   <div class="kstrip">
