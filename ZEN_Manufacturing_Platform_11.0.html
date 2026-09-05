@@ -666,6 +666,13 @@ td{color:#1C2C40}
 @media (pointer:coarse){
   .btn,.vtab,.pchip,#view button,.nav a{min-height:40px}
   #view button{display:inline-flex;align-items:center;justify-content:center}
+  /* 폼 컨트롤도 손가락으로 누른다 — 담당자 select, 기한 date, 검색창, 표 입력칸.
+     type 속성이 없는 input(.tblsearch 등)도 걸리도록 제외 목록 방식으로 쓴다. */
+  #view select,#view textarea,
+  #view input:not([type=file]):not([type=checkbox]):not([type=radio]):not([type=hidden]){min-height:42px}
+  /* 문장 속 인라인 링크는 글자를 키우면 줄이 깨진다.
+     인라인 요소의 세로 패딩은 줄 높이를 밀지 않으므로, 보이는 크기는 그대로 두고 탭 영역만 넓어진다. */
+  #view a[onclick]{padding-top:15px;padding-bottom:15px}
 }
 /* 가로 스크롤 최종 방어 */
 body{max-width:100%;overflow-x:clip}
