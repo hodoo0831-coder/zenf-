@@ -1263,9 +1263,9 @@ async function retryUntil(fn){
   return false;
 }
 async function liveStart(){
-  await Promise.allSettled([retryUntil(liveDirect),retryUntil(washRefresh),retryUntil(heatRefresh),retryUntil(whRefresh)]);
+  await Promise.allSettled([retryUntil(liveDirect),retryUntil(washRefresh),retryUntil(heatRefresh),retryUntil(whRefresh),retryUntil(actSync)]);
   if(_liveTimer)clearInterval(_liveTimer);
-  _liveTimer=setInterval(()=>{liveDirect(true);washRefresh(true);heatRefresh(true);whRefresh(true);},60000);
+  _liveTimer=setInterval(()=>{liveDirect(true);washRefresh(true);heatRefresh(true);whRefresh(true);actSync(true);},60000);
 }
 function liveRetry(){toast('실시간 연결을 다시 시도합니다…');liveDirect(false);}
 async function liveRefresh(){
@@ -2297,6 +2297,58 @@ function actGet(k){DB.actions=DB.actions||{};return DB.actions[k]||{st:'todo'};}
 function actDueDefault(){const d=new Date();d.setHours(18,0,0,0);if(d.getTime()<Date.now())d.setDate(d.getDate()+1);return d.getTime();}
 function actOwnerOf(area){return (area==='안전'||area==='세척')?'현장':(area==='생산'||area==='인력'||area==='품질')?'생산관리':'미지정';}
 function actOverdue(a){return !!(a&&a.due&&a.st!=='done'&&Date.now()>a.due);}
+/* ===== 조치 공유 (zen-actions Worker) =====
+   조치는 지금까지 localStorage 에만 있었다. 담당자를 지정해도 그 사람 화면에는
+   뜨지 않고, 다른 PC 에서 열면 보드가 비어 있었다.
+   로컬 우선으로 둔 채 서버를 얹는다 — 주소가 없거나 서버가 끊겨도 조치는 그대로 된다. */
+const ACT_SITE='AP 대전공장';
+let ACT_API=''; try{ACT_API=localStorage.getItem('zen_act_api')||'';}catch(e){}
+let ACTSYNC={st:'off',at:0,err:'',n:0};
+function actWho(){try{return (role==='center'?'이민아':'홍길동')+' '+ROLES[role].name;}catch(e){return '';}}
+function actSetApi(){const el=document.getElementById('actApi');ACT_API=(el&&el.value||'').trim();
+  try{localStorage.setItem('zen_act_api',ACT_API);}catch(e){}
+  if(ACT_API)actSync(false); else {ACTSYNC={st:'off',at:0,err:'',n:0};rerender();toast('조치 공유 해제 — 이 브라우저에만 저장됩니다');}}
+let _actTimer=null,_actPend=false;
+/* 조치를 건드릴 때마다 서버로 밀되, 연타는 한 번으로 묶는다 */
+function actPush(){ if(!ACT_API)return; if(_actPend)return; _actPend=true;
+  setTimeout(()=>{_actPend=false;actSync(true);},800); }
+async function actSync(silent){
+  if(!ACT_API){ACTSYNC.st='off';return false;}
+  const base=ACT_API.replace(/\/+$/,'');
+  const ac=('AbortController' in window)?new AbortController():null;
+  const tm=ac?setTimeout(()=>ac.abort(),12000):null;
+  try{
+    const body={site:ACT_SITE,by:actWho(),actions:DB.actions||{},actlog:(DB.actlog||[]).slice(-100)};
+    const r=await fetch(base+'/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body),cache:'no-store',signal:ac?ac.signal:undefined});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    if(!j||!j.ok)throw new Error('응답 형식 오류');
+    /* 서버가 병합 결과를 돌려준다 — 그대로 채택한다(우리 변경은 이미 반영됨) */
+    const before=JSON.stringify(DB.actions||{})+'|'+((DB.actlog||[]).length), stBefore=ACTSYNC.st;
+    if(j.actions)DB.actions=j.actions;
+    if(Array.isArray(j.actlog))DB.actlog=j.actlog;
+    ACTSYNC={st:'ok',at:Date.now(),err:'',n:Object.keys(j.actions||{}).length};
+    saveDB();
+    const after=JSON.stringify(DB.actions||{})+'|'+((DB.actlog||[]).length);
+    if((before!==after||stBefore!=='ok')&&typeof cur!=='undefined'&&cur==='track')go('track'); else syncSrcTag();
+    if(!silent)toast('조치 공유 연결 — 티켓 '+ACTSYNC.n+'건 · 이력 '+((DB.actlog||[]).length)+'건');
+    return true;
+  }catch(e){
+    const _was=ACTSYNC.st;
+    ACTSYNC={st:'err',at:ACTSYNC.at,err:liveErrText(e),n:ACTSYNC.n};
+    if(!silent)toast('조치 공유 서버에 닿지 않습니다 — 이 브라우저에만 저장됩니다 ('+ACTSYNC.err+')');
+    if(_was!=='err'&&typeof cur!=='undefined'&&cur==='track')go('track'); else syncSrcTag();
+    return false;
+  }finally{ if(tm)clearTimeout(tm); }
+}
+function actSyncLabel(){
+  if(!ACT_API)return {t:'이 브라우저에만 저장',c:'#8a7333'};
+  if(ACTSYNC.st==='ok'){const ago=Math.round((Date.now()-ACTSYNC.at)/1000);
+    return {t:'공유 중 · '+(ago<60?ago+'초 전':Math.round(ago/60)+'분 전')+' 동기화',c:'#0B7A43'};}
+  if(ACTSYNC.st==='err')return {t:'서버 미연결 — 로컬 저장 중'+(ACTSYNC.err?' ('+ACTSYNC.err+')':''),c:'#b9922e'};
+  return {t:'동기화 대기',c:'#8a7333'};
+}
 /* 조치 이력 — append-only. 티켓이 재발·효과없음으로 닫힐 때마다 스냅샷을 남긴다.
    기존 구조는 판단 키 하나에 레코드 하나여서, 재발하면 직전 조치 기록이 통째로 지워졌다. */
 function actArchive(k,a,x,outcome){
@@ -2324,6 +2376,7 @@ function actPatch(k,field,val){
   }
   if(field==='st'&&val!=='done'){a.verify=null;a.doneAt=null;}
   DB.actions[k]=a;
+  actPush();
   if(field==='st')opsLog('조치 '+( {done:'완료',doing:'착수',todo:'미조치',hold:'보류'}[val]||val )+' 처리'
     +(val==='done'?(a.verify==='cleared'?' (효과 확인)':' (효과 미확인 — 조건 지속)'):'')
     +(a.what?' — '+a.what:''),'조치',val==='done'?'done':'info');
@@ -2345,7 +2398,8 @@ function syncActionsFromJudgments(){
   const J=collectJudgments(); const DAY=86400000;
   let opened=0,changed=false;
   const fresh=(a,x,extra)=>Object.assign({st:'todo',openedAt:Date.now(),owner:a.owner||actOwnerOf(x.area),
-    due:actDueDefault(),note:'',what:'',txt:'',cleared:false,verify:null,doneAt:null,seq:(a.seq||1)+1},extra||{});
+    due:actDueDefault(),note:'',what:'',txt:'',cleared:false,verify:null,doneAt:null,seq:(a.seq||1)+1,
+    area:x.area,title:x.r,rule:x.rule,ts:Date.now()},extra||{});
   J.forEach(x=>{
     const k=actKey(x),a=Object.assign({},actGet(k));
     if(x.lv==='ok'){                       /* 조건 정상 복귀 */
@@ -2376,11 +2430,12 @@ function syncActionsFromJudgments(){
     }
     if(!a.openedAt){
       DB.actions[k]=Object.assign(a,{st:a.st&&a.st!=='todo'?a.st:'todo',openedAt:Date.now(),
-        owner:a.owner||actOwnerOf(x.area),due:a.due||actDueDefault(),cleared:false,seq:a.seq||1});
+        owner:a.owner||actOwnerOf(x.area),due:a.due||actDueDefault(),cleared:false,seq:a.seq||1,
+        area:x.area,title:x.r,rule:x.rule,ts:Date.now()});
       opened++;changed=true;
     }
   });
-  if(changed)saveDB();
+  if(changed){saveDB();actPush();}
   return opened;
 }
 function actGen(i){
@@ -2390,7 +2445,7 @@ function actGen(i){
   const txt=`[조치 요청] ${x.area} — ${x.r}\n· 근거: ${x.s}\n· 적용 기준: ${x.rule}\n· 권장 조치: ${x.act}\n· 담당: ${curA.owner}\n· 기한: ${dueStr}\n(ZEN Manufacturing Platform 자동 생성 · ${new Date().toISOString().slice(0,10)})`;
   DB.actions=DB.actions||{};DB.actions[k]=Object.assign(curA,{st:'doing',txt,ts:Date.now()});saveDB();
   opsLog(`[${x.area}] ${x.r} — 조치 문안 생성·담당자 전달`,x.area,'info');
-  copyText(txt,'조치 문안 생성 · 복사됨');go(cur==='track'?'track':cur);
+  actPush();copyText(txt,'조치 문안 생성 · 복사됨');go(cur==='track'?'track':cur);
 }
 let trackFilter='전체';
 /* 조치 보드 컬럼 접기 — 헤더 클릭/Enter/Space로 토글. 재렌더에도 유지 */
@@ -2498,6 +2553,11 @@ V.trackNow=()=>{
         <div><div class="tnum" style="font-size:26px;font-weight:800;color:${vrate>=rate?'#8fd8b9':'#ffd08a'}">${vrate}%</div><div style="font-size:11px;color:#a6bad8">효과 확인율</div></div>
       </div></div></div>
   ${repeat?`<div class="card" style="margin-bottom:12px;border-left:4px solid #7c3aed"><h3 style="border:none;padding:0;margin:0;font-size:14px">반복 발동 ${repeat}건 <span class="hint">3회 이상 — 임시 조치로 해결되지 않는 항목</span></h3><p class="mini" style="margin-top:6px">같은 조건이 세 번 넘게 다시 열렸습니다. 조치가 증상만 눌렀을 가능성이 큽니다. 근본 원인 조치로 올리세요.</p></div>`:''}
+  ${(()=>{const L=actSyncLabel();return `<div class="card" style="margin-bottom:12px;padding:11px 14px;display:flex;gap:9px;align-items:center;flex-wrap:wrap">
+    <span class="dot" style="background:${L.c};width:8px;height:8px;border-radius:50%;display:inline-block"></span>
+    <b style="font-size:12.5px;color:${L.c}">조치 공유 — ${escHtml(L.t)}</b>
+    <span class="mini" style="margin-left:auto">${ACT_API?'같은 사업장의 담당자가 같은 보드를 봅니다':'주소를 등록하면 담당자와 보드를 공유합니다'}
+      <a onclick="go('data')" style="color:#3f74b5;cursor:pointer;font-weight:800">기준 · 연동에서 설정</a></span></div>`;})()}
   <div class="card" style="margin-bottom:12px"><h3>필터 <span class="hint">영역 · 상태</span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">${chips}</span></h3></div>
   <div class="actboard">${col('미조치 · 보류',cTodo,'todo')}${col('조치중',cDo,'doing')}${col('완료',cDone,'done')}</div>
   ${actLogView()}`;
@@ -3445,7 +3505,16 @@ V.data=()=>{
       </div>
       <div class="mini" style="margin-top:8px">${WH_API?(WHLIVE?`✅ 연결됨 · <b>${whLiveDate()||'-'}</b> 점검 ${whLiveN()}/${WH_APP_ZONES.length}구역 수신${whLiveN()<WH_APP_ZONES.length?' <span style="color:#b9922e">— 미제출 구역은 집계에서 빠집니다</span>':''}`:`⚠ 수신 대기${whErr?' — '+whErr:''}`):'미등록 — 기준·업로드 데이터로 판단합니다'}</div>
     </div>
-    <div class="card"><h3>⑤ MES/DB 연동 <span class="hint">참고</span></h3>
+    <div class="card"><h3>⑤ 조치 공유 <span class="hint">담당자와 같은 보드</span></h3>
+      <p class="mini" style="line-height:1.7">조치 티켓과 이력을 <b>사업장 단위로 공유</b>합니다. 등록하지 않으면 조치가 이 브라우저에만 남아, 담당자를 지정해도 그 사람 화면에는 뜨지 않습니다. <b>zen-actions</b> Worker 배포 주소를 넣으세요(레포 <code>zen-actions/</code>).</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <input id="actApi" class="urlinp" value="${(ACT_API||'').replace(/"/g,'&quot;')}" placeholder="https://zen-actions.....workers.dev" style="flex:1;min-width:200px">
+        <button class="btn p" onclick="actSetApi()">연결</button>
+      </div>
+      <div class="mini" style="margin-top:8px">${(()=>{const L=actSyncLabel();return `<span style="color:${L.c};font-weight:800">${escHtml(L.t)}</span>`+(ACTSYNC.st==='ok'?` · 티켓 ${ACTSYNC.n}건 · 이력 ${(DB.actlog||[]).length}건`:'');})()}</div>
+      <div class="mini" style="margin-top:6px"><span class="mut2">서버가 끊겨도 조치는 이 브라우저에 계속 저장되고, 연결되면 자동으로 합쳐집니다.</span></div>
+    </div>
+    <div class="card"><h3>⑥ MES/DB 연동 <span class="hint">참고</span></h3>
       <p class="mini">사내 MES·ERP 직접연동은 백엔드 프록시 필요 · 엑셀/CSV 업로드로 동일 대시보드 구동.</p>
     </div>
   </div>
@@ -3453,7 +3522,7 @@ V.data=()=>{
     <div style="overflow-x:auto"><table class="edit"><thead><tr><th>라인</th>${EDIT_COLS.map(c=>`<th>${c.t}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
     <div class="mini" style="margin-top:10px">전환(0~1): 0 동일제품 · 0.5 제품전환 · 1.0 색상전환+알러지 · 세척 점수식에 직접 반영</div>
   </div>
-  <div class="card" style="margin-top:14px"><h3>⑥ 연동 시스템 (외부 배포 URL · 역할별) <span class="hint">관련 Agent 화면에 임베드 · 현장직=작업자용 / 반장·공장장=관리자용</span></h3>
+  <div class="card" style="margin-top:14px"><h3>⑦ 연동 시스템 (외부 배포 URL · 역할별) <span class="hint">관련 Agent 화면에 임베드 · 현장직=작업자용 / 반장·공장장=관리자용</span></h3>
     <div style="overflow-x:auto"><table class="tb"><thead><tr><th>시스템</th><th style="text-align:left">작업자용 URL</th><th style="text-align:left">관리자용 URL</th><th>표시 위치</th></tr></thead><tbody>
     ${(DB.extSys||[]).map(s=>{const u=s.urls||{};const inp=(which,val)=>`<input class="urlinp" style="width:100%;min-width:230px;padding:7px 9px" value="${(val||'').replace(/"/g,'&quot;')}" placeholder="https://..." onchange="setSysUrl('${s.id}','${which}',this.value)">`;
       const ag=(Array.isArray(s.agent)?s.agent:[s.agent]).map(a=>AGENTNAME[a]||a).join(' · ');
