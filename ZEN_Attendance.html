@@ -543,7 +543,7 @@ var SITES = [
   {id:'S01', n:'대한물류 김포센터',  client:'C01', corp:'L01', shift:'정상', open:'08:00', close:'17:00', radius:300},
   {id:'S02', n:'세종전자 아산공장',  client:'C02', corp:'L02', shift:'2교대', open:'06:00', close:'14:00', radius:250},
   {id:'S03', n:'한빛커머스 CS센터',  client:'C03', corp:'L03', shift:'정상', open:'09:00', close:'18:00', radius:200},
-  {id:'S04', n:'아모레퍼시픽 오산공장', client:'C04', corp:'L01', shift:'2교대', open:'07:00', close:'15:00', radius:350}
+  {id:'S04', n:'아모레퍼시픽 대전공장', client:'C04', corp:'L01', shift:'2교대', open:'07:00', close:'15:00', radius:350}
 ];
 
 /* 근태코드 마스터 (F-B0201) */
@@ -639,10 +639,10 @@ var ZEMOS = {
 var USERS = [
   {id:'w01', pw:'1234', role:'worker',  name:'박지수', emp:'Z-10142', site:'S01', color:'#6b7f95', pos:'물류 피킹'},
   {id:'w02', pw:'1234', role:'worker',  name:'정민호', emp:'Z-30118', site:'S03', color:'#6b7f95', pos:'CS 상담'},
-  {id:'w03', pw:'1234', role:'worker',  name:'윤채원', emp:'Z-40127', site:'S04', color:'#6b7f95', pos:'화장품 포장'},
+  {id:'w03', pw:'1234', role:'worker',  name:'윤채원', emp:'Z-40127', site:'S04', color:'#6b7f95', pos:'치약 라인'},
   {id:'m01', pw:'1234', role:'manager', name:'김태윤', emp:'M-0011', site:'S01', color:'#47607a', pos:'김포센터 현장관리자'},
   {id:'m02', pw:'1234', role:'manager', name:'박현우', emp:'M-0024', site:'S02', color:'#47607a', pos:'아산공장 현장관리자'},
-  {id:'m03', pw:'1234', role:'manager', name:'한소율', emp:'M-0036', site:'S04', color:'#47607a', pos:'오산공장 현장관리자'},
+  {id:'m03', pw:'1234', role:'manager', name:'한소율', emp:'M-0036', site:'S04', color:'#47607a', pos:'대전공장 현장관리자'},
   {id:'j01', pw:'1234', role:'jc',      name:'이서연', emp:'J-0003', site:null,  color:'#2e4d6b', pos:'J/C 운영담당 · 4개 현장'},
   {id:'a01', pw:'1234', role:'admin',   name:'오현석', emp:'S-0001', site:null,  color:'#0f2438', pos:'시스템 관리자'}
 ];
@@ -687,7 +687,7 @@ var FIRST=['지수','민호','서준','예린','도윤','하은','시우','채�
 var LAST=['김','이','박','최','정','강','조','윤','장','임','한','오','서','신','권','황'];
 var POS={S01:['물류 피킹','입고 검수','출고 패킹','지게차'],S02:['조립 1라인','조립 2라인','검사','포장'],
   S03:['CS 상담','채팅 상담','QA','스케줄러'],
-  S04:['화장품 포장','원료 계량','라벨링','완제품 출고']};
+  S04:['치약 라인','튜브 라인','염모 라인','멀티 라인','직선 라인']};
 
 var EMPS=[];
 (function buildEmps(){
@@ -709,7 +709,7 @@ var EMPS=[];
   var s3=EMPS.filter(function(e){return e.site==='S03';})[0];
   s3.no='Z-30118'; s3.name='정민호'; s3.pos='CS 상담'; s3.useApp=true;
   var s4=EMPS.filter(function(e){return e.site==='S04';})[0];
-  s4.no='Z-40127'; s4.name='윤채원'; s4.pos='화장품 포장'; s4.useApp=true;
+  s4.no='Z-40127'; s4.name='윤채원'; s4.pos='치약 라인'; s4.useApp=true;
 })();
 var EMP_MAP={}; EMPS.forEach(function(e){ EMP_MAP[e.no]=e; });
 function siteEmps(sid){ return EMPS.filter(function(e){ return e.site===sid; }); }
@@ -919,7 +919,7 @@ var UNMAPPED=[
   {src:'조출',    scope:'C02 · 세종전자 아산공장', cnt:14, first:'2026-08-19', ch:'excel'},
   {src:'대체휴무', scope:'C01 · 대한물류 김포센터', cnt:6,  first:'2026-08-24', ch:'excel'},
   {src:'교육',    scope:'C03 · 한빛커머스 CS센터', cnt:3,  first:'2026-08-27', ch:'manual'},
-  {src:'라인교육', scope:'C04 · 아모레퍼시픽 오산공장', cnt:5, first:'2026-08-21', ch:'excel'}
+  {src:'라인교육', scope:'C04 · 아모레퍼시픽 대전공장', cnt:5, first:'2026-08-21', ch:'excel'}
 ];
 
 /* 감사 로그 (F-J0105) */
