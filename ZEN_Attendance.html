@@ -536,6 +536,13 @@ var EXCS = [
   {k:'E13', n:'계획 없는 근무',   sev:'하', d:'근무계획 없음 · 실적 있음',           v:'V-08'}
 ];
 var EXC_MAP = {}; EXCS.forEach(function(e){ EXC_MAP[e.k]=e; });
+/* 예외 정보 조회 — 데모는 E-코드(EXC_MAP), 라이브는 검증엔진의 V-코드(EXC_LIVE) */
+function excOf(k){ return EXC_MAP[k] || (typeof EXC_LIVE!=='undefined' && EXC_LIVE[k]) ||
+  {k:k, n:k, sev:'중', d:'', v:k}; }
+function isBlockExc(k){
+  if(typeof EXC_LIVE!=='undefined' && EXC_LIVE[k]) return EXC_LIVE[k].grade==='오류';
+  return ['E01','E02','E05','E10','E11','E12'].indexOf(k)>=0;
+}
 
 /* 검증 룰 (F2) — v2 12룰 + 운영 확장 3룰 */
 var RULES = [
@@ -892,15 +899,28 @@ var AUDIT=[
    4. 집계 · 판정
    =================================================================== */
 function recOf(no, ym){ return DB[no+'|'+(ym||YM)]; }
+/* 근무 예정일인가 — 데모는 '100', 서버는 'WK'/'HW' */
+function isWorkPlan(p){ return p==='100' || p==='WK' || p==='HW' || p==='130'; }
+/* ERP 로 넘어가는 행인가 — 근로시간 산입 코드 + 출·퇴근 둘 다 있는 건 (서버 aggregate 와 같은 기준) */
+function isErpRow(x){
+  var cd=CODE_MAP[x.code];
+  if(!cd || !x.tin || !x.tout) return false;
+  if(cd.counts!==undefined) return !!cd.counts;
+  return cd.cls==='work' || cd.cls==='ot' || (cd.ann>0 && cd.ann<1);
+}
 function sums(no, ym){
   var rec=recOf(no,ym); if(!rec) return {days:0,work:0,ot:0,night:0,hol:0,ann:0,abs:0,exc:0};
   var s={days:0,work:0,ot:0,night:0,hol:0,ann:0,abs:0,exc:0};
   Object.keys(rec.days).forEach(function(k){
-    var x=rec.days[k];
-    if(x.code==='100'||x.code==='210'||x.code==='130') s.days++;
+    var x=rec.days[k], cd=CODE_MAP[x.code];
+    /* 코드번호를 박지 않는다 — 데모(100/200/…)와 서버(WK/AL/…) 양쪽에서 같게 동작해야 한다 */
+    if(cd){
+      if(cd.cls==='work' || cd.cls==='ot') s.days++;
+      else if(cd.ann>0 && cd.ann<1) s.days++;       // 반차 = 반일 근무
+      s.ann += (cd.ann||0);
+      if(cd.cls==='abs') s.abs++;
+    }
     s.work+=x.work; s.ot+=x.ot; s.night+=x.night; s.hol+=x.hol;
-    if(x.code==='200') s.ann+=1; if(x.code==='210') s.ann+=.5;
-    if(x.code==='300'||x.code==='310') s.abs++;
     if(x.ex.length && !x.resolved) s.exc++;
   });
   s.work=n1(s.work); s.ot=n1(s.ot); s.night=n1(s.night); s.hol=n1(s.hol);
@@ -948,14 +968,13 @@ function excList(sid, onlyOpen){
   });
 }
 function sevRank(day){
-  var r=0; day.ex.forEach(function(k){ var e=EXC_MAP[k]; if(!e) return;
+  var r=0; day.ex.forEach(function(k){ var e=excOf(k); if(!e) return;
     r=Math.max(r, e.sev==='상'?3:e.sev==='중'?2:1); });
   return r;
 }
-function blockCount(sid){    // 마감 차단 오류 건수
-  var block={E01:1,E02:1,E05:1,E10:1,E11:1,E12:1};
+function blockCount(sid){    // 마감 차단 오류 건수 (데모=E-코드, 라이브=검증엔진 '오류' 등급)
   return excList(sid,true).filter(function(o){
-    return o.day.ex.some(function(k){ return block[k]; }); }).length;
+    return o.day.ex.some(isBlockExc); }).length;
 }
 /* 현장 진행 단계 */
 function siteStage(sid, ym){
@@ -1090,7 +1109,7 @@ function go(v){ VIEW=v; SEL=null; closeDrawer(); render(); window.scrollTo(0,0);
 function goHome(){ go(MENUS[CUR.role].filter(function(m){ return m.id; })[0].id); }
 function setTab(k,v){ TAB[k]=v; render(); }
 function tabOf(k,d){ return TAB[k]||d; }
-function setYm(v){ YM=v; render(); }
+function setYm(v){ YM=v; if(LIVE.on){ liveRefresh(); } else render(); }
 function setScope(v){ SCOPE=v; render(); }
 function openDrawer(){ document.getElementById('drawer').classList.add('open');
   document.getElementById('drawerPane').innerHTML=drawerHtml(); }
@@ -1126,6 +1145,7 @@ function doLogin(){
 }
 function doLogout(){
   CUR=null; VIEW=null; closeModal(); closeDrawer();
+  if(LIVE.on){ LIVE.uid=''; LIVE.user=null; }
   document.getElementById('app').classList.add('hide');
   document.getElementById('login').classList.remove('hide');
   document.getElementById('lgPw').value='';
@@ -1216,6 +1236,16 @@ function tile(label, value, unit, desc, acc){
     (desc?'<div class="td">'+desc+'</div>':'')+'</div>';
 }
 function twHint(){ return '<div class="tw-hint">← 좌우로 밀어서 전체 열 보기</div>'; }
+/* 라이브 모드에서만 뜨는 실행 버튼 — 서버의 검증엔진·수신 배치를 직접 돌린다 */
+function liveBar(opts){
+  if(typeof LIVE==='undefined' || !LIVE.on) return '';
+  opts=opts||{};
+  return '<div class="btns" style="margin-bottom:13px">'+
+    '<button class="btn nv" onclick="liveValidate()">▶ 검증 실행 (V-01~15)</button>'+
+    (opts.recv?'<button class="btn" onclick="liveReceive()">📲 제모스 일 배치 수신</button>':'')+
+    '<button class="btn" onclick="liveRefresh(\'최신 상태를 불러왔습니다.\')">↻ 새로고침</button>'+
+    '</div>';
+}
 function emptyBox(icon, title, desc){
   return '<div class="empty"><div class="ei">'+icon+'</div><b>'+esc(title)+'</b>'+
     (desc?'<p>'+esc(desc)+'</p>':'')+'</div>';
@@ -1271,8 +1301,8 @@ VIEWS['w-home']=function(){
         excDays.slice(0,6).map(function(x){
           return '<div class="lc"><div class="lch">'+
             '<span class="lct">'+(+YM.split('-')[1])+'월 '+x.d+'일</span>'+
-            x.ex.map(function(k){ var e=EXC_MAP[k]; return '<span class="tag '+(e.sev==='상'?'t-err':'t-warn')+'">'+e.n+'</span>'; }).join('')+
-            '</div><div class="lcd">'+esc(EXC_MAP[x.ex[0]].d)+
+            x.ex.map(function(k){ var e=excOf(k); return '<span class="tag '+(e.sev==='상'?'t-err':'t-warn')+'">'+esc(e.n)+'</span>'; }).join('')+
+            '</div><div class="lcd">'+esc(excOf(x.ex[0]).d)+
             (x.tin?' · 출근 '+x.tin:'')+(x.tout?' · 퇴근 '+x.tout:' · 퇴근 기록 없음')+'</div>'+
             '<div class="lcb"><button class="btn sm pr" onclick="openReq(\''+me.no+'\','+x.d+',\'fix\')">정정 요청</button>'+
             '<button class="btn sm" onclick="openDay(\''+me.no+'\','+x.d+')">상세 보기</button></div></div>';
@@ -1315,7 +1345,7 @@ VIEWS['w-att']=function(){
     if(x.code==='100' && (x.ot>0||x.night>0)) kind='ot';
     var open = x.ex.length && !x.resolved;
     var val = !x.code ? '—' : m.cls==='work'||m.cls==='ot' ? num(x.work+x.ot)+'h'
-            : m.cls==='leave' ? (x.code==='210'?'반차':'연차') : m.cls==='abs' ? '결근'
+            : m.cls==='leave' ? ((m.ann&&m.ann<1)?'반차':'연차') : m.cls==='abs' ? '결근'
             : m.cls==='hol' ? '휴일' : '휴무';
     cells+='<button class="cd s-'+kind+(open?' exc':'')+(YM+'-'+String(d).padStart(2,'0')===TODAY?' today':'')+'" '+
       'onclick="openDay(\''+me.no+'\','+d+')" aria-label="'+d+'일 상세">'+
@@ -1406,6 +1436,7 @@ VIEWS['m-home']=function(){
       tile('수신 이상', bad.length, '건', bad.length?'제모스 수신 확인 필요':'전일 정상 수신', bad.length?'w':'o')+
     '</div>'+
 
+    liveBar({recv:true})+
     '<div class="card"><div class="card-h"><div class="card-t">마감 진행 단계</div>'+
       '<span class="card-s">'+ymLabel(YM)+' · 현장 단위</span></div><div class="card-b">'+stepsHtml(g)+
       '<div class="btns" style="margin-top:13px">'+
@@ -1417,7 +1448,7 @@ VIEWS['m-home']=function(){
       '<div class="card"><div class="card-h"><div class="card-t">예외 사유별 분포</div>'+
         '<span class="card-s">많은 순</span></div><div class="card-b">'+
         (keys.length ? keys.map(function(k){
-          var e=EXC_MAP[k], pct=Math.round(byType[k]/open.length*100);
+          var e=excOf(k), pct=Math.round(byType[k]/open.length*100);
           return '<div style="margin-bottom:11px"><div style="display:flex;gap:8px;align-items:center;font-size:12.5px">'+
             '<span class="tag '+(e.sev==='상'?'t-err':e.sev==='중'?'t-warn':'t-gy')+'">'+e.k+'</span>'+
             '<b style="flex:1;color:var(--navy)">'+esc(e.n)+'</b>'+
@@ -1466,7 +1497,7 @@ VIEWS['m-att']=function(){
       if(x.code==='100' && (x.ot>0||x.night>0)) cls='c-ot';
       var open = x.ex.length && !x.resolved;
       var mark = !x.code?'·' : m.cls==='work'||m.cls==='ot' ? num(x.work+x.ot,1)
-               : m.cls==='leave' ? (x.code==='210'?'半':'年') : m.cls==='abs' ? '欠'
+               : m.cls==='leave' ? ((m.ann&&m.ann<1)?'半':'年') : m.cls==='abs' ? '欠'
                : m.cls==='hol' ? '休' : '∅';
       r+='<td class="cell '+cls+(open?(sevRank(x)>=3?' exc':' warn'):'')+'" '+
         'onclick="openDay(\''+e.no+'\','+d+')" title="'+d+'일">'+mark+'</td>';
@@ -1515,20 +1546,21 @@ VIEWS['m-exc']=function(){
   var groups={};
   all.forEach(function(o){ var k=o.day.ex[0]; (groups[k]=groups[k]||[]).push(o); });
   var keys=Object.keys(groups).sort(function(a,b){
-    var sa=EXC_MAP[a].sev==='상'?3:EXC_MAP[a].sev==='중'?2:1;
-    var sb=EXC_MAP[b].sev==='상'?3:EXC_MAP[b].sev==='중'?2:1;
+    var sa=excOf(a).sev==='상'?3:excOf(a).sev==='중'?2:1;
+    var sb=excOf(b).sev==='상'?3:excOf(b).sev==='중'?2:1;
     return sb-sa || groups[b].length-groups[a].length; });
 
   return ph('이상근태 처리 · 승인', '자동 검증(V-01~15)이 걸러낸 예외만 사유별로 모았습니다. '+
       '같은 사유는 <b>일괄 승인</b>할 수 있고, 개별 건은 확정값을 보정합니다.', ['F-F0102','F-F0103','F-F0106','F-F0105'])+
     (locked?'<div class="note i"><b>마감된 기간입니다.</b> 조회만 가능합니다.</div>':'')+
+    liveBar()+
     '<div class="tabs">'+
       '<button class="'+(mode==='open'?'on':'')+'" onclick="setTab(\'mex\',\'open\')">미처리 '+excList(sid,true).length+'건</button>'+
       '<button class="'+(mode==='all'?'on':'')+'" onclick="setTab(\'mex\',\'all\')">전체 '+excList(sid,false).length+'건</button>'+
     '</div>'+
     (all.length===0 ? emptyBox('✓','처리할 예외가 없습니다','오류 0건 — 1차 확정을 진행할 수 있습니다.') :
     keys.map(function(k){
-      var e=EXC_MAP[k], list=groups[k], block=['E01','E02','E05','E10','E11','E12'].indexOf(k)>=0;
+      var e=excOf(k), list=groups[k], block=isBlockExc(k);
       return '<div class="card"><div class="card-h"><div class="card-t">'+esc(e.n)+'</div>'+
         '<span class="tag '+(e.sev==='상'?'t-err':e.sev==='중'?'t-warn':'t-gy')+'">'+e.k+' · '+e.sev+'</span>'+
         '<span class="tag '+(block?'t-err':'t-gy')+'">'+(block?'마감 차단':'경고')+'</span>'+
@@ -1545,7 +1577,7 @@ VIEWS['m-exc']=function(){
             '<td class="ctr">'+chTag(x.src)+'</td>'+
             '<td class="nw mono">'+(x.tin||'—')+' ~ '+(x.tout||'<b style="color:var(--err)">없음</b>')+'</td>'+
             '<td class="ctr">'+codeTag(x.code)+'</td>'+
-            '<td>'+esc(x.memo|| (x.conflict?x.conflict.why:'') || EXC_MAP[k].d)+'</td>'+
+            '<td>'+esc(x.memo|| (x.conflict?x.conflict.why:'') || excOf(k).d)+'</td>'+
             '<td class="ctr nw">'+(x.resolved?'<span class="tag t-ok">해소</span>':
               '<button class="btn sm" onclick="openDay(\''+o.emp.no+'\','+x.d+')">보정</button>')+'</td></tr>';
         }).join('')+'</tbody></table></div>'+twHint()+
@@ -1845,7 +1877,8 @@ VIEWS['j-erp']=function(){
     var g=siteStage(s.id,YM), es=siteEmps(s.id), mon=0, ot=0;
     es.forEach(function(e){ var rec=recOf(e.no);
       Object.keys(rec.days).forEach(function(k){ var x=rec.days[k];
-        if(x.code) mon++; if(x.ot>0||x.night>0||x.hol>0) ot++; }); });
+        if(isErpRow(x)) mon++; if(x.ot>0||x.night>0||x.hol>0) ot++; }); });
+    if(g.t.erpAtt!=null){ mon=g.t.erpAtt; ot=g.t.erpOt; }
     return {s:s, g:g, mon:mon, ot:ot, tx:erpTxOf(YM,s.id)[0]||null};
   });
   var failN=ERPTX.filter(function(t){ return t.res==='실패'; }).length;
@@ -1974,6 +2007,7 @@ VIEWS['x-recv']=function(){
       tile('배치 시각', ZEMOS.batchAt, '', '일 1회 · 실시간 아님')+
     '</div>'+
 
+    liveBar({recv:true})+
     (bad.length ? '<div class="note w"><b>수신 이상 '+bad.length+'건</b> — '+
       bad.slice(0,3).map(function(r){ return esc(siteName(r.site))+' '+(+YM.split('-')[1])+'/'+r.d+' ('+r.res+')'; }).join(' · ')+
       (bad.length>3?' 외 '+(bad.length-3)+'건':'')+
@@ -2426,9 +2460,10 @@ function openDay(no, d){
     (x.raw ? '<div class="flabel">제모스 원본값 (읽기 전용 · 절대 덮어쓰지 않음)</div>'+
       '<div class="note i" style="margin:0"><span class="mono">출근 '+(x.raw.punchIn||'—')+' · 퇴근 '+(x.raw.punchOut||'—')+
       '</span><br>위치 검증: <b>'+esc(x.raw.gps)+'</b> · 단말 '+esc(x.raw.dev)+'</div>' : '')+
-    (x.ex.length ? '<div class="flabel">검증 결과</div>'+x.ex.map(function(k){ var ex=EXC_MAP[k];
-      return '<div class="ck"><span class="ci '+(ex.sev==='상'?'n':'w')+'">'+ex.k.slice(1)+'</span><div>'+
-        '<div class="ct">'+esc(ex.n)+' <span class="tag t-gy">'+ex.v+'</span></div>'+
+    (x.ex.length ? '<div class="flabel">검증 결과</div>'+x.ex.map(function(k){ var ex=excOf(k);
+      return '<div class="ck"><span class="ci '+(ex.sev==='상'?'n':'w')+'">'+
+        esc(String(ex.k).replace(/^[EV]-?/,''))+'</span><div>'+
+        '<div class="ct">'+esc(ex.n)+' <span class="tag t-gy">'+esc(ex.v||ex.k)+'</span></div>'+
         '<div class="cd">'+esc(ex.d)+'</div></div></div>'; }).join('') : '')+
     (x.conflict ? '<div class="flabel">채널 충돌 (V-15) — 자동으로 덮어쓰지 않습니다</div>'+
       '<div class="note w" style="margin:0">'+esc(x.conflict.why)+'<br>'+
@@ -2492,9 +2527,9 @@ function bulkResolve(sid, k){
     o.day.resolved=true; if(o.day.st==='exc') o.day.st='fix'; n++;
   });
   audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'예외 일괄 승인',
-    tgt:siteName(sid)+' / '+YM+' · '+EXC_MAP[k].n+' '+n+'건', bf:'확인 필요', af:'해소',
+    tgt:siteName(sid)+' / '+YM+' · '+excOf(k).n+' '+n+'건', bf:'확인 필요', af:'해소',
     why:'동일 사유 일괄 처리', f:'F-F0103'});
-  render(); toast(EXC_MAP[k].n+' '+n+'건을 일괄 승인했습니다.');
+  render(); toast(excOf(k).n+' '+n+'건을 일괄 승인했습니다.');
 }
 function nowHm(){ var d=new Date(); return hhmm(d.getHours(), d.getMinutes()); }
 
@@ -2640,8 +2675,10 @@ function openSend(sid){
   var es=siteEmps(sid), mon=0, ot=0, work=0, otH=0;
   es.forEach(function(e){ var rec=recOf(e.no), s=sums(e.no);
     Object.keys(rec.days).forEach(function(k){ var x=rec.days[k];
-      if(x.code) mon++; if(x.ot>0||x.night>0||x.hol>0) ot++; });
+      if(isErpRow(x)) mon++; if(x.ot>0||x.night>0||x.hol>0) ot++; });
     work+=s.work; otH+=s.ot+s.night+s.hol; });
+  var stt=stOf(sid,YM);
+  if(stt && stt.erpAtt!=null){ mon=stt.erpAtt; ot=stt.erpOt; }
   var prev=erpTxOf(YM,sid)[0];
   openModal(
     '<div class="mh"><div><h3>ERP 근태 전송</h3>'+
@@ -2902,15 +2939,17 @@ VIEWS['w-sch']=function(){
   var me=EMP_MAP[CUR.emp], rec=recOf(me.no), nd=daysIn(YM), site=siteOf(me.site);
   var plan=0, real=0;
   for(var d=1;d<=nd;d++){ var x=rec.days[d];
-    if(x.plan==='100') plan++;
-    if(x.code==='100'||x.code==='210'||x.code==='130') real++; }
+    if(isWorkPlan(x.plan)) plan++;
+    var cc=CODE_MAP[x.code];
+    if(cc && (cc.cls==='work'||cc.cls==='ot'||(cc.ann>0&&cc.ann<1))) real++; }
   var WD=['일','월','화','수','목','금','토'];
   var first=dow(YM,1), cells='';
   for(var i=0;i<first;i++) cells+='<div class="cd e"></div>';
   for(var d2=1;d2<=nd;d2++){
-    var y=rec.days[d2], pm=CODE_MAP[y.plan];
-    var kind = y.plan==='100' ? 'work' : y.plan==='410' ? 'hol' : 'off';
-    var lbl = y.plan==='100' ? (site.open.slice(0,5)) : y.plan==='410' ? '휴일' : '휴무';
+    var y=rec.days[d2];
+    var kind = isWorkPlan(y.plan) ? 'work' : (y.plan==='410'||y.plan==='HL') ? 'hol' : 'off';
+    var lbl = isWorkPlan(y.plan) ? (y.planIn!=null ? mHM(y.planIn) : site.open.slice(0,5))
+            : (y.plan==='410') ? '휴일' : '휴무';
     cells+='<div class="cd s-'+kind+'"><span class="dn">'+d2+'</span><span class="dv">'+lbl+'</span></div>';
   }
   return ph('내 근무일정', '이번 달 <b>근무 계획</b>입니다. 계획과 실제 근무가 어긋나면 확인 대상이 됩니다. '+
@@ -2936,14 +2975,14 @@ VIEWS['m-plan']=function(){
   var sid=CUR.role==='manager'?CUR.site:(SCOPE==='ALL'?SITES[0].id:SCOPE);
   var es=siteEmps(sid), nd=daysIn(YM), site=siteOf(sid), tab=tabOf('plan','list');
   var planDays=0; es.forEach(function(e){ var rec=recOf(e.no);
-    for(var d=1;d<=nd;d++) if(rec.days[d].plan==='100') planDays++; });
+    for(var d=1;d<=nd;d++) if(isWorkPlan(rec.days[d].plan)) planDays++; });
   var planH=planDays*8;
   /* 주52시간 사전 시뮬레이션 (F-C0105) */
   var sim=es.map(function(e){
     var rec=recOf(e.no), weeks={}, maxw=0, at=1;
     for(var d=1;d<=nd;d++){
       var w=dow(YM,d), mon=d-((w+6)%7);
-      if(rec.days[d].plan==='100') weeks[mon]=(weeks[mon]||0)+8;
+      if(isWorkPlan(rec.days[d].plan)) weeks[mon]=(weeks[mon]||0)+8;
     }
     Object.keys(weeks).forEach(function(k){ if(weeks[k]>maxw){ maxw=weeks[k]; at=+k; } });
     return {e:e, plan:maxw, at:at, real:peakWeek(e.no,YM).h};
@@ -2959,8 +2998,9 @@ VIEWS['m-plan']=function(){
       '<th class="ctr">계획 대비</th></tr></thead><tbody>'+
       es.map(function(e){
         var rec=recOf(e.no), p=0, r=0;
-        for(var d=1;d<=nd;d++){ if(rec.days[d].plan==='100') p++;
-          if(['100','210','130'].indexOf(rec.days[d].code)>=0) r++; }
+        for(var d=1;d<=nd;d++){ if(isWorkPlan(rec.days[d].plan)) p++;
+          var cc=CODE_MAP[rec.days[d].code];
+          if(cc && (cc.cls==='work'||cc.cls==='ot'||(cc.ann>0&&cc.ann<1))) r++; }
         var gap=r-p;
         return '<tr><td class="nw"><b>'+esc(e.name)+'</b></td><td class="nw">'+esc(e.pos)+'</td>'+
           '<td class="num">'+p+'</td><td class="num">'+num(p*8,0)+'h</td><td class="num">'+r+'</td>'+
@@ -3131,7 +3171,7 @@ VIEWS['m-collect']=function(){
         for(var d=nd; d>=1; d--){
           var plan=0, got=0;
           es.forEach(function(e){ var x=recOf(e.no).days[d];
-            if(x.plan==='100'){ plan++; if(x.code) got++; } });
+            if(isWorkPlan(x.plan)){ plan++; if(x.code) got++; } });
           if(!plan) continue;
           var miss=plan-got;
           out+='<tr><td class="ctr">'+(+YM.split('-')[1])+'/'+d+'</td>'+
@@ -3261,7 +3301,9 @@ VIEWS['j-agg']=function(){
     es.forEach(function(e){ var x=sums(e.no), rec=recOf(e.no);
       t.days+=x.days; t.work+=x.work; t.ot+=x.ot; t.night+=x.night;
       t.hol+=x.hol; t.ann+=x.ann; t.abs+=x.abs;
-      Object.keys(rec.days).forEach(function(k){ if(rec.days[k].code) t.rows++; }); });
+      Object.keys(rec.days).forEach(function(k){ if(isErpRow(rec.days[k])) t.rows++; }); });
+    var stt=stOf(s.id,YM);
+    if(stt && stt.erpAtt!=null) t.rows=stt.erpAtt;   // 마감 현장은 서버 기준 행수
     return {s:s, n:es.length, t:t, g:siteStage(s.id,YM)};
   });
   var tot={days:0,work:0,ot:0,night:0,hol:0,ann:0,abs:0,rows:0,n:0};
@@ -3277,7 +3319,7 @@ VIEWS['j-agg']=function(){
       '<b>원장 합계와 집계 합계를 대조</b>합니다. 100% 일치해야 ERP로 넘어갑니다.', ['F-I0101','F-I0106'])+
     '<div class="tiles">'+
       tile('대상 인원', tot.n, '명', sites.length+'개 현장')+
-      tile('월근태 행', num(tot.rows,0), '행', 'ERP 전송 예정')+
+      tile('월근태 행', num(tot.rows,0), '행', 'ERP 전송 대상 (근로시간 산입 · 출퇴근 완비)')+
       tile('총 실근로', num(tot.work), 'h')+
       tile('총 연장', num(tot.ot), 'h', '', tot.ot?'w':'')+
       tile('총 야간', num(tot.night), 'h')+
@@ -3416,34 +3458,37 @@ VIEWS['a-ops']=function(){
       '근태 데이터 3년 · 접근 로그 1년 보관 후 자동 파기합니다. 마감 스냅샷은 기간 내 <b>수정 불가</b>입니다.</div>'+
       '</div></div>';
   } else if(tab==='srv'){
-    body='<div class="note '+(SRV.on?'':'w')+'"><b>'+(SRV.on
-        ? '서버 저장이 켜져 있습니다.' : '로컬 모드입니다.')+'</b> '+(SRV.on
-        ? '승인·마감·전송·감사로그가 서버에 저장되고, 같은 주소를 연 다른 사람에게도 보입니다.'
-        : '이 화면의 변경은 브라우저 메모리에만 남고 새로고침하면 사라집니다. '+
-          '파일을 직접 열었거나(file://) 서버 함수에 연결하지 못했습니다.')+'</div>'+
+    body='<div class="note '+(LIVE.on?'':'w')+'"><b>'+(LIVE.on
+        ? '실서버(att-system)에 연결돼 있습니다.' : '데모 모드입니다.')+'</b> '+(LIVE.on
+        ? '화면의 모든 값이 Cloudflare Workers + D1 의 실제 데이터입니다. 검증·확정·마감·전송이 모두 서버에서 처리됩니다.'
+        : 'API 주소를 지정하지 않아 이 파일 안의 시드로 동작합니다. 전 화면이 돌지만 데이터는 브라우저 안에서만 삽니다.')+'</div>'+
       '<div class="tiles">'+
-        tile('연결 상태', SRV.on?'연결됨':'로컬', '', SRV.on?'/api/att':'저장되지 않음', SRV.on?'o':'w')+
-        tile('저장 버전', SRV.ver, '', '변경 시마다 증가')+
-        tile('마지막 저장', SRV.at?esc(SRV.at.slice(0,16).replace('T',' ')):'—', '', SRV.by?esc(SRV.by):'')+
-        tile('동기화 주기', 12, '초', '다른 사용자 변경 자동 반영')+
+        tile('연결 상태', LIVE.on?'연결됨':'데모', '', LIVE.on?esc(LIVE.base):'API 주소 없음', LIVE.on?'o':'w')+
+        tile('로그인 계정', LIVE.on?esc(LIVE.uid||'—'):'시드 계정', '', LIVE.on?'X-User-Id 헤더':'SSO 연동 전')+
+        tile('제모스 모드', LIVE.on&&LIVE.env?esc(LIVE.env.jemosMode):'—', '', 'MOCK · DEMO · A/B/C', 
+          (LIVE.on&&LIVE.env&&LIVE.env.jemosMode==='DEMO')?'w':'')+
+        tile('ERP 모드', LIVE.on&&LIVE.env?esc(LIVE.env.erpMode):'—', '', 'FILE 폴백 · DIRECT', 
+          (LIVE.on&&LIVE.env&&LIVE.env.erpMode==='FILE')?'w':'o')+
       '</div>'+
-      '<div class="card"><div class="card-h"><div class="card-t">저장 구조</div>'+
-        '<span class="fid">netlify/functions/att.mjs</span></div><div class="card-b">'+
-        '<div class="ck"><span class="ci y">1</span><div><div class="ct">기준값은 서버가 아니라 시드</div>'+
-          '<div class="cd">근태 원장의 기준값(제모스 수신분)은 화면이 만들고, 서버에는 '+
-          '<b>사람이 한 행위의 변경분만</b> 저장합니다. 저장 용량과 전송량이 작습니다.</div></div></div>'+
-        '<div class="ck"><span class="ci y">2</span><div><div class="ct">저장 대상</div>'+
-          '<div class="cd">확정값 보정 · 예외 해소 · 정정/연장 요청 · 1·2차 승인 · 마감 · ERP 전송 이력 · '+
-          '매핑 규칙 · 검증 Rule · 근무계획 이력 · 배포 이력 · 감사 로그</div></div></div>'+
-        '<div class="ck"><span class="ci y">3</span><div><div class="ct">병합 방식</div>'+
-          '<div class="cd">이력(감사·요청·전송·배포)은 <b>키 기준 병합</b>으로 누적되고, '+
-          '상태값(보정·승인·마감)은 마지막 저장이 채택됩니다. 12초마다 다른 사용자의 변경을 받아옵니다.</div></div></div>'+
-        '<div class="ck"><span class="ci n">✗</span><div><div class="ct">여기까지가 한계</div>'+
-          '<div class="cd">제모스·ERP는 <b>사내망</b>에 있어 외부 클라우드에서 붙지 못합니다. '+
-          '개인정보(실제 사번·성명)는 보안 승인 전까지 넣지 않습니다. 이 단계는 '+
-          '<b>파일럿 검증용</b>입니다.</div></div></div>'+
+      '<div class="card"><div class="card-h"><div class="card-t">연결 구조</div>'+
+        '<span class="fid">att-system/backend</span></div><div class="card-b">'+
+        '<div class="ck"><span class="ci y">1</span><div><div class="ct">화면과 로직이 분리돼 있습니다</div>'+
+          '<div class="cd">근태 판정·코드 변환·한도 계산·확정·마감·ERP 전송은 전부 <b>서버(API)</b>에 있습니다. '+
+          '이 화면은 그리기만 합니다 — 기준문서 §0-3 이식 전제 설계 원칙 그대로입니다.</div></div></div>'+
+        '<div class="ck"><span class="ci y">2</span><div><div class="ct">테이블 23개 · 엔드포인트 45개</div>'+
+          '<div class="cd">근태원장 4단 구조 · 검증엔진 V-01~V-15 · 현장×월 확정 · 마감 스냅샷 봉인(해시) · '+
+          '내보내기 양식 엔진 · 감사 로그</div></div></div>'+
+        '<div class="ck"><span class="ci '+(LIVE.on&&LIVE.env&&LIVE.env.jemosMode==='DEMO'?'w':'n')+'">!</span>'+
+          '<div><div class="ct">제모스는 아직 실연동이 아닙니다</div>'+
+          '<div class="cd">MOCK=항상 0건, DEMO=시연용 합성 태그. 수신 방식(A/B/C)이 확정돼야 실연동으로 바뀝니다. '+
+          '어댑터 인터페이스는 이미 고정돼 있어 구현체만 갈아끼우면 됩니다.</div></div></div>'+
+        '<div class="ck"><span class="ci n">✗</span><div><div class="ct">ERP 직접 전송도 아직입니다</div>'+
+          '<div class="cd"><b>코드 문제가 아니라 인프라 문제</b>입니다. ERP 근태 DB 쓰기 권한과 테이블 스펙이 '+
+          '먼저 정해져야 합니다. 지금은 FILE 폴백만 동작합니다.</div></div></div>'+
         '<div class="btns" style="margin-top:12px">'+
-          '<button class="btn dg" onclick="openSrvReset()">서버 상태 초기화</button></div>'+
+          (LIVE.on?'<button class="btn" onclick="liveValidate()">검증 실행</button>'+
+                   '<button class="btn" onclick="liveReceive()">제모스 배치 수신</button>':'')+
+          '<button class="btn" onclick="openApiCfg()">API 주소 설정</button></div>'+
         '</div></div>';
   } else {
     body='<div class="card"><div class="card-h"><div class="card-t">릴리즈 이력</div>'+
@@ -3467,188 +3512,588 @@ VIEWS['a-ops']=function(){
 
 
 /* ===================================================================
-   13. 서버 연동 — Netlify Functions(/api/att) + Netlify Blobs
-       · 저장하는 것은 "사람이 한 행위"의 변경분(delta)뿐이다.
-       · 근태 원장 기준값(제모스 수신분)은 클라이언트 시드가 만든다.
-       · 서버에 못 붙으면 로컬 모드로 그대로 동작한다 (저장만 안 됨).
+   14. 라이브 모드 — att-system 백엔드(Cloudflare Workers + D1) 연결
+       · 데모 모드: 이 파일 안의 시드로 혼자 동작 (파일을 그냥 열었을 때)
+       · 라이브 모드: 실제 API·DB 의 값으로 동작
+       API 주소는  ?api=https://... 또는 설정 화면에서 지정한다.
    =================================================================== */
-var SRV={on:false, ver:0, busy:false, again:false, stale:false, at:'', by:'', err:'', poll:null};
-var API='/api/att';
+var LIVE={on:false, base:'', uid:'', user:null, users:[], busy:0, err:'', loadedYm:'', loadedSite:''};
 
-function srvPin(){
+function apiBase(){
   try{
-    var q=new URLSearchParams(location.search).get('pin');
-    if(q){ localStorage.setItem('zt_pin', q); return q; }
-    return localStorage.getItem('zt_pin') || '1234';
-  }catch(e){ return '1234'; }
+    var q=new URLSearchParams(location.search).get('api');
+    if(q!==null){ q=q.replace(/\/+$/,''); localStorage.setItem('zt_api', q); return q; }
+    return localStorage.getItem('zt_api') || '';
+  }catch(e){ return ''; }
 }
-function srvUsable(){ return location.protocol==='http:' || location.protocol==='https:'; }
-
-/* 시드(제모스 수신분) 지문 — 이 값과 다른 날만 "사람이 바꾼 것"이다 */
-var DAY_F=['code','tin','tout','work','ot','night','hol','st','memo','fixed','resolved','reqId','src'];
-function daySig(x){
-  return DAY_F.map(function(f){
-    var v=x[f]; return v===true?1:v===false?0:(v==null?'':v); }).join('~');
+function setApiBase(v){
+  try{ localStorage.setItem('zt_api', (v||'').replace(/\/+$/,'')); }catch(e){}
 }
-var SEED={};
-(function snapshotSeed(){
-  EMPS.forEach(function(e){ YM_LIST.forEach(function(ym){
-    var rec=DB[e.no+'|'+ym]; if(!rec) return;
-    Object.keys(rec.days).forEach(function(k){ SEED[e.no+'|'+ym+'|'+k]=daySig(rec.days[k]); });
-  }); });
-})();
+function api(path, opts){
+  opts=opts||{};
+  var h={'content-type':'application/json'};
+  if(LIVE.uid) h['X-User-Id']=LIVE.uid;
+  if(opts.headers) Object.keys(opts.headers).forEach(function(k){ h[k]=opts.headers[k]; });
+  LIVE.busy++; srvChip();
+  return fetch(LIVE.base+path, {method:opts.method||'GET', headers:h,
+      body: opts.body!==undefined ? JSON.stringify(opts.body) : undefined})
+    .then(function(r){
+      return r.text().then(function(t){
+        var j=null; try{ j=t?JSON.parse(t):null; }catch(e){ j={error:t}; }
+        if(!r.ok) throw new Error((j&&j.error)||('HTTP '+r.status));
+        return j;
+      });
+    })
+    .then(function(v){ LIVE.busy--; return v; },
+          function(e){ LIVE.busy--; throw e; });
+}
 
-/* 현재 메모리 상태에서 변경분 추출 — 시드와 다른 것만 */
-function collectDelta(){
-  var dayFix={};
-  EMPS.forEach(function(e){
-    YM_LIST.forEach(function(ym){
-      var rec=DB[e.no+'|'+ym]; if(!rec) return;
-      Object.keys(rec.days).forEach(function(k){
-        var x=rec.days[k], key=e.no+'|'+ym+'|'+k;
-        if(daySig(x)===SEED[key]) return;
-        dayFix[key]={code:x.code, tin:x.tin, tout:x.tout, work:x.work, ot:x.ot,
-          night:x.night, hol:x.hol, st:x.st, memo:x.memo, fixed:!!x.fixed,
-          resolved:!!x.resolved, reqId:x.reqId||null, src:x.src};
+/* ---- 서버 값 → 화면 구조로 변환 ---- */
+function mHM(min){
+  if(min==null) return null;
+  var m=((min%1440)+1440)%1440;
+  return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+}
+function hmM(s){ if(!s) return null; var p=String(s).split(':'); return (+p[0])*60+(+p[1]); }
+/* backend lib/calc.ts 와 같은 규칙 — 30분 절사 · 휴게 4h↑30분 / 8h↑60분 · 소정 8h · 야간 22~06 */
+function calcDay(code, tin, tout, isHol, countsHours){
+  var z={work:0,ot:0,night:0,hol:0};
+  if(tin==null||tout==null||!countsHours) return z;
+  var out=tout; if(out<tin) out+=1440;
+  var stay=(out-tin)/60;
+  var brk = stay>=8 ? 60 : (stay>=4 ? 30 : 0);
+  var work=Math.max(0, stay-brk/60);
+  var q=function(x){ return Math.floor(x*2)/2; };
+  var holiday = isHol || code==='HW';
+  var ot = holiday ? 0 : q(Math.max(0, work-8));
+  var hol = holiday ? q(work) : 0;
+  var nm=0;
+  [[1320,1800],[-120,360]].forEach(function(w){ nm+=Math.max(0, Math.min(out,w[1])-Math.max(tin,w[0])); });
+  return {work: holiday?0:Math.min(work,8), ot:ot, night:q(Math.max(0,nm/60)), hol:hol};
+}
+var SRV_CLS={WK:'work', HW:'ot', AL:'leave', HL:'leave', AB:'abs', OFF:'off'};
+var SRV_CH={'제모스':'app','엑셀':'excel','수기':'manual','이미지':'ocr'};
+var SRV_ROLE={mgr:'manager', jc:'jc', sys:'admin', worker:'worker'};
+
+/* ---- 부팅: 서버 확인 + 계정 목록 ---- */
+function liveInit(){
+  LIVE.base=apiBase();
+  if(!LIVE.base){ LIVE.on=false; renderAccts(); return; }
+  api('/api/health').then(function(h){
+    LIVE.on=true; LIVE.env=h;
+    return api('/api/users');
+  }).then(function(us){
+    LIVE.users=us||[];
+    renderAccts();
+    toast('백엔드에 연결되었습니다 — 실제 API·DB 로 동작합니다.');
+  }).catch(function(e){
+    LIVE.on=false; LIVE.err=String(e.message||e);
+    renderAccts();
+    toast('백엔드에 연결하지 못했습니다 — 데모 모드로 동작합니다.');
+  });
+}
+
+/* ---- 로그인 (라이브) ---- */
+function liveLogin(uid){
+  var u=LIVE.users.filter(function(x){ return x.id===uid; })[0];
+  if(!u){ toast('계정을 찾을 수 없습니다.'); return; }
+  LIVE.uid=u.id; LIVE.user=u; LIVE.empId=u.emp_id||null;
+  CUR={id:u.id, role:SRV_ROLE[u.role]||'worker', name:u.name, emp:null, site:u.site,
+       color:{manager:'#5b7f52', jc:'#7a6a9e', admin:'#0f2438', worker:'#48688d'}[SRV_ROLE[u.role]]||'#48688d',
+       pos:(u.site||'전 현장')};
+  SCOPE='ALL'; TAB={}; YM=YM_BASE;
+  document.getElementById('login').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+  installLiveActions();
+  liveLoadBase().then(function(){ return liveLoadMonth(); }).then(function(){
+    goHome();
+  }).catch(function(e){ toast('데이터를 불러오지 못했습니다: '+(e.message||e)); goHome(); });
+}
+
+/* ---- 기준정보 로드 (현장·사원·코드·휴일) ---- */
+function liveLoadBase(){
+  return Promise.all([api('/api/sites'), api('/api/employees'), api('/api/codes')])
+    .then(function(r){
+      var sites=r[0]||[], emps=r[1]||[], codes=r[2]||[];
+
+      CORPS.length=0; CORPS.push({id:'L01', n:'제니엘'});
+      CLIENTS.length=0;
+      SITES.length=0;
+      sites.forEach(function(s, i){
+        CLIENTS.push({id:'C'+i, n:s.site, corp:'L01', ct:'—'});
+        SITES.push({id:s.site, n:s.site, client:'C'+i, corp:'L01',
+          shift:'정상', open:'08:00', close:'17:00', radius:s.gps_radius_m||200,
+          empCount:s.emp_count, jemosCount:s.jemos_count, rules:s});
+      });
+      if(sites.length && sites[0].week_max_h){
+        CFG.week=sites[0].week_max_h; CFG.otWeek=sites[0].ot_week_h;
+        CFG.otMonth=sites[0].ot_month_h; CFG.tolIn=sites[0].tol_min;
+        CFG.autoDays=sites[0].auto_approve_days;
+      }
+
+      EMPS.length=0;
+      Object.keys(EMP_MAP).forEach(function(k){ delete EMP_MAP[k]; });
+      emps.forEach(function(e){
+        var o={no:e.emp_id, name:e.name, site:e.site,
+          pos:(e.contract_type||'')+(e.shift_default?' · '+e.shift_default:''),
+          useApp:!!e.jemos_active, short:false, in:e.hire_date, out:e.leave_date,
+          jemosId:e.jemos_id};
+        EMPS.push(o); EMP_MAP[e.emp_id]=o;
+      });
+      if(CUR && CUR.role==='worker'){
+        CUR.emp = LIVE.empId && EMP_MAP[LIVE.empId] ? LIVE.empId : null;
+        if(!CUR.emp){
+          var mine=EMPS.filter(function(x){ return x.site===LIVE.user.site; });
+          CUR.emp = mine[0] ? mine[0].no : null;
+        }
+        if(CUR.emp && EMP_MAP[CUR.emp]) CUR.pos=EMP_MAP[CUR.emp].pos;
+      }
+
+      CODES.length=0;
+      Object.keys(CODE_MAP).forEach(function(k){ delete CODE_MAP[k]; });
+      codes.forEach(function(c){
+        var o={c:c.code, n:c.name, pay:c.paid||'—', ann:c.leave_deduct||0,
+          use:c.active?'Y':'N', cls:SRV_CLS[c.code]||'work',
+          d:(c.counts_hours?'근로시간 산입':'근로시간 미산입')+(c.erp_code?' · ERP '+c.erp_code:''),
+          counts:!!c.counts_hours, erp:c.erp_code};
+        CODES.push(o); CODE_MAP[c.code]=o;
+        ERPCODE[c.code]=c.erp_code||'';
       });
     });
-  });
-  var sitest={};
-  Object.keys(SITEST).forEach(function(k){ sitest[k]=SITEST[k]; });
-  var rules={}; RULES.forEach(function(r){ rules[r.id]=!!r.on; });
-  return {dayFix:dayFix, sitest:sitest, rules:rules, reqs:REQS, erptx:ERPTX,
-    audit:AUDIT, planlog:PLANLOG, dist:DIST, maps:MAPS, unmapped:UNMAPPED};
-}
-/* 서버 상태를 메모리에 덮어쓰기 */
-function applyDelta(d){
-  if(!d) return;
-  if(d.dayFix) Object.keys(d.dayFix).forEach(function(k){
-    var p=k.split('|'), rec=DB[p[0]+'|'+p[1]]; if(!rec) return;
-    var x=rec.days[p[2]]; if(!x) return;
-    var v=d.dayFix[k];
-    ['code','tin','tout','work','ot','night','hol','st','memo','fixed','resolved','reqId','src']
-      .forEach(function(f){ if(v[f]!==undefined) x[f]=v[f]; });
-  });
-  if(d.sitest) Object.keys(d.sitest).forEach(function(k){
-    if(SITEST[k]) SITEST[k]=d.sitest[k]; });
-  if(d.rules) RULES.forEach(function(r){ if(d.rules[r.id]!==undefined) r.on=d.rules[r.id]; });
-  var swap=function(arr, val){ if(Array.isArray(val) && val.length){ arr.length=0;
-    val.forEach(function(x){ arr.push(x); }); } };
-  swap(REQS, d.reqs); swap(ERPTX, d.erptx); swap(AUDIT, d.audit);
-  swap(PLANLOG, d.planlog); swap(DIST, d.dist);
-  swap(MAPS, d.maps);
-  if(Array.isArray(d.unmapped)){ UNMAPPED.length=0; d.unmapped.forEach(function(x){ UNMAPPED.push(x); }); }
-  /* 요청 → 근태일 연결 복원 */
-  REQS.forEach(function(r){ if(r.st==='승인'){ var rec=DB[r.emp+'|'+r.ym];
-    if(rec && rec.days[r.d]) rec.days[r.d].reqId=r.id; } });
 }
 
-function srvInit(){
-  if(!srvUsable()){ SRV.on=false; SRV.err='local'; return; }
-  fetch(API, {headers:{'accept':'application/json'}})
-    .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
-    .then(function(j){
-      if(!j || !j.ok) return Promise.reject('bad');
-      SRV.on=true; SRV.ver=j.ver||0; SRV.at=(j.state&&j.state.updated_at)||''; SRV.by=(j.state&&j.state.updated_by)||'';
-      if(j.state && (j.ver||0)>0) applyDelta(j.state);
-      if(CUR) render();
-      srvStartPoll();
-    })
-    .catch(function(e){ SRV.on=false; SRV.err=String(e); if(CUR) render(); });
+/* ---- 대상 월 로드 ---- */
+function liveLoadMonth(){
+  var sites=SITES.map(function(s){ return s.id; });
+  var ym=YM;
+  var tasks=sites.map(function(sid){
+    return Promise.all([
+      api('/api/ledger?site='+encodeURIComponent(sid)+'&ym='+ym).catch(function(){ return []; }),
+      api('/api/plan?site='+encodeURIComponent(sid)+'&ym='+ym).catch(function(){ return []; }),
+      api('/api/exceptions?site='+encodeURIComponent(sid)+'&ym='+ym).catch(function(){ return []; }),
+      api('/api/month/status?site='+encodeURIComponent(sid)+'&ym='+ym).catch(function(){ return null; }),
+      api('/api/corrections?site='+encodeURIComponent(sid)+'&ym='+ym).catch(function(){ return []; }),
+      api('/api/ot-requests?site='+encodeURIComponent(sid)+'&ym='+ym).catch(function(){ return []; }),
+      api('/api/jemos/status?site='+encodeURIComponent(sid)+'&ym='+ym).catch(function(){ return []; })
+    ]).then(function(r){ return {sid:sid, ledger:r[0], plan:r[1], exc:r[2], ms:r[3],
+      corr:r[4], ot:r[5], recv:r[6]}; });
+  });
+  return Promise.all(tasks).then(function(all){
+    liveApply(all, ym);
+    /* 마감된 현장은 "ERP 로 실제 나갈 행수"를 서버에서 받아 쓴다.
+       집계 기준을 화면과 서버가 각자 갖고 있으면 숫자가 어긋난다 — 서버가 기준이다. */
+    var closed=all.filter(function(g){
+      return g.ms && ['마감','ERP확정'].indexOf(g.ms.stage)>=0; });
+    return Promise.all(closed.map(function(g){
+      return api('/api/erp/export?site='+encodeURIComponent(g.sid)+'&ym='+ym)
+        .then(function(x){ var t=SITEST[g.sid+'|'+ym];
+          if(t){ t.erpAtt=(x.att||[]).length; t.erpOt=(x.ot||[]).length; } })
+        .catch(function(){});
+    })).then(function(){ return all; });
+    /* 감사 로그는 J/C·시스템관리자만 조회 권한이 있다 (서버 requireRole) */
+    if(!CUR || ['jc','admin'].indexOf(CUR.role)<0){ AUDIT.length=0; return; }
+    return api('/api/audit').then(function(a){ liveAudit(a); }).catch(function(){});
+  });
 }
-var SYNC_T=null;
-/* 변경이 몰아칠 때(일괄 승인 등) 한 번으로 묶어 보낸다 */
-function srvPush(){
-  if(!SRV.on) return;
-  clearTimeout(SYNC_T);
-  SYNC_T=setTimeout(srvFlush, 350);
+
+function liveAudit(rows){
+  AUDIT.length=0;
+  (rows||[]).forEach(function(a){
+    AUDIT.push({t:(a.at||'').replace('T',' ').slice(0,16), u:a.by_user||'', r:'',
+      act:a.action||'', tgt:a.target||'', bf:'—', af:'—', why:a.detail||'', f:''});
+  });
 }
-function srvFlush(){
-  if(!SRV.on) return;
-  if(SRV.busy){ SRV.again=true; return; }
-  SRV.busy=true; SRV.again=false;
-  var before=SRV.ver;
-  if(CUR) srvChip();
-  fetch(API, {method:'POST', headers:{'content-type':'application/json','x-zt-pin':srvPin()},
-      body: JSON.stringify({by:(CUR?CUR.name:''), state:collectDelta()})})
-    .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
-    .then(function(j){
-      SRV.ver=j.ver||SRV.ver;
-      SRV.at=(j.state&&j.state.updated_at)||''; SRV.by=(j.state&&j.state.updated_by)||'';
-      SRV.err='';
-      /* 응답을 화면에 되덮지 않는다 — 전송 중에도 화면은 계속 바뀌므로
-         서버 스냅샷을 덮으면 그 사이 변경이 사라진다. 최신 상태는 이미 여기 있다.
-         다만 버전이 우리가 예상한 것보다 더 뛰었다면 그사이 다른 사람이 쓴 것이므로
-         한 번 더 받아온다. */
-      if(j.ver !== before+1) SRV.stale=true;
-    })
-    .catch(function(e){
-      SRV.err=String(e);
-      if(String(e)==='401'){ SRV.on=false; toast('저장 권한(PIN)이 맞지 않습니다 — 로컬 모드로 전환합니다.'); }
-      else toast('서버 저장에 실패했습니다. 화면 값은 유지되지만 저장되지 않았습니다.');
-    })
-    .then(function(){
-      SRV.busy=false;
-      if(SRV.again){ SRV.again=false; srvFlush(); return; }
-      if(SRV.stale){ SRV.stale=false; srvPull(true); return; }
-      if(CUR) render();
+
+function liveApply(all, ym){
+  var nd=daysIn(ym);
+  REQS.length=0; RECVLOG.length=0;
+  Object.keys(DB).forEach(function(k){ if(k.indexOf('|'+ym)>0) delete DB[k]; });
+
+  all.forEach(function(g){
+    /* 원장 · 계획 → DB */
+    var byEmp={};
+    siteEmps(g.sid).forEach(function(e){
+      var rec={days:{}, exc:[]};
+      for(var d=1; d<=nd; d++){
+        rec.days[d]={d:d, plan:'', code:'', tin:null, tout:null, work:0, ot:0, night:0, hol:0,
+          st:'none', ex:[], excIds:[], src:'app', memo:'', conflict:null, fixed:false,
+          resolved:false, reqId:null, recvAt:null, raw:null, lid:null};
+      }
+      DB[e.no+'|'+ym]=rec; byEmp[e.no]=rec;
     });
+    (g.plan||[]).forEach(function(p){
+      var rec=byEmp[p.emp_id]; if(!rec) return;
+      var d=+p.wdate.slice(8); if(!rec.days[d]) return;
+      rec.days[d].plan=p.plan_code;
+      rec.days[d].planIn=p.plan_in; rec.days[d].planOut=p.plan_out;
+    });
+    (g.ledger||[]).forEach(function(l){
+      var rec=byEmp[l.emp_id]; if(!rec) return;
+      var d=+l.wdate.slice(8), x=rec.days[d]; if(!x) return;
+      var code=l.confirmed_code||l.proposed_code||'';
+      var tin=(l.confirmed_code!=null? l.confirmed_in : l.proposed_in);
+      var tout=(l.confirmed_code!=null? l.confirmed_out : l.proposed_out);
+      var cd=CODE_MAP[code];
+      var hol=isHolLive(l.wdate) || dow(ym,d)===0;
+      var c=calcDay(code, tin, tout, hol, cd?cd.counts:false);
+      x.lid=l.id; x.code=code; x.tin=mHM(tin); x.tout=mHM(tout);
+      x.work=c.work; x.ot=c.ot; x.night=c.night; x.hol=c.hol;
+      x.src=SRV_CH[l.channel]||'manual';
+      x.fixed=!!l.confirmed_code;
+      x.recvAt=(l.received_at||'').replace('T',' ').slice(0,16);
+      x.st = l.status==='오류'?'exc' : l.status==='경고'?'warn' : l.status==='수정됨'?'fix'
+           : l.status==='정상'?'ok' : 'ok';
+      try{ var rp=JSON.parse(l.raw_payload||'null');
+        if(rp) x.raw={punchIn:x.tin, punchOut:x.tout,
+          gps:(l.gps_status==='out'?'반경 밖':'반경 내'), dev:'제모스 (채널 '+l.channel+')', rows:rp}; }catch(e){}
+    });
+    /* 예외 */
+    (g.exc||[]).forEach(function(e){
+      var rec=byEmp[e.emp_id]; if(!rec) return;
+      EXC_LIVE[e.rule_id]=EXC_LIVE[e.rule_id]||{k:e.rule_id, n:ruleName(e.rule_id),
+        sev:(e.grade==='오류'?'상':'중'), d:e.message, v:e.rule_id, grade:e.grade};
+      if(!e.wdate){ return; }
+      var d=+e.wdate.slice(8), x=rec.days[d]; if(!x) return;
+      if(e.status==='처리완료'){ x.resolved=true; if(x.st==='exc') x.st='fix'; return; }
+      if(x.ex.indexOf(e.rule_id)<0) x.ex.push(e.rule_id);
+      x.excIds.push({id:e.id, rule:e.rule_id, grade:e.grade, msg:e.message});
+      x.memo=x.memo||e.message;
+      if(e.grade==='오류') x.st='exc'; else if(x.st==='ok') x.st='warn';
+      rec.exc.push({d:d, k:e.rule_id});
+    });
+    /* 현장 상태 */
+    var st=g.ms||{stage:'수집'};
+    SITEST[g.sid+'|'+ym]={
+      mgrOk: ['1차확정','2차승인','마감','ERP확정'].indexOf(st.stage)>=0,
+      jcOk:  ['2차승인','마감','ERP확정'].indexOf(st.stage)>=0,
+      closed:['마감','ERP확정'].indexOf(st.stage)>=0,
+      returned: st.return_count||0,
+      mgrBy: st.confirm1_by, mgrAt:(st.confirm1_at||'').slice(0,10), mgrOpin: st.confirm1_opinion||'',
+      jcBy: st.confirm2_by, jcAt:(st.confirm2_at||'').slice(0,10), jcOpin: st.confirm2_opinion||'',
+      closedAt:(st.closed_at||'').slice(0,10), erpVer: st.erp_version||0,
+      stage: st.stage, hash: st.snapshot_hash, erpStatus: st.erp_status, lastRun: st.last_run_id
+    };
+    /* 요청 */
+    (g.corr||[]).forEach(function(c){
+      REQS.push({id:'C'+c.id, sid:c.id, kind:'corr', emp:c.emp_id, ym:ym, d:+c.wdate.slice(8),
+        type:'fix', st:(c.status==='승인대기'?'접수':c.status), why:c.reason,
+        before:c.field||'—', after:(c.requested_code||'')+' '+(mHM(c.requested_in)||'')+'~'+(mHM(c.requested_out)||''),
+        by:c.reviewed_by, at:(c.requested_at||'').slice(0,16), memo:c.review_note||''});
+    });
+    (g.ot||[]).forEach(function(o){
+      REQS.push({id:'O'+o.id, sid:o.id, kind:'ot', emp:o.emp_id, ym:ym, d:+o.wdate.slice(8),
+        type:'ot', st:(o.status==='승인대기'?'접수':o.status), why:o.reason,
+        before:o.timing, after:(mHM(o.start_min)||'')+'~'+(mHM(o.end_min)||''),
+        by:o.reviewed_by, at:(o.requested_at||'').slice(0,16), memo:''});
+    });
+    /* 수신 로그 */
+    (g.recv||[]).forEach(function(r){
+      RECVLOG.push({ym:ym, d:+r.rdate.slice(8), site:g.sid,
+        at:(r.received_at||'').replace('T',' ').slice(0,16),
+        expect:r.n_expected||0, got:r.n_records||0,
+        res:(r.ok? (r.n_expected && r.n_records<r.n_expected ? '부분':'성공') : '실패'),
+        err:(r.n_gps_out?('위치이탈 '+r.n_gps_out+'건 '):'')+(r.n_missing_out?('퇴근결손 '+r.n_missing_out+'건 '):'')+
+            (r.n_dup?('중복태그 '+r.n_dup+'건'):''),
+        retry:0});
+    });
+  });
+  LIVE.loadedYm=ym;
 }
-/* 서버 상태를 받아 화면에 반영 */
-function srvPull(quiet){
-  if(!SRV.on || SRV.busy) return;
-  fetch(API).then(function(r){ return r.ok?r.json():Promise.reject(r.status); })
-    .then(function(full){
-      if(!full || !full.ok) return;
-      SRV.ver=full.ver; SRV.at=(full.state&&full.state.updated_at)||'';
-      SRV.by=(full.state&&full.state.updated_by)||'';
-      applyDelta(full.state);
-      if(CUR) render();
-      if(!quiet) toast((SRV.by?SRV.by+'님의 ':'')+'변경 사항을 반영했습니다.');
-    })
-    .catch(function(){});
+var EXC_LIVE={};
+function ruleName(id){
+  for(var i=0;i<RULES.length;i++) if(RULES[i].id===id) return RULES[i].n;
+  return id;
 }
-function srvStartPoll(){
-  if(SRV.poll) clearInterval(SRV.poll);
-  SRV.poll=setInterval(function(){
-    if(!SRV.on || SRV.busy || SYNC_T || document.hidden) return;
-    fetch(API+'?ver=1').then(function(r){ return r.ok?r.json():Promise.reject(r.status); })
-      .then(function(j){ if(j.ok && (j.ver||0)!==SRV.ver) srvPull(false); })
-      .catch(function(){});
-  }, 12000);
-}
+var HOL_LIVE={};
+function isHolLive(d){ return !!HOL_LIVE[d]; }
+
+/* ---- 감사 로그 기록 (데모 모드 전용 — 라이브는 서버가 기록한다) ---- */
+function audit(rec){ if(!LIVE.on) AUDIT.unshift(rec); }
+
+/* ---- 저장 상태 칩 ---- */
 function srvChip(){
   var el=document.getElementById('srvChip'); if(!el) return;
-  el.className='tag '+(SRV.busy?'t-warn':SRV.on?'t-ok':'t-gy');
-  el.textContent = SRV.busy ? '저장 중…' : SRV.on ? ('서버 저장 v'+SRV.ver) : '로컬 모드';
+  el.className='tag '+(LIVE.busy?'t-warn':LIVE.on?'t-ok':'t-gy');
+  el.textContent = LIVE.busy ? '통신 중…' : LIVE.on ? '실서버 연결' : '데모 모드';
 }
-/* 감사 로그 기록 = 상태 변경 지점 → 여기서 서버 반영 */
-function audit(rec){ AUDIT.unshift(rec); srvPush(); }
-function srvReset(){
-  if(!SRV.on){ toast('로컬 모드에서는 초기화할 수 없습니다.'); return; }
-  fetch(API, {method:'POST', headers:{'content-type':'application/json','x-zt-pin':srvPin()},
-      body: JSON.stringify({action:'reset', by:(CUR?CUR.name:'')})})
-    .then(function(r){ return r.ok?r.json():Promise.reject(r.status); })
-    .then(function(){ closeModal(); toast('서버 상태를 초기화했습니다. 새로고침하면 시드값으로 돌아갑니다.');
-      SRV.ver=0; if(CUR) render(); })
-    .catch(function(){ toast('초기화에 실패했습니다.'); });
+
+/* ---- 로그인 계정 목록 ---- */
+function renderAccts(){
+  var host=document.getElementById('acctList'); if(!host) return;
+  var cfg='<button class="acct" onclick="openApiCfg()" style="border-style:dashed">'+
+    '<span class="av" style="background:'+(LIVE.on?'#4a8a60':'#6b7a86')+'">API</span>'+
+    '<span style="min-width:0"><span class="nm">'+(LIVE.on?'백엔드 연결됨':'백엔드 주소 설정')+'</span>'+
+    '<span class="ps">'+(LIVE.on? esc(LIVE.base) : (LIVE.base? '연결 실패 — '+esc(LIVE.err) : '설정하지 않으면 데모 모드로 동작합니다'))+
+    '</span></span></button>';
+  if(LIVE.on && LIVE.users.length){
+    host.innerHTML = LIVE.users.map(function(u){
+      var role=SRV_ROLE[u.role]||'worker';
+      var color={manager:'#5b7f52', jc:'#7a6a9e', admin:'#0f2438', worker:'#48688d'}[role];
+      return '<button class="acct" onclick="liveLogin(\''+u.id+'\')">'+
+        '<span class="av" style="background:'+color+'">'+ROLE_N[role].slice(0,1)+'</span>'+
+        '<span style="min-width:0"><span class="nm">'+esc(u.name)+'<span>'+ROLE_N[role]+'</span></span>'+
+        '<span class="ps">'+esc(u.id)+(u.site?' · '+esc(u.site):'')+'</span></span></button>';
+    }).join('') + cfg;
+    return;
+  }
+  host.innerHTML = USERS.map(function(u){
+    return '<button class="acct" onclick="fillAcct(\''+u.id+'\')">'+
+      '<span class="av" style="background:'+u.color+'">'+ROLE_N[u.role].slice(0,1)+'</span>'+
+      '<span style="min-width:0"><span class="nm">'+esc(u.name)+'<span>'+ROLE_N[u.role]+'</span></span>'+
+      '<span class="ps">'+esc(u.pos)+'</span></span></button>';
+  }).join('') + cfg;
 }
-function openSrvReset(){
-  openModal('<div class="mh"><div><h3>서버 상태 초기화</h3>'+
-    '<div class="ms">저장된 변경분을 모두 지웁니다</div></div>'+
+function openApiCfg(){
+  openModal('<div class="mh"><div><h3>백엔드 연결</h3>'+
+    '<div class="ms">att-system API 서버 주소</div></div>'+
     '<button class="mx" onclick="closeModal()" aria-label="닫기">✕</button></div>'+
-    '<div class="mb"><div class="note e"><b>되돌릴 수 없습니다.</b> 승인·마감·ERP 전송 이력·감사 로그 등 '+
-      '저장된 변경분이 전부 삭제되고, 새로고침 시 시드 데이터 상태로 돌아갑니다.</div>'+
-      '<div class="foot">시연을 처음부터 다시 하거나, 테스트로 어질러진 상태를 정리할 때 씁니다.</div></div>'+
-    '<div class="mf"><button class="btn dg" onclick="srvReset()">초기화 실행</button>'+
-    '<button class="btn" onclick="closeModal()">취소</button></div>');
+    '<div class="mb">'+
+      '<div class="note i">주소를 비워두면 <b>데모 모드</b>로 동작합니다 — 파일만 열어도 전 화면이 돌지만 '+
+      '데이터는 이 브라우저 안에서만 삽니다.<br>주소를 넣으면 <b>실제 API·D1</b>의 값으로 동작합니다.</div>'+
+      '<div class="flabel">API 주소</div>'+
+      '<input class="sel" id="apiUrl" value="'+esc(LIVE.base)+'" placeholder="예: http://localhost:8787">'+
+      '<div class="foot">로컬 실행: <span class="mono">cd att-system/backend &amp;&amp; npx wrangler dev --local --port 8787</span></div>'+
+    '</div>'+
+    '<div class="mf"><button class="btn pr" onclick="saveApiCfg()">연결</button>'+
+    '<button class="btn" onclick="clearApiCfg()">데모 모드로</button></div>');
+}
+function saveApiCfg(){
+  setApiBase(document.getElementById('apiUrl').value.trim());
+  closeModal(); liveInit();
+}
+function clearApiCfg(){ setApiBase(''); LIVE.on=false; LIVE.base=''; closeModal(); renderAccts();
+  toast('데모 모드로 전환했습니다.'); }
+
+/* ---- 라이브 새로고침 ---- */
+function liveRefresh(msg){
+  return liveLoadMonth().then(function(){ render(); if(msg) toast(msg); })
+    .catch(function(e){ toast('새로고침 실패: '+(e.message||e)); });
+}
+function liveFail(e){ toast(String(e && e.message ? e.message : e)); }
+
+/* ---- 검증 실행 · 제모스 배치 수신 (라이브 전용 동작) ---- */
+function liveValidate(sid){
+  sid=sid||curSite();
+  api('/api/validate', {method:'POST', body:{site:sid, ym:YM}})
+    .then(function(r){
+      return liveLoadMonth().then(function(){
+        render();
+        toast('검증 완료 — 원장 '+r.ledgerCount+'건 · 오류 '+r.errN+' · 경고 '+r.warnN+' · 자동승인 '+r.autoApproved);
+      });
+    }).catch(liveFail);
+}
+function liveReceive(sid){
+  sid=sid||curSite();
+  var nd=daysIn(YM), chain=Promise.resolve(), got=0;
+  for(var d=1; d<=nd; d++){
+    (function(dd){
+      chain=chain.then(function(){
+        return api('/api/jemos/receive', {method:'POST',
+          body:{site:sid, date:YM+'-'+String(dd).padStart(2,'0')}})
+          .then(function(r){ got+=(r.received||0); }).catch(function(){});
+      });
+    })(d);
+  }
+  toast('제모스 일 배치를 '+nd+'일치 수신합니다…');
+  chain.then(function(){
+    return api('/api/validate', {method:'POST', body:{site:sid, ym:YM}});
+  }).then(function(){ return liveLoadMonth(); })
+    .then(function(){ render(); toast('수신 '+got+'건 적재 후 재검증 완료'); })
+    .catch(liveFail);
+}
+function curSite(){
+  if(CUR && CUR.role==='manager' && CUR.site) return CUR.site;
+  if(SCOPE!=='ALL') return SCOPE;
+  return SITES[0] ? SITES[0].id : '';
+}
+
+/* ---- 라이브 동작 치환 ---- */
+function installLiveActions(){
+
+  saveDay=function(no, d){
+    var x=recOf(no).days[d];
+    var code=document.getElementById('dCode').value;
+    var tin=document.getElementById('dIn').value.trim();
+    var tout=document.getElementById('dOut').value.trim();
+    var why=document.getElementById('dWhy').value.trim();
+    if(!why){ toast('보정 사유를 입력하세요.'); return; }
+    var body={code:code, inMin:hmM(tin), outMin:hmM(tout), reason:why};
+    var p = x.lid
+      ? api('/api/ledger/'+x.lid+'/confirm', {method:'POST', body:body})
+      : api('/api/ledger/manual', {method:'POST', body:{empId:no,
+          date:YM+'-'+String(d).padStart(2,'0'), code:code, inMin:body.inMin,
+          outMin:body.outMin, reason:why}});
+    p.then(function(r){
+      closeModal();
+      return api('/api/validate', {method:'POST', body:{site:EMP_MAP[no].site, ym:YM}});
+    }).then(function(){ return liveLoadMonth(); })
+      .then(function(){ render(); toast('보정 저장 후 재검증했습니다. 원본은 그대로입니다.'); })
+      .catch(liveFail);
+  };
+
+  resolveDay=function(no, d){
+    var x=recOf(no).days[d];
+    var warn=(x.excIds||[]).filter(function(e){ return e.grade!=='오류'; });
+    var err=(x.excIds||[]).filter(function(e){ return e.grade==='오류'; });
+    if(err.length){
+      toast('오류 등급은 사유만으로 통과할 수 없습니다 — 실제 근태를 보정해야 합니다.');
+      return;
+    }
+    if(!warn.length){ toast('해소할 경고가 없습니다.'); return; }
+    var why=(document.getElementById('dWhy')||{}).value || '';
+    if(!why.trim()){ toast('확인 사유를 입력하세요.'); return; }
+    Promise.all(warn.map(function(e){
+      return api('/api/exceptions/'+e.id+'/resolve', {method:'POST', body:{reason:why}});
+    })).then(function(){ closeModal(); return liveLoadMonth(); })
+      .then(function(){ render(); toast('경고 '+warn.length+'건을 확인 처리했습니다.'); })
+      .catch(liveFail);
+  };
+
+  bulkResolve=function(sid, k){
+    if(isBlockExc(k)){
+      toast('오류 등급('+k+')은 일괄 통과할 수 없습니다 — 건별로 근태를 보정해야 합니다.');
+      return;
+    }
+    var ids=[];
+    excList(sid, true).forEach(function(o){
+      if(o.day.ex[0]!==k) return;
+      (o.day.excIds||[]).forEach(function(e){ if(e.rule===k && e.grade!=='오류') ids.push(e.id); });
+    });
+    if(!ids.length){ toast('대상이 없습니다.'); return; }
+    openModal('<div class="mh"><div><h3>경고 일괄 확인</h3>'+
+      '<div class="ms">'+esc(excOf(k).n)+' · '+ids.length+'건</div></div>'+
+      '<button class="mx" onclick="closeModal()" aria-label="닫기">✕</button></div>'+
+      '<div class="mb"><div class="note w">경고는 <b>사유를 남기면</b> 통과합니다. 사유는 감사 로그에 남습니다.</div>'+
+      '<div class="flabel">확인 사유 (필수)</div>'+
+      '<textarea class="txa" id="blkWhy" placeholder="예: 창고동 비콘 음영 구간 — 현장 확인 완료"></textarea></div>'+
+      '<div class="mf"><button class="btn pr" onclick="bulkResolveGo(\''+k+'\')">일괄 확인</button>'+
+      '<button class="btn" onclick="closeModal()">취소</button></div>');
+    window.__bulkIds=ids;
+  };
+
+  decideReq=function(id, dec){
+    var r=REQS.filter(function(x){ return x.id===id; })[0]; if(!r) return;
+    var base=(r.kind==='ot'?'/api/ot-requests/':'/api/corrections/')+r.sid;
+    var p;
+    if(dec==='승인') p=api(base+'/approve', {method:'POST', body:{}});
+    else {
+      var note=prompt('반려 사유를 입력하세요');
+      if(!note || !note.trim()){ toast('반려 사유는 필수입니다.'); return; }
+      p=api(base+'/reject', {method:'POST', body:{note:note}});
+    }
+    p.then(function(){ return api('/api/validate', {method:'POST', body:{site:EMP_MAP[r.emp].site, ym:YM}}); })
+     .then(function(){ return liveLoadMonth(); })
+     .then(function(){ render(); toast('요청을 '+dec+'하고 재검증했습니다.'); })
+     .catch(liveFail);
+  };
+
+  submitReq=function(no, type){
+    var d=+document.getElementById('rqDay').value;
+    var after=document.getElementById('rqAfter').value.trim();
+    var why=document.getElementById('rqWhy').value.trim();
+    if(!after || !why){ toast('요청 내용과 사유를 모두 입력하세요.'); return; }
+    var wdate=YM+'-'+String(d).padStart(2,'0');
+    var p;
+    if(type==='fix'){
+      var t=after.split('~');
+      p=api('/api/me/corrections', {method:'POST', body:{wdate:wdate, field:'출퇴근',
+        code:(recOf(no).days[d].code||'WK'),
+        inHM:(t[0]||'').trim()||null, outHM:(t[1]||'').trim()||null, reason:why}});
+    } else {
+      var o=after.split('~');
+      p=api('/api/me/ot-requests', {method:'POST', body:{wdate:wdate, timing:'사후',
+        startHM:(o[0]||'').trim()||'18:00', endHM:(o[1]||'').trim()||'20:00', reason:why}});
+    }
+    p.then(function(r){ closeModal(); return liveLoadMonth(); })
+     .then(function(){ render(); toast('요청을 등록했습니다. 현장관리자 확인 후 반영됩니다.'); })
+     .catch(liveFail);
+  };
+
+  doMgrOk=function(sid){
+    var el=document.getElementById('mgrOpin');
+    api('/api/month/confirm1', {method:'POST', body:{site:sid, ym:YM, opinion:(el?el.value.trim():'')}})
+      .then(function(){ return liveLoadMonth(); })
+      .then(function(){ render(); toast('1차 확정 완료 — J/C 검토로 넘어갑니다.'); })
+      .catch(liveFail);
+  };
+  undoMgr=function(){ toast('서버에는 1차 확정 취소가 없습니다. J/C 반송으로 되돌립니다.'); };
+  undoClose=function(){ toast('서버에는 마감 취소가 없습니다. 마감 후 오류는 차월 소급분으로 처리합니다.'); };
+
+  doJcOk=function(sid){
+    api('/api/month/confirm2', {method:'POST', body:{site:sid, ym:YM}})
+      .then(function(){ closeModal(); return liveLoadMonth(); })
+      .then(function(){ render(); toast('2차 승인 완료 — 마감할 수 있습니다.'); })
+      .catch(liveFail);
+  };
+  doReturn=function(sid){
+    var why=document.getElementById('rtWhy').value.trim();
+    if(!why){ toast('반송 사유를 입력하세요.'); return; }
+    api('/api/month/reject', {method:'POST', body:{site:sid, ym:YM, reason:why}})
+      .then(function(){ closeModal(); return liveLoadMonth(); })
+      .then(function(){ render(); toast('현장으로 반송했습니다.'); })
+      .catch(liveFail);
+  };
+  doClose=function(sid){
+    api('/api/month/close', {method:'POST', body:{site:sid, ym:YM}})
+      .then(function(r){ return liveLoadMonth().then(function(){ render();
+        toast('마감 완료 — 스냅샷 '+r.rows+'건 봉인 ('+r.hash+')'); }); })
+      .catch(liveFail);
+  };
+
+  doSend=function(sid){
+    api('/api/erp/send', {method:'POST', body:{site:sid, ym:YM}})
+      .then(function(r){
+        closeModal();
+        return liveLoadMonth().then(function(){
+          render();
+          if(r.mode==='FILE'){
+            openModal('<div class="mh"><div><h3>ERP 직접 전송 불가</h3>'+
+              '<div class="ms">'+esc(siteName(sid))+' · '+ymLabel(YM)+'</div></div>'+
+              '<button class="mx" onclick="closeModal()" aria-label="닫기">✕</button></div>'+
+              '<div class="mb"><div class="note e"><b>ERP API가 아직 열리지 않았습니다.</b><br>'+
+              esc(r.note||'')+'</div>'+
+              '<dl class="kv"><dt>월근태 행</dt><dd>'+num(r.rowsAtt||0,0)+'행</dd>'+
+              '<dt>시간외 행</dt><dd>'+num(r.rowsOt||0,0)+'행</dd>'+
+              '<dt>현재 모드</dt><dd class="mono">ERP_MODE=FILE (폴백)</dd></dl>'+
+              '<div class="note w" style="margin-top:12px">이건 <b>코드 문제가 아니라 인프라 문제</b>입니다. '+
+              'ERP 근태 DB 쓰기 권한과 테이블 스펙이 확정돼야 DIRECT 모드로 전환됩니다. (기준문서 §12 ★)</div></div>'+
+              '<div class="mf"><button class="btn" onclick="closeModal()">닫기</button></div>');
+          } else {
+            toast('ERP 전송 '+(r.ok?'성공':'응답 수신')+' — 월근태 '+r.rowsAtt+'행 · 시간외 '+r.rowsOt+'행');
+          }
+        });
+      }).catch(liveFail);
+  };
+
+  saveMap=function(i){
+    var u=UNMAPPED[i];
+    var std=document.getElementById('mpStd').value, scope=document.getElementById('mpScope').value;
+    api('/api/codes/mapping', {method:'POST',
+      body:{site:(scope==='전체'?'*':scope), rawLabel:u.src, code:std}})
+      .then(function(){ UNMAPPED.splice(i,1); closeModal(); render();
+        toast('매핑 규칙을 등록했습니다. 재검증하면 V-10이 해소됩니다.'); })
+      .catch(liveFail);
+  };
+  toggleRule=function(){ toast('라이브 모드에서는 룰 On/Off 대신 기준값(rule_settings)을 조정합니다.'); };
+  savePlan=function(){ toast('근무계획은 서버에서 1건 단위로 변경합니다 (PUT /api/plan).'); closeModal(); };
+  saveShiftGen=function(){ toast('교대패턴 일괄 생성은 서버 계획 API 확장 후 지원합니다.'); closeModal(); };
+}
+function bulkResolveGo(k){
+  var why=document.getElementById('blkWhy').value.trim();
+  if(!why){ toast('확인 사유를 입력하세요.'); return; }
+  var ids=window.__bulkIds||[];
+  Promise.all(ids.map(function(id){
+    return api('/api/exceptions/'+id+'/resolve', {method:'POST', body:{reason:why}});
+  })).then(function(){ closeModal(); return liveLoadMonth(); })
+    .then(function(){ render(); toast(excOf(k).n+' '+ids.length+'건을 확인 처리했습니다.'); })
+    .catch(liveFail);
 }
 
 /* ===================================================================
    9. 시작
    =================================================================== */
 renderAccts();
-srvInit();
+liveInit();
 document.getElementById('lgPw').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
 document.getElementById('lgId').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
 document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal(); closeDrawer(); } });
