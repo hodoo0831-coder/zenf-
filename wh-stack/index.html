@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1F4E78">
+<title>포장재 창고 적치 관리 시스템</title>
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="icon" href="./icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="manifest" href="./manifest-index.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="적치관리">
+<meta name="application-name" content="적치관리">
+<script src="./config.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;min-width:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{min-height:100vh;background:#2A5178;
+  font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+  color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px 20px 36px;-webkit-font-smoothing:antialiased}
+.num{font-variant-numeric:tabular-nums}
+.logo{margin-bottom:20px;opacity:.95}
+.eyebrow{font-size:12.5px;letter-spacing:.32em;font-weight:600;color:rgba(255,255,255,.62);
+  text-align:center;text-transform:uppercase}
+h1{margin-top:14px;font-size:clamp(26px,5vw,38px);font-weight:800;letter-spacing:-.02em;text-align:center}
+.lead{margin-top:12px;font-size:15px;color:rgba(255,255,255,.62);text-align:center}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,clamp(238px,26vw,300px)));gap:clamp(14px,2.4vw,28px);margin-top:clamp(28px,5vw,52px)}
+.c{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:clamp(300px,46vh,452px);padding:56px clamp(16px,2vw,24px) 34px;text-decoration:none;color:inherit;
+  background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.14);border-radius:22px;
+  transition:background .22s,border-color .22s,transform .22s}
+.c:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);transform:translateY(-3px)}
+.c .badge{position:absolute;top:22px;left:22px;font-size:10.5px;font-weight:800;letter-spacing:.06em;
+  padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.16);color:rgba(255,255,255,.9)}
+.c .lockmk{margin-top:14px;font-size:11px;color:rgba(255,255,255,.42)}
+.c .arw{position:absolute;top:24px;right:24px;font-size:17px;color:rgba(255,255,255,.5);transition:.22s}
+.c:hover .arw{color:#fff;transform:translateX(4px)}
+.c .ic{margin-bottom:26px;opacity:.95}
+.c h2{font-size:23px;font-weight:800;letter-spacing:-.02em}
+.c p{margin-top:11px;font-size:13.5px;color:rgba(255,255,255,.6)}
+.c .tags{margin-top:20px;display:flex;flex-direction:column;gap:6px;align-items:center;
+  font-size:12px;color:rgba(255,255,255,.42);line-height:1.6;text-align:center}
+.stat{width:100%;max-width:552px;margin-top:30px;background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:18px 20px;display:none}
+.stat .sh{display:flex;align-items:center;gap:9px;font-size:12.5px;color:rgba(255,255,255,.7);
+  padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.12)}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.45)}
+.dot.on{background:#7DE3AB;animation:pulse 2s ease-out infinite}
+.dot.off{background:#FF9A90}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(125,227,171,.6)}70%{box-shadow:0 0 0 8px rgba(125,227,171,0)}100%{box-shadow:0 0 0 0 rgba(125,227,171,0)}}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:15px 0 4px}
+.k .kl{font-size:11px;color:rgba(255,255,255,.55)}
+.k .kv{font-size:20px;font-weight:800;letter-spacing:-.02em;margin-top:3px}
+.bars{display:grid;gap:7px;padding-top:12px;border-top:1px solid rgba(255,255,255,.12)}
+.b{display:grid;grid-template-columns:104px 1fr 52px;gap:10px;align-items:center;font-size:11.5px}
+.b .t{color:rgba(255,255,255,.62);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.b .r{height:7px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden}
+.b .r i{display:block;height:100%;border-radius:4px}
+.b .p{text-align:right;font-weight:700}
+.tick{margin-top:12px;font-size:10.5px;color:rgba(255,255,255,.32);height:14px}
+.foot{margin-top:40px;padding-bottom:env(safe-area-inset-bottom);text-align:center}
+.foot .ln{width:52px;height:1px;background:rgba(255,255,255,.3);margin:0 auto 16px}
+.foot .f1{font-size:11.5px;font-weight:700;letter-spacing:.16em;color:rgba(255,255,255,.7)}
+.foot .f2{margin-top:8px;font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.03em;line-height:1.8}
+@media(max-width:620px){
+  body{padding:36px 18px 28px}
+  h1{font-size:29px}
+  .cards{grid-template-columns:1fr;gap:16px;margin-top:36px;width:100%;max-width:340px}
+  .c{min-height:auto;padding:46px 20px 24px}
+  .c .ic{margin-bottom:16px}
+  .c h2{font-size:20px}
+  .c .tags{margin-top:16px;font-size:11.5px}
+  .c .badge{top:16px;left:16px} .c .arw{top:16px;right:18px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="logo"><svg viewBox="0 0 256 256" width="56" height="56" fill="#fff" ><path d="M128 20 L246 101 v31 L128 56 L10 132 v-31 Z"/>
+  <rect x="24" y="100" width="28" height="140"/>
+  <rect x="204" y="100" width="28" height="140"/>
+  <rect x="62" y="127" width="132" height="17"/>
+  <path d="M104 160 h20 v10 h10 v-10 h20 v43 h-50 Z"/>
+  <path d="M74 209 h18 v9 h10 v-9 h25 v43 H74 Z"/>
+  <path d="M133 209 h18 v9 h10 v-9 h25 v43 H133 Z"/></svg></div>
+<div class="eyebrow">ZENIEL &times; AMOREPACIFIC DAEJEON</div>
+<h1>포장재 창고 적치 관리</h1>
+<div class="lead">사용할 시스템을 선택하세요</div>
+
+<div class="cards">
+  <a class="c" href="./worker.html">
+    <span class="arw">&rarr;</span>
+    <span class="ic"><svg viewBox="0 0 256 256" width="60" height="60" fill="#fff" ><path d="M128 20 L246 101 v31 L128 56 L10 132 v-31 Z"/>
+  <rect x="24" y="100" width="28" height="140"/>
+  <rect x="204" y="100" width="28" height="140"/>
+  <rect x="62" y="127" width="132" height="17"/>
+  <path d="M104 160 h20 v10 h10 v-10 h20 v43 h-50 Z"/>
+  <path d="M74 209 h18 v9 h10 v-9 h25 v43 H74 Z"/>
+  <path d="M133 209 h18 v9 h10 v-9 h25 v43 H133 Z"/></svg></span>
+    <h2>현장 입력</h2>
+    <p>구역 &middot; 로케이션별 파렛트 수</p>
+    <div class="tags"><span>구역 전체 &middot; 로케이션별 입력</span><span>배치도 &middot; 달력 &middot; 현황표</span></div>
+  </a>
+
+  <a class="c" href="./admin.html">
+    <span class="arw">&rarr;</span>
+    <span class="ic"><svg width="58" height="58" viewBox="0 0 58 58" fill="none">
+      <rect x="8" y="9" width="42" height="40" rx="3" fill="#fff"/>
+      <path d="M8 18 h42 M8 28 h42 M8 38 h42 M22 18 v31 M36 18 v31" stroke="#2A5178" stroke-width="2"/>
+      <rect x="10" y="20" width="10" height="6" rx="1" fill="#2A5178" opacity=".28"/>
+      <rect x="38" y="30" width="10" height="6" rx="1" fill="#2A5178" opacity=".28"/>
+    </svg></span>
+    <h2>관리자</h2>
+    <p>제출 확인 &middot; 적치 현황 분석</p>
+    <div class="tags"><span>배치도 &middot; 추이 &middot; 재배치</span><span>Chart&#128202; Export&#128228; Report&#128221;</span></div>
+    <div class="lockmk">&#128274; 암호 필요</div>
+  </a>
+</div>
+
+<div class="stat" id="stat">
+  <div class="sh"><span class="dot" id="dot"></span><span id="stx">&#9729;&#65039; Cloud 실시간 연동 &middot; 확인 중&hellip;</span>
+    <span style="margin-left:auto;font-weight:700" id="sdate">&mdash;</span></div>
+  <div class="kpis">
+    <div class="k"><div class="kl">제출 구역</div><div class="kv num" id="kZone">&mdash;</div></div>
+    <div class="k"><div class="kl">등록 파렛트</div><div class="kv num" id="kQty">&mdash;</div></div>
+    <div class="k"><div class="kl">전사 적치율</div><div class="kv num" id="kRate">&mdash;</div></div>
+    <div class="k"><div class="kl">100% 초과</div><div class="kv num" id="kOver">&mdash;</div></div>
+  </div>
+  <div class="bars" id="bars"></div>
+</div>
+
+<div class="tick" id="tick">&nbsp;</div>
+
+<div class="foot">
+  <div class="ln"></div>
+  <div class="f1">Developed by LEE MIN AH</div>
+  <div class="f2">제니엘 제조사업부 사업3팀 &middot; <span id="ver">v1.0</span></div>
+</div>
+
+<script>
+const CAP={hnb1:627,fnc2:242,fnc3:155,lbox:481,jig:85,tent:148,oc1:208,ocb:136,ocbb:37,occ:12,cloud:38};
+const NM={hnb1:"HnB동 1층",fnc2:"FnC동 2층 튜브",fnc3:"FnC동 3층 염모제",lbox:"L동 박스창고",jig:"J동 공작반 2층",
+ tent:"임가공[천막]",oc1:"OC동 1층",ocb:"OC동 지하 A",ocbb:"OC동 지하 B",occ:"OC동 지하 C",cloud:"클라우드동"};
+const $=i=>document.getElementById(i), fmt=n=>(n||0).toLocaleString("ko-KR");
+if(window.ZEN_WH_VER) $("ver").textContent=window.ZEN_WH_VER;
+const kst=()=>new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+
+/* 최근 사용 역할 표시 */
+try{
+  const last=localStorage.getItem("zen_wh_last_role");
+  if(last){ const c=document.querySelectorAll(".c")[last==="admin"?1:0];
+    if(c) c.insertAdjacentHTML("afterbegin",'<span class="badge">최근 사용</span>'); }
+}catch(e){}
+document.querySelectorAll(".c").forEach((c,i)=>c.addEventListener("click",()=>{
+  try{ localStorage.setItem("zen_wh_last_role", i?"admin":"worker"); }catch(e){}
+}));
+
+async function loadStat(){
+  const api=(window.ZEN_WH_API||"").replace(/\/+$/,"");
+  $("stat").style.display="";
+  if(!api){ $("stx").textContent="\u2601\uFE0F 서버 미설정 — config.js 확인"; $("dot").className="dot off"; return; }
+  try{
+    const ds=await (await fetch(api+"/api/dates")).json();
+    const date=(ds.ok&&ds.dates&&ds.dates[0]&&ds.dates[0].date)||kst();
+    const st=await (await fetch(api+"/api/state?date="+date)).json();
+    if(!st.ok) throw 0;
+    $("dot").className="dot on";
+    $("stx").textContent="\u2601\uFE0F Cloud 실시간 연동";
+    $("sdate").textContent=date;
+    const subs=st.submits||[], items=st.items||{};
+    let Q=0, over=0, rows=[];
+    Object.keys(NM).forEach(k=>{
+      if(!(items[k]||[]).length) return;
+      const q=(items[k]||[]).reduce((s,x)=>s+(x.qty||0),0);
+      Q+=q; const c=CAP[k], p=q/c; if(p>1) over++;
+      rows.push({n:NM[k], p});
+    });
+    const C=Object.values(CAP).reduce((a,b)=>a+b,0);
+    $("kZone").textContent=subs.length+"/"+Object.keys(NM).length;
+    $("kQty").textContent=fmt(Q);
+    $("kRate").textContent=(Q/C*100).toFixed(0)+"%";
+    $("kOver").textContent=over+"개";
+    $("bars").innerHTML=rows.sort((a,b)=>b.p-a.p).slice(0,6).map(function(r){
+      var col=r.p>1?"#FF9A90":r.p>=.85?"#F4C14E":"#7DE3AB";
+      return '<div class="b"><span class="t">'+r.n+'</span>'+
+        '<span class="r"><i style="width:'+Math.min(100,r.p*100)+'%;background:'+col+'"></i></span>'+
+        '<span class="p num" style="color:'+col+'">'+(r.p*100).toFixed(0)+'%</span></div>';}).join("");
+    $("tick").textContent="자동 갱신 30초 · 마지막 갱신 "+new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  }catch(e){ $("dot").className="dot off"; $("stx").textContent="\u2601\uFE0F Cloud 연결 실패";
+    $("tick").textContent="재시도 중 · 30초마다"; }
+}
+loadStat();
+setInterval(loadStat, 30000);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) loadStat(); });
+</script>
+</body>
+</html>

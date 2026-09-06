@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2aa864">
+<title>포장재 창고 적치 입력 · 작업자</title>
+<style>
+:root{--navy:#1F4E78;--navy2:#2E6DA4;--navyd:#163C5E;--accent:#ED7D31;--accent2:#F4A15D;
+ --bg:#F4F7FB;--panel:#fff;--panel2:#F3F7FC;--line:#DDE6F0;--tx:#1B2A3D;--mut:#5A6E85;--dim:#8C9CB0;
+ --ok:#2aa864;--okd:#1d8a51;--info:#2E6DA4;--infod:#1F4E78;--warn:#ED7D31;--bad:#D9534F;--idle:#C9D3E2;
+ --grad:linear-gradient(135deg,#1F4E78 0%,#2E6DA4 100%)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;min-width:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;font-size:15px;line-height:1.5}
+.num{font-variant-numeric:tabular-nums}
+.wrap{--pad:clamp(10px,2.5vw,14px);width:100%;max-width:720px;margin:0 auto;
+ padding:14px var(--pad) calc(120px + env(safe-area-inset-bottom))}
+@media (min-width:900px){ .wrap{max-width:1000px} }
+@media (min-width:1200px){ .wrap{max-width:1120px} }
+header{position:sticky;top:0;z-index:20;background:var(--grad);color:#fff;
+ padding:calc(13px + env(safe-area-inset-top)) var(--pad) 14px;
+ margin:-14px calc(-1 * var(--pad)) 14px;border-radius:0 0 20px 20px;
+ box-shadow:0 5px 16px rgba(31,56,100,.25)}
+.hrow{display:flex;align-items:center;gap:10px}
+h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.02em;color:#fff}
+.eyebrow{font-size:10.5px;letter-spacing:.14em;color:rgba(255,255,255,.82);text-transform:uppercase;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header button{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;font-weight:700;
+ border-radius:12px;padding:8px 12px;backdrop-filter:blur(4px)}
+header button:active{background:rgba(255,255,255,.3)}
+.mascot{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.94);flex:0 0 auto;
+ display:flex;align-items:center;justify-content:center;overflow:hidden}
+.mascot img{width:100%;height:100%;object-fit:cover}
+.cloudbn{background:linear-gradient(135deg,#1F4E78,#2E6DA4);color:#fff;border-radius:16px;
+ padding:13px 16px;margin-bottom:12px;box-shadow:0 3px 12px rgba(31,78,120,.22)}
+.cb-l{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cb-t{font-size:14px;font-weight:800}
+.cb-s{font-size:11.5px;font-weight:700;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 10px}
+.cb-s.on{background:rgba(126,231,169,.26)} .cb-s.off{background:rgba(255,150,140,.26)}
+.cb-d{font-size:11.5px;color:rgba(255,255,255,.78);margin-top:5px}
+.tabs{display:flex;gap:6px;margin-top:12px;background:rgba(255,255,255,.14);border-radius:13px;padding:4px}
+.tab{flex:1;background:transparent;border:0;color:rgba(255,255,255,.82);font-size:13.5px;font-weight:700;
+ padding:9px 4px;border-radius:10px;cursor:pointer}
+.tab.on{background:#fff;color:var(--navy);box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.datepill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border-radius:999px;
+ padding:4px 12px;font-size:12.5px;font-weight:700;margin-top:8px}
+button,select,input{font-family:inherit;font-size:15px;color:var(--tx)}
+button{background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 14px;cursor:pointer;font-weight:600}
+button.primary{background:var(--navy);border:0;color:#fff;font-weight:800;
+ box-shadow:0 3px 10px rgba(31,56,100,.28)}
+button.primary:active{background:var(--navyd)}
+button.blue{background:var(--info);border:0;color:#fff;font-weight:800;box-shadow:0 3px 10px rgba(79,143,232,.25)}
+button:active{transform:translateY(1px)}
+select,input[type=text],input[type=date]{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px;box-shadow:0 2px 8px rgba(31,56,100,.06)}
+.zlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:10px}
+.z{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 13px 13px;text-align:left;position:relative;
+ box-shadow:0 2px 8px rgba(31,56,100,.06);overflow:hidden}
+.z::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:#e3e9f3}
+.z.s-sub::before{background:var(--info)} .z.s-conf::before{background:var(--ok)} .z.s-draft::before{background:var(--warn)}
+.z b{display:block;font-size:14.5px;font-weight:750;margin-bottom:3px;padding-left:4px;padding-right:50px;word-break:keep-all;line-height:1.3}
+.z .s{font-size:11.5px;color:var(--dim);padding-left:4px;line-height:1.45}
+.z .pill{position:absolute;top:11px;right:9px;font-size:10px;font-weight:800;border-radius:999px;padding:2px 7px;white-space:nowrap}
+.p-none{background:#eef2f8;color:#7c8da3} .p-sub{background:rgba(79,143,232,.14);color:#2a63b0}
+.p-conf{background:rgba(42,168,100,.14);color:#1d7d49}
+.row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eef2f7}
+.row:last-child{border-bottom:0}
+.row .lc{flex:1;min-width:0}
+.row .lc b{display:block;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .lc span{font-size:11.5px;color:var(--dim)}
+.stp{display:flex;align-items:center;gap:6px}
+.stp button{width:40px;height:40px;padding:0;font-size:20px;font-weight:800;border-radius:12px;line-height:1;
+ background:var(--panel2);border-color:var(--line);color:var(--navy)}
+.stp input{width:64px;height:40px;text-align:center;border:1.5px solid var(--line);border-radius:13px;
+ font-variant-numeric:tabular-nums;font-weight:700}
+.bar{position:fixed;left:0;right:0;bottom:0;justify-content:center;background:rgba(255,255,255,.97);border-top:1px solid var(--line);
+ box-shadow:0 -4px 16px rgba(31,56,100,.08);
+ padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;z-index:30}
+.bar .sum{flex:1;font-size:13px}
+.bar .sum b{font-size:17px;font-weight:800}
+.bar button{flex:0 0 auto;padding:13px 24px;font-size:15.5px;border-radius:14px}
+.warnbox{background:#fff8e9;border:1px solid #f0d8a4;color:#8a5f04;border-radius:10px;padding:9px 12px;font-size:12.5px;margin-bottom:10px}
+.okbox{background:rgba(42,168,100,.08);border:1px solid rgba(42,168,100,.3);color:#1d7d49;border-radius:10px;padding:9px 12px;font-size:12.5px;margin-bottom:10px}
+.mapbox{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff;margin-bottom:12px}
+.mapbox svg{display:block}
+.aux{font-size:11.5px;color:var(--dim)}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(12px);background:var(--navy);color:#fff;
+ padding:10px 18px;border-radius:999px;font-size:13.5px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:40}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.set{display:grid;grid-template-columns:88px 1fr;gap:8px 10px;align-items:center;font-size:13px}
+.set input{width:100%}
+@keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.14)}100%{transform:scale(1)}}
+.pop{animation:pop .34s ease-out}
+
+/* 스플래시 */
+#splash{position:fixed;inset:0;z-index:999;background:linear-gradient(135deg,#1F4E78 0%,#2E6DA4 100%);
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#fff;
+ transition:opacity .45s ease,visibility .45s}
+#splash.hide{opacity:0;visibility:hidden}
+#splash .sp-ico{width:88px;height:88px;border-radius:26px;background:rgba(255,255,255,.95);
+ display:flex;align-items:center;justify-content:center;box-shadow:0 12px 34px rgba(0,0,0,.22);
+ animation:spIn .6s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes spIn{0%{transform:scale(.72) translateY(14px);opacity:0}100%{transform:none;opacity:1}}
+#splash .sp-t{font-size:19px;font-weight:800;letter-spacing:-.02em;animation:spUp .55s .12s both}
+#splash .sp-s{font-size:12.5px;color:rgba(255,255,255,.78);margin-top:-10px;animation:spUp .55s .2s both}
+#splash .sp-b{font-size:11px;color:rgba(255,255,255,.6);position:absolute;bottom:34px;text-align:center;line-height:1.7;
+ animation:spUp .55s .3s both}
+@keyframes spUp{0%{transform:translateY(10px);opacity:0}100%{transform:none;opacity:1}}
+#splash .sp-bar{width:132px;height:4px;border-radius:3px;background:rgba(255,255,255,.22);overflow:hidden}
+#splash .sp-bar i{display:block;height:100%;width:0;background:#fff;border-radius:3px;animation:spBar 1.1s ease-out forwards}
+@keyframes spBar{to{width:100%}}
+@media (prefers-reduced-motion:reduce){#splash *{animation:none!important}}
+.expbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.expbar button{flex:1;min-width:96px;padding:11px 8px;font-weight:700}
+.prthead{display:none}
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  header,.bar,.expbar,#listView,#calView,#editView,.foot,.toast,#setCard{display:none!important}
+  body{background:#fff}
+  .wrap{padding:0;max-width:none}
+  .card{border:0;box-shadow:none;padding:0;margin:0}
+  .prthead{display:block;margin-bottom:10px}
+  .prthead h2{margin:0 0 4px;font-size:16px;color:#1F4E78}
+  .prthead .p2{font-size:11px;color:#5b6b85}
+  .stbl th{background:#1F4E78!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .stbl tr.tot td{background:#eaeff8!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .warnbox,.okbox{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.foot{margin:22px 4px 4px;padding:16px 12px 4px;border-top:1px solid var(--line);text-align:center}
+.foot .fs{font-size:12.5px;font-weight:800;color:var(--navy);letter-spacing:-.01em}
+.foot .fo{font-size:11.5px;color:var(--mut);margin-top:5px}
+.foot .fo b{color:var(--mut);font-weight:600}
+.foot .fc{font-size:10.5px;color:var(--dim);margin-top:6px;letter-spacing:.03em}
+@media (min-width:900px){
+  #locs{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:0 18px}
+  #locs .row{border-bottom:1px solid #eef2f7}
+  .calgrid .cal-c{aspect-ratio:1/0.78}
+  .bar{padding-left:calc(50% - 500px);padding-right:calc(50% - 500px)}
+}
+/* 달력 */
+.calhd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.calhd b{flex:1;font-size:16px;font-weight:750;text-align:center;min-width:0}
+.caldow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:4px}
+.caldow span{text-align:center;font-size:11px;color:var(--dim);font-weight:600}
+.calgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal-c{position:relative;aspect-ratio:1/1.08;min-width:0;overflow:hidden;
+ border:1px solid var(--line);border-radius:12px;background:#fff;
+ padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px}
+.cal-c.empty{border:0;background:transparent}
+.cal-c .dn{font-size:clamp(11px,3.4vw,13.5px);font-weight:700;line-height:1.15}
+.cal-c .cb{font-size:clamp(8px,2.3vw,9.5px);font-weight:800;color:#2a63b0;background:rgba(79,143,232,.14);
+ border-radius:999px;padding:0 4px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5}
+.cal-c .cb.dr{color:#9c6a06;background:rgba(227,148,18,.16)}
+.cal-c .cq{font-size:clamp(8px,2.2vw,9.5px);color:var(--dim);white-space:nowrap;max-width:100%;overflow:hidden}
+.cal-c.full{background:rgba(42,168,100,.1);border-color:rgba(42,168,100,.45)}
+.cal-c.full .cb{color:#1d7d49;background:rgba(42,168,100,.16)}
+.cal-c.part{background:rgba(79,143,232,.07);border-color:rgba(79,143,232,.4)}
+.cal-c.draft{background:#fffaf0;border-color:#f0d8a4}
+.cal-c.today .dn{color:var(--navy)}
+.cal-c.sel{outline:2.5px solid var(--navy);outline-offset:-1px}
+.calleg{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--mut);margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.calleg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:middle}
+/* 현황표 */
+#sumTable{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.stbl{width:100%;border-collapse:collapse;font-size:clamp(10.5px,3vw,12.5px);table-layout:fixed}
+.stbl th,.stbl td{padding:6px 4px;border-bottom:1px solid #eef2f7;text-align:right;word-break:keep-all}
+.stbl th{font-size:11px;color:#fff;background:var(--navy);font-weight:700}
+.stbl th:first-child,.stbl td:first-child{text-align:left;width:32%;word-break:keep-all;line-height:1.3}
+.stbl th:nth-child(2),.stbl td:nth-child(2),
+.stbl th:nth-child(3),.stbl td:nth-child(3),
+.stbl th:nth-child(4),.stbl td:nth-child(4){width:15%}
+.stbl th:nth-child(5),.stbl td:nth-child(5),
+.stbl th:nth-child(6),.stbl td:nth-child(6){width:11.5%}
+.stbl tr.tot td{font-weight:800;background:#eaeff8;border-top:1.5px solid var(--navy)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:9px 13px;font-size:13.5px;color:var(--mut);background:#fff}
+.seg button.on{background:var(--navy);color:#fff;font-weight:750}
+.tag.wh{font-size:9.5px;font-weight:800;color:#2a63b0;background:rgba(79,143,232,.14);border-radius:999px;padding:1px 6px}
+.tag.dr{font-size:9.5px;font-weight:800;color:#9c6a06;background:rgba(227,148,18,.16);border-radius:999px;padding:1px 6px}
+</style>
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="icon" href="./icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="manifest" href="./manifest-worker.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="적치입력">
+<meta name="application-name" content="적치입력">
+<script src="./config.js"></script>
+</head>
+<body>
+<div id="splash">
+  <div class="sp-ico">
+    <svg viewBox="0 0 256 256" width="56" height="56" fill="#1F4E78" ><path d="M128 20 L246 101 v31 L128 56 L10 132 v-31 Z"/>
+  <rect x="24" y="100" width="28" height="140"/>
+  <rect x="204" y="100" width="28" height="140"/>
+  <rect x="62" y="127" width="132" height="17"/>
+  <path d="M104 160 h20 v10 h10 v-10 h20 v43 h-50 Z"/>
+  <path d="M74 209 h18 v9 h10 v-9 h25 v43 H74 Z"/>
+  <path d="M133 209 h18 v9 h10 v-9 h25 v43 H133 Z"/></svg>
+  </div>
+  <div class="sp-t">포장재 창고 적치 관리</div>
+  <div class="sp-s">현장 입력</div>
+  <div class="sp-bar"><i></i></div>
+  <div class="sp-b">ZENIEL × AMOREPACIFIC DAEJEON<br>Developed by LEE MIN AH</div>
+</div>
+<div class="wrap">
+  <header>
+    <div class="hrow">
+      <div class="mascot" id="mascot">
+        <svg viewBox="0 0 256 256" width="30" height="30" fill="#1F4E78" ><path d="M128 20 L246 101 v31 L128 56 L10 132 v-31 Z"/>
+  <rect x="24" y="100" width="28" height="140"/>
+  <rect x="204" y="100" width="28" height="140"/>
+  <rect x="62" y="127" width="132" height="17"/>
+  <path d="M104 160 h20 v10 h10 v-10 h20 v43 h-50 Z"/>
+  <path d="M74 209 h18 v9 h10 v-9 h25 v43 H74 Z"/>
+  <path d="M133 209 h18 v9 h10 v-9 h25 v43 H133 Z"/></svg>
+      </div>
+      <div style="flex:1">
+        <div class="eyebrow">ZENIEL × AMOREPACIFIC DAEJEON</div>
+        <h1 id="title">포장재 창고 적치</h1>
+      </div>
+      <button id="backBtn" style="display:none">◀ 구역</button>
+      <button id="homeBtn" style="display:none">◀ 목록</button>
+      <button id="setBtn">설정</button>
+    </div>
+    <div class="datepill" id="hDate">—</div>
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-v="list">📝 입력</button>
+      <button class="tab" data-v="cal">📅 달력</button>
+      <button class="tab" data-v="sum">📊 현황</button>
+    </div>
+  </header>
+
+  <div class="card" id="setCard" style="display:none">
+    <div class="set">
+      <label>서버 주소</label><input type="text" id="apiUrl" placeholder="https://wh-stack.<계정>.workers.dev">
+      <label>이름</label><input type="text" id="who" placeholder="입력자 이름">
+      <label>기준일</label><input type="date" id="theDate">
+      <label>캐릭터 이미지</label><input type="text" id="mimg" placeholder="젠프 이미지 URL (선택)">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="blue" id="saveSet">저장</button><button id="ping">연결 확인</button>
+      <span class="aux" id="pingR" style="align-self:center"></span>
+    </div>
+  </div>
+
+  <div id="listView">
+    <div class="cloudbn" id="cloudBn">
+      <div class="cb-l"><span class="cb-t">☁️ Cloud 실시간 연동</span>
+        <span class="cb-s" id="cbState">☁ 연결 중...</span></div>
+      <div class="cb-d">입력하면 관리자 화면에 자동으로 반영됩니다 · 5초마다 자동 갱신</div>
+    </div>
+    <div class="card" style="padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><b class="num" id="dLabel">—</b> <span class="aux">기준</span></div>
+        <div style="display:flex;gap:7px">
+          <button id="reload">새로고침</button>
+        </div>
+      </div>
+    </div>
+    <div class="zlist" id="zones"></div>
+  </div>
+
+  <div id="calView" style="display:none">
+    <div class="card">
+      <div class="calhd">
+        <button id="prevM">◀</button><b id="calTitle">—</b><button id="nextM">▶</button>
+      </div>
+      <div class="caldow"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+      <div class="calgrid" id="calGrid"></div>
+      <div class="calleg">
+        <span><i style="background:rgba(42,168,100,.5)"></i>전 구역 완료</span>
+        <span><i style="background:rgba(79,143,232,.45)"></i>일부 제출</span>
+        <span><i style="background:#f6e3b6"></i>임시저장</span>
+        <span>숫자 = 제출 구역 / 전체, 아래는 합계 PLT</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:12px">
+        <button class="blue" id="newDate">다른 날짜 등록</button>
+        <span class="aux" id="calInfo"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="sumView" style="display:none">
+    <div class="expbar">
+      <button onclick="expXlsx()">📊 엑셀</button>
+      <button onclick="expPdf()">📄 PDF</button>
+      <button onclick="expPptx()">🎨 PPT</button>
+    </div>
+    <div class="prthead" id="prtHead"></div>
+    <div id="sumHead"></div>
+    <div class="card" id="sumTable"></div>
+    <div class="aux" style="padding:0 4px">적치율표와 동일한 형식 · % = 적재수 ÷ 적재CAPA, %(Max) = 적재수 ÷ Max</div>
+  </div>
+
+  <div id="editView" style="display:none">
+    <div id="editHead"></div>
+    <div class="card" style="padding:10px 12px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span id="modeBar"></span>
+        <button id="mapBtn">🗺️ 배치도</button>
+        <button id="zeroBtn">↺ 전체 0</button>
+        <span class="aux" id="editRef" style="margin-left:auto"></span>
+      </div>
+    </div>
+    <div id="mapWrap" style="display:none"></div>
+    <div class="card" id="locs"></div>
+    <div class="card"><label class="aux">특이사항</label>
+      <input type="text" id="note" placeholder="예: 3열 파손 파렛트 2매 포함" style="width:100%;margin-top:6px"></div>
+  </div>
+  <div class="foot">
+    <div class="fs">포장재 창고 적치 관리 시스템 — 현장용</div>
+    <div class="fo">ZENIEL × AMOREPACIFIC DAEJEON</div>
+    <div class="fo" style="margin-top:2px">제니엘 제조사업부 사업3팀 · Developed by <b>LEE MIN AH</b></div>
+    <div class="fc">© 2026 ZENIEL · <span id="verTxt">v1.0</span> ·
+      <a href="./index.html" style="color:var(--dim)">포털</a> ·
+      <a href="./admin.html" style="color:var(--dim)">관리자 화면</a></div>
+  </div>
+</div>
+
+<div class="bar" id="bar" style="display:none">
+  <div class="sum"><b class="num" id="sumQ">0</b> <span class="aux">/ <span class="num" id="sumC">0</span> PLT</span>
+    <div class="aux" id="sumP">—</div></div>
+  <button class="primary" id="send">제출</button>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+/* ── 스플래시 해제 (가장 먼저 예약) ─────────────────────── */
+function hideSplash(){
+  const sp=document.getElementById("splash");
+  if(!sp || sp.classList.contains("hide")) return;
+  sp.classList.add("hide"); setTimeout(()=>sp.remove(), 500);
+}
+setTimeout(hideSplash, 1250);
+window.addEventListener("load", ()=>setTimeout(hideSplash, 1250));
+window.addEventListener("error", ()=>setTimeout(hideSplash, 300));
+document.getElementById("splash").addEventListener("click", hideSplash);
+
+const ZD = {"hnb1":{"n":"HnB동 1층","b":"HnB","tcap":627,"W":3263.4,"H":1399.0,"locs":[{"c":"3P","p":3,"x":1528.9,"y":62.7,"w":121.4,"h":16.9},{"c":"14P","p":14,"x":1832.4,"y":62.7,"w":546.3,"h":33.8},{"c":"8P","p":8,"x":1104.0,"y":79.6,"w":182.1,"h":16.9},{"c":"4P","p":4,"x":861.2,"y":96.5,"w":121.4,"h":16.1},{"c":"4P","p":4,"x":982.6,"y":96.5,"w":182.1,"h":16.1},{"c":"4P","p":4,"x":1164.7,"y":96.5,"w":121.4,"h":16.1},{"c":"4P","p":4,"x":1286.1,"y":96.5,"w":182.1,"h":16.1},{"c":"2Z-02-01 / 8P","p":8,"x":1832.4,"y":96.5,"w":546.3,"h":16.1},{"c":"08(2P)","p":2,"x":1711.0,"y":112.6,"w":121.4,"h":16.1},{"c":"07(2P)","p":2,"x":1832.4,"y":112.6,"w":121.4,"h":16.1},{"c":"06(2P)","p":2,"x":1953.8,"y":112.6,"w":121.4,"h":16.1},{"c":"05(2P)","p":2,"x":2075.2,"y":112.6,"w":121.4,"h":16.1},{"c":"04(2P)","p":2,"x":2196.6,"y":112.6,"w":121.4,"h":16.1},{"c":"03(2P)","p":2,"x":2318.0,"y":112.6,"w":121.4,"h":16.1},{"c":"02(2P)","p":2,"x":2439.3,"y":112.6,"w":121.4,"h":16.1},{"c":"01(2P)","p":2,"x":2560.7,"y":112.6,"w":121.4,"h":16.1},{"c":"12P","p":12,"x":861.2,"y":143.9,"w":607.0,"h":16.1},{"c":"15P+렉 2층 잔량","p":15,"x":2824.4,"y":143.9,"w":11.5,"h":245.2},{"c":"05(3P)","p":3,"x":1771.7,"y":160.0,"w":182.1,"h":20.1},{"c":"04(2P)","p":2,"x":1953.8,"y":160.0,"w":182.1,"h":20.1},{"c":"05(3P)","p":3,"x":2135.9,"y":160.0,"w":242.8,"h":20.1},{"c":"05(2P)","p":2,"x":2378.6,"y":160.0,"w":182.1,"h":20.1},{"c":"05(2P)","p":2,"x":2560.7,"y":160.0,"w":182.1,"h":20.1},{"c":"08(2P)","p":2,"x":1771.7,"y":180.1,"w":121.4,"h":20.1},{"c":"07(2P)","p":2,"x":1893.1,"y":180.1,"w":121.4,"h":20.1},{"c":"06(2P)","p":2,"x":2014.5,"y":180.1,"w":121.4,"h":20.1},{"c":"05(2P)","p":2,"x":2135.9,"y":180.1,"w":121.4,"h":20.1},{"c":"04(2P)","p":2,"x":2257.3,"y":180.1,"w":121.4,"h":20.1},{"c":"03(2P)","p":2,"x":2378.6,"y":180.1,"w":121.4,"h":20.1},{"c":"02(2P)","p":2,"x":2500.0,"y":180.1,"w":121.4,"h":20.1},{"c":"01(4P)","p":4,"x":2621.4,"y":180.1,"w":121.4,"h":20.1},{"c":"12P","p":12,"x":618.5,"y":215.5,"w":728.4,"h":15.3},{"c":"4P","p":4,"x":1711.0,"y":215.5,"w":121.4,"h":15.3},{"c":"4P","p":4,"x":1832.4,"y":215.5,"w":121.4,"h":15.3},{"c":"4P","p":4,"x":1953.8,"y":215.5,"w":121.4,"h":15.3},{"c":"4P","p":4,"x":2075.2,"y":215.5,"w":121.4,"h":15.3},{"c":"4P","p":4,"x":2196.6,"y":215.5,"w":121.4,"h":15.3},{"c":"4P","p":4,"x":2318.0,"y":215.5,"w":121.4,"h":15.3},{"c":"4P","p":4,"x":2439.3,"y":215.5,"w":121.4,"h":15.3},{"c":"4P","p":4,"x":2560.7,"y":215.5,"w":121.4,"h":15.3},{"c":"4P","p":4,"x":2682.1,"y":215.5,"w":121.4,"h":15.3},{"c":"2Z-06 / 8P(렉)","p":8,"x":618.5,"y":230.7,"w":789.0,"h":15.3},{"c":"2Z-07 / 8P(렉)","p":8,"x":618.5,"y":246.0,"w":849.7,"h":15.3},{"c":"4P","p":4,"x":1771.7,"y":246.0,"w":121.4,"h":15.3},{"c":"6P","p":6,"x":1893.1,"y":246.0,"w":182.1,"h":15.3},{"c":"4P","p":4,"x":2075.2,"y":246.0,"w":121.4,"h":15.3},{"c":"6P","p":6,"x":2196.6,"y":246.0,"w":182.1,"h":15.3},{"c":"4P","p":4,"x":2378.6,"y":246.0,"w":182.1,"h":15.3},{"c":"4P","p":4,"x":2560.7,"y":246.0,"w":182.1,"h":15.3},{"c":"12P","p":12,"x":618.5,"y":276.6,"w":849.7,"h":15.3},{"c":"7P","p":7,"x":1468.2,"y":276.6,"w":60.7,"h":82.0},{"c":"12P","p":12,"x":618.5,"y":291.9,"w":242.8,"h":15.3},{"c":"13P","p":13,"x":861.2,"y":291.9,"w":303.5,"h":15.3},{"c":"12P","p":12,"x":1164.7,"y":291.9,"w":303.5,"h":15.3},{"c":"6P","p":6,"x":1771.7,"y":291.9,"w":121.4,"h":15.3},{"c":"6P","p":6,"x":1893.1,"y":291.9,"w":121.4,"h":15.3},{"c":"6P","p":6,"x":2014.5,"y":291.9,"w":121.4,"h":15.3},{"c":"6P","p":6,"x":2135.9,"y":291.9,"w":121.4,"h":15.3},{"c":"6P","p":6,"x":2257.3,"y":291.9,"w":121.4,"h":15.3},{"c":"6P","p":6,"x":2378.6,"y":291.9,"w":121.4,"h":15.3},{"c":"6P","p":6,"x":2500.0,"y":291.9,"w":121.4,"h":15.3},{"c":"3P","p":3,"x":2621.4,"y":291.9,"w":121.4,"h":15.3},{"c":"14P","p":14,"x":618.5,"y":342.5,"w":242.8,"h":16.1},{"c":"14P","p":14,"x":861.2,"y":342.5,"w":303.5,"h":16.1},{"c":"13P","p":13,"x":1164.7,"y":342.5,"w":303.5,"h":16.1},{"c":"14P","p":14,"x":1771.7,"y":342.5,"w":303.5,"h":16.1},{"c":"15P","p":15,"x":2075.2,"y":342.5,"w":364.2,"h":16.1},{"c":"7P","p":7,"x":2439.3,"y":342.5,"w":303.5,"h":16.1},{"c":"12P","p":12,"x":618.5,"y":409.2,"w":910.4,"h":18.5},{"c":"11P","p":11,"x":1711.0,"y":409.2,"w":667.7,"h":18.5},{"c":"10P","p":10,"x":618.5,"y":427.7,"w":242.8,"h":15.3},{"c":"10P","p":10,"x":861.2,"y":427.7,"w":303.5,"h":15.3},{"c":"10P","p":10,"x":1164.7,"y":427.7,"w":303.5,"h":15.3},{"c":"6P","p":6,"x":1468.2,"y":427.7,"w":60.7,"h":82.8},{"c":"4P","p":4,"x":1771.7,"y":427.7,"w":182.1,"h":15.3},{"c":"15P","p":15,"x":1953.8,"y":427.7,"w":242.8,"h":15.3},{"c":"7P","p":7,"x":2196.6,"y":427.7,"w":182.1,"h":15.3},{"c":"10P","p":10,"x":618.5,"y":459.9,"w":242.8,"h":16.9},{"c":"10P","p":10,"x":861.2,"y":459.9,"w":303.5,"h":16.9},{"c":"12P","p":12,"x":1164.7,"y":459.9,"w":303.5,"h":16.9},{"c":"7P","p":7,"x":1771.7,"y":476.8,"w":182.1,"h":16.9},{"c":"15P","p":15,"x":1953.8,"y":476.8,"w":242.8,"h":16.9},{"c":"10P","p":10,"x":2196.6,"y":476.8,"w":182.1,"h":16.9},{"c":"3Z-5 (4P)","p":4,"x":618.5,"y":510.5,"w":121.4,"h":48.2},{"c":"9P","p":9,"x":921.9,"y":527.4,"w":546.3,"h":16.1},{"c":"7P","p":7,"x":1468.2,"y":527.4,"w":60.7,"h":144.7},{"c":"11P","p":11,"x":982.6,"y":543.5,"w":60.7,"h":15.3},{"c":"8P","p":8,"x":1164.7,"y":543.5,"w":60.7,"h":15.3},{"c":"11P","p":11,"x":1346.8,"y":543.5,"w":60.7,"h":15.3},{"c":"12P","p":12,"x":1711.0,"y":543.5,"w":789.0,"h":15.3},{"c":"7P","p":7,"x":1711.0,"y":558.8,"w":182.1,"h":16.1},{"c":"20P","p":20,"x":1893.1,"y":558.8,"w":242.8,"h":16.1},{"c":"7P","p":7,"x":2257.3,"y":558.8,"w":60.7,"h":16.1},{"c":"7P","p":7,"x":1711.0,"y":615.1,"w":182.1,"h":16.9},{"c":"12P","p":12,"x":1893.1,"y":615.1,"w":242.8,"h":16.9},{"c":"11P","p":11,"x":2135.9,"y":615.1,"w":182.1,"h":16.9},{"c":"15P","p":15,"x":982.6,"y":631.9,"w":60.7,"h":24.9},{"c":"8P","p":8,"x":1164.7,"y":631.9,"w":60.7,"h":24.9},{"c":"11P","p":11,"x":1346.8,"y":631.9,"w":60.7,"h":24.9},{"c":"8P","p":8,"x":1711.0,"y":672.1,"w":607.0,"h":16.1},{"c":"6P","p":6,"x":1468.2,"y":703.5,"w":60.7,"h":90.9},{"c":"11P","p":11,"x":1711.0,"y":703.5,"w":121.4,"h":20.1},{"c":"8P","p":8,"x":1832.4,"y":703.5,"w":121.4,"h":20.1},{"c":"8P","p":8,"x":1953.8,"y":703.5,"w":121.4,"h":20.1},{"c":"4P","p":4,"x":2075.2,"y":703.5,"w":121.4,"h":20.1},{"c":"12P","p":12,"x":1043.3,"y":723.6,"w":60.7,"h":15.3},{"c":"15P","p":15,"x":1286.1,"y":723.6,"w":60.7,"h":15.3},{"c":"10P","p":10,"x":1043.3,"y":759.0,"w":60.7,"h":20.1},{"c":"13P","p":13,"x":1286.1,"y":759.0,"w":60.7,"h":20.1},{"c":"펌푸/캡 대기구역 30P","p":30,"x":1893.1,"y":759.0,"w":607.0,"h":35.4},{"c":"10P","p":10,"x":921.9,"y":814.5,"w":546.3,"h":15.3},{"c":"6P","p":6,"x":1468.2,"y":814.5,"w":60.7,"h":120.6},{"c":"용기대기구역 (32P)","p":32,"x":1893.1,"y":829.7,"w":485.6,"h":35.4},{"c":"겉상자대기구역(22P)","p":22,"x":1771.7,"y":881.2,"w":60.7,"h":16.9},{"c":"8P","p":8,"x":1528.9,"y":985.7,"w":60.7,"h":15.3},{"c":"19P","p":19,"x":1832.4,"y":985.7,"w":60.7,"h":15.3},{"c":"12P","p":12,"x":2257.3,"y":985.7,"w":60.7,"h":15.3},{"c":"(7줄*3P)","p":3,"x":2257.3,"y":1341.9,"w":303.5,"h":21.7}],"refs":[{"c":"2025.11.10","x":2824.4,"y":23.3,"w":315.0,"h":24.1},{"c":"공작반","x":72.2,"y":47.4,"w":242.8,"h":15.3},{"c":"박스창고","x":375.7,"y":47.4,"w":182.1,"h":32.2},{"c":"서재권. 유지훈","x":557.8,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":618.5,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":679.2,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":739.9,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":800.6,"y":47.4,"w":60.7,"h":15.3},{"c":"L동","x":982.6,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":1225.4,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":1286.1,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":1346.8,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":1407.5,"y":47.4,"w":60.7,"h":15.3},{"c":"M동","x":1468.2,"y":47.4,"w":182.1,"h":15.3},{"c":"","x":1650.3,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":1711.0,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":1771.7,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":1832.4,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":1893.1,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":1953.8,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":2014.5,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":2075.2,"y":47.4,"w":60.7,"h":15.3},{"c":"","x":2135.9,"y":47.4,"w":60.7,"h":15.3},{"c":"N동","x":2439.3,"y":47.4,"w":60.7,"h":15.3},{"c":"O동","x":2803.5,"y":47.4,"w":20.9,"h":15.3},{"c":"P동","x":3018.0,"y":47.4,"w":60.7,"h":15.3},{"c":"세탁실","x":72.2,"y":62.7,"w":60.7,"h":16.9},{"c":"출","x":557.8,"y":62.7,"w":60.7,"h":16.9},{"c":"거품제거기","x":921.9,"y":62.7,"w":60.7,"h":16.9},{"c":"●","x":1711.0,"y":62.7,"w":121.4,"h":16.9},{"c":"2층","x":2439.3,"y":62.7,"w":60.7,"h":16.9},{"c":"층","x":2500.0,"y":62.7,"w":60.7,"h":16.9},{"c":"출","x":2621.4,"y":62.7,"w":60.7,"h":16.9},{"c":"소","x":2682.1,"y":62.7,"w":60.7,"h":16.9},{"c":"자동문","x":2803.5,"y":62.7,"w":32.4,"h":16.9},{"c":"창고","x":2835.9,"y":62.7,"w":121.4,"h":33.8},{"c":"지하출입문","x":375.7,"y":79.6,"w":60.7,"h":16.9},{"c":"입","x":557.8,"y":79.6,"w":60.7,"h":16.9},{"c":"전 실","x":618.5,"y":79.6,"w":182.1,"h":33.0},{"c":"계단","x":2439.3,"y":79.6,"w":60.7,"h":16.9},{"c":"입","x":2621.4,"y":79.6,"w":60.7,"h":16.9},{"c":"●","x":2682.1,"y":79.6,"w":60.7,"h":16.9},{"c":"2층계단","x":375.7,"y":96.5,"w":182.1,"h":47.4},{"c":"구","x":557.8,"y":96.5,"w":60.7,"h":16.1},{"c":"문","x":2621.4,"y":96.5,"w":60.7,"h":16.1},{"c":"전 실","x":2742.8,"y":96.5,"w":81.6,"h":16.1},{"c":"■","x":2824.4,"y":96.5,"w":11.5,"h":16.1},{"c":"12","x":861.2,"y":112.6,"w":121.4,"h":16.1},{"c":"11","x":982.6,"y":112.6,"w":182.1,"h":16.1},{"c":"10","x":1164.7,"y":112.6,"w":121.4,"h":16.1},{"c":"9","x":1286.1,"y":112.6,"w":182.1,"h":16.1},{"c":"2Z-03","x":1468.2,"y":112.6,"w":242.8,"h":16.1},{"c":"13","x":3078.7,"y":112.6,"w":60.7,"h":16.1},{"c":"■","x":2824.4,"y":128.6,"w":11.5,"h":15.3},{"c":"내","x":2896.6,"y":128.6,"w":121.4,"h":15.3},{"c":"소","x":497.1,"y":143.9,"w":60.7,"h":16.1},{"c":"위","x":11.5,"y":160.0,"w":182.1,"h":20.1},{"c":"■","x":497.1,"y":160.0,"w":60.7,"h":20.1},{"c":"BOX 대기구역","x":861.2,"y":160.0,"w":546.3,"h":40.2},{"c":"청","x":1407.5,"y":160.0,"w":60.7,"h":20.1},{"c":"■","x":1468.2,"y":160.0,"w":60.7,"h":20.1},{"c":"2Z-04","x":1650.3,"y":160.0,"w":121.4,"h":20.1},{"c":"용","x":2896.6,"y":160.0,"w":121.4,"h":20.1},{"c":"승강기 (7호)","x":375.7,"y":180.1,"w":121.4,"h":35.4},{"c":"●","x":497.1,"y":180.1,"w":60.7,"h":20.1},{"c":"●","x":1468.2,"y":180.1,"w":60.7,"h":20.1},{"c":"2Z-05","x":1650.3,"y":180.1,"w":121.4,"h":20.1},{"c":"물","x":2896.6,"y":200.2,"w":121.4,"h":15.3},{"c":"험","x":11.5,"y":215.5,"w":182.1,"h":15.3},{"c":"여","x":436.4,"y":215.5,"w":60.7,"h":15.3},{"c":"","x":1346.8,"y":215.5,"w":60.7,"h":15.3},{"c":"","x":1407.5,"y":215.5,"w":60.7,"h":15.3},{"c":"168","x":2803.5,"y":215.5,"w":20.9,"h":15.3},{"c":"화","x":375.7,"y":230.7,"w":60.7,"h":15.3},{"c":"자","x":436.4,"y":230.7,"w":60.7,"h":15.3},{"c":"컴","x":1407.5,"y":230.7,"w":60.7,"h":15.3},{"c":"2Z-06-09","x":1711.0,"y":230.7,"w":121.4,"h":15.3},{"c":"2Z-06-08","x":1832.4,"y":230.7,"w":121.4,"h":15.3},{"c":"2Z-06-07","x":1953.8,"y":230.7,"w":121.4,"h":15.3},{"c":"2Z-06-06","x":2075.2,"y":230.7,"w":121.4,"h":15.3},{"c":"2Z-06-05","x":2196.6,"y":230.7,"w":121.4,"h":15.3},{"c":"2Z-06-04","x":2318.0,"y":230.7,"w":121.4,"h":15.3},{"c":"2Z-06-03","x":2439.3,"y":230.7,"w":121.4,"h":15.3},{"c":"2Z-06-02","x":2560.7,"y":230.7,"w":121.4,"h":15.3},{"c":"2Z-06-01","x":2682.1,"y":230.7,"w":121.4,"h":15.3},{"c":"저","x":2896.6,"y":230.7,"w":121.4,"h":15.3},{"c":"장","x":375.7,"y":246.0,"w":60.7,"h":15.3},{"c":"남 자","x":436.4,"y":246.0,"w":60.7,"h":45.8},{"c":"12","x":3078.7,"y":246.0,"w":60.7,"h":15.3},{"c":"물","x":11.5,"y":261.3,"w":182.1,"h":15.3},{"c":"실","x":375.7,"y":261.3,"w":60.7,"h":15.3},{"c":"2Z-07-06","x":1771.7,"y":261.3,"w":121.4,"h":15.3},{"c":"2Z-07-06","x":1893.1,"y":261.3,"w":182.1,"h":15.3},{"c":"2Z-07-06","x":2075.2,"y":261.3,"w":121.4,"h":15.3},{"c":"2Z-07-06","x":2196.6,"y":261.3,"w":182.1,"h":15.3},{"c":"2Z-07-06","x":2378.6,"y":261.3,"w":182.1,"h":15.3},{"c":"2Z-07-06","x":2560.7,"y":261.3,"w":182.1,"h":15.3},{"c":"장","x":2896.6,"y":261.3,"w":121.4,"h":15.3},{"c":"포","x":3078.7,"y":261.3,"w":121.4,"h":30.6},{"c":"소","x":2896.6,"y":291.9,"w":121.4,"h":15.3},{"c":"창","x":11.5,"y":307.1,"w":182.1,"h":20.1},{"c":"이 온 수","x":375.7,"y":307.1,"w":60.7,"h":35.4},{"c":"2Z-08-11","x":618.5,"y":327.2,"w":242.8,"h":15.3},{"c":"2Z-08-10","x":861.2,"y":327.2,"w":303.5,"h":15.3},{"c":"2Z-08-09","x":1164.7,"y":327.2,"w":303.5,"h":15.3},{"c":"2Z-08-08","x":1771.7,"y":327.2,"w":121.4,"h":15.3},{"c":"2Z-08-07","x":1893.1,"y":327.2,"w":121.4,"h":15.3},{"c":"2Z-08-06","x":2014.5,"y":327.2,"w":121.4,"h":15.3},{"c":"2Z-08-05","x":2135.9,"y":327.2,"w":121.4,"h":15.3},{"c":"2Z-08-04","x":2257.3,"y":327.2,"w":121.4,"h":15.3},{"c":"2Z-08-03","x":2378.6,"y":327.2,"w":121.4,"h":15.3},{"c":"2Z-08-02","x":2500.0,"y":327.2,"w":121.4,"h":15.3},{"c":"2Z-08-01","x":2621.4,"y":327.2,"w":121.4,"h":15.3},{"c":"고","x":11.5,"y":358.6,"w":182.1,"h":15.3},{"c":"■","x":1468.2,"y":358.6,"w":60.7,"h":15.3},{"c":"11","x":3078.7,"y":358.6,"w":60.7,"h":15.3},{"c":"2Z-09-06","x":618.5,"y":373.9,"w":242.8,"h":15.3},{"c":"2Z-09-05","x":861.2,"y":373.9,"w":303.5,"h":15.3},{"c":"2Z-09-04","x":1164.7,"y":373.9,"w":303.5,"h":15.3},{"c":"2Z-09-03","x":1771.7,"y":373.9,"w":303.5,"h":15.3},{"c":"2Z-09-02","x":2075.2,"y":373.9,"w":364.2,"h":15.3},{"c":"2Z-09-01","x":2439.3,"y":373.9,"w":303.5,"h":15.3},{"c":"155","x":2803.5,"y":373.9,"w":20.9,"h":15.3},{"c":"#2017","x":2896.6,"y":373.9,"w":182.1,"h":15.3},{"c":"●","x":2835.9,"y":389.1,"w":60.7,"h":20.1},{"c":"승강기 (6호)","x":2957.3,"y":389.1,"w":121.4,"h":53.9},{"c":"6호","x":2896.6,"y":409.2,"w":60.7,"h":18.5},{"c":"2Z-10-06","x":618.5,"y":443.0,"w":242.8,"h":16.9},{"c":"2Z-10-05","x":861.2,"y":443.0,"w":303.5,"h":16.9},{"c":"2Z-10-04","x":1164.7,"y":443.0,"w":303.5,"h":16.9},{"c":"박","x":3018.0,"y":443.0,"w":60.7,"h":16.9},{"c":"2Z-10-03","x":1771.7,"y":459.9,"w":182.1,"h":16.9},{"c":"2Z-10-02","x":1953.8,"y":459.9,"w":242.8,"h":16.9},{"c":"2Z-10-01","x":2196.6,"y":459.9,"w":182.1,"h":16.9},{"c":"AGV","x":2378.6,"y":459.9,"w":303.5,"h":16.9},{"c":"스","x":3018.0,"y":459.9,"w":60.7,"h":16.9},{"c":"10","x":3078.7,"y":459.9,"w":60.7,"h":16.9},{"c":"3Z-06-03","x":618.5,"y":476.8,"w":242.8,"h":16.9},{"c":"대차보관","x":2378.6,"y":476.8,"w":303.5,"h":16.9},{"c":"회","x":3018.0,"y":476.8,"w":60.7,"h":16.9},{"c":"3Z-06-02","x":861.2,"y":493.7,"w":303.5,"h":16.9},{"c":"3Z-06-01","x":1164.7,"y":493.7,"w":303.5,"h":16.9},{"c":"수","x":3018.0,"y":493.7,"w":60.7,"h":16.9},{"c":"라 벨","x":375.7,"y":510.5,"w":182.1,"h":16.9},{"c":"","x":557.8,"y":510.5,"w":60.7,"h":16.9},{"c":"2Z-11-03","x":1771.7,"y":510.5,"w":182.1,"h":16.9},{"c":"2Z-11-02","x":1953.8,"y":510.5,"w":242.8,"h":16.9},{"c":"2Z-11-01","x":2196.6,"y":510.5,"w":182.1,"h":16.9},{"c":"108","x":2803.5,"y":510.5,"w":20.9,"h":16.9},{"c":"소","x":3018.0,"y":510.5,"w":60.7,"h":16.9},{"c":"","x":0,"y":527.4,"w":11.5,"h":16.1},{"c":"","x":11.5,"y":527.4,"w":60.7,"h":16.1},{"c":"보 관","x":375.7,"y":527.4,"w":182.1,"h":16.1},{"c":"","x":557.8,"y":527.4,"w":60.7,"h":16.1},{"c":"구","x":3018.0,"y":527.4,"w":60.7,"h":16.1},{"c":"장","x":3078.7,"y":527.4,"w":121.4,"h":31.4},{"c":"","x":0,"y":543.5,"w":11.5,"h":15.3},{"c":"","x":11.5,"y":543.5,"w":60.7,"h":15.3},{"c":"","x":132.9,"y":543.5,"w":60.7,"h":15.3},{"c":"윤용철","x":193.6,"y":543.5,"w":60.7,"h":15.3},{"c":"","x":254.3,"y":543.5,"w":60.7,"h":15.3},{"c":"컴","x":497.1,"y":543.5,"w":60.7,"h":15.3},{"c":"","x":557.8,"y":543.5,"w":60.7,"h":15.3},{"c":"컴3","x":2742.8,"y":543.5,"w":60.7,"h":15.3},{"c":"역","x":3018.0,"y":543.5,"w":60.7,"h":15.3},{"c":"","x":0,"y":558.8,"w":11.5,"h":16.1},{"c":"","x":11.5,"y":558.8,"w":60.7,"h":16.1},{"c":"전","x":375.7,"y":558.8,"w":60.7,"h":36.2},{"c":"동","x":436.4,"y":558.8,"w":60.7,"h":36.2},{"c":"카","x":497.1,"y":558.8,"w":60.7,"h":36.2},{"c":"충","x":557.8,"y":558.8,"w":60.7,"h":36.2},{"c":"전","x":618.5,"y":558.8,"w":60.7,"h":36.2},{"c":"소","x":679.2,"y":558.8,"w":60.7,"h":36.2},{"c":"●","x":739.9,"y":558.8,"w":60.7,"h":16.1},{"c":"소","x":1407.5,"y":558.8,"w":60.7,"h":16.1},{"c":"9","x":3078.7,"y":558.8,"w":60.7,"h":16.1},{"c":"공","x":0,"y":574.9,"w":72.2,"h":20.1},{"c":"전","x":739.9,"y":574.9,"w":60.7,"h":20.1},{"c":"3Z-05-03","x":921.9,"y":574.9,"w":60.7,"h":20.1},{"c":"3Z-05-02","x":1104.0,"y":574.9,"w":60.7,"h":20.1},{"c":"3Z-05-01","x":1286.1,"y":574.9,"w":60.7,"h":20.1},{"c":"2Z-12-01","x":2196.6,"y":574.9,"w":60.7,"h":20.1},{"c":"공","x":2500.0,"y":574.9,"w":60.7,"h":20.1},{"c":"3","x":2621.4,"y":574.9,"w":60.7,"h":20.1},{"c":"2","x":2682.1,"y":574.9,"w":60.7,"h":20.1},{"c":"1","x":2742.8,"y":574.9,"w":60.7,"h":20.1},{"c":"","x":2803.5,"y":574.9,"w":32.4,"h":20.1},{"c":"컴","x":2835.9,"y":574.9,"w":60.7,"h":20.1},{"c":"청","x":3018.0,"y":574.9,"w":60.7,"h":20.1},{"c":"","x":0,"y":595.0,"w":11.5,"h":20.1},{"c":"","x":11.5,"y":595.0,"w":60.7,"h":20.1},{"c":"9","x":193.6,"y":595.0,"w":60.7,"h":20.1},{"c":"자","x":315.0,"y":595.0,"w":60.7,"h":20.1},{"c":"■","x":375.7,"y":595.0,"w":60.7,"h":20.1},{"c":"용","x":618.5,"y":595.0,"w":121.4,"h":20.1},{"c":"동","x":739.9,"y":595.0,"w":60.7,"h":20.1},{"c":"2Z-12-03","x":1711.0,"y":595.0,"w":182.1,"h":20.1},{"c":"2Z-12-02","x":1893.1,"y":595.0,"w":242.8,"h":20.1},{"c":"폐기물","x":2318.0,"y":595.0,"w":182.1,"h":77.2},{"c":"박","x":2500.0,"y":595.0,"w":60.7,"h":20.1},{"c":"▼","x":2621.4,"y":595.0,"w":60.7,"h":20.1},{"c":"▼","x":2682.1,"y":595.0,"w":60.7,"h":20.1},{"c":"▼","x":2742.8,"y":595.0,"w":60.7,"h":20.1},{"c":"","x":2803.5,"y":595.0,"w":32.4,"h":20.1},{"c":"■","x":2957.3,"y":595.0,"w":60.7,"h":20.1},{"c":"자","x":3078.7,"y":595.0,"w":60.7,"h":20.1},{"c":"박","x":0,"y":615.1,"w":72.2,"h":16.9},{"c":"동","x":315.0,"y":615.1,"w":60.7,"h":16.9},{"c":"기","x":618.5,"y":615.1,"w":121.4,"h":16.9},{"c":"카","x":739.9,"y":615.1,"w":60.7,"h":16.9},{"c":"스","x":2500.0,"y":615.1,"w":60.7,"h":16.9},{"c":"AGV대기","x":2621.4,"y":615.1,"w":60.7,"h":16.9},{"c":"전실","x":2896.6,"y":615.1,"w":60.7,"h":16.9},{"c":"동","x":3078.7,"y":615.1,"w":60.7,"h":16.9},{"c":"","x":0,"y":631.9,"w":11.5,"h":24.9},{"c":"","x":11.5,"y":631.9,"w":60.7,"h":24.9},{"c":"문","x":315.0,"y":631.9,"w":60.7,"h":24.9},{"c":"회","x":618.5,"y":631.9,"w":121.4,"h":24.9},{"c":"충","x":739.9,"y":631.9,"w":60.7,"h":24.9},{"c":"▲","x":2621.4,"y":631.9,"w":60.7,"h":24.9},{"c":"▲","x":2682.1,"y":631.9,"w":60.7,"h":24.9},{"c":"▲","x":2742.8,"y":631.9,"w":60.7,"h":24.9},{"c":"■","x":2824.4,"y":631.9,"w":11.5,"h":24.9},{"c":"문","x":3078.7,"y":631.9,"w":60.7,"h":24.9},{"c":"스","x":0,"y":656.9,"w":72.2,"h":15.3},{"c":"8","x":193.6,"y":656.9,"w":60.7,"h":15.3},{"c":"■","x":375.7,"y":656.9,"w":60.7,"h":15.3},{"c":"수","x":618.5,"y":656.9,"w":121.4,"h":15.3},{"c":"전","x":739.9,"y":656.9,"w":60.7,"h":15.3},{"c":"3Z-04-03","x":921.9,"y":656.9,"w":60.7,"h":15.3},{"c":"3Z-04-02","x":1104.0,"y":656.9,"w":60.7,"h":15.3},{"c":"3Z-04-01","x":1286.1,"y":656.9,"w":60.7,"h":15.3},{"c":"●","x":1650.3,"y":656.9,"w":60.7,"h":15.3},{"c":"2Z-13-04","x":1711.0,"y":656.9,"w":182.1,"h":15.3},{"c":"2Z-13-03","x":1893.1,"y":656.9,"w":242.8,"h":15.3},{"c":"2Z-13-02","x":2135.9,"y":656.9,"w":182.1,"h":15.3},{"c":"●","x":2500.0,"y":656.9,"w":60.7,"h":15.3},{"c":"4","x":2621.4,"y":656.9,"w":60.7,"h":15.3},{"c":"5","x":2682.1,"y":656.9,"w":60.7,"h":15.3},{"c":"6","x":2742.8,"y":656.9,"w":60.7,"h":15.3},{"c":"136","x":2803.5,"y":656.9,"w":20.9,"h":15.3},{"c":"","x":0,"y":672.1,"w":11.5,"h":16.1},{"c":"","x":11.5,"y":672.1,"w":60.7,"h":16.1},{"c":"전    실","x":436.4,"y":672.1,"w":182.1,"h":31.4},{"c":"자","x":679.2,"y":672.1,"w":60.7,"h":16.1},{"c":"●","x":739.9,"y":672.1,"w":60.7,"h":16.1},{"c":"반","x":2824.4,"y":672.1,"w":11.5,"h":16.1},{"c":"2","x":3018.0,"y":672.1,"w":60.7,"h":16.1},{"c":"8","x":3078.7,"y":672.1,"w":60.7,"h":16.1},{"c":"보","x":0,"y":688.2,"w":72.2,"h":15.3},{"c":"자","x":315.0,"y":688.2,"w":60.7,"h":15.3},{"c":"동","x":679.2,"y":688.2,"w":60.7,"h":15.3},{"c":"제","x":2824.4,"y":688.2,"w":11.5,"h":15.3},{"c":"전","x":2896.6,"y":688.2,"w":60.7,"h":15.3},{"c":"★","x":2957.3,"y":688.2,"w":60.7,"h":15.3},{"c":"층","x":3018.0,"y":688.2,"w":60.7,"h":15.3},{"c":"","x":0,"y":703.5,"w":11.5,"h":20.1},{"c":"","x":11.5,"y":703.5,"w":60.7,"h":20.1},{"c":"7","x":193.6,"y":703.5,"w":60.7,"h":20.1},{"c":"동","x":315.0,"y":703.5,"w":60.7,"h":20.1},{"c":"프로필게이트","x":436.4,"y":703.5,"w":182.1,"h":35.4},{"c":"문","x":679.2,"y":703.5,"w":60.7,"h":35.4},{"c":"3Z-03-04","x":982.6,"y":703.5,"w":60.7,"h":20.1},{"c":"3Z-03-03","x":1225.4,"y":703.5,"w":60.7,"h":20.1},{"c":"AGV 소분 구역","x":2439.3,"y":703.5,"w":182.1,"h":55.5},{"c":"바","x":2621.4,"y":703.5,"w":60.7,"h":20.1},{"c":"품","x":2824.4,"y":703.5,"w":11.5,"h":20.1},{"c":"기","x":2896.6,"y":703.5,"w":60.7,"h":20.1},{"c":"계","x":3018.0,"y":703.5,"w":60.7,"h":20.1},{"c":"관","x":0,"y":723.6,"w":72.2,"h":15.3},{"c":"문","x":315.0,"y":723.6,"w":60.7,"h":15.3},{"c":"AGV 반제품박스","x":2196.6,"y":723.6,"w":242.8,"h":35.4},{"c":"퀴","x":2621.4,"y":723.6,"w":60.7,"h":15.3},{"c":"박","x":2824.4,"y":723.6,"w":11.5,"h":15.3},{"c":"단","x":3018.0,"y":723.6,"w":60.7,"h":15.3},{"c":"","x":0,"y":738.9,"w":11.5,"h":20.1},{"c":"","x":11.5,"y":738.9,"w":60.7,"h":20.1},{"c":"도","x":254.3,"y":738.9,"w":60.7,"h":40.2},{"c":"■","x":375.7,"y":738.9,"w":60.7,"h":20.1},{"c":"2Z-14-05","x":1711.0,"y":738.9,"w":121.4,"h":20.1},{"c":"2Z-14-04","x":1832.4,"y":738.9,"w":121.4,"h":20.1},{"c":"2Z-14-03","x":1953.8,"y":738.9,"w":121.4,"h":20.1},{"c":"2Z-14-02","x":2075.2,"y":738.9,"w":121.4,"h":20.1},{"c":"청","x":2621.4,"y":738.9,"w":60.7,"h":20.1},{"c":"스","x":2824.4,"y":738.9,"w":11.5,"h":20.1},{"c":"","x":0,"y":759.0,"w":11.5,"h":20.1},{"c":"","x":11.5,"y":759.0,"w":60.7,"h":20.1},{"c":"6","x":193.6,"y":759.0,"w":60.7,"h":20.1},{"c":"수동핸트카","x":375.7,"y":759.0,"w":303.5,"h":20.1},{"c":"컴","x":679.2,"y":759.0,"w":60.7,"h":20.1},{"c":"소","x":2621.4,"y":759.0,"w":60.7,"h":20.1},{"c":"대","x":2824.4,"y":759.0,"w":11.5,"h":20.1},{"c":"","x":0,"y":779.1,"w":11.5,"h":15.3},{"c":"","x":11.5,"y":779.1,"w":60.7,"h":15.3},{"c":"보 관 소","x":436.4,"y":779.1,"w":60.7,"h":15.3},{"c":"소","x":679.2,"y":779.1,"w":60.7,"h":15.3},{"c":"3Z-03-02","x":982.6,"y":779.1,"w":60.7,"h":15.3},{"c":"3Z-03-01","x":1225.4,"y":779.1,"w":60.7,"h":15.3},{"c":"기","x":2621.4,"y":779.1,"w":60.7,"h":15.3},{"c":"기","x":2824.4,"y":779.1,"w":11.5,"h":15.3},{"c":"7","x":3078.7,"y":779.1,"w":60.7,"h":15.3},{"c":"","x":0,"y":794.4,"w":11.5,"h":20.1},{"c":"","x":11.5,"y":794.4,"w":60.7,"h":20.1},{"c":"■","x":375.7,"y":794.4,"w":60.7,"h":20.1},{"c":"전    실","x":436.4,"y":794.4,"w":182.1,"h":35.4},{"c":"청","x":679.2,"y":794.4,"w":60.7,"h":20.1},{"c":"","x":0,"y":814.5,"w":11.5,"h":15.3},{"c":"","x":11.5,"y":814.5,"w":60.7,"h":15.3},{"c":"5","x":193.6,"y":814.5,"w":60.7,"h":15.3},{"c":"자","x":315.0,"y":814.5,"w":60.7,"h":15.3},{"c":"자","x":1711.0,"y":814.5,"w":60.7,"h":15.3},{"c":"대","x":1771.7,"y":814.5,"w":60.7,"h":15.3},{"c":"1","x":1832.4,"y":814.5,"w":60.7,"h":15.3},{"c":"2","x":1893.1,"y":814.5,"w":60.7,"h":15.3},{"c":"4","x":1953.8,"y":814.5,"w":60.7,"h":15.3},{"c":"3","x":2014.5,"y":814.5,"w":60.7,"h":15.3},{"c":"16","x":2075.2,"y":814.5,"w":60.7,"h":15.3},{"c":"11","x":2135.9,"y":814.5,"w":60.7,"h":15.3},{"c":"9","x":2196.6,"y":814.5,"w":60.7,"h":15.3},{"c":"14","x":2257.3,"y":814.5,"w":60.7,"h":15.3},{"c":"13","x":2318.0,"y":814.5,"w":60.7,"h":15.3},{"c":"8","x":2378.6,"y":814.5,"w":60.7,"h":15.3},{"c":"15","x":2439.3,"y":814.5,"w":60.7,"h":15.3},{"c":"10","x":2500.0,"y":814.5,"w":60.7,"h":15.3},{"c":"5호기","x":2560.7,"y":814.5,"w":121.4,"h":15.3},{"c":"수","x":2824.4,"y":814.5,"w":11.5,"h":15.3},{"c":"","x":0,"y":829.7,"w":11.5,"h":15.3},{"c":"","x":11.5,"y":829.7,"w":60.7,"h":15.3},{"c":"동","x":315.0,"y":829.7,"w":60.7,"h":15.3},{"c":"프로필게이트","x":436.4,"y":829.7,"w":182.1,"h":35.4},{"c":"자","x":679.2,"y":829.7,"w":60.7,"h":15.3},{"c":"2.3층 대기구역","x":921.9,"y":829.7,"w":546.3,"h":105.3},{"c":"타","x":2621.4,"y":829.7,"w":60.7,"h":15.3},{"c":"입","x":2824.4,"y":829.7,"w":11.5,"h":15.3},{"c":"유","x":2896.6,"y":829.7,"w":60.7,"h":15.3},{"c":"팔","x":0,"y":845.0,"w":72.2,"h":20.1},{"c":"크","x":254.3,"y":845.0,"w":60.7,"h":36.2},{"c":"문","x":315.0,"y":845.0,"w":60.7,"h":20.1},{"c":"동","x":679.2,"y":845.0,"w":60.7,"h":20.1},{"c":"상","x":2621.4,"y":845.0,"w":60.7,"h":20.1},{"c":"●","x":2803.5,"y":845.0,"w":20.9,"h":20.1},{"c":"펌","x":2824.4,"y":845.0,"w":11.5,"h":20.1},{"c":"파","x":3078.7,"y":845.0,"w":121.4,"h":36.2},{"c":"","x":0,"y":865.1,"w":11.5,"h":16.1},{"c":"","x":11.5,"y":865.1,"w":60.7,"h":16.1},{"c":"4","x":193.6,"y":865.1,"w":60.7,"h":16.1},{"c":"■","x":375.7,"y":865.1,"w":60.7,"h":16.1},{"c":"문","x":679.2,"y":865.1,"w":60.7,"h":16.1},{"c":"대","x":2439.3,"y":865.1,"w":60.7,"h":16.1},{"c":"차","x":2500.0,"y":865.1,"w":60.7,"h":16.1},{"c":"푸","x":2824.4,"y":865.1,"w":11.5,"h":16.1},{"c":"영","x":2896.6,"y":865.1,"w":60.7,"h":16.1},{"c":"레","x":0,"y":881.2,"w":72.2,"h":16.9},{"c":"●","x":739.9,"y":881.2,"w":60.7,"h":16.9},{"c":"보","x":2439.3,"y":881.2,"w":60.7,"h":16.9},{"c":"관","x":2500.0,"y":881.2,"w":60.7,"h":16.9},{"c":"비닐","x":2560.7,"y":881.2,"w":121.4,"h":16.9},{"c":"잔","x":2824.4,"y":881.2,"w":11.5,"h":16.9},{"c":"6","x":3078.7,"y":881.2,"w":60.7,"h":16.9},{"c":"","x":0,"y":898.1,"w":11.5,"h":16.9},{"c":"","x":11.5,"y":898.1,"w":60.7,"h":16.9},{"c":"승강기1호","x":375.7,"y":898.1,"w":182.1,"h":37.0},{"c":"구","x":2439.3,"y":898.1,"w":60.7,"h":16.9},{"c":"역","x":2500.0,"y":898.1,"w":60.7,"h":16.9},{"c":"박스","x":2560.7,"y":898.1,"w":60.7,"h":16.9},{"c":"72","x":2803.5,"y":898.1,"w":20.9,"h":16.9},{"c":"량","x":2824.4,"y":898.1,"w":11.5,"h":16.9},{"c":"3","x":2896.6,"y":898.1,"w":60.7,"h":16.9},{"c":"트","x":0,"y":915.0,"w":72.2,"h":20.1},{"c":"3","x":193.6,"y":915.0,"w":60.7,"h":20.1},{"c":"","x":0,"y":935.1,"w":11.5,"h":20.1},{"c":"","x":11.5,"y":935.1,"w":60.7,"h":20.1},{"c":"E/V (5호)","x":375.7,"y":935.1,"w":182.1,"h":50.7},{"c":"소","x":2824.4,"y":935.1,"w":11.5,"h":20.1},{"c":"급","x":2896.6,"y":935.1,"w":60.7,"h":20.1},{"c":"보","x":0,"y":955.2,"w":72.2,"h":15.3},{"c":"","x":618.5,"y":955.2,"w":182.1,"h":15.3},{"c":"검수대기구역","x":982.6,"y":955.2,"w":424.9,"h":30.6},{"c":"●","x":1468.2,"y":955.2,"w":60.7,"h":15.3},{"c":"","x":2257.3,"y":955.2,"w":60.7,"h":15.3},{"c":"","x":2318.0,"y":955.2,"w":60.7,"h":15.3},{"c":"","x":2378.6,"y":955.2,"w":60.7,"h":15.3},{"c":"","x":2439.3,"y":955.2,"w":60.7,"h":15.3},{"c":"","x":2500.0,"y":955.2,"w":60.7,"h":15.3},{"c":"","x":2742.8,"y":955.2,"w":81.6,"h":15.3},{"c":"컴","x":2824.4,"y":955.2,"w":11.5,"h":15.3},{"c":"","x":0,"y":970.4,"w":11.5,"h":15.3},{"c":"","x":11.5,"y":970.4,"w":60.7,"h":15.3},{"c":"2","x":193.6,"y":970.4,"w":60.7,"h":15.3},{"c":"컴","x":2500.0,"y":970.4,"w":60.7,"h":30.6},{"c":"팔레트","x":2560.7,"y":970.4,"w":121.4,"h":30.6},{"c":"지","x":2896.6,"y":970.4,"w":60.7,"h":15.3},{"c":"관","x":0,"y":985.7,"w":72.2,"h":15.3},{"c":"출","x":315.0,"y":985.7,"w":60.7,"h":15.3},{"c":"량","x":1468.2,"y":985.7,"w":60.7,"h":15.3},{"c":"■","x":1650.3,"y":985.7,"w":60.7,"h":15.3},{"c":"5","x":3078.7,"y":985.7,"w":60.7,"h":15.3},{"c":"","x":0,"y":1001.0,"w":11.5,"h":15.3},{"c":"","x":11.5,"y":1001.0,"w":60.7,"h":15.3},{"c":"입","x":315.0,"y":1001.0,"w":60.7,"h":15.3}]},"fnc2":{"n":"FnC동 2층 튜브","b":"FnC","tcap":242,"W":3459.7,"H":337.7,"locs":[{"c":"12P","p":12,"x":607.0,"y":28.1,"w":303.5,"h":14.1},{"c":"18P","p":18,"x":910.4,"y":28.1,"w":424.9,"h":14.1},{"c":"21P","p":21,"x":1335.3,"y":28.1,"w":364.2,"h":14.1},{"c":"56p","p":56,"x":2185.1,"y":28.1,"w":849.7,"h":14.1},{"c":"3T-02-06-1 (17p)","p":17,"x":2124.4,"y":84.4,"w":1153.2,"h":14.1},{"c":"13p","p":13,"x":546.3,"y":98.5,"w":303.5,"h":28.1},{"c":"12p","p":12,"x":971.1,"y":98.5,"w":303.5,"h":28.1},{"c":"13p","p":13,"x":1396.0,"y":98.5,"w":303.5,"h":28.1},{"c":"렉 5P","p":5,"x":3034.8,"y":98.5,"w":242.8,"h":14.1},{"c":"30p","p":30,"x":485.6,"y":211.0,"w":364.2,"h":56.3},{"c":"30p","p":30,"x":910.4,"y":211.0,"w":364.2,"h":56.3},{"c":"30p","p":30,"x":1335.3,"y":225.1,"w":424.9,"h":42.2},{"c":"15p","p":15,"x":2124.4,"y":225.1,"w":182.1,"h":42.2},{"c":"5p","p":5,"x":2731.3,"y":225.1,"w":121.4,"h":42.2}],"refs":[{"c":"","x":0,"y":0,"w":60.7,"h":14.1},{"c":"","x":424.9,"y":0,"w":60.7,"h":14.1},{"c":"","x":607.0,"y":0,"w":60.7,"h":14.1},{"c":"","x":667.7,"y":0,"w":60.7,"h":14.1},{"c":"","x":728.4,"y":0,"w":60.7,"h":14.1},{"c":"","x":789.0,"y":0,"w":60.7,"h":14.1},{"c":"","x":849.7,"y":0,"w":60.7,"h":14.1},{"c":"","x":910.4,"y":0,"w":60.7,"h":14.1},{"c":"","x":971.1,"y":0,"w":60.7,"h":14.1},{"c":"","x":1031.8,"y":0,"w":60.7,"h":14.1},{"c":"","x":1092.5,"y":0,"w":60.7,"h":14.1},{"c":"","x":1153.2,"y":0,"w":60.7,"h":14.1},{"c":"","x":1213.9,"y":0,"w":60.7,"h":14.1},{"c":"","x":1274.6,"y":0,"w":60.7,"h":14.1},{"c":"","x":1335.3,"y":0,"w":60.7,"h":14.1},{"c":"","x":1396.0,"y":0,"w":60.7,"h":14.1},{"c":"","x":1456.7,"y":0,"w":60.7,"h":14.1},{"c":"","x":1517.4,"y":0,"w":60.7,"h":14.1},{"c":"","x":1578.1,"y":0,"w":60.7,"h":14.1},{"c":"","x":1638.8,"y":0,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":0,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":0,"w":60.7,"h":14.1},{"c":"","x":2185.1,"y":0,"w":60.7,"h":14.1},{"c":"","x":2245.8,"y":0,"w":60.7,"h":14.1},{"c":"","x":2306.4,"y":0,"w":60.7,"h":14.1},{"c":"","x":2367.1,"y":0,"w":60.7,"h":14.1},{"c":"","x":2427.8,"y":0,"w":60.7,"h":14.1},{"c":"","x":2488.5,"y":0,"w":60.7,"h":14.1},{"c":"","x":2549.2,"y":0,"w":60.7,"h":14.1},{"c":"","x":2609.9,"y":0,"w":60.7,"h":14.1},{"c":"","x":2670.6,"y":0,"w":60.7,"h":14.1},{"c":"","x":2731.3,"y":0,"w":60.7,"h":14.1},{"c":"","x":2792.0,"y":0,"w":60.7,"h":14.1},{"c":"","x":2852.7,"y":0,"w":60.7,"h":14.1},{"c":"","x":2913.4,"y":0,"w":60.7,"h":14.1},{"c":"","x":2974.1,"y":0,"w":60.7,"h":14.1},{"c":"p박스2단적제","x":3034.8,"y":0,"w":364.2,"h":42.2},{"c":"","x":607.0,"y":14.1,"w":60.7,"h":14.1},{"c":"3T-1-3","x":667.7,"y":14.1,"w":60.7,"h":14.1},{"c":"","x":728.4,"y":14.1,"w":60.7,"h":14.1},{"c":"","x":789.0,"y":14.1,"w":60.7,"h":14.1},{"c":"","x":849.7,"y":14.1,"w":60.7,"h":14.1},{"c":"3T-1-2","x":910.4,"y":14.1,"w":424.9,"h":14.1},{"c":"","x":1335.3,"y":14.1,"w":60.7,"h":14.1},{"c":"3T-1-1","x":1396.0,"y":14.1,"w":60.7,"h":14.1},{"c":"","x":1456.7,"y":14.1,"w":60.7,"h":14.1},{"c":"","x":1517.4,"y":14.1,"w":60.7,"h":14.1},{"c":"","x":1578.1,"y":14.1,"w":60.7,"h":14.1},{"c":"","x":1638.8,"y":14.1,"w":60.7,"h":14.1},{"c":"E/V","x":1699.5,"y":14.1,"w":242.8,"h":14.1},{"c":"E/V","x":1942.3,"y":14.1,"w":182.1,"h":14.1},{"c":"3T-02-06-1","x":2124.4,"y":14.1,"w":910.4,"h":14.1},{"c":"","x":2124.4,"y":28.1,"w":60.7,"h":14.1},{"c":"","x":242.8,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":303.5,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":364.2,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":424.9,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":485.6,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":546.3,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":607.0,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":667.7,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":728.4,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":789.0,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":849.7,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":910.4,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":971.1,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1031.8,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1092.5,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1153.2,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1213.9,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1274.6,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1335.3,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1396.0,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1456.7,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1517.4,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1578.1,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1638.8,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1942.3,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2003.0,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2063.7,"y":42.2,"w":60.7,"h":14.1},{"c":"비닐대차","x":2124.4,"y":42.2,"w":121.4,"h":14.1},{"c":"","x":2245.8,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2306.4,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2367.1,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2427.8,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2488.5,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2549.2,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2609.9,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2670.6,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2731.3,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2792.0,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2852.7,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2913.4,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2974.1,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":242.8,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":303.5,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":364.2,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":424.9,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":485.6,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":546.3,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":607.0,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":667.7,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":728.4,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":789.0,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":849.7,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":910.4,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":971.1,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1031.8,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1092.5,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1153.2,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1213.9,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1274.6,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1335.3,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1396.0,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1456.7,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1517.4,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1578.1,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1638.8,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1942.3,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2003.0,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2063.7,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2185.1,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2245.8,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2306.4,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2367.1,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2427.8,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2488.5,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2549.2,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2609.9,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2670.6,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2731.3,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2792.0,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2852.7,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2913.4,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2974.1,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":3034.8,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":3095.5,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":3156.2,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":3216.9,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":3277.6,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":3338.3,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":3399.0,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":242.8,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":303.5,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":364.2,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":424.9,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":485.6,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":546.3,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":607.0,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":667.7,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":728.4,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":789.0,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":849.7,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":910.4,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":971.1,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1031.8,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1092.5,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1153.2,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1213.9,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1274.6,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1335.3,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1396.0,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1456.7,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1517.4,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1578.1,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1638.8,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1942.3,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2003.0,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2063.7,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2185.1,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2245.8,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2306.4,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2367.1,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2427.8,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2488.5,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2549.2,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2609.9,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2670.6,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2731.3,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2792.0,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2852.7,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2913.4,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2974.1,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":3034.8,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":3095.5,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":3156.2,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":3216.9,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":3277.6,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":3338.3,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":3399.0,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":242.8,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":303.5,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":364.2,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":424.9,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":485.6,"y":84.4,"w":60.7,"h":14.1},{"c":"3T-1-6","x":546.3,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":607.0,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":667.7,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":728.4,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":789.0,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":849.7,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":910.4,"y":84.4,"w":60.7,"h":14.1},{"c":"3T-1-5","x":971.1,"y":84.4,"w":303.5,"h":14.1},{"c":"","x":1274.6,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":1335.3,"y":84.4,"w":60.7,"h":14.1},{"c":"3T-1-4","x":1396.0,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":1456.7,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":1517.4,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":1578.1,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":1638.8,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":1942.3,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":2003.0,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":2063.7,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":3277.6,"y":84.4,"w":121.4,"h":28.1},{"c":"","x":3399.0,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":0,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":242.8,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":303.5,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":364.2,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":424.9,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":485.6,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":849.7,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":910.4,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":1274.6,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":1335.3,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":1942.3,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":2003.0,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":2063.7,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":2185.1,"y":98.5,"w":364.2,"h":14.1},{"c":"","x":2549.2,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":2609.9,"y":98.5,"w":364.2,"h":14.1},{"c":"","x":2974.1,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":3399.0,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":242.8,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":303.5,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":364.2,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":424.9,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":485.6,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":849.7,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":910.4,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":1274.6,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":1335.3,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":1942.3,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":2003.0,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":2063.7,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":112.6,"w":60.7,"h":14.1},{"c":"반입 포장재 보관 구역 제외","x":2185.1,"y":112.6,"w":789.0,"h":14.1},{"c":"","x":2974.1,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":3034.8,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":3095.5,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":3156.2,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":3216.9,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":3277.6,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":3338.3,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":3399.0,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":242.8,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":303.5,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":364.2,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":424.9,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":485.6,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":546.3,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":607.0,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":667.7,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":728.4,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":789.0,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":849.7,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":910.4,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":971.1,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1031.8,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1092.5,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1153.2,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1213.9,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1274.6,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1335.3,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1396.0,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1456.7,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1517.4,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1578.1,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1638.8,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1942.3,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2003.0,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2063.7,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2185.1,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2245.8,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2306.4,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2367.1,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2427.8,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2488.5,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2549.2,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2609.9,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2670.6,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2731.3,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2792.0,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2852.7,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2913.4,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2974.1,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":3034.8,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":3095.5,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":3156.2,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":3216.9,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":3277.6,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":3338.3,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":3399.0,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":242.8,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":303.5,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":364.2,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":424.9,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":485.6,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":546.3,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":607.0,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":667.7,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":728.4,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":789.0,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":849.7,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":910.4,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":971.1,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1031.8,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1092.5,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1153.2,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1213.9,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1274.6,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1335.3,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1396.0,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1456.7,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1517.4,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1578.1,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1638.8,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1942.3,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2003.0,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2063.7,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2185.1,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2245.8,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2306.4,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2367.1,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2427.8,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2488.5,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2549.2,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2609.9,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2670.6,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2731.3,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2792.0,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2852.7,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2913.4,"y":140.7,"w":60.7,"h":14.1},{"c":"p박스 세척 공간 및 박스갈이 작업존","x":2974.1,"y":140.7,"w":485.6,"h":112.6},{"c":"","x":242.8,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":303.5,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":364.2,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":424.9,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":485.6,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":546.3,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":607.0,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":667.7,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":728.4,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":789.0,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":849.7,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":910.4,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":971.1,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":1031.8,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":1092.5,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":1153.2,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":1213.9,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":1274.6,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":1335.3,"y":154.8,"w":60.7,"h":14.1}]},"fnc3":{"n":"FnC동 3층 염모제","b":"FnC","tcap":155,"W":3052.1,"H":731.6,"locs":[{"c":"반제품 6p","p":6,"x":1942.3,"y":0,"w":242.8,"h":28.1},{"c":"3D-05-01-1 35p","p":35,"x":1942.3,"y":28.1,"w":182.1,"h":253.3},{"c":"7P","p":7,"x":1699.5,"y":112.6,"w":121.4,"h":28.1},{"c":"13P","p":13,"x":1699.5,"y":379.9,"w":121.4,"h":28.1},{"c":"3D-01-01-1  27p","p":27,"x":1942.3,"y":436.2,"w":242.8,"h":78.4},{"c":"기존 ; 3D-1 : 51P 적치 공간 변경 ;        ","p":51,"x":2185.1,"y":436.2,"w":867.0,"h":277.4},{"c":"20p","p":20,"x":182.1,"y":478.4,"w":303.5,"h":36.2},{"c":"14p","p":14,"x":607.0,"y":586.9,"w":242.8,"h":18.1},{"c":"17p","p":17,"x":910.4,"y":586.9,"w":364.2,"h":18.1},{"c":"18p","p":18,"x":1335.3,"y":586.9,"w":364.2,"h":18.1},{"c":"3D-01-01-2 18p","p":18,"x":1942.3,"y":605.0,"w":242.8,"h":108.5},{"c":"4p","p":4,"x":607.0,"y":641.2,"w":242.8,"h":18.1},{"c":"7p","p":7,"x":910.4,"y":641.2,"w":364.2,"h":18.1},{"c":"12p","p":12,"x":182.1,"y":659.3,"w":303.5,"h":36.2},{"c":"2C-1(8P)-렉","p":8,"x":607.0,"y":659.3,"w":60.7,"h":18.1},{"c":"15p","p":15,"x":1456.7,"y":659.3,"w":60.7,"h":18.1},{"c":"2C-2(12P)-렉","p":12,"x":607.0,"y":695.5,"w":1213.9,"h":18.1}],"refs":[{"c":"생산라인","x":1699.5,"y":0,"w":60.7,"h":84.4},{"c":"반 제 품","x":1760.2,"y":0,"w":60.7,"h":98.5},{"c":"","x":1820.9,"y":0,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":0,"w":60.7,"h":14.1},{"c":"생산도급사용","x":2185.1,"y":0,"w":303.5,"h":28.1},{"c":"","x":1820.9,"y":14.1,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":14.1,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":28.1,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":28.1,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":28.1,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":42.2,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":56.3,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":70.3,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":84.4,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":98.5,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":112.6,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":126.6,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":140.7,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":154.8,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":168.8,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":168.8,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":168.8,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":168.8,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":168.8,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":182.9,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":182.9,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":182.9,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":182.9,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":182.9,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":197.0,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":197.0,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":197.0,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":211.0,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":211.0,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":211.0,"w":60.7,"h":14.1},{"c":"폐기","x":1699.5,"y":225.1,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":225.1,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":225.1,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":225.1,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":239.2,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":239.2,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":239.2,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":253.3,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":253.3,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":253.3,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":267.3,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":267.3,"w":60.7,"h":14.1},{"c":"","x":2124.4,"y":267.3,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":281.4,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":281.4,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":281.4,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":281.4,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":295.5,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":295.5,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":295.5,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":295.5,"w":60.7,"h":14.1},{"c":"업체","x":1699.5,"y":309.5,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":309.5,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":309.5,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":309.5,"w":60.7,"h":14.1},{"c":"회수","x":1699.5,"y":323.6,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":323.6,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":323.6,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":323.6,"w":60.7,"h":14.1},{"c":"E/V","x":1942.3,"y":323.6,"w":60.7,"h":14.1},{"c":"박스","x":1699.5,"y":337.7,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":337.7,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":337.7,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":337.7,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":351.7,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":351.7,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":351.7,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":351.7,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":365.8,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":365.8,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":365.8,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":379.9,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":379.9,"w":60.7,"h":14.1},{"c":"E/V","x":1942.3,"y":379.9,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":394.0,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":394.0,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":408.0,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":408.0,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":408.0,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":408.0,"w":60.7,"h":14.1},{"c":"폐스크랩","x":1942.3,"y":408.0,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":422.1,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":422.1,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":422.1,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":422.1,"w":60.7,"h":14.1},{"c":"대차","x":1942.3,"y":422.1,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":436.2,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":436.2,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":436.2,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":436.2,"w":60.7,"h":14.1},{"c":"","x":1699.5,"y":450.2,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":450.2,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":450.2,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":450.2,"w":60.7,"h":14.1},{"c":"","x":182.1,"y":464.3,"w":60.7,"h":14.1},{"c":"","x":242.8,"y":464.3,"w":60.7,"h":14.1},{"c":"","x":303.5,"y":464.3,"w":60.7,"h":14.1},{"c":"","x":364.2,"y":464.3,"w":60.7,"h":14.1},{"c":"회수박스","x":485.6,"y":464.3,"w":242.8,"h":32.2},{"c":"공정","x":728.4,"y":464.3,"w":60.7,"h":14.1},{"c":"","x":1031.8,"y":464.3,"w":60.7,"h":14.1},{"c":"","x":1092.5,"y":464.3,"w":60.7,"h":14.1},{"c":"","x":1153.2,"y":464.3,"w":60.7,"h":14.1},{"c":"AGV","x":1335.3,"y":464.3,"w":60.7,"h":14.1},{"c":"","x":1517.4,"y":464.3,"w":60.7,"h":14.1},{"c":"","x":1578.1,"y":464.3,"w":60.7,"h":14.1},{"c":"","x":1638.8,"y":464.3,"w":60.7,"h":14.1},{"c":"","x":1760.2,"y":464.3,"w":60.7,"h":14.1},{"c":"","x":1820.9,"y":464.3,"w":60.7,"h":14.1},{"c":"","x":1881.6,"y":464.3,"w":60.7,"h":14.1},{"c":"PC","x":728.4,"y":478.4,"w":60.7,"h":18.1},{"c":"반입","x":910.4,"y":478.4,"w":60.7,"h":18.1},{"c":"","x":1031.8,"y":478.4,"w":60.7,"h":18.1},{"c":"","x":1092.5,"y":478.4,"w":60.7,"h":18.1},{"c":"","x":1153.2,"y":478.4,"w":60.7,"h":18.1},{"c":"PC","x":1213.9,"y":478.4,"w":60.7,"h":18.1},{"c":"충전","x":1335.3,"y":478.4,"w":60.7,"h":18.1},{"c":"","x":1517.4,"y":478.4,"w":60.7,"h":18.1},{"c":"","x":1578.1,"y":478.4,"w":60.7,"h":18.1},{"c":"","x":1638.8,"y":478.4,"w":60.7,"h":18.1},{"c":"","x":1699.5,"y":478.4,"w":60.7,"h":18.1},{"c":"","x":1760.2,"y":478.4,"w":60.7,"h":18.1},{"c":"","x":1820.9,"y":478.4,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":478.4,"w":60.7,"h":18.1},{"c":"","x":485.6,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":607.0,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":667.7,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":728.4,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":789.0,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":849.7,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":910.4,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":971.1,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1031.8,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1092.5,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1153.2,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1213.9,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1274.6,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1335.3,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1396.0,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1456.7,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1517.4,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1578.1,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1638.8,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1699.5,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1760.2,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1820.9,"y":496.5,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":496.5,"w":60.7,"h":18.1},{"c":"3D-03-01-1","x":182.1,"y":514.6,"w":303.5,"h":72.4},{"c":"","x":485.6,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":607.0,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":667.7,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":728.4,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":789.0,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":849.7,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":910.4,"y":514.6,"w":60.7,"h":18.1},{"c":"출고 대기(대차30)","x":971.1,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1031.8,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1092.5,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1153.2,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1213.9,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1274.6,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1335.3,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1396.0,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1456.7,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1517.4,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1578.1,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1638.8,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1699.5,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1760.2,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1820.9,"y":514.6,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":514.6,"w":60.7,"h":18.1},{"c":"3D-01-01-1","x":1942.3,"y":514.6,"w":242.8,"h":72.4},{"c":"","x":485.6,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":607.0,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":667.7,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":728.4,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":789.0,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":849.7,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":910.4,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":971.1,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1031.8,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1092.5,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1153.2,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1213.9,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1274.6,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1335.3,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1396.0,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1456.7,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1517.4,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1578.1,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1638.8,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1699.5,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1760.2,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1820.9,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":532.6,"w":60.7,"h":18.1},{"c":"","x":485.6,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":607.0,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":667.7,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":728.4,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":789.0,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":849.7,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":910.4,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":971.1,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1031.8,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1092.5,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1153.2,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1213.9,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1274.6,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1335.3,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1396.0,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1456.7,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1517.4,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1578.1,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1638.8,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1699.5,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1760.2,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1820.9,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":550.7,"w":60.7,"h":18.1},{"c":"","x":485.6,"y":568.8,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":568.8,"w":60.7,"h":18.1},{"c":"3D-02-03-1","x":607.0,"y":568.8,"w":242.8,"h":18.1},{"c":"","x":849.7,"y":568.8,"w":60.7,"h":18.1},{"c":"3D-02-02-1","x":910.4,"y":568.8,"w":364.2,"h":18.1},{"c":"","x":1274.6,"y":568.8,"w":60.7,"h":18.1},{"c":"3D-02-01-1","x":1335.3,"y":568.8,"w":364.2,"h":18.1},{"c":"","x":1699.5,"y":568.8,"w":60.7,"h":18.1},{"c":"","x":1760.2,"y":568.8,"w":60.7,"h":36.2},{"c":"","x":1820.9,"y":568.8,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":568.8,"w":60.7,"h":18.1},{"c":"","x":182.1,"y":586.9,"w":60.7,"h":18.1},{"c":"","x":242.8,"y":586.9,"w":60.7,"h":18.1},{"c":"","x":303.5,"y":586.9,"w":60.7,"h":18.1},{"c":"","x":364.2,"y":586.9,"w":60.7,"h":18.1},{"c":"","x":485.6,"y":586.9,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":586.9,"w":60.7,"h":18.1},{"c":"","x":1820.9,"y":586.9,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":586.9,"w":60.7,"h":18.1},{"c":"3D-03-02-2","x":182.1,"y":605.0,"w":303.5,"h":54.3},{"c":"","x":485.6,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":607.0,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":667.7,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":728.4,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":789.0,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":849.7,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":910.4,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":971.1,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1031.8,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1092.5,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1153.2,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1213.9,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1274.6,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1335.3,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1396.0,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1456.7,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1517.4,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1578.1,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1638.8,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1699.5,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1760.2,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1820.9,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":605.0,"w":60.7,"h":18.1},{"c":"","x":485.6,"y":623.1,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":623.1,"w":60.7,"h":18.1},{"c":"3D-02-03-1","x":607.0,"y":623.1,"w":242.8,"h":18.1},{"c":"3D-02-02-1","x":849.7,"y":623.1,"w":424.9,"h":18.1},{"c":"","x":1274.6,"y":623.1,"w":60.7,"h":18.1},{"c":"","x":1335.3,"y":623.1,"w":60.7,"h":36.2},{"c":"3D-02-01-1","x":1396.0,"y":623.1,"w":424.9,"h":36.2},{"c":"","x":1820.9,"y":623.1,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":623.1,"w":60.7,"h":18.1},{"c":"","x":485.6,"y":641.2,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":641.2,"w":60.7,"h":18.1},{"c":"","x":849.7,"y":641.2,"w":60.7,"h":18.1},{"c":"","x":1274.6,"y":641.2,"w":60.7,"h":18.1},{"c":"","x":1820.9,"y":641.2,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":641.2,"w":60.7,"h":18.1},{"c":"","x":485.6,"y":659.3,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":659.3,"w":60.7,"h":18.1},{"c":"","x":1396.0,"y":659.3,"w":60.7,"h":18.1},{"c":"","x":1517.4,"y":659.3,"w":60.7,"h":18.1},{"c":"","x":1578.1,"y":659.3,"w":60.7,"h":18.1},{"c":"","x":1638.8,"y":659.3,"w":60.7,"h":18.1},{"c":"","x":1699.5,"y":659.3,"w":60.7,"h":18.1},{"c":"","x":1760.2,"y":659.3,"w":60.7,"h":18.1},{"c":"","x":1820.9,"y":659.3,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":659.3,"w":60.7,"h":18.1},{"c":"","x":485.6,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":607.0,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":667.7,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":728.4,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":789.0,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":849.7,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":910.4,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":971.1,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1031.8,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1092.5,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1153.2,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1213.9,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1274.6,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1335.3,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1396.0,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1456.7,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1517.4,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1578.1,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1638.8,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1699.5,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1760.2,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1820.9,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":677.4,"w":60.7,"h":18.1},{"c":"","x":182.1,"y":695.5,"w":60.7,"h":18.1},{"c":"","x":242.8,"y":695.5,"w":60.7,"h":18.1},{"c":"","x":303.5,"y":695.5,"w":60.7,"h":18.1},{"c":"","x":364.2,"y":695.5,"w":60.7,"h":18.1},{"c":"","x":424.9,"y":695.5,"w":60.7,"h":18.1},{"c":"","x":485.6,"y":695.5,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":695.5,"w":60.7,"h":18.1},{"c":"","x":1820.9,"y":695.5,"w":60.7,"h":18.1},{"c":"","x":1881.6,"y":695.5,"w":60.7,"h":18.1},{"c":"","x":182.1,"y":713.6,"w":60.7,"h":18.1},{"c":"","x":242.8,"y":713.6,"w":60.7,"h":18.1},{"c":"","x":303.5,"y":713.6,"w":60.7,"h":18.1},{"c":"","x":364.2,"y":713.6,"w":60.7,"h":18.1},{"c":"","x":485.6,"y":713.6,"w":60.7,"h":18.1},{"c":"","x":546.3,"y":713.6,"w":60.7,"h":18.1},{"c":"펌프대차 대기존","x":1760.2,"y":713.6,"w":242.8,"h":18.1},{"c":"","x":2003.0,"y":713.6,"w":60.7,"h":18.1},{"c":"","x":2063.7,"y":713.6,"w":60.7,"h":18.1}]},"lbox":{"n":"L동 박스창고","b":"L동","tcap":481,"W":0,"H":0,"locs":[{"c":"구역 전체","p":481,"x":0,"y":0,"w":0,"h":0}],"refs":[]},"jig":{"n":"J동 공작반 2층","b":"J동","tcap":85,"W":364.2,"H":281.4,"locs":[{"c":"공작반 2층 포장재 창고(80P)","p":80,"x":60.7,"y":0,"w":242.8,"h":20.1}],"refs":[{"c":"7S00003","x":0,"y":20.1,"w":364.2,"h":80.4},{"c":"7S00004","x":0,"y":100.5,"w":182.1,"h":160.8},{"c":"7S00002","x":182.1,"y":100.5,"w":182.1,"h":160.8},{"c":"엘리베이터","x":121.4,"y":261.3,"w":121.4,"h":20.1}]},"tent":{"n":"임가공[천막]","b":"임가공","tcap":148,"W":926.8,"H":201.8,"locs":[{"c":"5P","p":5,"x":0,"y":161.6,"w":38.1,"h":40.2},{"c":"5P","p":5,"x":38.1,"y":161.6,"w":65.5,"h":40.2},{"c":"5P","p":5,"x":103.6,"y":161.6,"w":59.0,"h":40.2},{"c":"5P","p":5,"x":162.7,"y":161.6,"w":82.1,"h":40.2},{"c":"5P","p":5,"x":244.7,"y":161.6,"w":60.7,"h":40.2},{"c":"5P","p":5,"x":305.4,"y":161.6,"w":60.7,"h":40.2},{"c":"5P","p":5,"x":366.1,"y":161.6,"w":60.7,"h":40.2},{"c":"5P","p":5,"x":426.8,"y":161.6,"w":60.7,"h":40.2},{"c":"5P","p":5,"x":487.5,"y":161.6,"w":60.7,"h":40.2},{"c":"5P","p":5,"x":548.2,"y":161.6,"w":60.7,"h":40.2},{"c":"5P","p":5,"x":608.9,"y":161.6,"w":60.7,"h":40.2},{"c":"5P","p":5,"x":669.6,"y":161.6,"w":87.3,"h":40.2},{"c":"5P","p":5,"x":756.9,"y":161.6,"w":62.6,"h":40.2},{"c":"5P","p":5,"x":819.6,"y":161.6,"w":44.6,"h":40.2},{"c":"5P","p":5,"x":864.2,"y":161.6,"w":62.6,"h":40.2}],"refs":[{"c":"임가공 천막창고 배치도","x":305.4,"y":0,"w":242.8,"h":20.1},{"c":"7 S 0 0 0 1 1","x":0,"y":20.1,"w":38.1,"h":141.5},{"c":"7 S 0 0 0 1 2","x":38.1,"y":20.1,"w":65.5,"h":141.5},{"c":"7 S 0 0 0 1 3","x":103.6,"y":20.1,"w":59.0,"h":141.5},{"c":"7 S 0 0 0 1 4","x":162.7,"y":20.1,"w":82.1,"h":141.5},{"c":"7 S 0 0 0 1 5","x":244.7,"y":20.1,"w":60.7,"h":141.5},{"c":"7 S 0 0 0 1 6","x":305.4,"y":20.1,"w":60.7,"h":141.5},{"c":"7 S 0 0 0 1 7","x":366.1,"y":20.1,"w":60.7,"h":141.5},{"c":"7 S 0 0 0 1 8","x":426.8,"y":20.1,"w":60.7,"h":141.5},{"c":"7 S 0 0 0 1 9","x":487.5,"y":20.1,"w":60.7,"h":141.5},{"c":"7 S 0 0 0 2 0","x":548.2,"y":20.1,"w":60.7,"h":141.5},{"c":"7 S 0 0 0 2 1","x":608.9,"y":20.1,"w":60.7,"h":141.5},{"c":"7 S 0 0 0 2 2","x":669.6,"y":20.1,"w":87.3,"h":141.5},{"c":"7 S 0 0 0 2 3","x":756.9,"y":20.1,"w":62.6,"h":141.5},{"c":"7 S 0 0 0 2 4","x":819.6,"y":20.1,"w":44.6,"h":141.5},{"c":"7 S 0 0 0 2 5","x":864.2,"y":20.1,"w":62.6,"h":141.5}]},"oc1p":{"n":"OC동 1층 종이상자+기타","b":"OC동","tcap":136,"W":4932.7,"H":775.1,"locs":[{"c":"반제품 박스 16P","p":16,"x":369.0,"y":0,"w":242.8,"h":140.7},{"c":"25P","p":25,"x":0,"y":40.2,"w":292.5,"h":20.1},{"c":"4C04021 / 25P","p":25,"x":0,"y":120.6,"w":292.5,"h":20.1},{"c":"PLT 보관 5P","p":5,"x":1036.6,"y":180.9,"w":121.4,"h":60.3},{"c":"4P","p":4,"x":369.0,"y":201.0,"w":60.7,"h":20.1},{"c":"겉상자 출고대기 45P","p":45,"x":551.1,"y":221.1,"w":364.2,"h":131.9},{"c":"4R03011 / 5P 4R03021 5P 4R03031 9p","p":5,"x":1036.6,"y":241.2,"w":485.6,"h":71.6},{"c":"4C-03-01-1 / 15P","p":15,"x":0,"y":312.8,"w":292.5,"h":20.1},{"c":"4C-03-02-1 / 10P","p":10,"x":0,"y":332.9,"w":292.5,"h":20.1},{"c":"20P","p":20,"x":369.0,"y":332.9,"w":182.1,"h":20.1},{"c":"4P","p":4,"x":60.7,"y":393.2,"w":182.1,"h":20.1},{"c":"4C-02-01-1 / 15P","p":15,"x":0,"y":453.5,"w":292.5,"h":20.1},{"c":"4C-02-02-1 / 15P","p":15,"x":0,"y":473.6,"w":292.5,"h":20.1},{"c":"44P","p":44,"x":1218.7,"y":493.7,"w":242.8,"h":20.1},{"c":"4P","p":4,"x":60.7,"y":533.9,"w":182.1,"h":20.1},{"c":"4C-01-02-1 / 15P","p":15,"x":0,"y":614.3,"w":292.5,"h":20.1}],"refs":[{"c":"","x":0,"y":0,"w":292.5,"h":20.1},{"c":"반제품 박스","x":0,"y":20.1,"w":292.5,"h":20.1},{"c":"※PAL 보관 capacity","x":1886.4,"y":20.1,"w":60.7,"h":20.1},{"c":"","x":0,"y":60.3,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":60.3,"w":182.1,"h":20.1},{"c":"","x":242.8,"y":60.3,"w":49.7,"h":20.1},{"c":"▶평치  : 264P","x":1947.1,"y":60.3,"w":60.7,"h":20.1},{"c":"","x":0,"y":80.4,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":80.4,"w":60.7,"h":20.1},{"c":"","x":121.4,"y":80.4,"w":60.7,"h":20.1},{"c":"","x":182.1,"y":80.4,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":80.4,"w":49.7,"h":20.1},{"c":"▶출고대기 공간 : 89P","x":1947.1,"y":80.4,"w":60.7,"h":20.1},{"c":"","x":0,"y":100.5,"w":292.5,"h":20.1},{"c":"▶반제품박스 대기 공간 : 41P","x":1947.1,"y":100.5,"w":60.7,"h":20.1},{"c":"▶전실 28P","x":1947.1,"y":120.6,"w":60.7,"h":20.1},{"c":"","x":0,"y":140.7,"w":292.5,"h":20.1},{"c":"","x":1643.6,"y":140.7,"w":60.7,"h":20.1},{"c":"▶총 적재 : 422P","x":1947.1,"y":140.7,"w":60.7,"h":20.1},{"c":"","x":0,"y":160.8,"w":292.5,"h":20.1},{"c":"","x":1643.6,"y":160.8,"w":60.7,"h":20.1},{"c":"","x":0,"y":180.9,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":180.9,"w":60.7,"h":20.1},{"c":"","x":121.4,"y":180.9,"w":60.7,"h":20.1},{"c":"","x":182.1,"y":180.9,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":180.9,"w":49.7,"h":20.1},{"c":"4R-05-02","x":369.0,"y":180.9,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":180.9,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":180.9,"w":60.7,"h":20.1},{"c":"잔량보관","x":551.1,"y":180.9,"w":303.5,"h":40.2},{"c":"","x":1158.0,"y":180.9,"w":60.7,"h":20.1},{"c":"4R-04-04-1 3PLT","x":1218.7,"y":180.9,"w":242.8,"h":40.2},{"c":"","x":0,"y":201.0,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":201.0,"w":182.1,"h":20.1},{"c":"","x":242.8,"y":201.0,"w":49.7,"h":20.1},{"c":"","x":429.7,"y":201.0,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":201.0,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":201.0,"w":60.7,"h":20.1},{"c":"","x":1158.0,"y":201.0,"w":60.7,"h":20.1},{"c":"","x":1461.5,"y":201.0,"w":60.7,"h":20.1},{"c":"▶평치+겉상자출고대기+전실+반제품박스대기공간 : 378P","x":1947.1,"y":201.0,"w":60.7,"h":20.1},{"c":"","x":0,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":121.4,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":182.1,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":221.1,"w":49.7,"h":20.1},{"c":"","x":369.0,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":1158.0,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":1218.7,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":1279.4,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":1340.1,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":1400.8,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":1461.5,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":0,"y":241.2,"w":60.7,"h":71.6},{"c":"","x":60.7,"y":241.2,"w":60.7,"h":71.6},{"c":"","x":121.4,"y":241.2,"w":60.7,"h":71.6},{"c":"","x":182.1,"y":241.2,"w":60.7,"h":71.6},{"c":"","x":242.8,"y":241.2,"w":49.7,"h":71.6},{"c":"4R-05","x":369.0,"y":241.2,"w":60.7,"h":71.6},{"c":"","x":429.7,"y":241.2,"w":60.7,"h":71.6},{"c":"","x":490.4,"y":241.2,"w":60.7,"h":71.6},{"c":"대","x":1643.6,"y":241.2,"w":60.7,"h":71.6},{"c":"-01-1","x":369.0,"y":312.8,"w":182.1,"h":20.1},{"c":"","x":1036.6,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1097.3,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1158.0,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1218.7,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1279.4,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1340.1,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1400.8,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1461.5,"y":312.8,"w":60.7,"h":20.1},{"c":"차","x":1643.6,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1036.6,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1097.3,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1158.0,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1218.7,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1279.4,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1340.1,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1400.8,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1461.5,"y":332.9,"w":60.7,"h":20.1},{"c":"보","x":1643.6,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":0,"y":353.0,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":353.0,"w":60.7,"h":20.1},{"c":"","x":121.4,"y":353.0,"w":60.7,"h":20.1},{"c":"","x":182.1,"y":353.0,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":353.0,"w":49.7,"h":20.1},{"c":"관","x":1643.6,"y":353.0,"w":60.7,"h":20.1},{"c":"25","x":2444.2,"y":353.0,"w":60.7,"h":20.1},{"c":"","x":0,"y":373.1,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":373.1,"w":60.7,"h":20.1},{"c":"","x":121.4,"y":373.1,"w":60.7,"h":20.1},{"c":"","x":182.1,"y":373.1,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":373.1,"w":49.7,"h":20.1},{"c":"장","x":1643.6,"y":373.1,"w":60.7,"h":20.1},{"c":"23","x":2444.2,"y":373.1,"w":60.7,"h":20.1},{"c":"","x":0,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":393.2,"w":49.7,"h":20.1},{"c":"","x":369.0,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":1158.0,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":1461.5,"y":393.2,"w":60.7,"h":20.1},{"c":"소","x":1643.6,"y":393.2,"w":60.7,"h":20.1},{"c":"25","x":2444.2,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":369.0,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":413.3,"w":60.7,"h":20.1},{"c":"25","x":2444.2,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":369.0,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":369.0,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":473.6,"w":60.7,"h":20.1},{"c":"단상자출고대기","x":1158.0,"y":473.6,"w":364.2,"h":20.1},{"c":"","x":1643.6,"y":473.6,"w":60.7,"h":20.1},{"c":"대차 보관구역","x":0,"y":493.7,"w":292.5,"h":20.1},{"c":"라","x":1643.6,"y":493.7,"w":60.7,"h":20.1},{"c":"(적치공간 제외 요청)","x":0,"y":513.8,"w":292.5,"h":20.1},{"c":"","x":369.0,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":513.8,"w":60.7,"h":20.1},{"c":"벨","x":1643.6,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":0,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":533.9,"w":49.7,"h":20.1},{"c":"","x":369.0,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":1158.0,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":1461.5,"y":533.9,"w":60.7,"h":20.1},{"c":"보","x":1643.6,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":369.0,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":554.0,"w":60.7,"h":20.1},{"c":"관","x":1643.6,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":1643.6,"y":574.1,"w":60.7,"h":20.1},{"c":"","x":0,"y":594.2,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":594.2,"w":60.7,"h":20.1},{"c":"","x":121.4,"y":594.2,"w":60.7,"h":20.1},{"c":"","x":182.1,"y":594.2,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":594.2,"w":49.7,"h":20.1},{"c":"","x":369.0,"y":594.2,"w":546.3,"h":20.1},{"c":"","x":1643.6,"y":614.3,"w":60.7,"h":20.1},{"c":"","x":0,"y":634.4,"w":292.5,"h":20.1},{"c":"","x":1643.6,"y":634.4,"w":60.7,"h":20.1},{"c":"부적합품보관구역","x":0,"y":654.5,"w":292.5,"h":20.1},{"c":"라벨보관","x":1097.3,"y":654.5,"w":303.5,"h":20.1},{"c":"","x":915.2,"y":674.6,"w":60.7,"h":20.1},{"c":"","x":975.9,"y":674.6,"w":60.7,"h":20.1},{"c":"사무실","x":369.0,"y":714.8,"w":303.5,"h":20.1},{"c":"수축필름","x":672.5,"y":714.8,"w":242.8,"h":20.1},{"c":"전실","x":1036.6,"y":714.8,"w":667.7,"h":20.1},{"c":"보관장소","x":672.5,"y":734.9,"w":242.8,"h":20.1},{"c":"28PLT","x":1036.6,"y":734.9,"w":667.7,"h":20.1},{"c":"","x":915.2,"y":755.0,"w":60.7,"h":20.1},{"c":"","x":975.9,"y":755.0,"w":60.7,"h":20.1}]},"oc1t":{"n":"OC동 1층 튜브","b":"OC동","tcap":72,"W":4932.7,"H":775.1,"locs":[{"c":"튜브 대기 20P","p":20,"x":1036.6,"y":393.2,"w":121.4,"h":160.8},{"c":"4R-04-03-1 / 24P","p":24,"x":369.0,"y":433.4,"w":546.3,"h":20.1},{"c":"4R-04-02-1 / 24P","p":24,"x":369.0,"y":493.7,"w":546.3,"h":20.1},{"c":"튜브 대기4P","p":4,"x":1036.6,"y":554.0,"w":182.1,"h":60.3},{"c":"4R-04-01-1 / 24P","p":24,"x":369.0,"y":574.1,"w":546.3,"h":20.1}],"refs":[{"c":"","x":0,"y":0,"w":292.5,"h":20.1},{"c":"반제품 박스","x":0,"y":20.1,"w":292.5,"h":20.1},{"c":"※PAL 보관 capacity","x":1886.4,"y":20.1,"w":60.7,"h":20.1},{"c":"","x":0,"y":60.3,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":60.3,"w":182.1,"h":20.1},{"c":"","x":242.8,"y":60.3,"w":49.7,"h":20.1},{"c":"▶평치  : 264P","x":1947.1,"y":60.3,"w":60.7,"h":20.1},{"c":"","x":0,"y":80.4,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":80.4,"w":60.7,"h":20.1},{"c":"","x":121.4,"y":80.4,"w":60.7,"h":20.1},{"c":"","x":182.1,"y":80.4,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":80.4,"w":49.7,"h":20.1},{"c":"▶출고대기 공간 : 89P","x":1947.1,"y":80.4,"w":60.7,"h":20.1},{"c":"","x":0,"y":100.5,"w":292.5,"h":20.1},{"c":"▶반제품박스 대기 공간 : 41P","x":1947.1,"y":100.5,"w":60.7,"h":20.1},{"c":"▶전실 28P","x":1947.1,"y":120.6,"w":60.7,"h":20.1},{"c":"","x":0,"y":140.7,"w":292.5,"h":20.1},{"c":"","x":1643.6,"y":140.7,"w":60.7,"h":20.1},{"c":"▶총 적재 : 422P","x":1947.1,"y":140.7,"w":60.7,"h":20.1},{"c":"","x":0,"y":160.8,"w":292.5,"h":20.1},{"c":"","x":1643.6,"y":160.8,"w":60.7,"h":20.1},{"c":"","x":0,"y":180.9,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":180.9,"w":60.7,"h":20.1},{"c":"","x":121.4,"y":180.9,"w":60.7,"h":20.1},{"c":"","x":182.1,"y":180.9,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":180.9,"w":49.7,"h":20.1},{"c":"4R-05-02","x":369.0,"y":180.9,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":180.9,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":180.9,"w":60.7,"h":20.1},{"c":"잔량보관","x":551.1,"y":180.9,"w":303.5,"h":40.2},{"c":"","x":1158.0,"y":180.9,"w":60.7,"h":20.1},{"c":"4R-04-04-1 3PLT","x":1218.7,"y":180.9,"w":242.8,"h":40.2},{"c":"","x":0,"y":201.0,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":201.0,"w":182.1,"h":20.1},{"c":"","x":242.8,"y":201.0,"w":49.7,"h":20.1},{"c":"","x":429.7,"y":201.0,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":201.0,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":201.0,"w":60.7,"h":20.1},{"c":"","x":1158.0,"y":201.0,"w":60.7,"h":20.1},{"c":"","x":1461.5,"y":201.0,"w":60.7,"h":20.1},{"c":"▶평치+겉상자출고대기+전실+반제품박스대기공간 : 378P","x":1947.1,"y":201.0,"w":60.7,"h":20.1},{"c":"","x":0,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":121.4,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":182.1,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":221.1,"w":49.7,"h":20.1},{"c":"","x":369.0,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":1158.0,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":1218.7,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":1279.4,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":1340.1,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":1400.8,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":1461.5,"y":221.1,"w":60.7,"h":20.1},{"c":"","x":0,"y":241.2,"w":60.7,"h":71.6},{"c":"","x":60.7,"y":241.2,"w":60.7,"h":71.6},{"c":"","x":121.4,"y":241.2,"w":60.7,"h":71.6},{"c":"","x":182.1,"y":241.2,"w":60.7,"h":71.6},{"c":"","x":242.8,"y":241.2,"w":49.7,"h":71.6},{"c":"4R-05","x":369.0,"y":241.2,"w":60.7,"h":71.6},{"c":"","x":429.7,"y":241.2,"w":60.7,"h":71.6},{"c":"","x":490.4,"y":241.2,"w":60.7,"h":71.6},{"c":"대","x":1643.6,"y":241.2,"w":60.7,"h":71.6},{"c":"-01-1","x":369.0,"y":312.8,"w":182.1,"h":20.1},{"c":"","x":1036.6,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1097.3,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1158.0,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1218.7,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1279.4,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1340.1,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1400.8,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1461.5,"y":312.8,"w":60.7,"h":20.1},{"c":"차","x":1643.6,"y":312.8,"w":60.7,"h":20.1},{"c":"","x":1036.6,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1097.3,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1158.0,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1218.7,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1279.4,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1340.1,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1400.8,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":1461.5,"y":332.9,"w":60.7,"h":20.1},{"c":"보","x":1643.6,"y":332.9,"w":60.7,"h":20.1},{"c":"","x":0,"y":353.0,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":353.0,"w":60.7,"h":20.1},{"c":"","x":121.4,"y":353.0,"w":60.7,"h":20.1},{"c":"","x":182.1,"y":353.0,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":353.0,"w":49.7,"h":20.1},{"c":"관","x":1643.6,"y":353.0,"w":60.7,"h":20.1},{"c":"25","x":2444.2,"y":353.0,"w":60.7,"h":20.1},{"c":"","x":0,"y":373.1,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":373.1,"w":60.7,"h":20.1},{"c":"","x":121.4,"y":373.1,"w":60.7,"h":20.1},{"c":"","x":182.1,"y":373.1,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":373.1,"w":49.7,"h":20.1},{"c":"장","x":1643.6,"y":373.1,"w":60.7,"h":20.1},{"c":"23","x":2444.2,"y":373.1,"w":60.7,"h":20.1},{"c":"","x":0,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":393.2,"w":49.7,"h":20.1},{"c":"","x":369.0,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":1158.0,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":1461.5,"y":393.2,"w":60.7,"h":20.1},{"c":"소","x":1643.6,"y":393.2,"w":60.7,"h":20.1},{"c":"25","x":2444.2,"y":393.2,"w":60.7,"h":20.1},{"c":"","x":369.0,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":413.3,"w":60.7,"h":20.1},{"c":"25","x":2444.2,"y":413.3,"w":60.7,"h":20.1},{"c":"","x":369.0,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":453.5,"w":60.7,"h":20.1},{"c":"","x":369.0,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":473.6,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":473.6,"w":60.7,"h":20.1},{"c":"단상자출고대기","x":1158.0,"y":473.6,"w":364.2,"h":20.1},{"c":"","x":1643.6,"y":473.6,"w":60.7,"h":20.1},{"c":"대차 보관구역","x":0,"y":493.7,"w":292.5,"h":20.1},{"c":"라","x":1643.6,"y":493.7,"w":60.7,"h":20.1},{"c":"(적치공간 제외 요청)","x":0,"y":513.8,"w":292.5,"h":20.1},{"c":"","x":369.0,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":513.8,"w":60.7,"h":20.1},{"c":"벨","x":1643.6,"y":513.8,"w":60.7,"h":20.1},{"c":"","x":0,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":533.9,"w":49.7,"h":20.1},{"c":"","x":369.0,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":1158.0,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":1461.5,"y":533.9,"w":60.7,"h":20.1},{"c":"보","x":1643.6,"y":533.9,"w":60.7,"h":20.1},{"c":"","x":369.0,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":429.7,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":490.4,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":551.1,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":611.8,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":672.5,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":733.2,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":793.9,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":854.6,"y":554.0,"w":60.7,"h":20.1},{"c":"관","x":1643.6,"y":554.0,"w":60.7,"h":20.1},{"c":"","x":1643.6,"y":574.1,"w":60.7,"h":20.1},{"c":"","x":0,"y":594.2,"w":60.7,"h":20.1},{"c":"","x":60.7,"y":594.2,"w":60.7,"h":20.1},{"c":"","x":121.4,"y":594.2,"w":60.7,"h":20.1},{"c":"","x":182.1,"y":594.2,"w":60.7,"h":20.1},{"c":"","x":242.8,"y":594.2,"w":49.7,"h":20.1},{"c":"","x":369.0,"y":594.2,"w":546.3,"h":20.1},{"c":"","x":1643.6,"y":614.3,"w":60.7,"h":20.1},{"c":"","x":0,"y":634.4,"w":292.5,"h":20.1},{"c":"","x":1643.6,"y":634.4,"w":60.7,"h":20.1},{"c":"부적합품보관구역","x":0,"y":654.5,"w":292.5,"h":20.1},{"c":"라벨보관","x":1097.3,"y":654.5,"w":303.5,"h":20.1},{"c":"","x":915.2,"y":674.6,"w":60.7,"h":20.1},{"c":"","x":975.9,"y":674.6,"w":60.7,"h":20.1},{"c":"사무실","x":369.0,"y":714.8,"w":303.5,"h":20.1},{"c":"수축필름","x":672.5,"y":714.8,"w":242.8,"h":20.1},{"c":"전실","x":1036.6,"y":714.8,"w":667.7,"h":20.1},{"c":"보관장소","x":672.5,"y":734.9,"w":242.8,"h":20.1},{"c":"28PLT","x":1036.6,"y":734.9,"w":667.7,"h":20.1},{"c":"","x":915.2,"y":755.0,"w":60.7,"h":20.1},{"c":"","x":975.9,"y":755.0,"w":60.7,"h":20.1}]},"ocb":{"n":"OC동 지하 A구역","b":"OC동","tcap":136,"W":835.4,"H":191.4,"locs":[{"c":"치약 반제품 박스 보관구역 (7P)","p":7,"x":20.9,"y":20.1,"w":206.6,"h":43.4},{"c":"7S00041 (15P)","p":15,"x":227.5,"y":20.1,"w":121.4,"h":127.8},{"c":"7S00042 (20P)","p":20,"x":348.9,"y":20.1,"w":121.4,"h":127.8},{"c":"7S00043 (16P)","p":16,"x":470.3,"y":20.1,"w":121.4,"h":127.8},{"c":"7S00040 (16P)","p":16,"x":591.7,"y":20.1,"w":87.3,"h":127.8},{"c":"추가보관장소 20P","p":20,"x":679.0,"y":20.1,"w":156.4,"h":127.8},{"c":"치약 반제품 박스 보관구역 (20p)","p":20,"x":20.9,"y":104.5,"w":144.0,"h":86.8}],"refs":[{"c":"치약 지하동 포장재 창고","x":93.6,"y":0,"w":437.4,"h":20.1},{"c":"엘 리 베 이 터","x":0,"y":40.2,"w":20.9,"h":107.7},{"c":"통로","x":20.9,"y":63.5,"w":144.0,"h":41.0},{"c":"통로","x":164.8,"y":63.5,"w":62.6,"h":84.4},{"c":"계 단","x":0,"y":147.9,"w":20.9,"h":43.4},{"c":"통로","x":164.8,"y":147.9,"w":670.6,"h":43.4}]},"ocbb":{"n":"OC동 지하 B구역","b":"OC동","tcap":37,"W":0,"H":0,"locs":[{"c":"구역 전체","p":37,"x":0,"y":0,"w":0,"h":0}],"refs":[]},"occ":{"n":"OC동 지하 C구역","b":"OC동","tcap":12,"W":0,"H":0,"locs":[{"c":"구역 전체","p":12,"x":0,"y":0,"w":0,"h":0}],"refs":[]},"cloud":{"n":"클라우드동","b":"클라우드동","tcap":38,"W":0,"H":0,"locs":[{"c":"구역 전체","p":38,"x":0,"y":0,"w":0,"h":0}],"refs":[]}};
+/* 적치율표 기준 Max (구역별) */
+const MAXV = {hnb1:762, fnc2:250, fnc3:165, lbox:481, jig:100, tent:148, oc1p:136, oc1t:72, ocb:136, ocbb:37, occ:12, cloud:38};
+let CALM = null;          // 달력에 보여줄 월 (1일 기준 Date)
+let DATEIDX = {};         // {date:{zones,qty}} — 서버 등록 이력
+
+/* ── 상태 ─────────────────────────────────────────────── */
+const LS = "zen_wh_worker_v1";
+let CFG = (()=>{ try{ return JSON.parse(localStorage.getItem(LS))||{}; }catch(e){ return {}; } })();
+CFG.date = CFG.date || kstToday();
+CFG.api  = CFG.api  || (window.ZEN_WH_API||"");     // config.js 기본 서버
+let STATE = {submits:{}, items:{}};      // 서버 현황
+let CUR = null, MODE = 'loc', TOTALV = 0, VALS = {}, DRAFTS = (()=>{ try{ return JSON.parse(localStorage.getItem(LS+"_draft"))||{}; }catch(e){ return {}; } })();
+
+function kstToday(){ return new Date(Date.now()+9*3600e3).toISOString().slice(0,10); }
+const $ = id => document.getElementById(id);
+const fmt = n => (n||0).toLocaleString("ko-KR");
+const saveCfg = ()=>{ try{ localStorage.setItem(LS, JSON.stringify(CFG)); }catch(e){} };
+const saveDraft = ()=>{ try{ localStorage.setItem(LS+"_draft", JSON.stringify(DRAFTS)); }catch(e){} };
+function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("on");
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("on"),1900); }
+const api = p => (CFG.api||"").replace(/\/+$/,"") + p;
+
+/* ── 설정 ─────────────────────────────────────────────── */
+$("setBtn").onclick = ()=>{ const c=$("setCard"); c.style.display = c.style.display==="none"?"":"none"; };
+$("saveSet").onclick = ()=>{
+  CFG.api=$("apiUrl").value.trim(); CFG.who=$("who").value.trim(); CFG.date=$("theDate").value||kstToday();
+  CFG.mimg=$("mimg").value.trim();
+  saveCfg(); $("setCard").style.display="none"; toast("저장했습니다"); load();
+};
+$("ping").onclick = async ()=>{
+  const u=$("apiUrl").value.trim().replace(/\/+$/,"");
+  $("pingR").textContent="확인 중…";
+  try{ const r=await fetch(u+"/api/health"); const j=await r.json();
+    $("pingR").textContent = j.ok? "연결됨 · "+j.time : "응답 이상"; }
+  catch(e){ $("pingR").textContent="연결 실패"; }
+};
+
+/* ── 목록 ─────────────────────────────────────────────── */
+async function load(){
+  $("apiUrl").value=CFG.api||""; $("who").value=CFG.who||""; $("theDate").value=CFG.date;
+  $("mimg").value=CFG.mimg||"";
+  $("dLabel").textContent=CFG.date;
+  $("hDate").textContent = `${CFG.date}${CFG.who?" · "+CFG.who:""}`;
+  if(CFG.mimg) $("mascot").innerHTML=`<img src="${CFG.mimg}" alt="">`;
+  STATE={submits:{}, items:{}};
+  if(CFG.api){
+    cbSet("","☁ 연결 중...");
+    try{
+      const r=await fetch(api("/api/state?date="+CFG.date)); const j=await r.json();
+      if(j.ok){ (j.submits||[]).forEach(s=>STATE.submits[s.zone]=s); STATE.items=j.items||{}; STATE.submits2=j.submits||[];
+        cbSet("on","☁ 연결됨 · "+new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"})); }
+    }catch(e){ cbSet("off","☁ 연결 실패 — 오프라인 입력"); toast("서버 연결 실패 — 오프라인 입력만 가능"); }
+  } else cbSet("off","☁ 서버 미설정");
+  renderZones();
+  await loadDates();
+  if($("calView").style.display!=="none") renderCal();
+  if($("sumView").style.display!=="none") renderSummary();
+}
+function renderZones(){
+  $("zones").innerHTML = Object.keys(ZD).map(k=>{
+    const z=ZD[k], s=STATE.submits[k], d=DRAFTS[CFG.date+"|"+k];
+    const pill = s? (s.status==="confirmed"?`<span class="pill p-conf">확인완료</span>`:`<span class="pill p-sub">제출됨</span>`)
+                  : (d?`<span class="pill p-sub">임시저장</span>`:`<span class="pill p-none">미입력</span>`);
+    const whole = (STATE.items[k]||[]).length===1 && (STATE.items[k]||[])[0].loc===TOTKEY;
+    const sub = s? `${fmt(s.total)} PLT${whole?" (전체입력)":""} · ${(s.worker||"-")} · ${(s.submitted_at||"").slice(5,16)}`
+                 : `로케이션 ${z.locs.length}개 · CAPA ${fmt(z.tcap)} PLT`;
+    const cls = s? (s.status==="confirmed"?"s-conf":"s-sub") : (d?"s-draft":"");
+    return `<button class="z ${cls}" onclick="openZone('${k}')">${pill}<b>${z.n}</b><span class="s">${sub}</span></button>`;
+  }).join("");
+}
+
+/* ── 입력 화면 ─────────────────────────────────────────── */
+function openZone(k){
+  CUR=k; const z=ZD[k], s=STATE.submits[k];
+  VALS={};
+  const srv=(STATE.items[k]||[]); const draft=DRAFTS[CFG.date+"|"+k];
+  z.locs.forEach((l,i)=>{
+    const key=l.c+"#"+i;
+    const sv=srv.find(x=>x.loc===key);
+    VALS[key] = draft&&draft[key]!==undefined? draft[key] : (sv? sv.qty : 0);
+  });
+  const svTot=srv.find(x=>x.loc===TOTKEY), drTot=draft&&draft[TOTKEY];
+  MODE = "total";                       // 항상 구역 전체 입력이 먼저
+  TOTALV = drTot!==undefined? drTot
+         : (svTot? svTot.qty : z.locs.reduce((s,l,i)=>s+(VALS[l.c+"#"+i]||0),0));
+  showView("edit"); $("title").textContent=z.n;
+  $("editRef").textContent = z.W? "배치도 등록 구역" : "배치도 미등록 — 구역 합계 입력";
+  $("note").value = (s&&s.note)||"";
+  $("editHead").innerHTML = s? `<div class="${s.status==="confirmed"?"okbox":"warnbox"}">
+      ${s.status==="confirmed"?"관리자 확인 완료 — 수정하려면 관리자에게 확인 취소 요청":"이미 제출됨 · "+(s.worker||"")+" "+(s.submitted_at||"").slice(5,16)+" · 다시 제출하면 덮어씁니다"}</div>`:"";
+  $("mapWrap").style.display="none"; $("mapWrap").innerHTML="";
+  renderLocs();
+}
+const TOTKEY="__TOTAL__";
+function setMode(m){
+  const z=ZD[CUR];
+  if(m===MODE) return;
+  if(m==="total") TOTALV = z.locs.reduce((s,l,i)=>s+(VALS[l.c+"#"+i]||0),0) || TOTALV;
+  MODE=m; renderLocs(); draft(); paintMap();
+}
+function spread(){                       /* 구역 합계를 CAPA 비례로 로케이션 배분 */
+  const z=ZD[CUR], cap=z.locs.reduce((s,l)=>s+l.p,0);
+  if(!cap){ toast("배분할 CAPA 정보가 없습니다"); return; }
+  let left=TOTALV;
+  z.locs.forEach((l,i)=>{ const v=Math.min(left, Math.round(TOTALV*l.p/cap)); VALS[l.c+"#"+i]=v; left-=v; });
+  if(left>0){ const l=z.locs[0]; VALS[l.c+"#0"]=(VALS[l.c+"#0"]||0)+left; }
+  MODE="loc"; renderLocs(); draft(); paintMap(); toast("CAPA 비례로 배분했습니다 — 실제와 다르면 수정하세요");
+}
+function renderLocs(){
+  const z=ZD[CUR];
+  const cap=z.locs.reduce((s,l)=>s+l.p,0);
+  $("modeBar").innerHTML = z.locs.length>1 ? `
+    <span class="seg">
+      <button class="${MODE==="total"?"on":""}" onclick="setMode('total')">구역 전체</button>
+      <button class="${MODE==="loc"?"on":""}" onclick="setMode('loc')">로케이션별</button>
+    </span>` : `<span class="aux">구역 전체 파렛트 수 입력</span>`;
+  if(MODE==="total"){
+    const c=z.tcap||cap, p=c? TOTALV/c : 0;
+    $("locs").innerHTML=`
+      <div style="text-align:center;padding:8px 4px 4px">
+        <div class="aux">구역 전체 파렛트 수</div>
+        <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin:12px 0 6px">
+          <button onclick="bumpT(-10)" style="width:52px;height:52px;font-size:15px;font-weight:700">−10</button>
+          <button onclick="bumpT(-1)" style="width:46px;height:52px;font-size:22px;font-weight:700">−</button>
+          <input type="number" inputmode="numeric" min="0" id="totIn" value="${TOTALV}"
+            style="width:120px;height:56px;text-align:center;font-size:26px;font-weight:800;border:1px solid var(--line);border-radius:12px;font-variant-numeric:tabular-nums">
+          <button onclick="bumpT(1)" style="width:46px;height:52px;font-size:22px;font-weight:700">+</button>
+          <button onclick="bumpT(10)" style="width:52px;height:52px;font-size:15px;font-weight:700">+10</button>
+        </div>
+        <div class="aux">적재 CAPA ${fmt(c)} PLT${cap&&cap!==c?` · 배치도 로케이션 합계 ${fmt(cap)}`:""}</div>
+        <div id="totRate" style="margin-top:8px;font-size:17px;font-weight:800"></div>
+        <div class="aux" style="margin-top:4px">숫자 입력 후 <b>Enter</b>를 누르면 바로 계산됩니다</div>
+        ${z.locs.length>1?`<button class="blue" style="margin-top:14px" onclick="spread()">로케이션별로 배분해서 보기</button>`:""}
+      </div>`;
+    const t=$("totIn");
+    t.addEventListener("input",e=>{ TOTALV=Math.max(0,Number(e.target.value)||0); calcTotal(false); });
+    t.addEventListener("focus",e=>e.target.select());
+    t.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.keyCode===13){ e.preventDefault();
+      TOTALV=Math.max(0,Number(e.target.value)||0); e.target.blur(); calcTotal(true); } });
+    calcTotal(false); return;
+  }
+  $("locs").innerHTML = z.locs.map((l,i)=>{ const key=l.c+"#"+i, v=VALS[key]||0;
+    const over = l.p && v>l.p;
+    return `<div class="row" id="r_${i}">
+      <div class="lc"><b>${l.c}</b><span>CAPA ${fmt(l.p)} PLT${over?` · <b style="color:#c2392e">초과 ${fmt(v-l.p)}</b>`:""}</span></div>
+      <div class="stp">
+        <button onclick="bump(${i},-1)">−</button>
+        <input type="number" inputmode="numeric" min="0" data-i="${i}" value="${v}">
+        <button onclick="bump(${i},1)">+</button>
+      </div></div>`;}).join("");
+  document.querySelectorAll("#locs input").forEach(inp=>inp.addEventListener("input",e=>{
+    const i=+e.target.dataset.i, l=z.locs[i];
+    VALS[l.c+"#"+i]=Math.max(0,Number(e.target.value)||0); sums(); draft();
+  }));
+  sums();
+}
+function calcTotal(flash){
+  const z=ZD[CUR], c=z.tcap||z.locs.reduce((s,l)=>s+l.p,0);
+  const el=$("totRate");
+  if(el){
+    el.innerHTML = `적치율 ${c?(TOTALV/c*100).toFixed(1)+"%":"—"}${TOTALV>c?` · 초과 ${fmt(TOTALV-c)} PLT`:""}`;
+    el.style.color = TOTALV>c? "#c2392e" : (c&&TOTALV/c>=0.85? "#9c6a06" : "var(--ok)");
+    if(flash){ el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
+  }
+  sums(); draft();
+  if(flash) toast(`${ZD[CUR].n} · ${fmt(TOTALV)} PLT · 적치율 ${c?(TOTALV/c*100).toFixed(1)+"%":"—"}`);
+}
+function bumpT(d){
+  TOTALV=Math.max(0,TOTALV+d);
+  const t=$("totIn"); if(t) t.value=TOTALV;
+  calcTotal(false);
+}
+function bump(i,d){
+  const z=ZD[CUR], l=z.locs[i], key=l.c+"#"+i;
+  VALS[key]=Math.max(0,(VALS[key]||0)+d);
+  const inp=document.querySelector(`#locs input[data-i="${i}"]`); if(inp) inp.value=VALS[key];
+  sums(); draft(); paintMap();
+}
+function sums(){
+  const z=ZD[CUR];
+  const q = MODE==="total"? TOTALV : z.locs.reduce((s,l,i)=>s+(VALS[l.c+"#"+i]||0),0);
+  const c = MODE==="total"? (z.tcap||z.locs.reduce((s,l)=>s+l.p,0)) : z.locs.reduce((s,l)=>s+l.p,0);
+  $("sumQ").textContent=fmt(q); $("sumC").textContent=fmt(c);
+  $("sumP").textContent = c? `적치율 ${(q/c*100).toFixed(1)}%${q>c?" · 초과 "+fmt(q-c)+" PLT":""}` : "—";
+  $("sumP").style.color = q>c? "#c2392e" : "var(--dim)";
+}
+function draft(){
+  const d = MODE==="total"? {[TOTKEY]:TOTALV} : {...VALS};
+  DRAFTS[CFG.date+"|"+CUR]=d; saveDraft();
+}
+
+/* 배치도 보기 — 칸을 누르면 해당 입력칸으로 이동 */
+$("mapBtn").onclick = ()=>{
+  const w=$("mapWrap"); const z=ZD[CUR];
+  if(!z.W){ toast("이 구역은 배치도가 없습니다"); return; }
+  if(w.style.display!=="none"){ w.style.display="none"; return; }
+  w.style.display=""; paintMap(true);
+};
+function paintMap(only){
+  const z=ZD[CUR], w=$("mapWrap"); if(!z.W || w.style.display==="none") return;
+  const S=Math.min(1, 700/z.W)*1.5;
+  const col=(v,p)=> !v?"#e3e9f2" : v>p?"#d8453a" : v>=p*0.85?"#dd8f0f":"#249a5c";
+  let g=`<rect x="0" y="0" width="${z.W}" height="${z.H}" fill="#fff"/>`;
+  g+=z.refs.map(r=>`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="#f6f8fc" stroke="#e4eaf3" stroke-width=".7"/>`).join("");
+  g+=z.locs.map((l,i)=>{ const v=VALS[l.c+"#"+i]||0;
+    const fs=Math.max(7.5,Math.min(12,l.h*0.42));
+    return `<g onclick="jump(${i})" style="cursor:pointer"><title>${l.c} — ${v}/${l.p}</title>
+      <rect x="${l.x}" y="${l.y}" width="${l.w}" height="${l.h}" rx="2" fill="${col(v,l.p)}" stroke="#fff"/>
+      <text x="${l.x+l.w/2}" y="${l.y+l.h/2+fs*0.35}" font-size="${fs}" font-weight="700"
+        fill="${v?"#fff":"#7c8da3"}" text-anchor="middle">${v||"·"}</text></g>`;}).join("");
+  w.innerHTML=`<div class="mapbox"><svg viewBox="0 0 ${z.W} ${z.H}" width="${Math.round(z.W*S)}" height="${Math.round(z.H*S)}">${g}</svg></div>`;
+}
+function jump(i){
+  const el=$("r_"+i); if(!el) return;
+  el.scrollIntoView({behavior:"smooth",block:"center"});
+  el.style.background="#eaf4ff"; setTimeout(()=>el.style.background="",1200);
+  const inp=el.querySelector("input"); if(inp) inp.focus();
+}
+$("zeroBtn").onclick=()=>{ Object.keys(VALS).forEach(k=>VALS[k]=0); renderLocs(); paintMap(); draft(); };
+$("backBtn").onclick=()=>{ CUR=null; showView("list"); renderZones(); };
+
+/* ── 제출 ─────────────────────────────────────────────── */
+$("send").onclick = async ()=>{
+  if(!CFG.api){ toast("설정에서 서버 주소를 먼저 입력하세요"); $("setCard").style.display=""; return; }
+  if(!CFG.who){ toast("설정에서 이름을 입력하세요"); $("setCard").style.display=""; return; }
+  const z=ZD[CUR];
+  const items = MODE==="total"
+    ? [{loc:TOTKEY, capa:(z.tcap||z.locs.reduce((s,l)=>s+l.p,0)), qty:TOTALV}]
+    : z.locs.map((l,i)=>({loc:l.c+"#"+i, capa:l.p, qty:VALS[l.c+"#"+i]||0}));
+  $("send").disabled=true; $("send").textContent="전송 중…";
+  try{
+    const r=await fetch(api("/api/submit"),{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({date:CFG.date, zone:CUR, worker:CFG.who, note:$("note").value.trim(), items})});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||"실패");
+    delete DRAFTS[CFG.date+"|"+CUR]; saveDraft();
+    toast("제출 완료 — "+fmt(j.total)+" PLT");
+    await load(); $("backBtn").click();
+  }catch(e){ toast("제출 실패: "+e.message+" (임시저장은 남아 있습니다)"); }
+  $("send").disabled=false; $("send").textContent="제출";
+};
+$("reload").onclick=load;
+document.querySelectorAll("#tabs .tab").forEach(b=>b.onclick=()=>{
+  const v=b.dataset.v;
+  document.querySelectorAll("#tabs .tab").forEach(x=>x.classList.toggle("on",x===b));
+  if(v==="list") showView("list");
+  else if(v==="cal"){ CALM=CALM||firstOfMonth(CFG.date); showView("cal"); renderCal(); }
+  else { showView("sum"); renderSummary(); }
+});
+function cbSet(k,txt){ const e=$("cbState"); if(!e) return; e.className="cb-s"+(k?" "+k:""); e.textContent=txt; }
+if($("calBtn")) $("calBtn").onclick=()=>{ CALM=CALM||firstOfMonth(CFG.date); showView("cal"); renderCal(); };
+if($("sumBtn")) $("sumBtn").onclick=()=>{ showView("sum"); renderSummary(); };
+if($("homeBtn")) $("homeBtn").onclick=()=>showView("list");
+$("prevM").onclick=()=>{ CALM=addMonth(CALM,-1); renderCal(); };
+$("nextM").onclick=()=>{ CALM=addMonth(CALM,1); renderCal(); };
+
+function showView(v){
+  document.querySelectorAll("#tabs .tab").forEach(x=>x.classList.toggle("on", x.dataset.v===v));
+  document.getElementById("tabs").style.display = v==="edit"?"none":"flex";
+  ["list","cal","sum","edit"].forEach(x=>$(x+"View").style.display = v===x?"":"none");
+  $("bar").style.display = v==="edit"?"flex":"none";
+  $("backBtn").style.display = v==="edit"?"":"none";
+  $("homeBtn").style.display = (v==="cal"||v==="sum")?"":"none";
+  if(v!=="edit") $("title").textContent = v==="cal"?"기준일 달력" : v==="sum"?"적치 현황" : "적치 파렛트 입력";
+}
+const firstOfMonth = d => { const x=new Date(d+"T00:00:00"); return new Date(x.getFullYear(), x.getMonth(), 1); };
+const addMonth = (d,n) => new Date(d.getFullYear(), d.getMonth()+n, 1);
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+
+/* ── 달력 ─────────────────────────────────────────────── */
+async function loadDates(){
+  DATEIDX={};
+  if(!CFG.api) return;
+  try{ const j=await (await fetch(api("/api/dates"))).json();
+    if(j.ok) (j.dates||[]).forEach(d=>DATEIDX[d.date]={zones:d.zones, qty:d.qty}); }catch(e){}
+}
+function renderCal(){
+  const y=CALM.getFullYear(), m=CALM.getMonth();
+  const first=new Date(y,m,1), start=first.getDay(), days=new Date(y,m+1,0).getDate();
+  const total=Object.keys(ZD).length, tod=kstToday();
+  let cells="";
+  for(let i=0;i<start;i++) cells+=`<div class="cal-c empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const key=ymd(new Date(y,m,d)), info=DATEIDX[key];
+    const drafts=Object.keys(DRAFTS).filter(k=>k.startsWith(key+"|")).length;
+    const done=info? info.zones:0;
+    const cls = done>=total? "full" : done? "part" : drafts? "draft" : "";
+    cells+=`<button class="cal-c ${cls} ${key===CFG.date?"sel":""} ${key===tod?"today":""}" onclick="pickDate('${key}')">
+      <span class="dn">${d}</span>
+      ${done?`<span class="cb">${done}/${total}</span>`:(drafts?`<span class="cb dr">임시</span>`:"")}
+      ${info?`<span class="cq num">${fmt(info.qty)}</span>`:""}</button>`;
+  }
+  $("calGrid").innerHTML=cells;
+  $("calTitle").textContent=`${y}년 ${m+1}월`;
+  $("calInfo").innerHTML=`선택 <b>${CFG.date}</b> · 이 달 등록 <b class="num">${
+    Object.keys(DATEIDX).filter(k=>k.startsWith(`${y}-${String(m+1).padStart(2,"0")}`)).length}</b>일`;
+}
+function pickDate(d){
+  CFG.date=d; saveCfg(); $("theDate").value=d; $("dLabel").textContent=d;
+  showView("list"); load(); toast(d+" 기준으로 전환");
+}
+$("newDate").onclick=()=>{
+  const d=prompt("등록할 기준일 (YYYY-MM-DD)", kstToday());
+  if(d && /^\d{4}-\d{2}-\d{2}$/.test(d)) pickDate(d); else if(d) toast("형식이 올바르지 않습니다");
+};
+
+
+
+/* ── 외부 라이브러리 지연 로드 (CDN 다중 폴백) ─────────────── */
+const CDN = {
+  xlsx: ["https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
+         "https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js",
+         "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"],
+  pptx: ["https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js",
+         "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js",
+         "https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"]
+};
+function loadOne(src){
+  return new Promise((ok,ng)=>{
+    const t=document.createElement("script");
+    t.src=src; t.async=true;
+    const timer=setTimeout(()=>{ t.remove(); ng(new Error("시간 초과")); }, 12000);
+    t.onload=()=>{ clearTimeout(timer); ok(); };
+    t.onerror=()=>{ clearTimeout(timer); t.remove(); ng(new Error("로드 실패")); };
+    document.head.appendChild(t);
+  });
+}
+async function ensureLib(kind){
+  const has=()=> kind==="xlsx"? typeof XLSX!=="undefined" : typeof PptxGenJS!=="undefined";
+  if(has()) return true;
+  for(const url of CDN[kind]){
+    try{ await loadOne(url); if(has()) return true; }catch(e){}
+  }
+  return false;
+}
+
+/* ── 적치 현황 내보내기 ─────────────────────────────────── */
+const WBY = (window.ZEN_WH_BY || "이민아");
+const nowStamp = ()=> new Date(Date.now()+9*3600e3).toISOString().replace("T"," ").slice(0,16);
+function sumRows(){                    /* [구역, CAPA, Max, 적재수, %, %(Max)] */
+  const out=[]; let tq=0,tc=0,tm=0;
+  Object.keys(ZD).forEach(k=>{
+    const z=ZD[k], srv=(STATE.items[k]||[]), dr=DRAFTS[CFG.date+"|"+k];
+    let q=null;
+    if(srv.length) q=srv.reduce((s,x)=>s+(x.qty||0),0);
+    else if(dr) q=Object.values(dr).reduce((s,v)=>s+(v||0),0);
+    const c=z.tcap, mx=MAXV[k]||c;
+    if(q!=null) tq+=q; tc+=c; tm+=mx;
+    out.push([z.n, c, mx, q==null?"":q,
+      q==null?"":Math.round(q/c*100)+"%", q==null?"":Math.round(q/mx*100)+"%"]);
+  });
+  out.push(["계", tc, tm, tq, Math.round(tq/tc*100)+"%", Math.round(tq/tm*100)+"%"]);
+  return out;
+}
+function fileStamp(){
+  const d=new Date(Date.now()+9*3600e3).toISOString();
+  return d.slice(2,10).replace(/-/g,"")+"_"+d.slice(11,16).replace(":","");
+}
+const expName = ext => `포장재창고_적치현황_기준${CFG.date}_출력${fileStamp()}${ext?"."+ext:""}`;
+
+async function expXlsx(){
+  toast("엑셀 준비 중…");
+  if(!await ensureLib("xlsx")){ toast("엑셀 모듈을 불러오지 못했습니다 — 사내망에서 차단되었을 수 있습니다"); return; }
+  const aoa=[["포장재창고 적치 현황"],[`기준일 ${CFG.date}`,"",`작성 ${WBY} · 제니엘 제조사업부 사업3팀`],
+    [`입력 ${CFG.who||"-"} · 출력 ${nowStamp()}`],[],
+    ["구 분","적재 CAPA","Max","적재수","%","%(Max)"], ...sumRows()];
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"]=[{wch:22},{wch:11},{wch:9},{wch:10},{wch:8},{wch:9}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,CFG.date.replace(/-/g,"").slice(4));
+  XLSX.writeFile(wb, expName("xlsx")); toast("엑셀로 내보냈습니다");
+}
+function expPdf(){
+  $("prtHead").innerHTML=`<h2>포장재창고 적치 현황</h2>
+    <div class="p2">기준일 ${CFG.date} · 작성 ${WBY} · 제니엘 제조사업부 사업3팀<br>
+      입력 ${CFG.who||"-"} · 출력 ${nowStamp()}</div>`;
+  const orgTitle=document.title;
+  document.title = expName("");
+  toast("인쇄 화면에서 'PDF로 저장'을 선택하세요");
+  const restore=()=>{ document.title=orgTitle; window.removeEventListener("afterprint",restore); };
+  window.addEventListener("afterprint",restore);
+  setTimeout(()=>{ window.print(); setTimeout(restore,3000); }, 400);
+}
+async function expPptx(){
+  toast("PPT 준비 중…");
+  if(!await ensureLib("pptx")){ toast("PPT 모듈을 불러오지 못했습니다 — 사내망 차단 시 PDF를 이용하세요"); return; }
+  const p=new PptxGenJS(); p.layout="LAYOUT_WIDE";
+  const sl=p.addSlide();
+  sl.addShape(p.ShapeType.rect,{x:0,y:0,w:13.3,h:0.9,fill:{color:"1F3864"}});
+  sl.addText("포장재창고 적치 현황",{x:0.5,y:0.16,w:8,h:0.6,fontSize:24,bold:true,color:"FFFFFF",fontFace:"맑은 고딕"});
+  sl.addText(`기준일 ${CFG.date}`,{x:9.6,y:0.28,w:3.2,h:0.4,fontSize:13,color:"D6E0F0",align:"right",fontFace:"맑은 고딕"});
+  const head=["구 분","적재 CAPA","Max","적재수","%","%(Max)"].map(t=>({text:t,
+    options:{bold:true,color:"FFFFFF",fill:{color:"1F3864"},align:"center",fontFace:"맑은 고딕"}}));
+  const body=sumRows().map((r,i,arr)=>{
+    const last=i===arr.length-1;
+    const over=r[4] && parseInt(r[4])>100;
+    return r.map((c,j)=>({text:String(c), options:{
+      bold:last||j===0&&false, align:j?"right":"left", fontFace:"맑은 고딕",
+      color: over&&j>=4? "C2392E" : "1B2A44",
+      fill:{color: last? "EAEFF8" : (i%2? "F7F9FC":"FFFFFF")}}}));
+  });
+  sl.addTable([head,...body],{x:0.5,y:1.15,w:12.3,fontSize:11.5,border:{pt:0.5,color:"DFE6F0"},
+    colW:[4.3,1.7,1.5,1.7,1.5,1.6],rowH:0.28,valign:"middle"});
+  sl.addText(`제니엘(ZENIEL) 제조사업부 사업3팀 · 작성 ${WBY} · 입력 ${CFG.who||"-"} · ${nowStamp()}`,
+    {x:0.5,y:7.0,w:8,h:0.3,fontSize:10,color:"8F9DB4",fontFace:"맑은 고딕"});
+  p.writeFile({fileName:expName("pptx")}); toast("PPT로 내보냈습니다");
+}
+
+/* ── 현황(적치율표 형식) ───────────────────────────────── */
+function renderSummary(){
+  const subs={}; (STATE.submits2||[]).forEach(s=>subs[s.zone]=s);
+  let tq=0,tc=0,tm=0;
+  const rows=Object.keys(ZD).map(k=>{
+    const z=ZD[k], srv=(STATE.items[k]||[]), dr=DRAFTS[CFG.date+"|"+k];
+    let q=null, whole=false;
+    if(srv.length){ q=srv.reduce((s,x)=>s+(x.qty||0),0); whole=srv.length===1&&srv[0].loc===TOTKEY; }
+    else if(dr){ q=Object.values(dr).reduce((s,v)=>s+(v||0),0); whole=dr[TOTKEY]!==undefined; }
+    const c=z.tcap, mx=MAXV[k]||c;
+    if(q!=null){ tq+=q; } tc+=c; tm+=mx;
+    const p=q!=null&&c? q/c : null, pm=q!=null&&mx? q/mx : null;
+    const st=STATE.submits[k];
+    return `<tr>
+      <td>${z.n}${whole?' <span class="tag wh">전체</span>':''}${!st&&dr?' <span class="tag dr">임시</span>':''}</td>
+      <td class="num">${fmt(c)}</td><td class="num aux">${fmt(mx)}</td>
+      <td class="num" style="font-weight:700">${q==null?"—":fmt(q)}</td>
+      <td class="num" style="color:${p&&p>1?'#c2392e':'inherit'}">${p==null?"—":(p*100).toFixed(0)+"%"}</td>
+      <td class="num aux">${pm==null?"—":(pm*100).toFixed(0)+"%"}</td></tr>`;
+  }).join("");
+  $("sumTable").innerHTML=`<table class="stbl">
+    <thead><tr><th>구 분</th><th>적재<br>CAPA</th><th>Max</th><th>적재수</th><th>%</th><th>%(Max)</th></tr></thead>
+    <tbody>${rows}<tr class="tot"><td>계</td><td class="num">${fmt(tc)}</td><td class="num">${fmt(tm)}</td>
+      <td class="num">${fmt(tq)}</td><td class="num">${tc?(tq/tc*100).toFixed(0)+"%":"—"}</td>
+      <td class="num">${tm?(tq/tm*100).toFixed(0)+"%":"—"}</td></tr></tbody></table>`;
+  const miss=Object.keys(ZD).filter(k=>!STATE.submits[k]).length;
+  $("sumHead").innerHTML=`<div class="${miss?"warnbox":"okbox"}">기준일 <b>${CFG.date}</b> ·
+    ${miss? `미제출 ${miss}개 구역 — 표시된 합계는 제출·임시저장분만 반영` : "전 구역 제출 완료"}</div>`;
+}
+$("theDate").onchange=e=>{ CFG.date=e.target.value||kstToday(); saveCfg(); load(); };
+load();
+
+</script>
+</body>
+</html>
