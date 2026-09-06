@@ -18,12 +18,17 @@
   --err:#c25a52; --err-l:#fbf0ef; --warn:#cb9447; --warn-l:#fdf5ea;
   --ok:#4a8a60; --ok-l:#eef6f0; --info:#48688d; --info-l:#eef2f7;
   --plum:#7a6a9e; --plum-l:#f2effa; --clay:#bd7c4a;
-  --r:16px; --r-s:11px; --sh:0 2px 8px rgba(34,46,55,.055);
+  --r:16px; --r-s:11px;
+  --sh:0 1px 2px rgba(15,36,56,.05), 0 4px 14px rgba(15,36,56,.045);
+  --sh-lift:0 2px 4px rgba(15,36,56,.06), 0 10px 28px rgba(15,36,56,.08);
+  --ease:cubic-bezier(.22,.61,.36,1);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
 body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',system-ui,-apple-system,sans-serif;
-  background:var(--bg);color:var(--ink);line-height:1.55;font-size:14px;min-height:100vh;overflow-x:hidden}
+  background:var(--bg);color:var(--ink);line-height:1.55;font-size:14px;min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input,select,textarea{font-family:inherit;font-size:16px;color:inherit}
 table{border-collapse:collapse;width:100%}
@@ -79,13 +84,15 @@ a{color:var(--green-d)}
 
 /* ===== 앱 셸 ===== */
 #app{min-height:100vh;display:flex;flex-direction:column}
-.topbar{position:sticky;top:0;z-index:60;background:var(--navy);color:#fff;
+.topbar{position:sticky;top:0;z-index:60;color:#fff;
+  background:linear-gradient(180deg,#14304c 0%,var(--navy) 100%);
+  box-shadow:0 1px 0 rgba(138,173,125,.55), 0 4px 16px rgba(9,20,32,.16);
   padding:calc(9px + env(safe-area-inset-top,0)) 12px 9px;display:flex;align-items:center;gap:9px}
 .tb-menu{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;
   font-size:19px;flex:none;background:rgba(255,255,255,.1)}
 .tb-logo{display:flex;flex-direction:column;align-items:flex-start;min-height:40px;justify-content:center;
   padding:0 6px;border-radius:9px;flex:none}
-.tb-logo b{font-size:16px;font-weight:900;letter-spacing:.4px;line-height:1.1}
+.tb-logo b{font-size:16px;font-weight:900;letter-spacing:.2px;line-height:1.1}
 .tb-logo b span{color:var(--lime)}
 .tb-logo small{font-size:9.5px;font-weight:700;color:#8fa8d4;letter-spacing:1.2px}
 .tb-sp{flex:1}
@@ -126,9 +133,12 @@ a{color:var(--green-d)}
 .navg{font-size:10.5px;font-weight:800;letter-spacing:.6px;color:var(--faint);margin:14px 10px 6px}
 .navg:first-child{margin-top:2px}
 .navi{display:flex;align-items:center;gap:9px;width:100%;min-height:42px;padding:0 10px;border-radius:10px;
-  font-size:13.5px;font-weight:700;color:var(--ink);text-align:left;margin-bottom:2px}
+  font-size:13.5px;font-weight:700;color:var(--ink);text-align:left;margin-bottom:2px;position:relative;
+  transition:background .16s var(--ease),color .16s var(--ease)}
 .navi:hover{background:var(--line2)}
 .navi.on{background:var(--green-l);color:var(--green-d);font-weight:800}
+.navi.on::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;
+  border-radius:0 3px 3px 0;background:var(--green)}
 .navi .ic{width:20px;text-align:center;font-size:14px;flex:none}
 .navi .nb{margin-left:auto;background:var(--err);color:#fff;font-size:10.5px;font-weight:800;
   border-radius:999px;padding:1px 7px;min-width:19px;text-align:center}
@@ -165,7 +175,7 @@ a{color:var(--green-d)}
 .ph{margin-bottom:14px}
 .ph .k{font-size:11.5px;font-weight:800;color:var(--green);letter-spacing:.3px}
 .ph .k::before{content:"—";margin-right:7px;font-weight:900}
-.ph h1{font-size:clamp(19px,5vw,25px);font-weight:900;color:var(--navy);letter-spacing:-.4px;margin-top:5px}
+.ph h1{font-size:clamp(19px,5vw,25px);font-weight:900;color:var(--navy);letter-spacing:-.7px;margin-top:5px}
 .ph p{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.65;max-width:78ch}
 .ph .fids{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
 .fid{font-size:10.5px;font-weight:800;color:var(--muted);background:#fff;border:1px solid var(--line);
@@ -173,9 +183,11 @@ a{color:var(--green-d)}
 
 /* ===== 카드 ===== */
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-bottom:14px;
-  box-shadow:var(--sh);overflow:hidden}
+  box-shadow:var(--sh);overflow:hidden;position:relative;transition:box-shadow .22s var(--ease)}
+.card::before{content:"";position:absolute;inset:0 0 auto;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);pointer-events:none}
 .card-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 15px 0}
-.card-t{font-size:14.5px;font-weight:800;color:var(--navy)}
+.card-t{font-size:14.5px;font-weight:800;color:var(--navy);letter-spacing:-.2px}
 .card-t::before{content:"—";color:var(--green);font-weight:900;margin-right:7px}
 .card-s{font-size:11.5px;color:var(--muted);font-weight:600}
 .card-h .sp{flex:1}
@@ -188,16 +200,18 @@ a{color:var(--green-d)}
 .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 @media (min-width:560px){ .tiles{grid-template-columns:repeat(3,1fr)} }
 @media (min-width:1024px){ .tiles{grid-template-columns:repeat(auto-fit,minmax(158px,1fr))} }
-.tile{background:#fff;border:1px solid var(--line);border-radius:var(--r-s);padding:12px 13px;box-shadow:var(--sh)}
+.tile{background:#fff;border:1px solid var(--line);border-radius:var(--r-s);padding:13px 14px;
+  box-shadow:var(--sh);transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+@media (hover:hover){ .tile:hover{transform:translateY(-1px);box-shadow:var(--sh-lift)} }
 .tile .tl{font-size:11.5px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:5px}
-.tile .tv{font-size:clamp(20px,5.4vw,26px);font-weight:900;color:var(--navy);margin-top:4px;letter-spacing:-.5px;
-  line-height:1.15;display:flex;align-items:baseline;gap:3px}
+.tile .tv{font-size:clamp(21px,5.6vw,27px);font-weight:900;color:var(--navy);margin-top:5px;letter-spacing:-.9px;
+  line-height:1.12;display:flex;align-items:baseline;gap:3px;font-variant-numeric:tabular-nums}
 .tile .tv u{text-decoration:none;font-size:12.5px;font-weight:800;color:var(--muted)}
 .tile .td{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5}
-.tile.acc{border-left:3px solid var(--green)}
-.tile.acc-e{border-left:3px solid var(--err)} .tile.acc-e .tv{color:var(--err)}
-.tile.acc-w{border-left:3px solid var(--warn)} .tile.acc-w .tv{color:#a3721f}
-.tile.acc-o{border-left:3px solid var(--ok)} .tile.acc-o .tv{color:var(--ok)}
+.tile.acc{box-shadow:inset 3px 0 0 var(--green),var(--sh)}
+.tile.acc-e{box-shadow:inset 3px 0 0 var(--err),var(--sh)} .tile.acc-e .tv{color:var(--err)}
+.tile.acc-w{box-shadow:inset 3px 0 0 var(--warn),var(--sh)} .tile.acc-w .tv{color:#a3721f}
+.tile.acc-o{box-shadow:inset 3px 0 0 var(--ok),var(--sh)} .tile.acc-o .tv{color:var(--ok)}
 
 /* 배지 · 태그 */
 .tag{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;border-radius:999px;
@@ -224,7 +238,10 @@ a{color:var(--green-d)}
 /* 버튼 */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:40px;padding:0 14px;
   border:1.5px solid var(--line);background:#fff;border-radius:10px;font-size:13px;font-weight:800;
-  color:var(--ink);transition:.14s;white-space:nowrap}
+  color:var(--ink);white-space:nowrap;
+  transition:transform .12s var(--ease),border-color .14s,background .14s,color .14s,box-shadow .14s}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn.pr,.btn.nv{box-shadow:0 1px 2px rgba(15,36,56,.12)}
 .btn:hover:not(:disabled){border-color:var(--green);color:var(--green-d)}
 .btn.pr{background:var(--green);border-color:var(--green);color:#fff}
 .btn.pr:hover:not(:disabled){background:var(--green-d);border-color:var(--green-d);color:#fff}
@@ -248,10 +265,11 @@ a{color:var(--green-d)}
 .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table.tb{min-width:560px;font-size:12.5px}
 table.tb th{background:#f6f8f8;color:var(--muted);font-size:11px;font-weight:800;text-align:left;
-  padding:9px 11px;border-bottom:1px solid var(--line);white-space:nowrap;letter-spacing:.2px}
+  padding:9px 11px;border-bottom:1px solid var(--line);white-space:nowrap;letter-spacing:.3px}
 table.tb td{padding:10px 11px;border-bottom:1px solid var(--line2);vertical-align:middle}
 table.tb tbody tr:last-child td{border-bottom:none}
-table.tb tbody tr:hover{background:#fafbfb}
+table.tb tbody tr{transition:background .12s var(--ease)}
+table.tb tbody tr:hover{background:#f7f9f9}
 table.tb .ctr{text-align:center}
 table.tb .num{text-align:right;font-variant-numeric:tabular-nums}
 table.tb .nw{white-space:nowrap}
@@ -276,8 +294,8 @@ table.tb b{color:var(--navy)}
 .step{flex:1;border:1.5px solid var(--line);border-radius:var(--r-s);padding:10px 12px;background:#fff;display:flex;gap:9px;align-items:flex-start}
 .step .sn{width:22px;height:22px;border-radius:50%;background:var(--line);color:var(--muted);
   display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex:none;margin-top:1px}
-.step .st{font-size:13px;font-weight:800;color:var(--navy)}
-.step .sd{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5}
+.step .st{display:block;font-size:13px;font-weight:800;color:var(--navy);letter-spacing:-.2px}
+.step .sd{display:block;font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5}
 .step.done{border-color:#cfe0ca;background:var(--green-l)}
 .step.done .sn{background:var(--green);color:#fff}
 .step.now{border-color:var(--warn);background:var(--warn-l)}
@@ -391,6 +409,16 @@ table.mgt td.sm-num{min-width:44px;font-variant-numeric:tabular-nums;font-weight
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (min-width:1024px){ #toast{bottom:26px} }
 
+@keyframes viewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.main>.ph,.main>.card,.main>.tiles,.main>.tabs,.main>.note,.main>.g2,.main>.g3,.main>.btns{
+  animation:viewIn .26s var(--ease) both}
+.main>.ph{animation-delay:0s} .main>.tiles{animation-delay:.03s}
+.main>.tabs{animation-delay:.04s} .main>.card{animation-delay:.05s}
+@media (prefers-reduced-motion:reduce){ .main>*{animation:none!important} }
+/* 표 안쪽 스크롤바를 얇게 */
+.tw::-webkit-scrollbar,.mg::-webkit-scrollbar{height:8px}
+.tw::-webkit-scrollbar-thumb,.mg::-webkit-scrollbar-thumb{background:#cfd8dd;border-radius:99px}
+.tw::-webkit-scrollbar-track,.mg::-webkit-scrollbar-track{background:transparent}
 .empty{text-align:center;padding:34px 16px;color:var(--muted)}
 .empty .ei{font-size:34px;opacity:.5}
 .empty b{display:block;font-size:14.5px;color:var(--navy);margin-top:9px}
@@ -1038,12 +1066,14 @@ var MENUS={
     {g:'조회'},
     {id:'j-audit', ic:'🕐', t:'Audit Log',      scr:'SCR-S-06'},
     {id:'x-code',  ic:'#', t:'근태코드 마스터', scr:'SCR-S-01'},
+    {id:'x-arch',  ic:'◈', t:'시스템 구성',     scr:'SCR-P-02'},
     {id:'x-fdef',  ic:'📘', t:'기능정의서',      scr:'SCR-S-09'}
   ],
   admin:[
     {g:'운영 현황'},
     {id:'a-home', ic:'▤', t:'시스템 운영 현황', scr:'SCR-S-07'},
     {id:'a-ops',  ic:'📈', t:'효과 · 보존 · 릴리즈', scr:'SCR-S-07'},
+    {id:'x-arch', ic:'◈', t:'시스템 구성',      scr:'SCR-P-02'},
     {id:'x-plan', ic:'🧭', t:'과제 계획 · 로드맵', scr:'SCR-P-01'},
     {g:'기준정보 · 규칙'},
     {id:'x-code', ic:'#', t:'근태 기준정보',   scr:'SCR-S-01'},
@@ -1064,7 +1094,7 @@ var MENUS={
 var SHORT={'w-home':'대시보드','w-sch':'근무일정','w-att':'내 근태','w-req':'정정요청','w-ot':'연장신청',
   'm-home':'대시보드','m-plan':'근무계획','m-collect':'근태수집','m-att':'월 근태','m-exc':'이상근태','m-close':'1차확정',
   'j-home':'대시보드','j-review':'2차검토','j-close':'월마감','j-agg':'집계검증','j-erp':'ERP전송',
-  'a-home':'운영현황','a-ops':'효과지표','x-recv':'수신현황','a-rule':'검증룰','a-hub':'표준화',
+  'a-home':'운영현황','a-ops':'효과지표','x-arch':'구성도','x-recv':'수신현황','a-rule':'검증룰','a-hub':'표준화',
   'a-perm':'권한','x-fdef':'기능정의서'};
 var TABBAR={
   worker:['w-home','w-att','w-req','w-ot','__more'],
@@ -4088,6 +4118,177 @@ function bulkResolveGo(k){
     .then(function(){ render(); toast(excOf(k).n+' '+ids.length+'건을 확인 처리했습니다.'); })
     .catch(liveFail);
 }
+
+/* ===================================================================
+   15. 시스템 구성도 (SCR-P-02)
+       한 장으로 답해야 하는 것 — 데이터가 어디서 들어와, 어떤 상태를 거쳐,
+       어디로 나가고, 지금 어디가 막혀 있는가.
+   =================================================================== */
+function archSvg(){
+  var L={ink:'var(--navy)', mut:'var(--muted)', line:'var(--line)', grn:'var(--green)',
+         err:'var(--err)', warn:'var(--warn)', pp:'var(--plum)', info:'var(--info)'};
+  function box(x,y,w,h,fill,stroke,rx){
+    return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+(rx||10)+'" '+
+      'fill="'+(fill||'#fff')+'" stroke="'+(stroke||L.line)+'" stroke-width="1.5"/>';
+  }
+  function t(x,y,s,size,weight,fill,anchor){
+    return '<text x="'+x+'" y="'+y+'" font-size="'+(size||12)+'" font-weight="'+(weight||600)+'" '+
+      'fill="'+(fill||L.ink)+'" text-anchor="'+(anchor||'start')+'">'+esc(s)+'</text>';
+  }
+  function arrow(x1,y1,x2,y2,color){
+    return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+(color||L.mut)+
+      '" stroke-width="1.8" marker-end="url(#ah)"/>';
+  }
+  var stage=[
+    {n:'① 원본 적재',  s:'RAW · 불변',        d:'수신 payload 그대로'},
+    {n:'② 표준화',     s:'코드 매핑 · 정합성', d:'현장 표기 → 표준코드'},
+    {n:'③ 자동 검증',  s:'V-01 ~ V-15',      d:'오류 · 경고 분리'},
+    {n:'④ 확정값 보정', s:'사유 없으면 차단',  d:'원본은 그대로'},
+    {n:'⑤ 마감 · 봉인', s:'현장 × 월',        d:'스냅샷 해시'}
+  ];
+  var sx=64, sw=134, sg=18, sy=286, sh=92;
+  var stages='';
+  stage.forEach(function(st,i){
+    var x=sx+i*(sw+sg);
+    stages+=box(x,sy,sw,sh,'#fff',(i===2?L.grn:L.line))+
+      t(x+12, sy+26, st.n, 12.5, 800, (i===2?'var(--green-d)':L.ink))+
+      t(x+12, sy+46, st.s, 11, 700, L.mut)+
+      t(x+12, sy+64, st.d, 10, 600, 'var(--faint)');
+    if(i<stage.length-1) arrow(0,0,0,0);
+    if(i<stage.length-1) stages+=arrow(x+sw+2, sy+sh/2, x+sw+sg-2, sy+sh/2, L.mut);
+  });
+
+  var roles=['근로자 (모바일 웹)','현장관리자','J / C','시스템관리자'];
+  var rolesSvg='';
+  roles.forEach(function(r,i){
+    var y=298+i*46;
+    rolesSvg+=box(902,y,214,36,'#fff',L.line,8)+t(916,y+23,r,11.5,700,L.ink);
+  });
+
+  return '<figure style="margin:0">'+
+  '<div class="tw" style="padding:4px 0 2px">'+
+  '<svg viewBox="0 0 1160 660" role="img" style="min-width:900px;width:100%;height:auto;display:block" '+
+    'aria-label="근태 시스템 구성도 — 제모스와 예외 채널에서 받은 원본을 서버가 표준화·검증하고, 현장×월 단위로 확정·마감한 확정값만 ERP 근태 DB로 직접 전송한다. 제모스 수신 방식과 ERP 쓰기 권한 두 지점이 아직 확정되지 않았다.">'+
+    '<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'+
+      '<path d="M0,0 L10,5 L0,10 z" fill="'+L.mut+'"/></marker>'+
+    '<marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'+
+      '<path d="M0,0 L10,5 L0,10 z" fill="'+L.grn+'"/></marker></defs>'+
+
+    /* ── 원천 계층 ── */
+    t(40, 34, '원천 — 우리가 만들지 않는 것', 11.5, 800, 'var(--faint)')+
+    box(40, 48, 380, 92, 'var(--info-l)', 'var(--info)')+
+      t(58, 74, '제모스', 15, 900, 'var(--info)')+
+      t(120, 74, '출퇴근 태그 · 연차/반차 · 계정', 11.5, 600, L.mut)+
+      t(58, 96, '읽기 전용 수신 · 일 1회 08:00 배치', 11, 700, L.ink)+
+      t(58, 116, '쓰기(write) 없음 — 앱을 건드리지 않는다', 10.5, 600, 'var(--faint)')+
+    box(440, 48, 380, 92, '#fff', L.line)+
+      t(458, 74, '예외 채널', 13.5, 800, L.ink)+
+      t(458, 96, 'Excel 업로드 · 관리자 수기 · OCR · 데이사인', 11, 600, L.mut)+
+      t(458, 116, '제모스 미도입 현장 · 연동 장애 대비', 10.5, 600, 'var(--faint)')+
+
+    /* 미결 뱃지 ① */
+    box(836, 60, 284, 68, 'var(--err-l)', 'var(--err)', 9)+
+      t(852, 84, '⛔ 수신 방식 미확정', 12, 800, 'var(--err)')+
+      t(852, 104, 'A 조회API · B DB읽기 · C 배치파일', 10.5, 600, L.ink)+
+      t(852, 120, '이게 안 풀리면 F0 전체가 멈춘다', 10, 600, 'var(--faint)')+
+
+    arrow(230, 142, 230, 196)+
+    t(240, 172, '수신', 11, 700, L.mut)+
+    arrow(630, 142, 630, 196)+
+    t(640, 172, '업로드 · 입력', 11, 700, L.mut)+
+
+    /* ── 서버 계층 ── */
+    '<rect x="40" y="200" width="800" height="240" rx="14" fill="var(--green-l)" '+
+      'stroke="var(--green)" stroke-width="1.5" stroke-dasharray="6 4"/>'+
+    t(60, 228, '서버 로직  ·  Cloudflare Workers + D1', 13.5, 900, 'var(--green-d)')+
+    t(60, 250, '테이블 23 · 엔드포인트 45 · 검증룰 15 — 판정과 계산은 전부 여기 있다', 11, 600, L.mut)+
+    stages+
+    t(60, 424, '근태원장 4단 구조: 원본 → 제안값 → 관리자 보정 → 최종 확정값  ·  각 단계에 주체·일시·사유가 남는다',
+      10.5, 600, 'var(--faint)')+
+
+    /* ── 화면 계층 ── */
+    t(902, 250, '화면 — 그리기만 한다', 11.5, 800, 'var(--faint)')+
+    box(890, 264, 238, 216, '#fff', L.line, 12)+
+      t(902, 286, '4개 역할 · 35개 화면', 12, 800, L.ink)+
+      rolesSvg+
+    arrow(886, 352, 850, 352)+
+    t(866, 342, 'REST', 10.5, 700, L.mut, 'middle')+
+    t(890, 500, '화면에는 판정 로직이 없다', 10, 600, 'var(--faint)')+
+
+    /* ── 출력 계층 ── */
+    '<line x1="440" y1="440" x2="440" y2="486" stroke="'+L.grn+'" stroke-width="2.4" marker-end="url(#ahg)"/>'+
+    t(452, 458, '확정값만 · 트랜잭션 · 멱등 재전송 · 역조회 대조', 11, 700, 'var(--green-d)')+
+    t(40, 512, '출력', 11.5, 800, 'var(--faint)')+
+    box(40, 526, 400, 92, 'var(--green-l)', 'var(--green)')+
+      t(58, 552, 'ERP 근태 DB 직접 INSERT', 13.5, 900, 'var(--green-d)')+
+      t(58, 574, 'ERP_HR.TB_MON_ATT  /  TB_OT_ATT', 11, 700, L.ink)+
+      t(58, 594, '파일 생성 없음 · 사람의 수동 업로드 없음', 10.5, 600, L.mut)+
+    box(460, 526, 380, 92, '#fff', L.line)+
+      t(478, 552, '현장 · 고객사 산출물', 13, 800, L.ink)+
+      t(478, 574, '양식 5종 · 현장 고유표기 역매핑', 11, 600, L.mut)+
+      t(478, 594, '고객사 제출은 비식별 강제 (해제 불가)', 10.5, 600, 'var(--faint)')+
+
+    /* 미결 뱃지 ② */
+    box(860, 526, 260, 92, 'var(--err-l)', 'var(--err)', 9)+
+      t(876, 552, '⛔ 쓰기 권한 미확정', 12, 800, 'var(--err)')+
+      t(876, 574, '코드가 아니라 인프라 문제', 11, 700, L.ink)+
+      t(876, 594, '권한 · 테이블 스펙이 먼저다', 10.5, 600, 'var(--faint)')+
+  '</svg></div>'+
+  '<figcaption style="font-size:12px;color:var(--muted);line-height:1.7;margin-top:10px">'+
+    '<b style="color:var(--navy)">제모스가 찍고 → 이 시스템이 검증·확정하고 → ERP로 바로 쏜다.</b> '+
+    '원본은 어느 단계에서도 수정되지 않고, 사람이 확정한 값만 ERP로 나갑니다. '+
+    '빨간 두 지점(제모스 수신 방식 · ERP 쓰기 권한)이 지금 막혀 있는 곳입니다.'+
+  '</figcaption></figure>';
+}
+
+VIEWS['x-arch']=function(){
+  var rows=[
+    ['원본은 고쳐지지 않는다', '수신한 payload 는 RAW 로 그대로 남고, 보정은 별도 레이어에 쌓입니다. '+
+      '원본 → 제안값 → 관리자 보정 → 확정값 4단이 모두 보존되고, 각 단계에 주체·일시·사유가 붙습니다.'],
+    ['오류는 사유로 못 넘어간다', '경고는 사유를 남기면 통과하지만 <b>오류 등급은 API 레벨에서 차단</b>됩니다. '+
+      '실제로 근태를 보정해야만 해소됩니다 — 노무 리스크 대응의 핵심 장치입니다.'],
+    ['확정 단위는 사람이 아니라 현장 × 월', '근로자를 한 명씩 승인하지 않습니다. 현장의 근태가 조건을 채우면 '+
+      '<b>현장×월 전체를 1건으로</b> 확정하고, J/C도 같은 단위로 승인합니다.'],
+    ['판정 로직이 화면에 없다', '검증·코드 변환·한도 계산·ERP 전송이 전부 서버에 있습니다. '+
+      '나중에 제모스가 화면만 바꿔 달아도 <b>로직을 다시 만들지 않습니다</b> — 이식을 전제로 한 설계입니다.'],
+    ['마감하면 봉인된다', '마감 시점의 확정값이 스냅샷으로 굳고 해시가 남습니다. '+
+      '이후 발견된 오류는 스냅샷을 고치지 않고 <b>차월 소급분</b>으로 처리합니다.']
+  ];
+  return ph('시스템 구성', '데이터가 어디서 들어와 어떤 상태를 거쳐 어디로 나가는지, 그리고 '+
+      '지금 어디가 막혀 있는지를 한 장에 담았습니다.', ['SCR-P-02'])+
+    '<div class="card"><div class="card-b">'+archSvg()+'</div></div>'+
+    '<div class="card"><div class="card-h"><div class="card-t">이 구조가 지키는 것</div>'+
+      '<span class="card-s">그림에 드러나지 않는 규칙</span></div><div class="card-b">'+
+      rows.map(function(r,i){
+        return '<div class="ck"><span class="ci y">'+(i+1)+'</span><div>'+
+          '<div class="ct">'+esc(r[0])+'</div><div class="cd">'+r[1]+'</div></div></div>';
+      }).join('')+
+      '</div></div>'+
+    '<div class="g2">'+
+      '<div class="card"><div class="card-h"><div class="card-t">구성 요소</div></div><div class="card-b np">'+
+        '<div class="tw"><table class="tb"><thead><tr><th>계층</th><th>구현</th><th class="ctr">규모</th></tr></thead><tbody>'+
+        [['화면','단일 HTML · 외부 의존 없음','4역할 · 35화면'],
+         ['API','Cloudflare Workers (TypeScript)','엔드포인트 45'],
+         ['데이터','D1 (SQLite)','테이블 23'],
+         ['검증엔진','규칙 데이터 기반','V-01 ~ V-15'],
+         ['수신 어댑터','인터페이스 고정 · 구현체 교체','MOCK / DEMO / A·B·C'],
+         ['전송 어댑터','DIRECT / FILE 폴백','ERP 2 테이블']
+        ].map(function(r){ return '<tr><td class="nw"><b>'+esc(r[0])+'</b></td><td>'+esc(r[1])+'</td>'+
+          '<td class="ctr nw">'+esc(r[2])+'</td></tr>'; }).join('')+
+        '</tbody></table></div>'+twHint()+'</div></div>'+
+      '<div class="card"><div class="card-h"><div class="card-t">막혀 있는 두 지점</div>'+
+        '<span class="tag t-err">착수 전 결론 필요</span></div><div class="card-b">'+
+        '<div class="ck"><span class="ci n">1</span><div><div class="ct">제모스 데이터 수신 방식</div>'+
+          '<div class="cd">A 조회 API · B DB 읽기전용 · C 일 배치파일 중 하나로 확정해야 합니다. '+
+          '어댑터 인터페이스는 이미 고정돼 있어 <b>구현체만 갈아끼우면</b> 됩니다. — 이노파크</div></div></div>'+
+        '<div class="ck"><span class="ci n">2</span><div><div class="ct">ERP 근태 DB 쓰기 권한 · 테이블 스펙</div>'+
+          '<div class="cd">서버가 사내 ERP DB에 네트워크로 닿을 수 있는지부터 정해야 합니다. '+
+          '<b>만들면 되는 것이 아니라</b> 권한·망 결정이 먼저입니다. — 전략기획실 · 이노파크</div></div></div>'+
+        '<div class="note w" style="margin:12px 0 0">이 둘이 안 풀리면 <b>F0 과 F3 이 못 움직입니다.</b> '+
+        '그래서 지금 제모스는 DEMO 어댑터, ERP는 FILE 폴백으로 돌고 있습니다.</div>'+
+        '</div></div>'+
+    '</div>';
+};
 
 /* ===================================================================
    9. 시작
