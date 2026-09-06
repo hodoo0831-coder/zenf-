@@ -1152,6 +1152,7 @@ function render(){
   /* 본문 */
   var fn = VIEWS[VIEW];
   document.getElementById('main').innerHTML = fn ? fn() : '<div class="empty"><div class="ei">▤</div><b>화면을 선택하세요</b></div>';
+  srvChip();
 }
 function navHtml(){
   return MENUS[CUR.role].map(function(m){
@@ -1197,6 +1198,7 @@ function ctxHtml(){
     h+='<span class="cx">현장</span><b style="font-size:13px;color:var(--navy);flex:none">'+esc(siteName(me.site))+'</b>'+
        '<span class="tag t-gy" style="flex:none">'+esc(me.pos)+'</span>';
   }
+  h+='<span class="tag t-gy" id="srvChip" style="flex:none">로컬 모드</span>';
   return h;
 }
 function stageTag(n){ return ['','t-warn','t-info','t-pp','t-ok'][n]||'t-gy'; }
@@ -2470,7 +2472,7 @@ function saveDay(no, d){
     var w=Math.max(0, Math.round((total-brk)*2)/2);
     x.ot = w>8 ? n1(w-8) : 0; x.work = Math.min(8, w);
   }
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'확정값 보정',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'확정값 보정',
     tgt:no+' / '+YM.slice(5)+'-'+String(d).padStart(2,'0'), bf:bf,
     af:code+' '+(tin||'—')+'~'+(tout||'—'), why:why, f:'F-G0203'});
   closeModal(); render(); toast('확정값을 보정했습니다. 원본은 그대로 보존됩니다.');
@@ -2478,7 +2480,7 @@ function saveDay(no, d){
 function resolveDay(no, d){
   var x=recOf(no).days[d];
   x.resolved=true; if(x.st==='exc') x.st='fix';
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'예외 해소',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'예외 해소',
     tgt:no+' / '+YM.slice(5)+'-'+String(d).padStart(2,'0'), bf:'확인 필요', af:'해소',
     why:'사유 확인 후 통과', f:'F-F0103'});
   closeModal(); render(); toast('예외를 해소했습니다.');
@@ -2489,7 +2491,7 @@ function bulkResolve(sid, k){
     if(o.day.ex[0]!==k) return;
     o.day.resolved=true; if(o.day.st==='exc') o.day.st='fix'; n++;
   });
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'예외 일괄 승인',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'예외 일괄 승인',
     tgt:siteName(sid)+' / '+YM+' · '+EXC_MAP[k].n+' '+n+'건', bf:'확인 필요', af:'해소',
     why:'동일 사유 일괄 처리', f:'F-F0103'});
   render(); toast(EXC_MAP[k].n+' '+n+'건을 일괄 승인했습니다.');
@@ -2531,7 +2533,7 @@ function submitReq(no, type){
   REQS.unshift({id:id, emp:no, ym:YM, d:d, type:type, st:'접수', why:why,
     before: type==='fix' ? ((x.tin||'—')+'~'+(x.tout||'없음')) : '-', after:after,
     by:null, at:TODAY+' '+nowHm(), memo:''});
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role],
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role],
     act:(type==='fix'?'정정 요청 등록':'연장근로 신청'), tgt:no+' / '+YM.slice(5)+'-'+String(d).padStart(2,'0'),
     bf:'—', af:after, why:why, f:type==='fix'?'F-G0102':'F-G0103'});
   closeModal(); render();
@@ -2547,7 +2549,7 @@ function decideReq(id, dec){
   } else {
     r.memo=r.memo||'반려 — 사유를 확인해 주세요';
   }
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'정정 요청 '+dec,
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'정정 요청 '+dec,
     tgt:r.emp+' / '+r.ym.slice(5)+'-'+String(r.d).padStart(2,'0'), bf:r.before, af:r.after,
     why:r.why, f:'F-G0203'});
   render(); toast('요청을 '+dec+'했습니다.');
@@ -2559,7 +2561,7 @@ function doMgrOk(sid){
   if(!g.canMgr){ toast('마감 차단 오류를 먼저 해소하세요.'); return; }
   var t=stOf(sid,YM), el=document.getElementById('mgrOpin');
   t.mgrOk=true; t.mgrBy=CUR.name; t.mgrAt=TODAY; t.mgrOpin=el?el.value.trim():'';
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'1차 확정',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'1차 확정',
     tgt:siteName(sid)+' / '+YM, bf:'검토중', af:'1차확정', why:t.mgrOpin||'예외 전건 해소', f:'F-G0204'});
   render(); toast('1차 확정 완료 — J/C 검토로 넘어갑니다.');
 }
@@ -2567,7 +2569,7 @@ function undoMgr(sid){
   var t=stOf(sid,YM);
   if(t.jcOk){ toast('2차 승인이 완료되어 취소할 수 없습니다.'); return; }
   t.mgrOk=false; t.mgrBy=null; t.mgrAt=null;
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'1차 확정 취소',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'1차 확정 취소',
     tgt:siteName(sid)+' / '+YM, bf:'1차확정', af:'검토중', why:'현장 재검토', f:'F-G0204'});
   render(); toast('1차 확정을 취소했습니다.');
 }
@@ -2592,7 +2594,7 @@ function openJcOk(sid){
 function doJcOk(sid){
   var t=stOf(sid,YM), el=document.getElementById('jcOpin');
   t.jcOk=true; t.jcBy=CUR.name; t.jcAt=TODAY; t.jcOpin=el?el.value.trim():'';
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'2차 승인',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'2차 승인',
     tgt:siteName(sid)+' / '+YM, bf:'1차확정', af:'2차승인', why:t.jcOpin||'검토 완료', f:'F-G0302'});
   closeModal(); render(); toast('2차 승인 완료 — 마감할 수 있습니다.');
 }
@@ -2611,7 +2613,7 @@ function doReturn(sid){
   if(!why){ toast('반송 사유를 입력하세요.'); return; }
   var t=stOf(sid,YM);
   t.mgrOk=false; t.jcOk=false; t.returned=(t.returned||0)+1; t.jcOpin=why;
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'현장 반송',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'현장 반송',
     tgt:siteName(sid)+' / '+YM, bf:'1차확정', af:'검토중', why:why, f:'F-G0303'});
   closeModal(); render(); toast('현장으로 반송했습니다.');
 }
@@ -2620,7 +2622,7 @@ function doClose(sid){
   if(!g.canClose){ toast('2차 승인이 완료되어야 마감할 수 있습니다.'); return; }
   var t=stOf(sid,YM);
   t.closed=true; t.closedAt=TODAY;
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'월 마감 실행',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'월 마감 실행',
     tgt:siteName(sid)+' / '+YM, bf:'2차승인', af:'마감', why:'정기 마감 · 스냅샷 고정', f:'F-H0101'});
   render(); toast('마감했습니다. 스냅샷이 고정되고 ERP 전송 대상이 됩니다.');
 }
@@ -2628,7 +2630,7 @@ function undoClose(sid){
   var tx=erpTxOf(YM,sid)[0];
   if(tx && tx.res==='성공'){ toast('ERP 전송이 완료되어 마감을 취소할 수 없습니다. 차월 소급으로 처리하세요.'); return; }
   var t=stOf(sid,YM); t.closed=false; t.closedAt=null;
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'마감 취소',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'마감 취소',
     tgt:siteName(sid)+' / '+YM, bf:'마감', af:'2차승인', why:'전송 전 재검토', f:'F-H0101'});
   render(); toast('마감을 취소했습니다.');
 }
@@ -2666,7 +2668,7 @@ function doSend(sid, mon, ot){
   ERPTX.unshift({ym:YM, site:sid, at:TODAY+' '+nowHm(), by:CUR.name, ver:ver,
     mon:mon, ot:ot, res:'성공', err:''});
   t.erpVer=ver;
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'ERP 근태 전송',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'ERP 근태 전송',
     tgt:siteName(sid)+' / '+YM+' · '+(mon+ot)+'행', bf:'—', af:'성공 (v'+ver+')',
     why:'DB 직접 INSERT · 역조회 대조 일치', f:'F-I0102'});
   closeModal(); render();
@@ -2677,7 +2679,7 @@ function doSend(sid, mon, ot){
 function toggleRule(id){
   var r=RULES.filter(function(x){ return x.id===id; })[0]; if(!r) return;
   r.on=!r.on;
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'검증 Rule 변경',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'검증 Rule 변경',
     tgt:r.id+' '+r.n, bf:r.on?'OFF':'ON', af:r.on?'ON':'OFF', why:'운영 판단', f:'F-J0101'});
   render(); toast(r.id+' '+(r.on?'사용':'미사용')+'으로 변경했습니다.');
 }
@@ -2706,7 +2708,7 @@ function saveMap(i){
   var std=document.getElementById('mpStd').value, scope=document.getElementById('mpScope').value;
   MAPS.push({src:u.src, std:std, scope:scope, from:TODAY, by:CUR.name});
   UNMAPPED.splice(i,1);
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'매핑 규칙 등록',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'매핑 규칙 등록',
     tgt:(scope==='전체'?'전체':clientOf(scope).n)+' · "'+u.src+'" → '+std+' '+CODE_MAP[std].n,
     bf:'(미매핑)', af:std, why:'신규 표기 발견', f:'F-J0102'});
   closeModal(); render(); toast('매핑 규칙을 등록했습니다.');
@@ -3035,7 +3037,7 @@ function savePlan(sid){
   var why=document.getElementById('plWhy').value.trim()||'정기 등록';
   PLANLOG.unshift({ym:YM, site:sid, at:TODAY+' '+nowHm(), by:CUR.name, act:'월 근무계획 등록',
     n:siteEmps(sid).length+'명 × '+daysIn(YM)+'일', why:why});
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'월 근무계획 등록',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'월 근무계획 등록',
     tgt:siteName(sid)+' / '+YM, bf:'—', af:siteEmps(sid).length+'명', why:why, f:'F-C0101'});
   closeModal(); setTab('plan','log'); toast('근무계획을 등록했습니다.');
 }
@@ -3061,7 +3063,7 @@ function saveShiftGen(sid){
   var k=document.getElementById('sgKind').value, c=document.getElementById('sgCycle').value;
   PLANLOG.unshift({ym:YM, site:sid, at:TODAY+' '+nowHm(), by:CUR.name, act:'교대패턴 일괄 생성',
     n:siteEmps(sid).length+'명 × '+k, why:c+' 자동 전개 — 제안값'});
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'교대패턴 일괄 생성',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'교대패턴 일괄 생성',
     tgt:siteName(sid)+' / '+YM+' · '+k, bf:'—', af:c, why:'계획 자동 전개', f:'F-C0102'});
   closeModal(); setTab('plan','log'); toast('교대패턴을 전개했습니다. 제안값이므로 확인 후 확정하세요.');
 }
@@ -3380,7 +3382,7 @@ function maskNo(no){ return no.length<=5 ? no : no.slice(0,3)+'**'+no.slice(-2);
 function makeReport(sid){
   DIST.unshift({at:TODAY+' '+nowHm(), ym:YM, site:sid, kind:'고객사 근태 리포트', by:CUR.name,
     to:clientOf(siteOf(sid).client).n+' 운영팀', mask:'적용'});
-  AUDIT.unshift({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'고객사 리포트 생성·배포',
+  audit({t:TODAY+' '+nowHm(), u:CUR.name, r:ROLE_N[CUR.role], act:'고객사 리포트 생성·배포',
     tgt:siteName(sid)+' / '+YM, bf:'—', af:'비식별 리포트', why:'고객사 제출', f:'F-I0107'});
   setTab('rep','log'); toast('비식별 리포트를 생성했습니다. 배포 이력에 기록됩니다.');
 }
@@ -3413,6 +3415,36 @@ VIEWS['a-ops']=function(){
       '<div class="foot" style="padding-left:15px;padding-right:15px">'+
       '근태 데이터 3년 · 접근 로그 1년 보관 후 자동 파기합니다. 마감 스냅샷은 기간 내 <b>수정 불가</b>입니다.</div>'+
       '</div></div>';
+  } else if(tab==='srv'){
+    body='<div class="note '+(SRV.on?'':'w')+'"><b>'+(SRV.on
+        ? '서버 저장이 켜져 있습니다.' : '로컬 모드입니다.')+'</b> '+(SRV.on
+        ? '승인·마감·전송·감사로그가 서버에 저장되고, 같은 주소를 연 다른 사람에게도 보입니다.'
+        : '이 화면의 변경은 브라우저 메모리에만 남고 새로고침하면 사라집니다. '+
+          '파일을 직접 열었거나(file://) 서버 함수에 연결하지 못했습니다.')+'</div>'+
+      '<div class="tiles">'+
+        tile('연결 상태', SRV.on?'연결됨':'로컬', '', SRV.on?'/api/att':'저장되지 않음', SRV.on?'o':'w')+
+        tile('저장 버전', SRV.ver, '', '변경 시마다 증가')+
+        tile('마지막 저장', SRV.at?esc(SRV.at.slice(0,16).replace('T',' ')):'—', '', SRV.by?esc(SRV.by):'')+
+        tile('동기화 주기', 12, '초', '다른 사용자 변경 자동 반영')+
+      '</div>'+
+      '<div class="card"><div class="card-h"><div class="card-t">저장 구조</div>'+
+        '<span class="fid">netlify/functions/att.mjs</span></div><div class="card-b">'+
+        '<div class="ck"><span class="ci y">1</span><div><div class="ct">기준값은 서버가 아니라 시드</div>'+
+          '<div class="cd">근태 원장의 기준값(제모스 수신분)은 화면이 만들고, 서버에는 '+
+          '<b>사람이 한 행위의 변경분만</b> 저장합니다. 저장 용량과 전송량이 작습니다.</div></div></div>'+
+        '<div class="ck"><span class="ci y">2</span><div><div class="ct">저장 대상</div>'+
+          '<div class="cd">확정값 보정 · 예외 해소 · 정정/연장 요청 · 1·2차 승인 · 마감 · ERP 전송 이력 · '+
+          '매핑 규칙 · 검증 Rule · 근무계획 이력 · 배포 이력 · 감사 로그</div></div></div>'+
+        '<div class="ck"><span class="ci y">3</span><div><div class="ct">병합 방식</div>'+
+          '<div class="cd">이력(감사·요청·전송·배포)은 <b>키 기준 병합</b>으로 누적되고, '+
+          '상태값(보정·승인·마감)은 마지막 저장이 채택됩니다. 12초마다 다른 사용자의 변경을 받아옵니다.</div></div></div>'+
+        '<div class="ck"><span class="ci n">✗</span><div><div class="ct">여기까지가 한계</div>'+
+          '<div class="cd">제모스·ERP는 <b>사내망</b>에 있어 외부 클라우드에서 붙지 못합니다. '+
+          '개인정보(실제 사번·성명)는 보안 승인 전까지 넣지 않습니다. 이 단계는 '+
+          '<b>파일럿 검증용</b>입니다.</div></div></div>'+
+        '<div class="btns" style="margin-top:12px">'+
+          '<button class="btn dg" onclick="openSrvReset()">서버 상태 초기화</button></div>'+
+        '</div></div>';
   } else {
     body='<div class="card"><div class="card-h"><div class="card-t">릴리즈 이력</div>'+
       '<span class="card-s">형상 관리</span></div><div class="card-b">'+
@@ -3429,13 +3461,194 @@ VIEWS['a-ops']=function(){
       '<button class="'+(tab==='kpi'?'on':'')+'" onclick="setTab(\'ops\',\'kpi\')">효과 지표</button>'+
       '<button class="'+(tab==='backup'?'on':'')+'" onclick="setTab(\'ops\',\'backup\')">백업 · 보존</button>'+
       '<button class="'+(tab==='rel'?'on':'')+'" onclick="setTab(\'ops\',\'rel\')">릴리즈</button>'+
+      '<button class="'+(tab==='srv'?'on':'')+'" onclick="setTab(\'ops\',\'srv\')">서버 저장</button>'+
     '</div>'+body;
 };
+
+
+/* ===================================================================
+   13. 서버 연동 — Netlify Functions(/api/att) + Netlify Blobs
+       · 저장하는 것은 "사람이 한 행위"의 변경분(delta)뿐이다.
+       · 근태 원장 기준값(제모스 수신분)은 클라이언트 시드가 만든다.
+       · 서버에 못 붙으면 로컬 모드로 그대로 동작한다 (저장만 안 됨).
+   =================================================================== */
+var SRV={on:false, ver:0, busy:false, again:false, stale:false, at:'', by:'', err:'', poll:null};
+var API='/api/att';
+
+function srvPin(){
+  try{
+    var q=new URLSearchParams(location.search).get('pin');
+    if(q){ localStorage.setItem('zt_pin', q); return q; }
+    return localStorage.getItem('zt_pin') || '1234';
+  }catch(e){ return '1234'; }
+}
+function srvUsable(){ return location.protocol==='http:' || location.protocol==='https:'; }
+
+/* 시드(제모스 수신분) 지문 — 이 값과 다른 날만 "사람이 바꾼 것"이다 */
+var DAY_F=['code','tin','tout','work','ot','night','hol','st','memo','fixed','resolved','reqId','src'];
+function daySig(x){
+  return DAY_F.map(function(f){
+    var v=x[f]; return v===true?1:v===false?0:(v==null?'':v); }).join('~');
+}
+var SEED={};
+(function snapshotSeed(){
+  EMPS.forEach(function(e){ YM_LIST.forEach(function(ym){
+    var rec=DB[e.no+'|'+ym]; if(!rec) return;
+    Object.keys(rec.days).forEach(function(k){ SEED[e.no+'|'+ym+'|'+k]=daySig(rec.days[k]); });
+  }); });
+})();
+
+/* 현재 메모리 상태에서 변경분 추출 — 시드와 다른 것만 */
+function collectDelta(){
+  var dayFix={};
+  EMPS.forEach(function(e){
+    YM_LIST.forEach(function(ym){
+      var rec=DB[e.no+'|'+ym]; if(!rec) return;
+      Object.keys(rec.days).forEach(function(k){
+        var x=rec.days[k], key=e.no+'|'+ym+'|'+k;
+        if(daySig(x)===SEED[key]) return;
+        dayFix[key]={code:x.code, tin:x.tin, tout:x.tout, work:x.work, ot:x.ot,
+          night:x.night, hol:x.hol, st:x.st, memo:x.memo, fixed:!!x.fixed,
+          resolved:!!x.resolved, reqId:x.reqId||null, src:x.src};
+      });
+    });
+  });
+  var sitest={};
+  Object.keys(SITEST).forEach(function(k){ sitest[k]=SITEST[k]; });
+  var rules={}; RULES.forEach(function(r){ rules[r.id]=!!r.on; });
+  return {dayFix:dayFix, sitest:sitest, rules:rules, reqs:REQS, erptx:ERPTX,
+    audit:AUDIT, planlog:PLANLOG, dist:DIST, maps:MAPS, unmapped:UNMAPPED};
+}
+/* 서버 상태를 메모리에 덮어쓰기 */
+function applyDelta(d){
+  if(!d) return;
+  if(d.dayFix) Object.keys(d.dayFix).forEach(function(k){
+    var p=k.split('|'), rec=DB[p[0]+'|'+p[1]]; if(!rec) return;
+    var x=rec.days[p[2]]; if(!x) return;
+    var v=d.dayFix[k];
+    ['code','tin','tout','work','ot','night','hol','st','memo','fixed','resolved','reqId','src']
+      .forEach(function(f){ if(v[f]!==undefined) x[f]=v[f]; });
+  });
+  if(d.sitest) Object.keys(d.sitest).forEach(function(k){
+    if(SITEST[k]) SITEST[k]=d.sitest[k]; });
+  if(d.rules) RULES.forEach(function(r){ if(d.rules[r.id]!==undefined) r.on=d.rules[r.id]; });
+  var swap=function(arr, val){ if(Array.isArray(val) && val.length){ arr.length=0;
+    val.forEach(function(x){ arr.push(x); }); } };
+  swap(REQS, d.reqs); swap(ERPTX, d.erptx); swap(AUDIT, d.audit);
+  swap(PLANLOG, d.planlog); swap(DIST, d.dist);
+  swap(MAPS, d.maps);
+  if(Array.isArray(d.unmapped)){ UNMAPPED.length=0; d.unmapped.forEach(function(x){ UNMAPPED.push(x); }); }
+  /* 요청 → 근태일 연결 복원 */
+  REQS.forEach(function(r){ if(r.st==='승인'){ var rec=DB[r.emp+'|'+r.ym];
+    if(rec && rec.days[r.d]) rec.days[r.d].reqId=r.id; } });
+}
+
+function srvInit(){
+  if(!srvUsable()){ SRV.on=false; SRV.err='local'; return; }
+  fetch(API, {headers:{'accept':'application/json'}})
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function(j){
+      if(!j || !j.ok) return Promise.reject('bad');
+      SRV.on=true; SRV.ver=j.ver||0; SRV.at=(j.state&&j.state.updated_at)||''; SRV.by=(j.state&&j.state.updated_by)||'';
+      if(j.state && (j.ver||0)>0) applyDelta(j.state);
+      if(CUR) render();
+      srvStartPoll();
+    })
+    .catch(function(e){ SRV.on=false; SRV.err=String(e); if(CUR) render(); });
+}
+var SYNC_T=null;
+/* 변경이 몰아칠 때(일괄 승인 등) 한 번으로 묶어 보낸다 */
+function srvPush(){
+  if(!SRV.on) return;
+  clearTimeout(SYNC_T);
+  SYNC_T=setTimeout(srvFlush, 350);
+}
+function srvFlush(){
+  if(!SRV.on) return;
+  if(SRV.busy){ SRV.again=true; return; }
+  SRV.busy=true; SRV.again=false;
+  var before=SRV.ver;
+  if(CUR) srvChip();
+  fetch(API, {method:'POST', headers:{'content-type':'application/json','x-zt-pin':srvPin()},
+      body: JSON.stringify({by:(CUR?CUR.name:''), state:collectDelta()})})
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function(j){
+      SRV.ver=j.ver||SRV.ver;
+      SRV.at=(j.state&&j.state.updated_at)||''; SRV.by=(j.state&&j.state.updated_by)||'';
+      SRV.err='';
+      /* 응답을 화면에 되덮지 않는다 — 전송 중에도 화면은 계속 바뀌므로
+         서버 스냅샷을 덮으면 그 사이 변경이 사라진다. 최신 상태는 이미 여기 있다.
+         다만 버전이 우리가 예상한 것보다 더 뛰었다면 그사이 다른 사람이 쓴 것이므로
+         한 번 더 받아온다. */
+      if(j.ver !== before+1) SRV.stale=true;
+    })
+    .catch(function(e){
+      SRV.err=String(e);
+      if(String(e)==='401'){ SRV.on=false; toast('저장 권한(PIN)이 맞지 않습니다 — 로컬 모드로 전환합니다.'); }
+      else toast('서버 저장에 실패했습니다. 화면 값은 유지되지만 저장되지 않았습니다.');
+    })
+    .then(function(){
+      SRV.busy=false;
+      if(SRV.again){ SRV.again=false; srvFlush(); return; }
+      if(SRV.stale){ SRV.stale=false; srvPull(true); return; }
+      if(CUR) render();
+    });
+}
+/* 서버 상태를 받아 화면에 반영 */
+function srvPull(quiet){
+  if(!SRV.on || SRV.busy) return;
+  fetch(API).then(function(r){ return r.ok?r.json():Promise.reject(r.status); })
+    .then(function(full){
+      if(!full || !full.ok) return;
+      SRV.ver=full.ver; SRV.at=(full.state&&full.state.updated_at)||'';
+      SRV.by=(full.state&&full.state.updated_by)||'';
+      applyDelta(full.state);
+      if(CUR) render();
+      if(!quiet) toast((SRV.by?SRV.by+'님의 ':'')+'변경 사항을 반영했습니다.');
+    })
+    .catch(function(){});
+}
+function srvStartPoll(){
+  if(SRV.poll) clearInterval(SRV.poll);
+  SRV.poll=setInterval(function(){
+    if(!SRV.on || SRV.busy || SYNC_T || document.hidden) return;
+    fetch(API+'?ver=1').then(function(r){ return r.ok?r.json():Promise.reject(r.status); })
+      .then(function(j){ if(j.ok && (j.ver||0)!==SRV.ver) srvPull(false); })
+      .catch(function(){});
+  }, 12000);
+}
+function srvChip(){
+  var el=document.getElementById('srvChip'); if(!el) return;
+  el.className='tag '+(SRV.busy?'t-warn':SRV.on?'t-ok':'t-gy');
+  el.textContent = SRV.busy ? '저장 중…' : SRV.on ? ('서버 저장 v'+SRV.ver) : '로컬 모드';
+}
+/* 감사 로그 기록 = 상태 변경 지점 → 여기서 서버 반영 */
+function audit(rec){ AUDIT.unshift(rec); srvPush(); }
+function srvReset(){
+  if(!SRV.on){ toast('로컬 모드에서는 초기화할 수 없습니다.'); return; }
+  fetch(API, {method:'POST', headers:{'content-type':'application/json','x-zt-pin':srvPin()},
+      body: JSON.stringify({action:'reset', by:(CUR?CUR.name:'')})})
+    .then(function(r){ return r.ok?r.json():Promise.reject(r.status); })
+    .then(function(){ closeModal(); toast('서버 상태를 초기화했습니다. 새로고침하면 시드값으로 돌아갑니다.');
+      SRV.ver=0; if(CUR) render(); })
+    .catch(function(){ toast('초기화에 실패했습니다.'); });
+}
+function openSrvReset(){
+  openModal('<div class="mh"><div><h3>서버 상태 초기화</h3>'+
+    '<div class="ms">저장된 변경분을 모두 지웁니다</div></div>'+
+    '<button class="mx" onclick="closeModal()" aria-label="닫기">✕</button></div>'+
+    '<div class="mb"><div class="note e"><b>되돌릴 수 없습니다.</b> 승인·마감·ERP 전송 이력·감사 로그 등 '+
+      '저장된 변경분이 전부 삭제되고, 새로고침 시 시드 데이터 상태로 돌아갑니다.</div>'+
+      '<div class="foot">시연을 처음부터 다시 하거나, 테스트로 어질러진 상태를 정리할 때 씁니다.</div></div>'+
+    '<div class="mf"><button class="btn dg" onclick="srvReset()">초기화 실행</button>'+
+    '<button class="btn" onclick="closeModal()">취소</button></div>');
+}
 
 /* ===================================================================
    9. 시작
    =================================================================== */
 renderAccts();
+srvInit();
 document.getElementById('lgPw').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
 document.getElementById('lgId').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
 document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal(); closeDrawer(); } });
