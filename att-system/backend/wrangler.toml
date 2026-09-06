@@ -1,0 +1,15 @@
+name = "jeniel-attendance"
+main = "src/index.ts"
+compatibility_date = "2025-07-18"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "att_db"
+database_id = "REPLACE_AFTER_D1_CREATE"   # wrangler d1 create att_db 후 여기 채우기
+
+[vars]
+SITE_TZ = "Asia/Seoul"
+# 제모스 연동 방식이 확정되면 아래 값을 A_API / B_DB / C_BATCH 로 설정
+JEMOS_MODE = "DEMO"   # MOCK=항상 0건 · DEMO=시연용 합성 태그 · 확정되면 A_API/B_DB/C_BATCH
+# ERP 직접 API가 열리면 DIRECT, 그 전까지는 FILE(파일 다운로드/업로드 폴백)
+ERP_MODE = "FILE"
