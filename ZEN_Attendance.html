@@ -35,7 +35,10 @@ body{font-family:'NanumGothicEmbedded','NanumGothic','Nanum Gothic','나눔고�
   'Malgun Gothic','맑은 고딕',system-ui,-apple-system,sans-serif;
   background:var(--bg);color:var(--ink);line-height:1.66;font-size:14px;min-height:100vh;overflow-x:hidden;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
-  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+  /* 한글은 어절 단위로 끊는다. 안 그러면 "V‑01~15"가 "V-/01~15"로 갈라지고
+     문장이 낱글자로 흩어져 조판이 허술해 보인다. */
+  word-break:keep-all;overflow-wrap:break-word}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input,select,textarea{font-family:inherit;font-size:16px;color:inherit}
 table{border-collapse:collapse;width:100%}
@@ -204,6 +207,7 @@ a{color:var(--green-d)}
   border-left:1px solid var(--line);margin-bottom:20px}
 @media (min-width:560px){ .tiles{grid-template-columns:repeat(3,1fr)} }
 @media (min-width:1024px){ .tiles{grid-template-columns:repeat(auto-fit,minmax(182px,1fr))} }
+@media (min-width:1280px){ .tiles{grid-template-columns:repeat(var(--tc,4),minmax(0,1fr))} }
 .tile{background:#fff;border-right:1px solid var(--line);border-bottom:1px solid var(--line);
   padding:15px 17px 17px}
 .tile .tl{font-size:10.5px;font-weight:700;color:var(--faint);letter-spacing:.1em;
@@ -232,7 +236,7 @@ a{color:var(--green-d)}
 /* 노트 */
 .note{background:var(--wash);border:1px solid var(--line);
   border-radius:var(--r);padding:14px 16px;font-size:12.5px;color:var(--ink);line-height:1.8;margin-bottom:18px}
-.note b{color:var(--green-d)}
+.note b{color:var(--navy)}
 .note.w{background:var(--warn-l);border-color:#f0e2cd}
 .note.w b{color:#a3721f}
 .note.e{background:var(--err-l);border-color:#f0dcda}
@@ -455,7 +459,7 @@ table.mgt td.sm-num{min-width:48px;font-variant-numeric:tabular-nums;font-weight
         <div class="lg-chain">
           <i>제모스 <small>읽기전용</small></i><u>▸</u>
           <i>수신 · 표준화</i><u>▸</u>
-          <i>자동검증 V-01~15</i><u>▸</u>
+          <i>자동검증 V‑01~15</i><u>▸</u>
           <i>예외 처리</i><u>▸</u>
           <i>1차 · 2차 승인</i><u>▸</u>
           <i>월 마감</i><u>▸</u>
@@ -611,11 +615,11 @@ var CFG = {week:52, weekWarn:.88, otWeek:12, otMonth:52, tolIn:10, tolOut:30,
 
 /* 수집 채널 — 제모스가 디폴트, 나머지는 예외 경로 */
 var CHANNELS = {
-  app:   {n:'제모스 출퇴근', ic:'📲', pri:1, kind:'디폴트', d:'전 인원 기본 경로 — 제모스 태그를 수신'},
-  dsign: {n:'데이사인 단기자', ic:'🪪', pri:2, kind:'수신',  d:'일단위 단기자 계약·태그 자동 수신'},
-  manual:{n:'관리자 직접입력', ic:'✎', pri:3, kind:'예외',  d:'예외 건 보정 · 제모스 미사용 인원'},
-  excel: {n:'Excel 업로드',  ic:'📄', pri:4, kind:'예외',  d:'제모스 미도입 현장 · 연동 장애 대체'},
-  ocr:   {n:'수기 이미지 OCR', ic:'📷', pri:5, kind:'예외',  d:'수기 노트 운영 현장 · 항상 제안값'}
+  app:   {n:'제모스 출퇴근', pri:1, kind:'디폴트', d:'전 인원 기본 경로 — 제모스 태그를 수신'},
+  dsign: {n:'데이사인 단기자', pri:2, kind:'수신',  d:'일단위 단기자 계약·태그 자동 수신'},
+  manual:{n:'관리자 직접입력', pri:3, kind:'예외',  d:'예외 건 보정 · 제모스 미사용 인원'},
+  excel: {n:'Excel 업로드',  pri:4, kind:'예외',  d:'제모스 미도입 현장 · 연동 장애 대체'},
+  ocr:   {n:'수기 이미지 OCR', pri:5, kind:'예외',  d:'수기 노트 운영 현장 · 항상 제안값'}
 };
 
 /* 제모스 연동 (F0) — 최우선 미결사항 */
@@ -865,7 +869,7 @@ function siteReqs(sid, st){
     var e=EMP_MAP[r.emp]; return e && e.site===sid && r.ym===YM && (!st || r.st===st); });
 }
 
-/* ERP 전송 (V3 ②) */
+/* ERP 전송 (V3) */
 var ERPTBL={mon:'ERP_HR.TB_MON_ATT', ot:'ERP_HR.TB_OT_ATT'};
 var ERPCODE={'100':'A01','110':'B11','120':'B12','130':'B13','200':'C21','210':'C22',
   '300':'D31','310':'D32','400':'E41','410':'E42'};
@@ -1046,70 +1050,70 @@ var CUR=null, VIEW=null, SCOPE='ALL', TAB={}, SEL=null;
 var MENUS={
   worker:[
     {g:'내 근태'},
-    {id:'w-home', ic:'▤', t:'내 대시보드',   scr:'SCR-W-01'},
-    {id:'w-sch',  ic:'📅', t:'내 근무일정',   scr:'SCR-W-02'},
-    {id:'w-att',  ic:'▦', t:'내 근태 확인',   scr:'SCR-W-03'},
+    {id:'w-home', t:'내 대시보드',   scr:'SCR-W-01'},
+    {id:'w-sch',  t:'내 근무일정',   scr:'SCR-W-02'},
+    {id:'w-att',  t:'내 근태 확인',   scr:'SCR-W-03'},
     {g:'신청'},
-    {id:'w-req',  ic:'✎', t:'근태 정정 요청', scr:'SCR-W-04', b:'wreq'},
-    {id:'w-ot',   ic:'⏱', t:'연장근로 신청',  scr:'SCR-W-05'},
+    {id:'w-req',  t:'근태 정정 요청', scr:'SCR-W-04', b:'wreq'},
+    {id:'w-ot',   t:'연장근로 신청',  scr:'SCR-W-05'},
     {g:'안내'},
-    {id:'x-code', ic:'#', t:'근태코드 안내',  scr:'SCR-S-01'},
-    {id:'x-zemos',ic:'📲', t:'제모스 안내',    scr:'SCR-Z-02'}
+    {id:'x-code', t:'근태코드 안내',  scr:'SCR-S-01'},
+    {id:'x-zemos',t:'제모스 안내',    scr:'SCR-Z-02'}
   ],
   manager:[
     {g:'현장 운영'},
-    {id:'m-home',   ic:'▤', t:'현장 대시보드',  scr:'SCR-M-01'},
-    {id:'m-plan',   ic:'📅', t:'근무계획 관리',  scr:'SCR-M-02'},
-    {id:'m-collect',ic:'📥', t:'근태 수집 현황', scr:'SCR-M-03'},
-    {id:'x-recv',   ic:'📲', t:'제모스 수신',    scr:'SCR-Z-01', b:'recv'},
-    {id:'m-att',    ic:'▦', t:'월 근태 등록',   scr:'SCR-M-03'},
+    {id:'m-home',   t:'현장 대시보드',  scr:'SCR-M-01'},
+    {id:'m-plan',   t:'근무계획 관리',  scr:'SCR-M-02'},
+    {id:'m-collect',t:'근태 수집 현황', scr:'SCR-M-03'},
+    {id:'x-recv',   t:'제모스 수신',    scr:'SCR-Z-01', b:'recv'},
+    {id:'m-att',    t:'월 근태 등록',   scr:'SCR-M-03'},
     {g:'검증 · 확정'},
-    {id:'m-exc',  ic:'⚠', t:'이상근태 처리',  scr:'SCR-M-04', b:'exc'},
-    {id:'m-req',  ic:'✎', t:'정정 요청 처리', scr:'SCR-M-05', b:'mreq'},
-    {id:'m-limit',ic:'⏱', t:'한도 사전경고',  scr:'SCR-M-01', b:'lim'},
-    {id:'m-close',ic:'✔', t:'1차 근태 확정',  scr:'SCR-M-06'},
+    {id:'m-exc',  t:'이상근태 처리',  scr:'SCR-M-04', b:'exc'},
+    {id:'m-req',  t:'정정 요청 처리', scr:'SCR-M-05', b:'mreq'},
+    {id:'m-limit',t:'한도 사전경고',  scr:'SCR-M-01', b:'lim'},
+    {id:'m-close',t:'1차 근태 확정',  scr:'SCR-M-06'},
     {g:'기준정보'},
-    {id:'x-code', ic:'#', t:'근태 기준정보',  scr:'SCR-S-01'},
-    {id:'x-fdef', ic:'📘', t:'기능정의서',     scr:'SCR-S-09'}
+    {id:'x-code', t:'근태 기준정보',  scr:'SCR-S-01'},
+    {id:'x-fdef', t:'기능정의서',     scr:'SCR-S-09'}
   ],
   jc:[
     {g:'통합 운영'},
-    {id:'j-home',  ic:'▤', t:'통합 대시보드',    scr:'SCR-J-01'},
-    {id:'j-status',ic:'🏢', t:'현장별 진행 현황', scr:'SCR-J-02'},
-    {id:'x-recv',  ic:'📲', t:'제모스 수신 현황', scr:'SCR-Z-01', b:'recv'},
+    {id:'j-home',  t:'통합 대시보드',    scr:'SCR-J-01'},
+    {id:'j-status',t:'현장별 진행 현황', scr:'SCR-J-02'},
+    {id:'x-recv',  t:'제모스 수신 현황', scr:'SCR-Z-01', b:'recv'},
     {g:'검토 · 마감'},
-    {id:'j-review',ic:'⚖', t:'2차 검토 · 승인', scr:'SCR-J-03', b:'jc'},
-    {id:'j-limit', ic:'⏱', t:'한도 사전경고',    scr:'SCR-J-01', b:'lim'},
-    {id:'j-close', ic:'🔒', t:'월 근태 마감',    scr:'SCR-J-04'},
+    {id:'j-review',t:'2차 검토 · 승인', scr:'SCR-J-03', b:'jc'},
+    {id:'j-limit', t:'한도 사전경고',    scr:'SCR-J-01', b:'lim'},
+    {id:'j-close', t:'월 근태 마감',    scr:'SCR-J-04'},
     {g:'산출 · 전송'},
-    {id:'j-agg',   ic:'Σ', t:'집계 · 검증',     scr:'SCR-J-05'},
-    {id:'j-erp',   ic:'📤', t:'ERP 근태 전송',   scr:'SCR-J-05', b:'erp'},
-    {id:'j-report',ic:'📄', t:'고객사 근태자료', scr:'SCR-J-06'},
+    {id:'j-agg',   t:'집계 · 검증',     scr:'SCR-J-05'},
+    {id:'j-erp',   t:'ERP 근태 전송',   scr:'SCR-J-05', b:'erp'},
+    {id:'j-report',t:'고객사 근태자료', scr:'SCR-J-06'},
     {g:'조회'},
-    {id:'j-audit', ic:'🕐', t:'Audit Log',      scr:'SCR-S-06'},
-    {id:'x-code',  ic:'#', t:'근태코드 마스터', scr:'SCR-S-01'},
-    {id:'x-arch',  ic:'◈', t:'시스템 구성',     scr:'SCR-P-02'},
-    {id:'x-fdef',  ic:'📘', t:'기능정의서',      scr:'SCR-S-09'}
+    {id:'j-audit', t:'Audit Log',      scr:'SCR-S-06'},
+    {id:'x-code',  t:'근태코드 마스터', scr:'SCR-S-01'},
+    {id:'x-arch',  t:'시스템 구성',     scr:'SCR-P-02'},
+    {id:'x-fdef',  t:'기능정의서',      scr:'SCR-S-09'}
   ],
   admin:[
     {g:'운영 현황'},
-    {id:'a-home', ic:'▤', t:'시스템 운영 현황', scr:'SCR-S-07'},
-    {id:'a-ops',  ic:'📈', t:'효과 · 보존 · 릴리즈', scr:'SCR-S-07'},
-    {id:'x-arch', ic:'◈', t:'시스템 구성',      scr:'SCR-P-02'},
-    {id:'x-plan', ic:'🧭', t:'과제 계획 · 로드맵', scr:'SCR-P-01'},
+    {id:'a-home', t:'시스템 운영 현황', scr:'SCR-S-07'},
+    {id:'a-ops',  t:'효과 · 보존 · 릴리즈', scr:'SCR-S-07'},
+    {id:'x-arch', t:'시스템 구성',      scr:'SCR-P-02'},
+    {id:'x-plan', t:'과제 계획 · 로드맵', scr:'SCR-P-01'},
     {g:'기준정보 · 규칙'},
-    {id:'x-code', ic:'#', t:'근태 기준정보',   scr:'SCR-S-01'},
-    {id:'a-rule', ic:'⚙', t:'검증 Rule 설정',  scr:'SCR-S-02'},
-    {id:'a-map',  ic:'⇵', t:'매핑 규칙 관리',  scr:'SCR-S-03', b:'map'},
+    {id:'x-code', t:'근태 기준정보',   scr:'SCR-S-01'},
+    {id:'a-rule', t:'검증 Rule 설정',  scr:'SCR-S-02'},
+    {id:'a-map',  t:'매핑 규칙 관리',  scr:'SCR-S-03', b:'map'},
     {g:'연동 · 데이터'},
-    {id:'x-recv', ic:'📲', t:'제모스 수신 현황', scr:'SCR-Z-01', b:'recv'},
-    {id:'a-hub',  ic:'🗄', t:'데이터 표준화',   scr:'SCR-S-03'},
-    {id:'a-api',  ic:'🔌', t:'외부 연동 설정',  scr:'SCR-S-04'},
+    {id:'x-recv', t:'제모스 수신 현황', scr:'SCR-Z-01', b:'recv'},
+    {id:'a-hub',  t:'데이터 표준화',   scr:'SCR-S-03'},
+    {id:'a-api',  t:'외부 연동 설정',  scr:'SCR-S-04'},
     {g:'권한 · 감사'},
-    {id:'a-perm', ic:'🔑', t:'권한 · 조직 배정', scr:'SCR-S-05'},
-    {id:'a-audit',ic:'🕐', t:'Audit Log 전체',  scr:'SCR-S-06'},
+    {id:'a-perm', t:'권한 · 조직 배정', scr:'SCR-S-05'},
+    {id:'a-audit',t:'Audit Log 전체',  scr:'SCR-S-06'},
     {g:'문서'},
-    {id:'x-fdef', ic:'📘', t:'기능정의서 v1.1', scr:'SCR-S-09'}
+    {id:'x-fdef', t:'기능정의서 v1.1', scr:'SCR-S-09'}
   ]
 };
 /* 모바일 하단 탭 (역할별 5개) — 짧은 라벨 */
@@ -1224,7 +1228,19 @@ function render(){
   /* 본문 */
   var fn = VIEWS[VIEW];
   document.getElementById('main').innerHTML = fn ? fn() : '<div class="empty"><div class="ei">▤</div><b>화면을 선택하세요</b></div>';
+  fitTiles();
   srvChip();
+}
+/* 타일 개수를 나누어떨어지는 열 수로 배치한다. 8개를 6+2로 흘리면 오른쪽이 비어
+   설계가 없어 보인다. 3~5열 중 딱 떨어지는 가장 큰 값을 쓰고, 없으면 4열. */
+function fitTiles(){
+  var boxes=document.querySelectorAll('#main .tiles');
+  for(var i=0;i<boxes.length;i++){
+    var c=boxes[i].children.length, n=0;
+    for(var k=5;k>=3;k--){ if(c%k===0){ n=k; break; } }
+    if(!n) n = (c<3 ? c : 4);
+    boxes[i].style.setProperty('--tc', n);
+  }
 }
 function navHtml(){
   return MENUS[CUR.role].map(function(m){
@@ -1293,8 +1309,8 @@ function liveBar(opts){
   if(typeof LIVE==='undefined' || !LIVE.on) return '';
   opts=opts||{};
   return '<div class="btns" style="margin-bottom:13px">'+
-    '<button class="btn nv" onclick="liveValidate()">▶ 검증 실행 (V-01~15)</button>'+
-    (opts.recv?'<button class="btn" onclick="liveReceive()">📲 제모스 일 배치 수신</button>':'')+
+    '<button class="btn nv" onclick="liveValidate()">▶ 검증 실행 (V‑01~15)</button>'+
+    (opts.recv?'<button class="btn" onclick="liveReceive()">제모스 일 배치 수신</button>':'')+
     '<button class="btn" onclick="liveRefresh(\'최신 상태를 불러왔습니다.\')">↻ 새로고침</button>'+
     '</div>';
 }
@@ -1309,7 +1325,7 @@ function codeTag(c){
   return '<span class="tag '+cls+'">'+m.c+' '+m.n+'</span>';
 }
 function chTag(k){ var c=CHANNELS[k]; if(!c) return ''; 
-  return '<span class="tag '+(c.pri===1?'t-gr':c.kind==='예외'?'t-warn':'t-info')+'">'+c.ic+' '+c.n+'</span>'; }
+  return '<span class="tag '+(c.pri===1?'t-gr':c.kind==='예외'?'t-warn':'t-info')+'">'+c.n+'</span>'; }
 var VIEWS={};
 
 /* ===================================================================
@@ -1371,7 +1387,7 @@ VIEWS['w-home']=function(){
 };
 function stepsHtml(g){
   var steps=[
-    {t:'제모스 수신 · 자동검증', d:'일 배치로 태그를 받아 V-01~15 검증'},
+    {t:'제모스 수신 · 자동검증', d:'일 배치로 태그를 받아 V‑01~15 검증'},
     {t:'예외 처리 (현장)', d:'확인 필요 '+g.open+'건'},
     {t:'1차 확정 (현장관리자)', d:g.t.mgrOk?('완료 · '+(g.t.mgrAt||'')):'대기'},
     {t:'2차 승인 (J/C)', d:g.t.jcOk?('완료 · '+(g.t.jcAt||'')):'대기'},
@@ -1571,7 +1587,7 @@ VIEWS['m-att']=function(){
     '</div>'+
     '<div class="card"><div class="card-h"><div class="card-t">'+esc(siteName(sid))+' · '+ymLabel(YM)+'</div>'+
       '<span class="card-s">'+list.length+'명 표시</span><span class="sp"></span>'+
-      '<button class="btn sm" onclick="doUpload()">📄 Excel 업로드 (예외)</button></div>'+
+      '<button class="btn sm" onclick="doUpload()">Excel 업로드 (예외)</button></div>'+
       '<div class="card-b np">'+
       (list.length ? '<div class="mg"><table class="mgt"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>'
         : emptyBox('✓','확인 필요한 인원이 없습니다',''))+
@@ -1602,7 +1618,7 @@ VIEWS['m-exc']=function(){
     var sb=excOf(b).sev==='상'?3:excOf(b).sev==='중'?2:1;
     return sb-sa || groups[b].length-groups[a].length; });
 
-  return ph('이상근태 처리 · 승인', '자동 검증(V-01~15)이 걸러낸 예외만 사유별로 모았습니다. '+
+  return ph('이상근태 처리 · 승인', '자동 검증(V‑01~15)이 걸러낸 예외만 사유별로 모았습니다. '+
       '같은 사유는 <b>일괄 승인</b>할 수 있고, 개별 건은 확정값을 보정합니다.', ['F-F0102','F-F0103','F-F0106','F-F0105'])+
     (locked?'<div class="note i"><b>마감된 기간입니다.</b> 조회만 가능합니다.</div>':'')+
     liveBar()+
@@ -1848,7 +1864,7 @@ VIEWS['j-review']=function(){
       '문제가 있으면 <b>현장으로 반송</b>합니다.', ['F-G0302','F-G0303','F-G0304'])+
     '<div class="note i"><b>검토 기준</b> — ① 마감 차단 오류 0건 ② 예외 처리 사유 기재 여부 '+
       '③ 한도 초과 조치 여부 ④ 채널 충돌 건 선택 근거. 확정값만 ERP로 넘어갑니다.</div>'+
-    (wait.length===0 ? emptyBox('⚖','검토 대기 중인 현장이 없습니다','현장 1차 확정이 완료되면 여기에 올라옵니다.') :
+    (wait.length===0 ? emptyBox('','검토 대기 중인 현장이 없습니다','현장 1차 확정이 완료되면 여기에 올라옵니다.') :
     wait.map(function(s){
       var g=siteStage(s.id,YM), es=siteEmps(s.id);
       var lim=overLimit(s.id), fixed=0;
@@ -1896,7 +1912,7 @@ VIEWS['j-close']=function(){
           '<td class="ctr">'+(g.t.closed?'<span class="tag t-ok">마감 '+esc(g.t.closedAt||'')+'</span>':'<span class="tag t-gy">미마감</span>')+'</td>'+
           '<td class="ctr nw">'+(g.t.closed
             ? '<button class="btn sm dg" onclick="undoClose(\''+s.id+'\')">마감 취소</button>'
-            : '<button class="btn sm '+(g.canClose?'nv':'')+'" onclick="doClose(\''+s.id+'\')"'+(g.canClose?'':' disabled')+'>🔒 마감</button>')+
+            : '<button class="btn sm '+(g.canClose?'nv':'')+'" onclick="doClose(\''+s.id+'\')"'+(g.canClose?'':' disabled')+'>마감</button>')+
           '</td></tr>';
       }).join('')+'</tbody></table></div>'+twHint()+
       '<div class="foot" style="padding-left:15px;padding-right:15px">'+
@@ -1936,7 +1952,7 @@ VIEWS['j-erp']=function(){
   var failN=ERPTX.filter(function(t){ return t.res==='실패'; }).length;
 
   var send =
-    '<div class="note"><b>ERP 파일을 만들지 않습니다. (V3 ②)</b> J/C가 최종 승인한 확정 근태를 '+
+    '<div class="note"><b>ERP 파일을 만들지 않습니다. (V3)</b> J/C가 최종 승인한 확정 근태를 '+
       '시스템이 <b>ERP 근태 테이블에 직접 INSERT</b>합니다. 사람이 파일을 내려받아 ERP 화면에 올리는 단계가 사라집니다.</div>'+
     '<div class="card"><div class="card-h"><div class="card-t">전송 대상 · 실행</div>'+
       '<span class="card-s">마감 완료 현장만 · 전송 단위 = 현장 × 월</span></div><div class="card-b np">'+
@@ -1952,8 +1968,8 @@ VIEWS['j-erp']=function(){
           '<td class="ctr">'+(r.tx?'v'+r.tx.ver:'—')+'</td>'+
           '<td class="ctr nw">'+(r.g.t.closed
             ? '<button class="btn sm '+(r.tx&&r.tx.res==='성공'?'':'nv')+'" onclick="openSend(\''+r.s.id+'\')">'+
-              (r.tx&&r.tx.res==='성공'?'🔄 재전송':'📤 ERP 전송')+'</button>'
-            : '<button class="btn sm" disabled>📤 ERP 전송</button>')+'</td></tr>';
+              (r.tx&&r.tx.res==='성공'?'재전송':'ERP 전송')+'</button>'
+            : '<button class="btn sm" disabled>ERP 전송</button>')+'</td></tr>';
       }).join('')+'</tbody></table></div>'+twHint()+
       '<div class="foot" style="padding-left:15px;padding-right:15px">'+
       '한 현장·한 기간의 월근태와 시간외근무를 <b>하나의 트랜잭션</b>으로 INSERT하며, '+
@@ -2102,7 +2118,7 @@ VIEWS['x-zemos']=function(){
   return ph('제모스 안내', '출퇴근 태깅과 연차·반차 신청은 <b>지금 쓰시는 제모스에서 그대로</b> 하시면 됩니다. '+
       '새 앱을 설치할 필요가 없습니다.', ['F0'])+
     '<div class="card"><div class="card-h"><div class="card-t">역할 나누기</div></div><div class="card-b">'+
-      '<div class="ck"><span class="ci y">📲</span><div><div class="ct">제모스에서 하는 일</div>'+
+      '<div class="ck"><span class="ci y">1</span><div><div class="ct">제모스에서 하는 일</div>'+
         '<div class="cd">출근·퇴근 태깅 · 연차/반차 신청 · 계정과 권한 · 근무 기록 조회</div></div></div>'+
       '<div class="ck"><span class="ci y">▦</span><div><div class="ct">젠타임(이 시스템)에서 하는 일</div>'+
         '<div class="cd">받은 기록의 <b>검증 · 예외 처리 · 확정 · 마감 · ERP 전송</b>, 그리고 근로자의 <b>확인과 정정 요청</b></div></div></div>'+
@@ -2252,7 +2268,7 @@ VIEWS['x-plan']=function(){
   ];
   var todo=[
     {p:'★ 최우선', c:'제모스 연동', t:'데이터 수신 방식 확정 (API / DB 읽기 / 배치 파일) 및 제공 항목·주기', d:'09.05 / 이노파크'},
-    {p:'★ 최우선', c:'ERP 연동', t:'ERP 근태 DB 직접 INSERT 권한 · 테이블 스펙 확정 (V3 ②)', d:'09.05 / 전략기획실'},
+    {p:'★ 최우선', c:'ERP 연동', t:'ERP 근태 DB 직접 INSERT 권한 · 테이블 스펙 확정 (V3)', d:'09.05 / 전략기획실'},
     {p:'★', c:'제모스 현황', t:'파일럿 현장의 제모스 실사용률 및 미사용 인원 수', d:'09.05 / 각 현장'},
     {p:'★', c:'개인정보', t:'제모스 위치정보 활용 동의 범위 — 신규 시스템 이관 가능 여부', d:'09.05 / 전략기획실'},
     {p:'', c:'데이터 권한', t:'사원 마스터 다운로드 권한 · 동기화 주기', d:'09.05 / 이노파크'},
@@ -2305,7 +2321,7 @@ VIEWS['a-home']=function(){
       tile('등록 현장', SITES.length, '개', CORPS.length+'개 법인')+
       tile('관리 인원', EMPS.length, '명', '사원마스터 동기화 일 1회')+
       tile('마감 진행', closed+' / '+SITES.length, '', ymLabel(YM), closed===SITES.length?'o':'w')+
-      tile('활성 검증룰', RULES.filter(function(r){ return r.on; }).length+' / '+RULES.length, '', 'V-01~15')+
+      tile('활성 검증룰', RULES.filter(function(r){ return r.on; }).length+' / '+RULES.length, '', 'V‑01~15')+
       tile('미매핑 코드', UNMAPPED.length, '건', UNMAPPED.length?'매핑 등록 필요':'없음', UNMAPPED.length?'w':'o')+
       tile('연동 경고', apiBad.length, '건', apiBad.length?esc(apiBad[0].n):'전 연동 정상', apiBad.length?'w':'o')+
       tile('수신 이상', bad.length, '건', '제모스 배치', bad.length?'w':'o')+
@@ -2748,7 +2764,7 @@ function openSend(sid){
       (prev?'<div class="note '+(prev.res==='성공'?'i':'e')+'"><b>직전 전송</b> — '+esc(prev.at)+' · v'+prev.ver+
         ' · '+prev.res+(prev.err?'<br>'+esc(prev.err):'')+'<br>재전송 시 <b>기존 행을 삭제한 뒤 재적재</b>합니다.</div>':'')+
     '</div>'+
-    '<div class="mf"><button class="btn nv" onclick="doSend(\''+sid+'\','+mon+','+ot+')">📤 전송 실행</button>'+
+    '<div class="mf"><button class="btn nv" onclick="doSend(\''+sid+'\','+mon+','+ot+')">전송 실행</button>'+
       '<button class="btn" onclick="closeModal()">취소</button></div>');
 }
 function doSend(sid, mon, ot){
@@ -3197,10 +3213,10 @@ VIEWS['m-collect']=function(){
           '<div class="bar"><i class="'+(c.kind==='예외'?'w':'')+'" style="width:'+pct+'%"></i></div></div>';
       }).join('')+
       '<div class="btns" style="margin-top:6px">'+
-        '<button class="btn" onclick="doUpload()">📄 Excel 업로드</button>'+
-        '<button class="btn" onclick="openOcr()">📷 수기 이미지 OCR</button>'+
+        '<button class="btn" onclick="doUpload()">Excel 업로드</button>'+
+        '<button class="btn" onclick="openOcr()">수기 이미지 OCR</button>'+
         '<button class="btn" onclick="go(\'m-att\')">✎ 수기 입력 (그리드)</button>'+
-        '<button class="btn" onclick="go(\'x-recv\')">📲 제모스 수신 로그</button>'+
+        '<button class="btn" onclick="go(\'x-recv\')">제모스 수신 로그</button>'+
       '</div></div></div>'+
     (noApp.length ?
       '<div class="card"><div class="card-h"><div class="card-t">제모스 미사용 인원</div>'+
@@ -3446,7 +3462,7 @@ VIEWS['j-report']=function(){
           '</tbody></table></div>'+twHint()+
           '<div class="btns" style="padding:13px 15px 15px">'+
           '<button class="btn '+(g.t.closed?'pr':'')+'" onclick="makeReport(\''+s.id+'\')"'+(g.t.closed?'':' disabled')+'>'+
-          (g.t.closed?'📄 리포트 생성 · 배포':'마감 후 생성 가능')+'</button></div>'+
+          (g.t.closed?'리포트 생성 · 배포':'마감 후 생성 가능')+'</button></div>'+
           (es.length>5?'<div class="foot" style="padding-left:15px">상위 5명만 미리보기 — 생성 시 전 인원 포함</div>':'')+
           '</div></div>';
       }).join('');
@@ -3529,7 +3545,7 @@ VIEWS['a-ops']=function(){
           '<div class="cd">근태 판정·코드 변환·한도 계산·확정·마감·ERP 전송은 전부 <b>서버(API)</b>에 있습니다. '+
           '이 화면은 그리기만 합니다 — 기준문서 §0-3 이식 전제 설계 원칙 그대로입니다.</div></div></div>'+
         '<div class="ck"><span class="ci y">2</span><div><div class="ct">테이블 23개 · 엔드포인트 45개</div>'+
-          '<div class="cd">근태원장 4단 구조 · 검증엔진 V-01~V-15 · 현장×월 확정 · 마감 스냅샷 봉인(해시) · '+
+          '<div class="cd">근태원장 4단 구조 · 검증엔진 V‑01~V-15 · 현장×월 확정 · 마감 스냅샷 봉인(해시) · '+
           '내보내기 양식 엔진 · 감사 로그</div></div></div>'+
         '<div class="ck"><span class="ci '+(LIVE.on&&LIVE.env&&LIVE.env.jemosMode==='DEMO'?'w':'n')+'">!</span>'+
           '<div><div class="ct">제모스는 아직 실연동이 아닙니다</div>'+
@@ -4211,7 +4227,7 @@ function archSvg(){
 
     /* 미결 뱃지 ① */
     box(836, 60, 284, 68, 'var(--err-l)', 'var(--err)', 9)+
-      t(852, 84, '⛔ 수신 방식 미확정', 12, 700, 'var(--err)')+
+      t(852, 84, '수신 방식 미확정', 12, 700, 'var(--err)')+
       t(852, 104, 'A 조회API · B DB읽기 · C 배치파일', 10.5, 600, L.ink)+
       t(852, 120, '이게 안 풀리면 F0 전체가 멈춘다', 10, 600, 'var(--faint)')+
 
@@ -4253,7 +4269,7 @@ function archSvg(){
 
     /* 미결 뱃지 ② */
     box(860, 526, 260, 92, 'var(--err-l)', 'var(--err)', 9)+
-      t(876, 552, '⛔ 쓰기 권한 미확정', 12, 700, 'var(--err)')+
+      t(876, 552, '쓰기 권한 미확정', 12, 700, 'var(--err)')+
       t(876, 574, '코드가 아니라 인프라 문제', 11, 700, L.ink)+
       t(876, 594, '권한 · 테이블 스펙이 먼저다', 10.5, 600, 'var(--faint)')+
   '</svg></div>'+

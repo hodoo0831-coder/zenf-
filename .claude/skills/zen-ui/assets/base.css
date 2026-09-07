@@ -24,7 +24,10 @@ body{font-family:'NanumGothicEmbedded','NanumGothic','Nanum Gothic','나눔고�
   'Malgun Gothic','맑은 고딕',system-ui,-apple-system,sans-serif;
   background:var(--bg);color:var(--ink);line-height:1.66;font-size:14px;min-height:100vh;overflow-x:hidden;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
-  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;
+  /* 한글은 어절 단위로 끊는다. 안 그러면 "V-01~15"가 "V-/01~15"로 갈라지고
+     문장이 낱글자로 흩어져 조판이 허술해 보인다. */
+  word-break:keep-all;overflow-wrap:break-word}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input,select,textarea{font-family:inherit;font-size:16px;color:inherit}
 table{border-collapse:collapse;width:100%}
@@ -194,6 +197,9 @@ a{color:var(--green-d)}
   border-left:1px solid var(--line);margin-bottom:20px}
 @media (min-width:560px){ .tiles{grid-template-columns:repeat(3,1fr)} }
 @media (min-width:1024px){ .tiles{grid-template-columns:repeat(auto-fit,minmax(182px,1fr))} }
+/* 1280 이상에서는 개수에 맞는 열 수를 JS(fitTiles)가 --tc 로 넣어준다.
+   8개를 6+2로 흘리면 오른쪽이 비어 설계가 없어 보인다. */
+@media (min-width:1280px){ .tiles{grid-template-columns:repeat(var(--tc,4),minmax(0,1fr))} }
 .tile{background:#fff;border-right:1px solid var(--line);border-bottom:1px solid var(--line);
   padding:15px 17px 17px}
 .tile .tl{font-size:10.5px;font-weight:700;color:var(--faint);letter-spacing:.1em;
