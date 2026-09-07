@@ -7,7 +7,7 @@
 [제모스]  출퇴근 · 연차/반차 · 계정          ← 수정 불가 · 읽기 전용 수신
     ▼
 backend/            Cloudflare Workers + D1   ← 판정·검증·확정·마감·전송 로직 전부
-    ▲ REST (X-User-Id)
+    ▲ REST (Authorization: Bearer 세션 토큰)
 ZEN_Attendance.html 젠타임 콘솔 (근로자·현장관리자·J/C·시스템관리자)
     ▼
 [ERP]  ERP_HR.TB_MON_ATT / TB_OT_ATT        ← DB 직접 INSERT (권한 확정 대기)
@@ -91,7 +91,7 @@ ZEN_Attendance.html?api=http://localhost:8787
 | --- | --- | --- |
 | 제모스 실연동 | ⛔ | 수신 방식 A/B/C 미확정 (기준문서 §12 ★) |
 | ERP DB 직접 INSERT | ⛔ | **코드가 아니라 인프라 문제.** Workers가 사내 ERP DB에 닿을 수 있는지, 쓰기 권한·테이블 스펙부터 |
-| 로그인 | ⚠️ | `X-User-Id` 헤더 임시 인증. SSO 미정 |
+| 로그인 | ✅ | 비밀번호+세션 토큰 (아래 "로그인" 절). 제모스 SSO 는 확인부만 교체 |
 | OCR 인식 | ⚠️ | 큐만 있고 인식 엔진 없음 — 사람이 값을 넣어 확정 |
 | Cloudflare 배포 | ⛔ | 계정 접근 권한이 있는 환경에서 `wrangler deploy` 필요 |
 
