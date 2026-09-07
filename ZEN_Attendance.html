@@ -484,7 +484,7 @@ table.mgt td.sm-num{min-width:48px;font-variant-numeric:tabular-nums;font-weight
         <input id="lgId" placeholder="예: m01" autocomplete="off" autocapitalize="off"></div>
       <div class="fld"><label for="lgPw">비밀번호</label>
         <input id="lgPw" type="password" placeholder="1234" autocomplete="off"></div>
-      <button class="btn-lg" onclick="doLogin()">로그인</button>
+      <button class="btn-lg" onclick="submitLogin()">로그인</button>
       <div class="lg-err" id="lgErr"></div>
       <div class="lg-div">역할별 데모 계정</div>
       <div id="acctList"></div>
@@ -1161,12 +1161,59 @@ function scopeEmps(){
    =================================================================== */
 function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.classList.add('on');
   clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove('on'); }, 2400); }
-function go(v){ VIEW=v; SEL=null; closeDrawer(); render(); window.scrollTo(0,0); }
+/* ---- 주소(라우팅) --------------------------------------------------
+   화면마다 주소를 준다. 링크를 복사해 보내면 상대가 같은 화면을 연다.
+   해시(#/)를 쓰는 이유: file:// 로 더블클릭해 열어도 똑같이 동작해야 하기
+   때문이다. 경로형 주소(/m-att)는 서버 rewrite 설정을 타지만 해시는 안 탄다. */
+var ROUTE_LOCK=false, PEND_ROUTE=null;
+function routeUrl(){
+  if(!CUR) return '#/login';
+  var q=[];
+  if(YM && YM!==YM_BASE) q.push('ym='+encodeURIComponent(YM));
+  if(SCOPE && SCOPE!=='ALL') q.push('site='+encodeURIComponent(SCOPE));
+  return '#/'+(VIEW||'')+(q.length?'?'+q.join('&'):'');
+}
+function routeSync(replace){
+  if(ROUTE_LOCK) return;
+  var u=routeUrl();
+  if(location.hash===u) return;
+  ROUTE_LOCK=true;
+  try{ history[replace?'replaceState':'pushState'](null,'',u); }
+  catch(e){ location.hash=u; }
+  ROUTE_LOCK=false;
+}
+function routeRead(){
+  var h=location.hash.replace(/^#\/?/,'');
+  var qi=h.indexOf('?'), path=qi<0?h:h.slice(0,qi), qs=qi<0?'':h.slice(qi+1), p={};
+  qs.split('&').forEach(function(kv){ if(!kv) return; var i=kv.indexOf('=');
+    if(i>0) p[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1)); });
+  return {view:path, ym:p.ym, site:p.site};
+}
+function allowedViews(){ return MENUS[CUR.role].filter(function(m){ return m.id; }).map(function(m){ return m.id; }); }
+/* 주소에 담긴 상태를 화면에 반영한다. 권한 밖 화면은 홈으로 — 서버가 진짜
+   경계지만, 남의 역할 화면이 잠깐이라도 뜨면 구멍처럼 보인다. */
+function routeApply(){
+  var r=routeRead();
+  if(!CUR){ PEND_ROUTE = (r.view && r.view!=='login') ? r : null; return; }
+  ROUTE_LOCK=true;
+  /* 주소에 없는 값은 기본으로 되돌린다 — 안 그러면 뒤로가기했을 때
+     화면만 바뀌고 대상월·범위가 직전 상태로 남는다. */
+  YM = (r.ym && YM_LIST.indexOf(r.ym)>=0) ? r.ym : YM_BASE;
+  if(CUR.role!=='manager'){
+    var ok = r.site && (r.site==='ALL' || SITES.some(function(x){ return x.id===r.site; }));
+    SCOPE = ok ? r.site : 'ALL';
+  }
+  var can=allowedViews();
+  VIEW = (r.view && VIEWS[r.view] && can.indexOf(r.view)>=0) ? r.view : can[0];
+  ROUTE_LOCK=false;
+  SEL=null; closeDrawer(); render();
+}
+function go(v){ VIEW=v; SEL=null; closeDrawer(); routeSync(); render(); window.scrollTo(0,0); }
 function goHome(){ go(MENUS[CUR.role].filter(function(m){ return m.id; })[0].id); }
 function setTab(k,v){ TAB[k]=v; render(); }
 function tabOf(k,d){ return TAB[k]||d; }
-function setYm(v){ YM=v; if(LIVE.on){ liveRefresh(); } else render(); }
-function setScope(v){ SCOPE=v; render(); }
+function setYm(v){ YM=v; routeSync(); if(LIVE.on){ liveRefresh(); } else render(); }
+function setScope(v){ SCOPE=v; routeSync(); render(); }
 function openDrawer(){ document.getElementById('drawer').classList.add('open');
   document.getElementById('drawerPane').innerHTML=drawerHtml(); }
 function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); }
@@ -1190,21 +1237,38 @@ function fillAcct(id){
   document.getElementById('lgErr').textContent='';
   doLogin();
 }
+/* 백엔드가 붙어 있으면 진짜 인증, 아니면 데모 계정 확인 */
+function submitLogin(){ if(LIVE.on) liveLoginPw(); else doLogin(); }
 function doLogin(){
   var id=document.getElementById('lgId').value.trim(), pw=document.getElementById('lgPw').value.trim();
   var u=USERS.filter(function(x){ return x.id===id && x.pw===pw; })[0];
   if(!u){ document.getElementById('lgErr').textContent='아이디 또는 비밀번호가 올바르지 않습니다. (데모 비밀번호 1234)'; return; }
-  CUR=u; SCOPE='ALL'; TAB={}; YM = (u.role==='worker') ? YM_BASE : YM_BASE;
+  CUR=u; SCOPE='ALL'; TAB={}; YM = YM_BASE;
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
+  afterLogin();
+}
+/* 로그인 전에 딥링크로 들어왔으면 그 화면으로 보낸다 */
+function afterLogin(){
+  if(PEND_ROUTE){
+    var r=PEND_ROUTE; PEND_ROUTE=null;
+    ROUTE_LOCK=true;
+    if(r.ym && YM_LIST.indexOf(r.ym)>=0) YM=r.ym;
+    if(r.site && CUR.role!=='manager' && (r.site==='ALL'||SITES.some(function(x){return x.id===r.site;}))) SCOPE=r.site;
+    var can=allowedViews();
+    VIEW=(VIEWS[r.view] && can.indexOf(r.view)>=0) ? r.view : can[0];
+    ROUTE_LOCK=false;
+    routeSync(true); render(); window.scrollTo(0,0); return;
+  }
   goHome();
 }
 function doLogout(){
   CUR=null; VIEW=null; closeModal(); closeDrawer();
-  if(LIVE.on){ LIVE.uid=''; LIVE.user=null; }
+  if(LIVE.on) liveLogout();
   document.getElementById('app').classList.add('hide');
   document.getElementById('login').classList.remove('hide');
   document.getElementById('lgPw').value='';
+  routeSync();
   window.scrollTo(0,0);
 }
 
@@ -3533,7 +3597,7 @@ VIEWS['a-ops']=function(){
         : 'API 주소를 지정하지 않아 이 파일 안의 시드로 동작합니다. 전 화면이 돌지만 데이터는 브라우저 안에서만 삽니다.')+'</div>'+
       '<div class="tiles">'+
         tile('연결 상태', LIVE.on?'연결됨':'데모', '', LIVE.on?esc(LIVE.base):'API 주소 없음', LIVE.on?'o':'w')+
-        tile('로그인 계정', LIVE.on?esc(LIVE.uid||'—'):'시드 계정', '', LIVE.on?'X-User-Id 헤더':'SSO 연동 전')+
+        tile('로그인 계정', LIVE.on?esc(LIVE.uid||'—'):'데모 계정', '', LIVE.on?'세션 토큰 인증':'SSO 연동 전 · 가상 계정')+
         tile('제모스 모드', LIVE.on&&LIVE.env?esc(LIVE.env.jemosMode):'—', '', 'MOCK · DEMO · A/B/C', 
           (LIVE.on&&LIVE.env&&LIVE.env.jemosMode==='DEMO')?'w':'')+
         tile('ERP 모드', LIVE.on&&LIVE.env?esc(LIVE.env.erpMode):'—', '', 'FILE 폴백 · DIRECT', 
@@ -3586,7 +3650,7 @@ VIEWS['a-ops']=function(){
        · 라이브 모드: 실제 API·DB 의 값으로 동작
        API 주소는  ?api=https://... 또는 설정 화면에서 지정한다.
    =================================================================== */
-var LIVE={on:false, base:'', uid:'', user:null, users:[], busy:0, err:'', loadedYm:'', loadedSite:''};
+var LIVE={on:false, token:'', mustChange:false, base:'', uid:'', user:null, users:[], busy:0, err:'', loadedYm:'', loadedSite:''};
 
 function apiBase(){
   try{
@@ -3601,7 +3665,8 @@ function setApiBase(v){
 function api(path, opts){
   opts=opts||{};
   var h={'content-type':'application/json'};
-  if(LIVE.uid) h['X-User-Id']=LIVE.uid;
+  if(LIVE.token) h['Authorization']='Bearer '+LIVE.token;
+  else if(LIVE.uid) h['X-User-Id']=LIVE.uid;   /* 서버가 AUTH_MODE=DEV 일 때만 통한다 */
   if(opts.headers) Object.keys(opts.headers).forEach(function(k){ h[k]=opts.headers[k]; });
   LIVE.busy++; srvChip();
   return fetch(LIVE.base+path, {method:opts.method||'GET', headers:h,
@@ -3609,6 +3674,7 @@ function api(path, opts){
     .then(function(r){
       return r.text().then(function(t){
         var j=null; try{ j=t?JSON.parse(t):null; }catch(e){ j={error:t}; }
+        if(r.status===401 && LIVE.token){ sessionExpired(); }
         if(!r.ok) throw new Error((j&&j.error)||('HTTP '+r.status));
         return j;
       });
@@ -3650,11 +3716,11 @@ function liveInit(){
   if(!LIVE.base){ LIVE.on=false; renderAccts(); return; }
   api('/api/health').then(function(h){
     LIVE.on=true; LIVE.env=h;
-    return api('/api/users');
-  }).then(function(us){
-    LIVE.users=us||[];
     renderAccts();
-    toast('백엔드에 연결되었습니다 — 실제 API·DB 로 동작합니다.');
+    /* 새로고침이었다면 세션이 아직 살아 있을 수 있다 */
+    return liveRestore().then(function(ok){
+      if(!ok) toast('백엔드에 연결되었습니다 — 아이디·비밀번호로 로그인하세요.');
+    });
   }).catch(function(e){
     LIVE.on=false; LIVE.err=String(e.message||e);
     renderAccts();
@@ -3662,21 +3728,90 @@ function liveInit(){
   });
 }
 
-/* ---- 로그인 (라이브) ---- */
-function liveLogin(uid){
-  var u=LIVE.users.filter(function(x){ return x.id===uid; })[0];
-  if(!u){ toast('계정을 찾을 수 없습니다.'); return; }
+/* ---- 로그인 (라이브) ------------------------------------------------
+   서버에 아이디·비밀번호를 보내고 세션 토큰을 받는다. 토큰은 sessionStorage 에만
+   둔다 — 탭을 닫으면 사라지고, 다른 탭·다른 사이트에서 읽히지 않는다.
+   비밀번호는 화면 어디에도 저장하지 않는다. */
+function liveLoginPw(){
+  var id=(document.getElementById('lgId')||{}).value||'';
+  var pw=(document.getElementById('lgPw')||{}).value||'';
+  var err=document.getElementById('lgErr');
+  id=id.trim();
+  if(!id||!pw){ err.textContent='아이디와 비밀번호를 입력하세요.'; return; }
+  err.textContent='확인 중…';
+  fetch(LIVE.base+'/api/auth/login', {method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({id:id, password:pw})})
+    .then(function(r){ return r.text().then(function(t){
+        var j=null; try{ j=t?JSON.parse(t):null; }catch(e){ j={error:t}; }
+        if(!r.ok) throw new Error((j&&j.error)||('HTTP '+r.status));
+        return j; }); })
+    .then(function(res){
+      err.textContent='';
+      document.getElementById('lgPw').value='';
+      LIVE.token=res.token; LIVE.mustChange=!!res.mustChangePassword;
+      try{ sessionStorage.setItem('zt_tok', res.token); }catch(e){}
+      liveEnter(res.user);
+    })
+    .catch(function(e){ err.textContent = e.message||'로그인에 실패했습니다.'; });
+}
+/* 인증이 끝난 뒤 화면으로 들여보내는 부분 — 토큰 로그인과 세션 복원이 함께 쓴다 */
+function liveEnter(u){
+  var role=SRV_ROLE[u.role]||'worker';
   LIVE.uid=u.id; LIVE.user=u; LIVE.empId=u.emp_id||null;
-  CUR={id:u.id, role:SRV_ROLE[u.role]||'worker', name:u.name, emp:null, site:u.site,
-       color:{manager:'#47607a', jc:'#2e4d6b', admin:'#0f2438', worker:'#6b7f95'}[SRV_ROLE[u.role]]||'#6b7f95',
+  CUR={id:u.id, role:role, name:u.name, emp:null, site:u.site,
+       color:{manager:'#47607a', jc:'#2e4d6b', admin:'#0f2438', worker:'#6b7f95'}[role]||'#6b7f95',
        pos:(u.site||'전 현장')};
   SCOPE='ALL'; TAB={}; YM=YM_BASE;
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
   installLiveActions();
   liveLoadBase().then(function(){ return liveLoadMonth(); }).then(function(){
-    goHome();
-  }).catch(function(e){ toast('데이터를 불러오지 못했습니다: '+(e.message||e)); goHome(); });
+    afterLogin();
+    if(LIVE.mustChange) askPasswordChange();
+  }).catch(function(e){ toast('데이터를 불러오지 못했습니다: '+(e.message||e)); afterLogin(); });
+}
+/* 새로고침해도 로그인이 풀리지 않게 — 토큰이 살아 있으면 그대로 들어간다 */
+function liveRestore(){
+  var t=null; try{ t=sessionStorage.getItem('zt_tok'); }catch(e){}
+  if(!t) return Promise.resolve(false);
+  LIVE.token=t;
+  return fetch(LIVE.base+'/api/auth/me', {headers:{'Authorization':'Bearer '+t}})
+    .then(function(r){ if(!r.ok) throw new Error('expired'); return r.json(); })
+    .then(function(j){ liveEnter(j.user); return true; })
+    .catch(function(){ LIVE.token=''; try{ sessionStorage.removeItem('zt_tok'); }catch(e){} return false; });
+}
+function sessionExpired(){
+  LIVE.token=''; try{ sessionStorage.removeItem('zt_tok'); }catch(e){}
+  if(CUR){ doLogout(); toast('세션이 만료되었습니다. 다시 로그인하세요.'); }
+}
+function liveLogout(){
+  var t=LIVE.token;
+  LIVE.token=''; LIVE.uid=''; LIVE.user=null;
+  try{ sessionStorage.removeItem('zt_tok'); }catch(e){}
+  if(t) fetch(LIVE.base+'/api/auth/logout', {method:'POST', headers:{'Authorization':'Bearer '+t}}).catch(function(){});
+}
+/* 초기 비밀번호는 반드시 바꾸게 한다 */
+function askPasswordChange(){
+  openModal('<div class="mh"><div><h3>비밀번호 변경</h3>'+
+    '<div class="ms">초기 비밀번호를 쓰고 있습니다</div></div></div>'+
+    '<div class="mb">'+
+      '<div class="note w">처음 받은 비밀번호는 전달 과정에 남아 있을 수 있습니다. 지금 바꾸세요.</div>'+
+      '<div class="flabel">현재 비밀번호</div><input class="sel" id="pwCur" type="password" autocomplete="current-password">'+
+      '<div class="flabel">새 비밀번호 (8자 이상)</div><input class="sel" id="pwNew" type="password" autocomplete="new-password">'+
+      '<div class="lg-err" id="pwErr"></div>'+
+    '</div>'+
+    '<div class="mf"><button class="btn pr" onclick="doPasswordChange()">변경</button>'+
+    '<button class="btn" onclick="closeModal()">나중에</button></div>');
+}
+function doPasswordChange(){
+  var cur=document.getElementById('pwCur').value, nx=document.getElementById('pwNew').value;
+  var err=document.getElementById('pwErr');
+  if(nx.length<8){ err.textContent='새 비밀번호는 8자 이상이어야 합니다.'; return; }
+  api('/api/auth/password', {method:'POST', body:{current:cur, next:nx}})
+    .then(function(){ closeModal(); LIVE.mustChange=false;
+      toast('비밀번호를 바꿨습니다. 다시 로그인하세요.'); sessionExpired(); })
+    .catch(function(e){ err.textContent=e.message||'변경하지 못했습니다.'; });
 }
 
 /* ---- 기준정보 로드 (현장·사원·코드·휴일) ---- */
@@ -3894,15 +4029,11 @@ function renderAccts(){
     '<span style="min-width:0"><span class="nm">'+(LIVE.on?'백엔드 연결됨':'백엔드 주소 설정')+'</span>'+
     '<span class="ps">'+(LIVE.on? esc(LIVE.base) : (LIVE.base? '연결 실패 — '+esc(LIVE.err) : '설정하지 않으면 데모 모드로 동작합니다'))+
     '</span></span></button>';
-  if(LIVE.on && LIVE.users.length){
-    host.innerHTML = LIVE.users.map(function(u){
-      var role=SRV_ROLE[u.role]||'worker';
-      var color={manager:'#47607a', jc:'#2e4d6b', admin:'#0f2438', worker:'#6b7f95'}[role];
-      return '<button class="acct" onclick="liveLogin(\''+u.id+'\')">'+
-        '<span class="av" style="background:'+color+'">'+ROLE_N[role].slice(0,1)+'</span>'+
-        '<span style="min-width:0"><span class="nm">'+esc(u.name)+'<span>'+ROLE_N[role]+'</span></span>'+
-        '<span class="ps">'+esc(u.id)+(u.site?' · '+esc(u.site):'')+'</span></span></button>';
-    }).join('') + cfg;
+  /* 라이브 모드에서는 계정 목록을 보여주지 않는다. 누구 계정이 있는지
+     로그인 화면에서 알려주면 그 자체가 정보가 된다. 아이디는 입력받는다. */
+  if(LIVE.on){
+    host.innerHTML = '<div class="note i" style="margin:0 0 10px">발급받은 <b>아이디와 비밀번호</b>로 로그인하세요. '+
+      '초기 비밀번호는 첫 로그인 뒤 바로 바꾸게 됩니다.</div>' + cfg;
     return;
   }
   host.innerHTML = USERS.map(function(u){
@@ -4334,8 +4465,11 @@ VIEWS['x-arch']=function(){
    =================================================================== */
 renderAccts();
 liveInit();
-document.getElementById('lgPw').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
-document.getElementById('lgId').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+window.addEventListener('popstate', function(){ if(!ROUTE_LOCK) routeApply(); });
+window.addEventListener('hashchange', function(){ if(!ROUTE_LOCK) routeApply(); });
+routeApply();
+document.getElementById('lgPw').addEventListener('keydown', function(e){ if(e.key==='Enter') submitLogin(); });
+document.getElementById('lgId').addEventListener('keydown', function(e){ if(e.key==='Enter') submitLogin(); });
 document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal(); closeDrawer(); } });
 </script>
 </body>

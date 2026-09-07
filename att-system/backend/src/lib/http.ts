@@ -2,20 +2,45 @@ export interface Env {
   DB: D1Database;
   JEMOS_MODE: string;
   ERP_MODE: string;
+  // DEV 일 때만 X-User-Id 헤더 인증을 허용한다. 운영에서는 반드시 비워두거나 PROD.
+  AUTH_MODE?: string;
 }
 
-// TODO: 실제 로그인 붙기 전까지 X-User-Id 헤더로 사용자를 식별한다.
-// F-A0103 개편: 근로자 로그인 없음 — users 테이블은 관리자/J·C/시스템관리자/본사인사만 담는다.
 // §1-1 역할 4개: 근로자(worker) / 현장관리자(mgr) / J·C(jc) / 시스템관리자(sys).
 // 본사인사·고객사 역할은 J/C로 통합됨(문서 각주) — 별도 role 없음.
 export interface AuthedUser { id: string; name: string; role: 'mgr' | 'jc' | 'sys' | 'worker'; site: string | null; }
 
+/* 세션 토큰으로 사용자를 확인한다 (Authorization: Bearer <token>).
+   X-User-Id 헤더는 AUTH_MODE=DEV 일 때만 받는다 — 헤더는 누구나 바꿔 보낼 수
+   있으므로 그것만으로는 인증이 아니다. 운영 설정에서 DEV 를 켜지 말 것. */
 export async function requireUser(req: Request, env: Env): Promise<AuthedUser> {
-  const uid = req.headers.get('X-User-Id');
-  if (!uid) throw httpError(401, '로그인이 필요합니다 (X-User-Id 헤더 누락 — 실제 SSO 연동 전 임시 인증)');
-  const row = await env.DB.prepare('SELECT id, name, role, site FROM users WHERE id=? AND active=1').bind(uid).first<AuthedUser>();
-  if (!row) throw httpError(401, '유효하지 않은 사용자');
-  return row;
+  const auth = req.headers.get('Authorization') || '';
+  if (auth.startsWith('Bearer ')) {
+    const token = auth.slice(7).trim();
+    const digest = await sha256Hex(token);
+    const row = await env.DB.prepare(
+      `SELECT u.id, u.name, u.role, u.site
+         FROM sessions s JOIN users u ON u.id = s.user_id
+        WHERE s.token_hash = ? AND s.expires_at > datetime('now') AND u.active = 1`
+    ).bind(digest).first<AuthedUser>();
+    if (!row) throw httpError(401, '세션이 만료되었습니다. 다시 로그인하세요.');
+    return row;
+  }
+
+  if (env.AUTH_MODE === 'DEV') {
+    const uid = req.headers.get('X-User-Id');
+    if (uid) {
+      const row = await env.DB.prepare('SELECT id, name, role, site FROM users WHERE id=? AND active=1')
+        .bind(uid).first<AuthedUser>();
+      if (row) return row;
+    }
+  }
+  throw httpError(401, '로그인이 필요합니다.');
+}
+
+async function sha256Hex(v: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 export function requireRole(user: AuthedUser, roles: AuthedUser['role'][]) {

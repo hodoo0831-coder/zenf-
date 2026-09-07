@@ -13,3 +13,5 @@ SITE_TZ = "Asia/Seoul"
 JEMOS_MODE = "DEMO"   # MOCK=항상 0건 · DEMO=시연용 합성 태그 · 확정되면 A_API/B_DB/C_BATCH
 # ERP 직접 API가 열리면 DIRECT, 그 전까지는 FILE(파일 다운로드/업로드 폴백)
 ERP_MODE = "FILE"
+# 로컬 개발에서만 X-User-Id 헤더 인증을 허용한다. 배포 시에는 반드시 PROD 로 둘 것.
+AUTH_MODE = "DEV"

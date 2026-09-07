@@ -25,8 +25,50 @@ md 6절 "사전 확인 필요사항"이 아직 안 풀렸기 때문에, 아래 �
 - ERP는 `/api/erp/export`로 집계 데이터를 받아 프론트에서 SheetJS로 xlsx를 만들어 사람이 직접 업로드하고,
   `/api/erp/upload-result`로 결과만 기록합니다(F-I0109 폴백 경로 그대로).
 
-**인증도 임시 상태**입니다. 지금은 `X-User-Id` 헤더로 사용자를 식별합니다(`src/lib/http.ts`).
-사내 SSO/그룹웨어 연동이 정해지면 이 부분만 교체하면 됩니다.
+## 로그인 (2026-09 추가)
+
+`X-User-Id` 헤더 하나로 사람을 구분하던 것을 **비밀번호 + 세션 토큰**으로 바꿨습니다.
+헤더는 누구나 바꿔 보낼 수 있으니 그건 식별이지 인증이 아니었습니다.
+
+```
+POST /api/auth/login     { id, password }  → { token, user, mustChangePassword }
+POST /api/auth/logout    Authorization: Bearer <token>
+GET  /api/auth/me        Authorization: Bearer <token>
+POST /api/auth/password  { current, next }   (본인 것만 · 8자 이상)
+```
+
+이후 모든 요청에 `Authorization: Bearer <token>` 을 붙입니다.
+
+- 비밀번호는 **PBKDF2-SHA256 10만회**로만 저장합니다(`pw_hash`/`pw_salt`/`pw_iter`).
+  평문이나 역산 가능한 형태로는 어디에도 남기지 않습니다.
+- 세션 토큰은 DB에 **원문이 아니라 SHA-256 해시**로 넣습니다. DB가 통째로 새도
+  그 값으로 로그인할 수는 없습니다. 유효기간 12시간.
+- 없는 아이디와 틀린 비밀번호에 **같은 메시지·비슷한 응답 시간**을 씁니다.
+  다르면 어떤 아이디가 실재하는지 알려주는 셈입니다.
+- 비밀번호를 바꾸면 그 사람의 **다른 기기 세션도 전부 끊습니다.**
+- `GET /api/users`(계정 목록)는 **시스템관리자 전용**으로 잠갔습니다.
+
+### 이미 만든 DB에 적용
+
+```bash
+npx wrangler d1 execute att_db --local --file=./migrations/001_auth.sql
+```
+
+그다음 계정에 초기 비밀번호를 심어야 로그인할 수 있습니다. 해시는 서버와 같은
+파라미터(PBKDF2-SHA256 · 10만회 · 16바이트 salt)로 계산한 값을 넣어야 합니다.
+`must_change=1` 로 두면 첫 로그인 직후 변경 화면이 뜹니다.
+
+### AUTH_MODE
+
+`wrangler.toml` 의 `AUTH_MODE="DEV"` 일 때만 예전 `X-User-Id` 헤더 인증이 함께
+동작합니다. **배포할 때는 반드시 `PROD` 로 바꾸거나 지우십시오.** DEV 로 두면
+헤더만으로 아무나 사칭할 수 있습니다.
+
+### 제모스 SSO 로 갈 때
+
+`src/routes/auth.ts` 의 `login()` 안에서 비밀번호를 확인하는 부분만 제모스 인증
+호출로 바꾸면 됩니다. 나머지 코드는 "세션이 유효한가"만 보므로 손댈 필요가
+없습니다 — 제모스·ERP 어댑터와 같은 구조입니다.
 
 ## 아직 안 만든 것
 
