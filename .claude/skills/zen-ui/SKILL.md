@@ -14,8 +14,11 @@ description: 젠키퍼·제니엘(ZEN 스위트) 사내 웹앱의 화면 디자�
 셸(상단바·컨텍스트바·사이드바·모바일 탭바·드로어·모달·토스트)과 글꼴 내장을 매번 다시
 만들지 말고 뼈대를 뽑아 쓴다. 그 자리에서 더블클릭하면 뜨는 완성된 단일 HTML이 나온다.
 
+아래 명령은 전부 **이 스킬 폴더에서** 실행한다(스크립트가 상대경로로 자기 `assets/`를
+찾는다). 만들 파일은 절대경로로 지정하면 된다.
+
 ```bash
-python3 scripts/new_app.py 젠체크.html \
+python3 scripts/new_app.py /어딘가/젠체크.html \
   --name 젠체크 --roman ZENCHECK --sub "현장 점검 관리" \
   --title "젠체크 · 현장 점검" --desc "현장 점검 결과를 모아 한 장으로"
 # 날짜 축이 없는 앱이면 --slim (근태 그리드·달력 CSS 제외)
@@ -25,7 +28,30 @@ python3 scripts/new_app.py 젠체크.html \
 화면 함수를 채우고, `renderCtx()`의 컨텍스트 바를 이 앱에 맞게 바꾼다. 셸·라우팅·
 모바일 대응은 이미 돌아간다.
 
-기존 화면을 손보는 작업이면 이 절은 건너뛰고 아래 규칙만 본다.
+## 기존 화면을 손보는 거면 이 순서로
+
+`base.css`는 이 디자인의 화면들과 **선택자 대 선택자로 거의 1:1**이다. 그러니 "필요한
+규칙만 골라 넣기"보다 **통째 교체**가 빠르고 결과가 깨끗하다.
+
+1. 옛 `<style>` 블록을 통째로 지우고, `embed_fonts.py` 결과 + `base.css`를 넣는다.
+2. **빠진 선택자를 메운다.** 옛 CSS와 base.css의 최상위 선택자 집합을 뽑아 비교한다.
+   base.css에 없는 것 중 그 앱의 마크업이 실제로 쓰는 게 있으면(아이콘 span, 그 앱
+   고유 위젯 등) 그 규칙만 살려서 뒤에 붙인다.
+   ```bash
+   grep -o '^[.#a-zA-Z][^{]*{' old_style.css | sort -u > sel_old.txt
+   grep -o '^[.#a-zA-Z][^{]*{' assets/base.css | sort -u > sel_base.txt
+   comm -23 sel_old.txt sel_base.txt      # 옛것에만 있는 규칙 = 검토 대상
+   ```
+3. **JS 안의 인라인 스타일을 훑는다. 여기가 진짜 함정이다.** 단일 HTML 앱은 옛 디자인을
+   `<style>`이 아니라 템플릿 문자열 속에 숨겨둔다. 최소한 이건 찾아본다 —
+   `font-weight:800|900`, 하드코딩된 `padding:15px` 류(`--pad`가 20/24로 바뀌면 어긋난다),
+   SVG의 `rx="14"` 같은 둥근 모서리, 그라데이션·`box-shadow` 문자열.
+4. **데이터에 박힌 색을 본다.** 사람·역할 색은 CSS가 아니라 `USERS[].color` 같은 JS
+   배열에 있는 경우가 많다. 젠타임도 여기에 초록·자주가 남아 있었다. `grep`으로 옛
+   강조색 hex를 찾아 네이비 농담으로 바꾼다.
+5. 아래 "완성 전 검증"을 돌린다.
+
+로직·마크업 구조는 건드리지 않는다. 디자인 작업의 diff는 전부 표현에 관한 것이어야 한다.
 
 ## 협상 불가 제약
 
@@ -52,13 +78,17 @@ python3 scripts/new_app.py 젠체크.html \
   --warn:#cb9447; --warn-l:#fdf5ea;
   --ok:#4a8a60;   --ok-l:#eef6f0;
   --info:#48688d; --info-l:#eef2f7;
-  --r:3px;              /* 모서리는 거의 각지게 */
-  --sh:none;            /* 그림자 없음 */
+  --plum:#7a6a9e; --plum-l:#f2effa;   /* 의미 없는 구분용 배지 */
+  --r:3px;              /* 모서리는 거의 각지게. 그림자는 아예 안 쓴다 */
+  --ease:cubic-bezier(.22,.61,.36,1);
   --pad:20px;           /* 데스크톱에서 24px */
   --gut:0px;            /* 초광폭 가운데 여백 — 아래 "1760px 이상" 참조 */
 }
 @media (min-width:1024px){ :root{--pad:24px} }
 ```
+
+이게 `:root` **전부**다. base.css의 `:root`와 같으므로, 기존 파일의 `:root`를 이걸로
+통째 교체해도 정의 안 된 변수가 남지 않는다.
 
 **네이비가 강조색이고 초록은 상태색이다.** 좌측 메뉴 활성 표시, 주버튼, 진행바, 단계
 번호, 체크 표시 — 전부 네이비. 초록은 "정상 판정 / 마감 완료 / 검증 통과"처럼 **의미가
@@ -76,12 +106,16 @@ python3 scripts/new_app.py 젠체크.html \
 (`new_app.py`로 만들었다면 이미 들어 있다 — 기존 파일에 글꼴만 넣을 때 쓴다.)
 
 ```bash
-python3 scripts/embed_fonts.py > fontface.css     # 붙여넣을 CSS가 나온다
+cd <이 스킬 폴더>          # 스크립트는 스킬 폴더 기준 상대경로로 자기 assets를 찾는다
+python3 scripts/embed_fonts.py > /tmp/fontface.css
 ```
 
 라틴 + KS X 1001 상용 음절 2,350자 + 앱에서 쓰는 글자로 서브셋해 둔 것이라, 시드에 없던
-이름이 들어와도 대부분 같은 글꼴로 나온다. 파일이 375KB 늘지만 Netlify가 gzip으로
-내보내므로 실제 전송량은 그보다 작고, 첫 로딩 한 번뿐이다.
+이름이 들어와도 대부분 같은 글꼴로 나온다.
+
+woff2 원본은 375KB지만 base64로 감싸면 **약 500KB**가 파일에 붙는다(젠타임은 330KB →
+830KB가 됐다). Netlify가 gzip으로 내보내므로 실제 전송량은 원본 woff2에 가깝고 첫 로딩
+한 번뿐이지만, 사내망 사정을 따질 때는 500KB를 기준으로 판단한다.
 
 ```css
 body{font-family:'NanumGothicEmbedded','NanumGothic','Nanum Gothic','나눔고딕',
@@ -91,10 +125,19 @@ body{font-family:'NanumGothicEmbedded','NanumGothic','Nanum Gothic','나눔고�
   font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1}
 ```
 
-**굵기는 400과 700, 두 벌뿐이다.** 이게 함정이다. CSS 폰트 매칭 규칙상
+### "글씨가 얇다"는 원인이 둘이다 — 순서대로 확인한다
+
+**① 글꼴이 아예 안 실렸다.** 기존 화면을 손볼 때 가장 흔하다. `font-family`가
+Pretendard 같은 걸 부르는데 `@font-face`도 CDN 링크도 없으면, 현장 PC에서는 아무거나로
+대체돼 흐리게 나온다. 지정한 글꼴이 실제로 파일 안에 있는지부터 본다. 없으면 위
+`embed_fonts.py` 한 번으로 끝난다.
+
+**② 중간 굵기를 썼다.** 나눔고딕은 **400과 700, 두 벌뿐이다.** CSS 폰트 매칭 규칙상
 `font-weight:500`은 아래로 내려가 **400으로 그려지고**, `600`은 위로 올라가 **700이
-된다**. 즉 라벨을 500으로 지정하면 굵어지기는커녕 보통 굵기로 나온다. 화면이 전체적으로
-얇고 흐릿해 보이면 십중팔구 이것이다.
+된다**. 라벨을 500으로 지정하면 굵어지기는커녕 보통 굵기로 나온다.
+
+②는 새로 CSS를 쓸 때 밟는 지뢰고, ①은 남의 파일을 물려받을 때 밟는 지뢰다. 젠타임은
+②였고(라벨이 전부 500이었다), 그 이전 버전은 ①이었다.
 
 그러니 **중간값을 쓰지 말고 400 아니면 700으로 정한다**:
 
@@ -138,8 +181,6 @@ body{font-family:'NanumGothicEmbedded','NanumGothic','Nanum Gothic','나눔고�
 .shell{display:flex;padding:0 var(--gut)}
 ```
 
-`100vw`는 스크롤바를 포함하지만 padding으로만 쓰면 넘침이 생기지 않는다.
-
 **사이드바 구분선은 화면 높이만큼.** `align-self:flex-start`인 sticky 사이드바는 내용
 높이만큼만 자라서 세로선이 화면 중간에 뚝 끊긴다. `height:calc(100vh - <상단 높이>)`로
 고정한다.
@@ -160,9 +201,11 @@ body{font-family:'NanumGothicEmbedded','NanumGothic','Nanum Gothic','나눔고�
 
 ## 컴포넌트
 
-`assets/base.css`에 실제로 검증된 전체 CSS가 들어 있다(약 430줄). `new_app.py`가 이걸
-넣어주지만, 기존 파일에 붙일 때는 통째로 복사하고 안 쓰는 블록을 지우는 편이 처음부터
-쓰는 것보다 빠르고 안전하다.
+`assets/base.css`(약 430줄)는 젠타임에서 그대로 뽑아낸, 실제로 도는 CSS다. `new_app.py`가
+이걸 넣어준다.
+
+**다만 젠타임이 쓰는 것만 들어 있다.** 다른 앱이 쓰는 위젯은 없을 수 있으니, 기존 화면에
+붙일 때는 위 "기존 화면을 손보는 거면" 2단계대로 빠진 선택자를 확인한다.
 
 - 화면 골격(상단바·컨텍스트바·사이드바·탭바·드로어), 카드, 통계 타일, 표, 진행 단계,
   체크리스트, 모달, 토스트, 배지·태그, 근태 그리드, 달력, 로그인 화면이 들어 있다.
@@ -171,11 +214,11 @@ body{font-family:'NanumGothicEmbedded','NanumGothic','Nanum Gothic','나눔고�
 
 ## 완성 전 검증
 
-눈으로 보고 "괜찮네" 하면 320px에서 반드시 깨져 있다. 스크립트로 확인한다.
+스크립트로 확인한다. 실행 위치는 이 스킬 폴더다.
 
 ```bash
-node scripts/check_responsive.js file:///path/to/app.html
-node scripts/check_responsive.js file:///path/to/app.html --states states.js
+node scripts/check_responsive.js file:///절대경로/app.html
+node scripts/check_responsive.js file:///절대경로/app.html --states states.js --shots /tmp/shots
 ```
 
 6개 폭(320/390/768/1024/1280/1920)에서 가로 넘침·40px 미만 터치 타깃·JS 오류를 잡고,
@@ -191,6 +234,16 @@ module.exports = [
 ];
 ```
 
+`js`는 페이지 안에서 그대로 실행된다. 젠타임·`starter.html`의 `fillAcct(id)`는 아이디만
+채우는 게 아니라 **로그인까지 마치므로** 앞에 따로 로그인 단계를 넣을 필요가 없다.
+
+**상태는 한 페이지에서 순서대로 실행된다.** 새로고침하지 않으므로 앞 상태가 열어둔 모달이나
+바꿔둔 필터가 뒤 상태에 남는다. 모달을 여는 상태를 넣었으면 다음 상태에서 닫아준다.
+
+**모달·드로어처럼 눌러야 나오는 것은 상태에 넣지 않으면 검사되지 않는다.** 실제로 이
+스킬의 스타터도 모달이 안 열리는 버그를 달고 있었는데, 상태 목록에 모달이 없어서
+`ALL CLEAN`이 나왔다. 열리는 것은 열어보고 넘어간다.
+
 `ALL CLEAN`이 나올 때까지 고친다. 실패가 뜨면 **테스트를 느슨하게 하지 말고 앱을 고친다** —
 단, 진입 애니메이션의 transform 때문에 40px이 39.97px로 측정되는 것처럼 측정 자체가
 문제일 때는 대기 시간을 늘리거나 허용오차를 조정하는 게 맞다. 안정된 뒤의 실제 값을
@@ -205,13 +258,9 @@ playwright가 스킬 폴더에 없으므로, 프로젝트에 설치돼 있으면
 NODE_PATH=<프로젝트>/node_modules node scripts/check_responsive.js …
 ```
 
-## 배포 (zenf- 저장소)
+## 두 가지만 더
 
-`main` 브랜치 → Netlify 자동 배포, 빌드 없음. 짧은 경로는 `netlify.toml`의 redirects에
-추가한다(`/zentime`, `/attendance` 같은 식).
-
-## 실제 데이터를 넣기 전에
-
-시연·데모용 데이터는 **전부 가상 이름·가상 사번**으로 만든다. 실제 사번·성명 등
-개인정보는 보안 승인 전까지 넣지 않는다. 현장명·고객사명은 실명을 써도 되지만, 사람
-이름은 승인 전까지 가상으로 둔다.
+- **배포** — `zenf-` 저장소는 `main` → Netlify 자동 배포(빌드 없음). 짧은 주소가 필요하면
+  `netlify.toml`의 redirects에 추가한다.
+- **데모 데이터** — 사람 이름·사번은 **가상으로 만든다.** 실제 개인정보는 보안 승인 전까지
+  넣지 않는다. 현장명·고객사명은 실명을 써도 된다.

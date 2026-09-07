@@ -6,6 +6,9 @@
  *   node check_responsive.js http://localhost:8791/app.html --states states.js
  *   node check_responsive.js <url> --shots /tmp/shots     # 폭별 스크린샷도 저장
  *
+ * 브라우저를 못 찾으면 CHROMIUM_PATH 또는 PLAYWRIGHT_BROWSERS_PATH 로 알려준다.
+ * states 는 한 페이지에서 순서대로 실행되므로, 앞 상태가 남긴 모달·필터가 뒤에 영향을 준다.
+ *
  * states.js 는 화면 전환이 있는 앱에서 각 화면을 돌아보게 하는 목록이다:
  *
  *   module.exports = [
@@ -103,9 +106,13 @@ function arg(flag) {
           });
         }
         const small = [];
-        document.querySelectorAll('button, select, input, textarea, a[href]').forEach(el => {
+        // 진짜 버튼뿐 아니라 눌리는 모든 것 — div[onclick], role=button, tabindex 도 본다
+        const TAPPABLE = 'button, select, input, textarea, a[href], [role="button"], ' +
+                         '[onclick], [tabindex]:not([tabindex="-1"])';
+        document.querySelectorAll(TAPPABLE).forEach(el => {
           const b = el.getBoundingClientRect();
           if (b.width === 0 && b.height === 0) return;          // 숨겨진 것
+          if (el.querySelector(TAPPABLE)) return;                // 눌리는 것을 감싼 껍데기
           if (b.height < minTouch) {
             small.push(el.tagName + '.' + (el.className || '') + ' h=' + b.height.toFixed(1) +
               ' "' + (el.textContent || '').trim().slice(0, 16) + '"');

@@ -29,7 +29,7 @@
       <div class="fld"><label>아이디</label><input id="lg-id" placeholder="예: m01"></div>
       <div class="fld"><label>비밀번호</label><input id="lg-pw" type="password" placeholder="1234"></div>
       <div class="lg-err" id="lg-err"></div>
-      <button class="btn pr lg-go" onclick="doLogin()">로그인</button>
+      <button class="btn-lg" onclick="doLogin()">로그인</button>
       <div class="lg-div"><span>역할별 데모 계정</span></div>
       <div id="lg-accts"></div>
     </div>
@@ -59,7 +59,7 @@
   <div id="drawer"><div class="dim" onclick="closeDrawer()"></div><div class="pane" id="dw-pane"></div></div>
 </div>
 <div id="toast"></div>
-<div id="modal" class="hide"><div class="mdim" onclick="closeModal()"></div><div class="mw" id="mw"></div></div>
+<div id="modal"><div class="dim" onclick="closeModal()"></div><div class="mw" id="mw"></div></div>
 
 <script>
 /* ===================================================================
@@ -117,7 +117,12 @@ function tile(label, value, unit, desc, acc){
 }
 function demoTiles(){ return '<div class="tiles">'+tile('대상 인원',9,'명','전원 정상')+
   tile('확인 필요',3,'건','아래에서 처리','e')+tile('처리 완료',12,'건','금일')+'</div>'; }
-function demoCard(){ return card('카드 제목','보조 설명','<p>여기에 내용이 들어갑니다.</p>'); }
+function demoCard(){ return card('카드 제목','보조 설명',
+  '<p>여기에 내용이 들어갑니다.</p>'+
+  '<div class="btns"><button class="btn pr" onclick="demoModal()">모달 열기</button></div>'); }
+function demoModal(){ openModal('모달 제목',
+  '<p>본문만 스크롤됩니다. 모바일에서는 아래에서 올라오는 시트로 붙습니다.</p>',
+  '<button class="btn" onclick="closeModal()">닫기</button>'); }
 
 function fillAcct(id){
   var u = USERS.filter(function(x){ return x.id===id; })[0];
@@ -181,9 +186,9 @@ function openModal(title, body, foot){
   $('mw').innerHTML='<div class="mh"><h3>'+esc(title)+'</h3>'+
     '<button class="mx" onclick="closeModal()" aria-label="닫기">✕</button></div>'+
     '<div class="mb">'+body+'</div>'+(foot?'<div class="mf">'+foot+'</div>':'');
-  $('modal').classList.remove('hide');
+  $('modal').classList.add('open');
 }
-function closeModal(){ $('modal').classList.add('hide'); }
+function closeModal(){ $('modal').classList.remove('open'); }
 document.addEventListener('keydown', function(e){ if(e.key==='Escape'){ closeModal(); closeDrawer(); } });
 
 /* 로그인 화면의 데모 계정 목록 */

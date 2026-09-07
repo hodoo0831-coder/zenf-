@@ -129,14 +129,19 @@ body에 걸어둠).
 **PC는 표, 모바일은 리스트 카드.** 열이 5개를 넘는 표를 320px에서 가로 스크롤로 밀면
 아무도 안 본다. 같은 데이터를 두 벌로 그리고 `@media`로 하나만 띄운다.
 
+`.only-pc` / `.only-mb`가 768px에서 갈라준다.
+
 ```html
-<div class="tw"><table class="tb">…</table></div>   <!-- 넓은 화면 -->
-<div class="lc">                                     <!-- 좁은 화면 -->
+<div class="only-pc tw"><table class="tb">…</table></div>
+<div class="only-mb lc">
   <div class="lch"><span class="lct">서지수</span><span class="tag t-err">퇴근 태그 누락</span></div>
   <div class="lcd">8/5 · 제모스 출퇴근 · 07:57 ~ 없음</div>
   <div class="lcb"><button class="btn sm pr">보정</button></div>
 </div>
 ```
+
+예외는 **날짜축 그리드**처럼 표 모양을 유지해야만 뜻이 통하는 것 — 이건 리스트 카드로
+바꾸지 말고 `.tw` 안에서 가로 스크롤시키고 `.tw-hint`("옆으로 밀어서 보세요")를 붙인다.
 
 표 머리글은 `--faint` 700에 자간을 벌리고, 아래에 **네이비 1px 선**을 긋는다. 행 구분선은
 `--line2`로 더 흐리게 — 머리글 선만 진해야 표가 안 흐트러진다.
@@ -154,16 +159,22 @@ body에 걸어둠).
 ```html
 <div class="steps">
   <div class="step done"><span class="sn">✓</span>
-    <span class="st">제모스 수신 · 자동검증</span><span class="sd">일 배치로 태그를 받아 V-01~15 검증</span></div>
-  <div class="step on"><span class="sn">2</span>
-    <span class="st">예외 처리 (현장)</span><span class="sd">확인 필요 54건</span></div>
+    <div><span class="st">제모스 수신 · 자동검증</span><span class="sd">일 배치로 태그를 받아 V-01~15 검증</span></div></div>
+  <div class="step now"><span class="sn">2</span>
+    <div><span class="st">예외 처리 (현장)</span><span class="sd">확인 필요 54건</span></div></div>
 </div>
 ```
 
-`.st`/`.sd`에 `display:block`이 필요하다(안 그러면 제목과 설명이 한 줄에 붙는다).
+활성 단계는 `.step.now`, 지난 단계는 `.step.done`이다(`.on`이 아니다 — 사이드바·탭바만
+`.on`을 쓴다).
 
-`.ck` 체크리스트는 **규칙·정책을 설명**할 때 쓴다 — 절차가 아니라 "이건 이래서 이렇다"를
-번호와 함께 늘어놓는 자리.
+`.sn`과 본문은 `.step{display:flex}`의 형제이므로 **제목·설명은 `<div>`로 한 번
+감싼다.** 안 감싸면 `.st`/`.sd`가 각각 flex 아이템이 되어 한 줄에 나란히 붙는다.
+
+`.ck`는 이름이 체크리스트지만 **읽는 것**이다 — 규칙·정책을 번호와 함께 늘어놓는 자리이지
+사용자가 눌러서 판정하는 위젯이 아니다. 점검 앱처럼 **탭해서 OK/NG를 매기는 행**이
+필요하면 그건 앱마다 만든다(행 하나에 항목명 + 40px 버튼 3개면 충분하고, `.lc` 리스트
+카드를 변형하는 게 가장 빠르다).
 
 ---
 
@@ -171,7 +182,7 @@ body에 걸어둠).
 
 `.tag`는 상태 한 단어. 색은 의미로만 고른다 —
 `t-ok`(정상·완료) · `t-warn`(주의·대기) · `t-err`(오류·차단) · `t-info`(참고) ·
-`t-plum`(구분용).
+`t-gr`(초록 — 정상 판정) · `t-gy`(회색 — 해당없음·비활성) · `t-pp`(자주 — 의미 없는 구분용).
 
 `.note`는 화면 위쪽의 안내 블록. 규칙이나 판정 기준처럼 **틀리면 손해 보는 정보**를 담는다.
 장식으로 쓰면 사용자가 곧 무시하게 되므로 화면당 한 개를 넘기지 않는다.
