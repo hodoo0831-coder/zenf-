@@ -2,14 +2,16 @@
 // 기존 라우트에는 사원·현장·사용자 목록을 내려주는 엔드포인트가 없어서
 // 화면이 사번만 표시할 수 있었다. 표시에 필요한 최소 조회만 추가한다.
 // 쓰기 없음 · 개인정보는 사번·성명·현장까지만.
-import { Env, requireUser, json } from '../lib/http';
+import { Env, requireUser, requireRole, json } from '../lib/http';
 
-// GET /api/users — 로그인 계정 선택용 (SSO 연동 전 임시).
-// 기존 프론트가 X-User-Id 를 하드코딩하던 것을 데이터로 대체한다.
-// emp_id 는 근로자 계정이 본인 근태를 찾는 데 필요한 연결키다.
-export async function listUsers(_req: Request, env: Env): Promise<Response> {
+// GET /api/users — 계정 목록. 시스템관리자 전용.
+// 로그인 화면에서 계정을 고르게 하던 용도였으나 실제 로그인이 붙으면서 그 쓰임은
+// 사라졌다. 누가 계정을 갖고 있는지는 공개 정보가 아니므로 인증·권한을 건다.
+export async function listUsers(req: Request, env: Env): Promise<Response> {
+  const u = await requireUser(req, env);
+  requireRole(u, ['sys']);
   const rows = await env.DB.prepare(
-    'SELECT id, name, role, site, emp_id FROM users WHERE active=1 ORDER BY role, id'
+    'SELECT id, name, role, site, emp_id, active, last_login_at FROM users ORDER BY role, id'
   ).all();
   return json(rows.results);
 }

@@ -12,10 +12,11 @@ import { listPlan, setPlan, simulatePlan } from './routes/plan';
 import { listFormats, upsertFormat, generateExport, exportHistory, requestFormatChange, listFormatChangeRequests, resolveFormatChangeRequest } from './routes/export';
 import { uploadOcr, listOcr, confirmOcr, rejectOcr } from './routes/ocr';
 import { listUsers, listSites, listEmployees, listHolidays } from './routes/meta';
+import { login, logout, me, changePassword, sweepSessions } from './routes/auth';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*', // TODO: 배포 시 실제 프론트 도메인으로 제한
-  'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
+  'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, Authorization',
   'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
 };
 
@@ -28,7 +29,12 @@ export default {
 
     try {
       let res: Response;
-      if (p === '/api/jemos/receive' && req.method === 'POST') res = await receiveJemos(req, env);
+      if (p === '/api/auth/login' && req.method === 'POST') { await sweepSessions(env); res = await login(req, env); }
+      else if (p === '/api/auth/logout' && req.method === 'POST') res = await logout(req, env);
+      else if (p === '/api/auth/me' && req.method === 'GET') res = await me(req, env);
+      else if (p === '/api/auth/password' && req.method === 'POST') res = await changePassword(req, env);
+
+      else if (p === '/api/jemos/receive' && req.method === 'POST') res = await receiveJemos(req, env);
       else if (p === '/api/jemos/status' && req.method === 'GET') res = await jemosStatus(req, env);
 
       else if (p === '/api/ledger' && req.method === 'GET') res = await listLedger(req, env);
