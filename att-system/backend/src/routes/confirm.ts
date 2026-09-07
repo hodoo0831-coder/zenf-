@@ -1,4 +1,4 @@
-import { Env, requireUser, requireRole, json, audit, httpError } from '../lib/http';
+import { Env, reqParam, requireUser, requireRole, json, audit, httpError } from '../lib/http';
 
 async function getStatus(env: Env, site: string, ym: string) {
   let s = await env.DB.prepare('SELECT * FROM month_status WHERE site=? AND ym=?').bind(site, ym).first<any>();
@@ -136,6 +136,8 @@ async function sha256Hex(s: string): Promise<string> {
 export async function monthStatus(req: Request, env: Env): Promise<Response> {
   await requireUser(req, env);
   const url = new URL(req.url);
-  const s = await getStatus(env, url.searchParams.get('site')!, url.searchParams.get('ym')!);
+  // getStatus 는 없으면 행을 만들기 때문에(읽기이면서 쓰기), 빈 site 로 들어오면
+  // NOT NULL 제약에 걸려 500 이 났다. 여기서 400 으로 막는다.
+  const s = await getStatus(env, reqParam(url, 'site'), reqParam(url, 'ym'));
   return json(s);
 }

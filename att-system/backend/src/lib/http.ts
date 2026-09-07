@@ -47,6 +47,13 @@ export function requireRole(user: AuthedUser, roles: AuthedUser['role'][]) {
   if (!roles.includes(user.role)) throw httpError(403, `이 작업은 ${roles.join('/')} 권한이 필요합니다 (현재: ${user.role})`);
 }
 
+/** 필수 쿼리 파라미터. 빠지면 500 이 아니라 400 으로 이유를 말해준다. */
+export function reqParam(url: URL, name: string): string {
+  const v = url.searchParams.get(name);
+  if (!v) throw httpError(400, `${name} 파라미터가 필요합니다.`);
+  return v;
+}
+
 export class HttpError extends Error { constructor(public status: number, message: string) { super(message); } }
 export function httpError(status: number, message: string) { return new HttpError(status, message); }
 
