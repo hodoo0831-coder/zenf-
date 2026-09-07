@@ -86,7 +86,7 @@ var VIEWS = {
   'w-home': function(){ return ph('근로자','내 요약','이 화면이 무엇을 대신해 주는지.') + demoCard(); },
   'w-list': function(){ return ph('근로자','내 내역','') + demoCard(); },
   'm-home': function(){ return ph('현장관리자','현장 대시보드','전 인원을 훑지 않습니다. 어긋난 건만 봅니다.') + demoTiles() + demoCard(); },
-  'm-list': function(){ return ph('현장관리자','목록','') + demoCard(); },
+  'm-list': function(){ return ph('현장관리자','목록','') + judgeCard(); },
   'm-base': function(){ return ph('현장관리자','기준정보','') + demoCard(); },
   'a-home': function(){ return ph('시스템관리자','시스템 현황','') + demoTiles(); },
   'a-base': function(){ return ph('시스템관리자','기준정보','') + demoCard(); }
@@ -117,6 +117,33 @@ function tile(label, value, unit, desc, acc){
 }
 function demoTiles(){ return '<div class="tiles">'+tile('대상 인원',9,'명','전원 정상')+
   tile('확인 필요',3,'건','아래에서 처리','e')+tile('처리 완료',12,'건','금일')+'</div>'; }
+/* 판정 행 데모 — 점검·검수형 화면의 뼈대. ITEMS/JUDGE 를 앱에 맞게 바꾼다 */
+var ITEMS = [
+  {id:'i1', n:'비상정지 스위치 동작', d:'라인 정지까지 2초 이내'},
+  {id:'i2', n:'방호덮개 체결',       d:'볼트 4본 전부'},
+  {id:'i3', n:'바닥 유분 제거',      d:'통로·작업발판'}
+];
+var JUDGE = {};
+function judgeCard(){
+  var done = ITEMS.filter(function(i){ return JUDGE[i.id]; }).length;
+  var ng   = ITEMS.filter(function(i){ return JUDGE[i.id]==='ng'; }).length;
+  var rows = '<div class="jsum">판정 <b>'+done+'</b> / '+ITEMS.length+
+             '<span>부적합 <b>'+ng+'</b></span><span>미판정 <b>'+(ITEMS.length-done)+'</b></span></div>';
+  ITEMS.forEach(function(it){
+    var v = JUDGE[it.id];
+    rows += '<div class="jr'+(v==='ng'?' ng':'')+'">'+
+      '<div class="jt">'+esc(it.n)+'<small>'+esc(it.d)+'</small></div>'+
+      '<div class="jb">'+
+        ['ok','ng','na'].map(function(k){
+          var lbl={ok:'적합',ng:'부적합',na:'해당없음'}[k];
+          return '<button class="'+(v===k?'on '+k:'')+'" onclick="setJudge(\''+it.id+'\',\''+k+'\')">'+lbl+'</button>';
+        }).join('')+
+      '</div></div>';
+  });
+  return card('점검 항목', done+' / '+ITEMS.length+' 판정', rows, true);
+}
+function setJudge(id, v){ JUDGE[id] = (JUDGE[id]===v ? null : v); go(VIEW); }
+
 function demoCard(){ return card('카드 제목','보조 설명',
   '<p>여기에 내용이 들어갑니다.</p>'+
   '<div class="btns"><button class="btn pr" onclick="demoModal()">모달 열기</button></div>'); }

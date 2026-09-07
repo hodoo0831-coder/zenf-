@@ -237,7 +237,7 @@ a{color:var(--green-d)}
   transition:border-color .16s var(--ease),background .16s,color .16s}
 .btn:hover:not(:disabled){border-color:var(--navy);color:var(--navy)}
 .btn.pr{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:700}
-.btn.pr:hover:not(:disabled){background:var(--green-d);border-color:var(--green-d);color:#fff}
+.btn.pr:hover:not(:disabled){background:var(--navy2);border-color:var(--navy2);color:#fff}
 .btn.nv{background:#fff;border-color:var(--navy);color:var(--navy);font-weight:700}
 .btn.nv:hover:not(:disabled){background:var(--navy2);border-color:var(--navy2);color:#fff}
 .btn.dg{border-color:#e8cdcb;color:var(--err)}
@@ -246,6 +246,30 @@ a{color:var(--green-d)}
 .btn.sm{min-height:40px;padding:0 12px;font-size:11.5px}
 .btn.blk{width:100%}
 .btns{display:flex;flex-wrap:wrap;gap:8px}
+
+/* 판정 행 — 점검·검수처럼 항목마다 눌러 OK/NG를 매기는 자리.
+   .ck 는 읽는 것이고 이건 누르는 것이다. 버튼 세 개를 한 덩어리로 붙여 오조작을 줄인다. */
+.jr{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;
+  padding:12px var(--pad);border-bottom:1px solid var(--line2)}
+.jr:last-child{border-bottom:none}
+.jr.ng{background:var(--err-l)}
+.jr .jt{flex:1;min-width:150px;font-size:13px;font-weight:700;color:var(--ink);line-height:1.5}
+.jr .jt small{display:block;font-size:11.5px;font-weight:400;color:var(--faint);margin-top:2px}
+.jr .jb{display:flex;flex:none}
+.jr .jb button{min-height:40px;min-width:54px;padding:0 11px;font-size:12px;font-weight:700;
+  border:1px solid var(--line);background:#fff;color:var(--muted);margin-left:-1px;
+  transition:background .14s var(--ease),color .14s,border-color .14s}
+.jr .jb button:first-child{border-radius:var(--r) 0 0 var(--r);margin-left:0}
+.jr .jb button:last-child{border-radius:0 var(--r) var(--r) 0}
+.jr .jb button:hover{color:var(--navy);border-color:var(--navy);position:relative;z-index:1}
+.jr .jb button.on{position:relative;z-index:2;color:#fff}
+.jr .jb button.on.ok{background:var(--ok);border-color:var(--ok)}
+.jr .jb button.on.ng{background:var(--err);border-color:var(--err)}
+.jr .jb button.on.na{background:var(--faint);border-color:var(--faint)}
+/* 진행 요약 — 몇 개 남았는지 항상 보이게 */
+.jsum{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;
+  padding:12px var(--pad);border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+.jsum b{color:var(--navy);font-weight:700}
 
 /* 탭 */
 .tabs{display:flex;gap:24px;overflow-x:auto;margin-bottom:22px;scrollbar-width:none;
