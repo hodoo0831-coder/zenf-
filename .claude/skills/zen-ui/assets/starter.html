@@ -195,12 +195,25 @@ function go(id){
   if(!VIEWS[id]) { toast('준비 중인 화면입니다.'); return; }
   VIEW=id;
   $('main').innerHTML = VIEWS[id]();
+  fitTiles();
   $('main').scrollTop=0; window.scrollTo(0,0);
   ['side','tabbar','dw-pane'].forEach(function(c){
     var box=$(c); if(!box) return;
     box.querySelectorAll('[data-v]').forEach(function(b){ b.classList.toggle('on', b.dataset.v===id); });
   });
 }
+/* 타일 개수를 나누어떨어지는 열 수로 배치한다 — 8개가 6+2로 흘러 오른쪽이 비면
+   설계가 없어 보인다. 3~5열 중 딱 떨어지는 가장 큰 값, 없으면 4열. */
+function fitTiles(){
+  var boxes=$('main').querySelectorAll('.tiles');
+  for(var i=0;i<boxes.length;i++){
+    var c=boxes[i].children.length, n=0;
+    for(var k=5;k>=3;k--){ if(c%k===0){ n=k; break; } }
+    if(!n) n = (c<3 ? c : 4);
+    boxes[i].style.setProperty('--tc', n);
+  }
+}
+
 function openDrawer(){ $('drawer').classList.add('open'); }
 function closeDrawer(){ $('drawer').classList.remove('open'); }
 
