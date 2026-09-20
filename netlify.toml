@@ -63,6 +63,17 @@
   to = "/ZEN_Attendance.html"
   status = 200
 
+# 젠인사이트(경영실적 분석·예측): 월마감 손익 워크북을 올리면 리포트·착지 전망
+[[redirects]]
+  from = "/insight"
+  to = "/ZEN_Biz_Insight.html"
+  status = 200
+
+[[redirects]]
+  from = "/bizinsight"
+  to = "/ZEN_Biz_Insight.html"
+  status = 200
+
 # 보안 헤더 (임베드/클릭재킹 완화, 데모 프로토타입 기준)
 [[headers]]
   for = "/*"
