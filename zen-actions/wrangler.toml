@@ -1,0 +1,8 @@
+name = "zen-actions"
+main = "zen-actions-worker.js"
+compatibility_date = "2026-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "zen-actions"
+database_id = "여기에-d1-create-후-나온-id-입력"
