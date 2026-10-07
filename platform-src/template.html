@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ZEN Manufacturing · 아모레퍼시픽 헤어앤뷰티 사업장</title>
+<meta name="theme-color" content="#f4f7fb">
+<style>@@css-main@@</style>
+
+
+<style>@@css-vivid@@</style>
+<style>@@css-responsive@@</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div class="login" id="login">
+  <div class="box">
+    <div class="brand"><span>ZEN</span> Manufacturing Platform</div>
+    <div class="tagline">제조현장 통합 운영 플랫폼</div>
+    <div class="thesis">데이터가 아니라 <b>‘판단’</b>을 자동화합니다</div>
+    <div class="caps">8개 AI Agent가 현장 실측을 실시간 종합<br>→ <b>작업 예측·자동 보고</b><br>아모레퍼시픽 헤어앤뷰티 사업장</div>
+    <label>역할 선택</label>
+    <div class="roles" id="roles">
+      <button data-role="field">현장</button>
+      <button data-role="admin">관리자</button>
+      <button data-role="center" class="on">센터</button>
+    </div>
+    <label id="scopeLbl">담당 구역</label>
+    <select id="scopeSel"></select>
+    <label>사번 / 비밀번호</label>
+    <input id="pw" type="password" inputmode="numeric" maxlength="8" placeholder="접속 비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="pwErr" style="display:none;color:#ff8f8f;font-size:12px;font-weight:700;margin-top:7px">비밀번호가 올바르지 않습니다. 관리자에게 문의하세요.</div>
+    <button class="go" onclick="doLogin()">로그인</button>
+    <div class="note" style="margin-top:10px"> 사내 인증 — 접속 기록은 감사 로그에 저장됩니다</div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div class="app" id="app">
+  <div class="navScrim" id="navScrim" onclick="toggleNav()"></div>
+  <aside class="nav" id="nav"></aside>
+  <main class="stage">
+    <div class="bar">
+      <button class="navToggle" id="navToggle" onclick="toggleNav()" aria-label="메뉴" title="메뉴">☰</button>
+      <div>
+        <h1 id="vTitle">컨트롤타워</h1>
+        <div class="sub" id="vSub">AP 헤어앤뷰티 사업장 · 8 Agent 통합 대시보드</div>
+      </div>
+      <div class="right">
+        <button class="btn" id="bigBtn" onclick="toggleBig()" title="벽 모니터·전광판용 큰 화면">큰화면</button>
+        <span class="src" id="srcTag">데이터: 기준값</span>
+        <div class="clock">
+          <div class="d" id="topDate">—</div>
+          <div class="r" id="refreshTag"><span class="dot"></span> 자동 갱신 중</div>
+        </div>
+      </div>
+    </div>
+    <div id="view"></div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>@@js-xlsx@@</script>
+<script>@@js-app@@</script>
+<style>@@css-polish@@</style>
+<style>@@css-white@@</style>
+
+<script>@@js-countup@@</script>
+<!-- 내장 앱 데이터(비실행) — 메인 스크립트 뒤에 두어 로그인이 먼저 열린다 -->
+<script type="text/plain" id="zd-opl">@@blob:opl@@</script>
+<script type="text/plain" id="zd-mon">@@blob:mon@@</script>
+<script type="text/plain" id="zd-lab">@@blob:lab@@</script>
+<script type="text/plain" id="zd-safe">@@blob:safe@@</script>
+<script type="text/plain" id="zd-heat">@@blob:heat@@</script>
+<script type="text/plain" id="zd-svW">@@blob:svW@@</script>
+<script type="text/plain" id="zd-washW">@@blob:washW@@</script>
+<script type="text/plain" id="zd-washA">@@blob:washA@@</script>
+<script type="text/plain" id="zd-pboxA">@@blob:pboxA@@</script>
+<script type="text/plain" id="zd-pboxW">@@blob:pboxW@@</script>
+<script type="text/plain" id="zd-oriA">@@blob:oriA@@</script>
+<script type="text/plain" id="zd-oriW">@@blob:oriW@@</script>
+<script type="text/plain" id="zd-whA">@@blob:whA@@</script>
+<script type="text/plain" id="zd-whW">@@blob:whW@@</script>
+</body>
+</html>
