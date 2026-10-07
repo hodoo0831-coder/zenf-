@@ -1727,7 +1727,7 @@ function loadDayView(){
   const bars=S.map(d=>{const on=d.date===loadDate, hN=Math.round(d.need/mx*88), hA=Math.round(d.avail/mx*88);
     const col=d.gap>0.4?'#dc4b4b':'#0f2438';
     return `<div style="flex:1;min-width:52px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer" onclick="loadDate='${d.date}';go('load')">
-      <div style="font-size:11px;font-weight:700;color:${d.qty?col:'var(--mut)'}">${d.qty?d.need:'-'}</div>
+      <div style="font-size:11px;font-weight:700;color:${d.qty?col:'var(--muted)'}">${d.qty?d.need:'-'}</div>
       <div style="position:relative;width:100%;height:92px;display:flex;align-items:flex-end">
         <div style="width:100%;height:${d.qty?hN+3:3}px;border-radius:4px 4px 0 0;background:${d.qty?col:'#d8dee6'};opacity:${on?1:.55}"></div>
         <span title="가용 ${d.avail}명" style="position:absolute;left:0;right:0;bottom:${hA}px;height:0;border-top:2px dashed #4f7cb0"></span>
@@ -3139,7 +3139,7 @@ function laborLiveCard(){
   const dm=Math.max(4,...A.trend.map(x=>x.n));
   const bars=A.trend.map(x=>{const on=x.date===A.date;
     return `<div style="flex:1;min-width:34px;display:flex;flex-direction:column;align-items:center;gap:4px">
-      <div style="font-size:11px;font-weight:700;color:${on?'#0f2438':'var(--mut)'}">${x.n}</div>
+      <div style="font-size:11px;font-weight:700;color:${on?'#0f2438':'var(--muted)'}">${x.n}</div>
       <div style="width:100%;height:${Math.round(x.n/dm*56)+4}px;border-radius:4px 4px 0 0;background:${on?'#0f2438':'#c7d2dd'}"></div>
       <div class="mini" style="font-size:10px">${x.date.slice(5)}</div></div>`;}).join('');
   const top=[...A.names].slice(0,12).map(n=>`<span class="chip" style="margin:2px 3px 0 0">${n}</span>`).join('');
