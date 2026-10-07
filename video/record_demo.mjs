@@ -3,6 +3,7 @@
  *
  *   node video/record_demo.mjs [index.html 경로] [출력.webm]
  *   LIVE=1 node video/record_demo.mjs      ← 실시간 연동(workers.dev)을 막지 않고 녹화 — 인터넷이 되는 PC 에서 이걸로 찍을 것
+ *   ONLY=2,4,8,10,11,12 node video/record_demo.mjs   ← 번호(0=S1 … 18=S17)로 고른 장면만 녹화. 장면마다 따로 잘라 .clips/ 에 저장(ffmpeg 필요)
  *
  * 필요: playwright (npm i playwright) + Chromium.  CHROMIUM=/경로 로 브라우저 실행 파일 지정 가능.
  * 소리는 들어 있지 않다 — 대본을 읽은 음성을 편집 프로그램에서 얹는다.
@@ -15,6 +16,7 @@ const HERE=path.dirname(fileURLToPath(import.meta.url));
 const FILE=path.resolve(process.argv[2]||path.join(HERE,'..','index.html'));
 const OUT=path.resolve(process.argv[3]||path.join(HERE,'ZEN_데모영상_자동.webm'));
 const LIVE=!!process.env.LIVE;
+const ONLY=process.env.ONLY?new Set(process.env.ONLY.split(',').map(Number)):null;
 const SEC_PER_CHAR=+(process.env.SPC||0.12);
 
 const SCENES=[
@@ -43,7 +45,9 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM||'/opt/
 const tmp=fs.mkdtempSync(path.join(HERE,'.rec-'));
 const ctx=await browser.newContext({viewport:{width:1280,height:720},recordVideo:{dir:tmp,size:{width:1280,height:720}}});
 if(!LIVE)await ctx.route('https://*.workers.dev/**',r=>r.abort('failed'));
+const tStart=Date.now();
 const p=await ctx.newPage();
+const marks=[];
 const sleep=(ms)=>p.waitForTimeout(ms);
 
 /* 자막 + 가짜 커서(헤드리스는 커서를 그리지 않는다) */
@@ -90,14 +94,18 @@ async function glide(ms){
 await p.goto('file://'+FILE);await sleep(1500);
 const t0=Date.now();
 async function scene(i,acts,hold){
+  if(ONLY&&!ONLY.has(i))return;
   const [t,s]=SCENES[i];const dur=Math.max(4500,s.replace(/\s/g,'').length*SEC_PER_CHAR*1000);
-  await caption(t,s);const a=Date.now();
+  await caption(t,s);const a=Date.now();marks.push({i,title:t,start:(a-tStart)/1000});
   console.log(((Date.now()-t0)/1000).toFixed(0)+'s '+t);
   try{await acts();}catch(e){console.log('  장면 오류',String(e).split('\n')[0].slice(0,100));}
   const left=dur-(Date.now()-a);if(left>0){if(hold)await sleep(left);else await glide(left);}
+  marks[marks.length-1].end=(Date.now()-tStart)/1000;
   if(process.env.SHOTS)await p.screenshot({path:path.join(process.env.SHOTS,'s'+String(i).padStart(2,'0')+'.png')});
 }
 
+async function silentLogin(){const pin=p.locator('input[type=password]').first();await pin.fill('1996');await p.keyboard.press('Enter');await sleep(2500);}
+if(ONLY&&!ONLY.has(0)&&!ONLY.has(1)){await silentLogin();await p.evaluate(()=>{const c=document.getElementById('zcap');if(c)c.style.display='block';});}
 /* S1 로그인 화면 */
 await scene(0,async()=>{await sleep(2500);});
 /* S2 역할 */
@@ -133,4 +141,12 @@ await scene(17,async()=>{await goV('reports');await tab('reports','monthly');awa
  await sleep(5500);}
 const vid=p.video();await ctx.close();await browser.close();
 fs.copyFileSync(await vid.path(),OUT);fs.rmSync(tmp,{recursive:true,force:true});
+fs.writeFileSync(OUT+'.scenes.json',JSON.stringify(marks,null,1));
+if(ONLY){/* 장면별로 잘라 저장 */
+  const {execFileSync}=await import('child_process');
+  const FF=process.env.FFMPEG||[...(fs.existsSync('/opt/pw-browsers')?fs.readdirSync('/opt/pw-browsers').filter(d=>d.startsWith('ffmpeg')).map(d=>path.join('/opt/pw-browsers',d,'ffmpeg-linux')):[]),'ffmpeg'].find(f=>f==='ffmpeg'||fs.existsSync(f));
+  const dir=path.join(path.dirname(OUT),'clips');fs.mkdirSync(dir,{recursive:true});
+  for(const m of marks){const f=path.join(dir,'S'+String(m.i).padStart(2,'0')+'_'+m.title.split(' · ')[0].replace(/\s/g,'')+'.webm');
+    try{execFileSync(FF,['-v','error','-y','-ss',String(Math.max(0,m.start-0.2)),'-to',String(m.end+0.4),'-i',OUT,'-c:v','libvpx','-b:v','4M','-an',f]);console.log('  클립 →',f);}catch(e){console.log('  (자르기 실패 — '+OUT+'.scenes.json 의 시각으로 편집기에서 자르세요)');break;}}
+}
 console.log('저장 →',OUT,(fs.statSync(OUT).size/1048576).toFixed(1)+'MB',((Date.now()-t0)/1000).toFixed(0)+'초');
