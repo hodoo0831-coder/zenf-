@@ -1,0 +1,49 @@
+
+/* ══ 화이트 톤 — 세이프보이스처럼 흰 면 + 헤어라인 (마지막 로드로 우선 적용) ══
+   로그인 화면은 어두운 톤 그대로 둔다. 구조·기능은 건드리지 않고 색만 바꾼다. */
+:root{--tint:#f7f8f8}
+body,.stage,#view{background:#fff}
+/* 로그인 — 어두운 카드 위에서 버튼이 보이도록 (네이비 위 네이비였다) */
+.login .go{background:#fff!important;color:#0f2438!important;border:1px solid #fff}
+.login .go:hover{background:#e6edf5!important;filter:none}
+/* 좌측 메뉴 — 활성은 색 면이 아니라 네이비 글자 + 왼쪽 막대 */
+.nav{background:#fff!important}
+.nav a.on{background:#f7f8f8!important;color:#0f2438!important;border-color:transparent!important;box-shadow:inset 3px 0 0 #0f2438!important}
+.nav .user{background:#fff!important;border:1px solid var(--line)!important}
+.rchip{background:#fff!important;border:1px solid var(--line)!important;color:var(--muted)!important}
+.rchip.on{background:#0f2438!important;border-color:#0f2438!important;color:#fff!important}
+.av{background:#fff!important;color:#0f2438!important;border:1px solid var(--line)}
+/* 배지·칩·태그 — 꽉 찬 색 면 대신 흰 바탕 + 색 글자·테두리 */
+.badge{background:#fff!important;color:#c25a52!important;border:1px solid #c25a52}
+.predlv,.predlv.crit,.predlv.warn,.predlv.ok{background:#fff!important;border:1px solid var(--line)}
+.predlv.crit{color:#c25a52!important;border-color:#c25a52}
+.predlv.warn{color:#cb9447!important;border-color:#cb9447}
+.actlv,.actlv.crit,.actlv.warn,.actlv.ok{background:#fff!important;border:1px solid var(--line)}
+.actlv.crit{color:#c25a52!important;border-color:#c25a52}
+.actlv.warn{color:#cb9447!important;border-color:#cb9447}
+.actdue,.actseq{background:#fff!important;border:1px solid currentColor}
+.actdue{color:#c25a52!important}.actseq{color:#7a6a9e!important}
+.chip,.tag,.mtag,.prule,.sl,.t-blue,.t-green,.t-red,.t-amber{background:#fff!important;border:1px solid var(--line)}
+.sl{color:#4a8a60!important}
+/* 아이콘 칸·번호 칸 — 색 면 없이 헤어라인 */
+.ico,.ic,.agxi i,.flowstep b{background:#fff!important;border:1px solid var(--line)!important}
+.agxi.on i{background:#fff!important;color:#0f2438!important;border-color:#fff!important}
+.aspark{background:#0f2438!important;color:#fff!important}
+.prule{color:#0f2438!important}
+/* 판단·조치 카드 상단 색띠 → 중립 헤어라인 (상태는 글자·좌측 줄로 이미 전달됨) */
+.decisioncard.now,.decisioncard.predict,.decisioncard.act{border-top:1px solid var(--line)!important}
+.actreco,.reco,.pred{background:#fff!important}
+.actcol{background:#fff!important;border:1px solid var(--line)!important}
+.actcol h4{background:#fff!important;border-bottom:2px solid var(--line)}
+.actcol.todo h4{color:#c25a52!important;border-bottom-color:#c25a52}
+.actcol.doing h4{color:#cb9447!important;border-bottom-color:#cb9447}
+.actcol.done h4{color:#4a8a60!important;border-bottom-color:#4a8a60}
+.actcol h4 .cnt,.actcol h4 span{background:#fff!important}
+/* 표·그리드 머리·행 — 색 면 대신 중립 워시 */
+th{background:#f7f8f8!important}
+/* 큰 안내 패널(.hero·.livebar·.aiband)은 흰 면 */
+.hero,.livebar{background:#fff!important;color:#141f29!important;border:1px solid var(--line)!important}
+.hero .hl .t,.livebar .lh .t{color:#0f2438!important}
+.hero .hl .k,.hero .hl .s,.livebar *{color:inherit}
+.aiband{background:#fff!important;border:1px solid var(--line)!important;border-left:3px solid #0f2438!important}
+

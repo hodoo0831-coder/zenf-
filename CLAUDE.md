@@ -22,3 +22,11 @@
 
 - main 브랜치 → Netlify 자동 배포. 빌드 과정 없음(정적 서빙).
 - 짧은 경로는 `netlify.toml`의 redirects에 추가한다.
+
+## 플랫폼 (ZEN_Manufacturing_Platform_11.0.html)
+
+- **결과 HTML 을 직접 고치지 않는다.** 소스는 `platform-src/` 에 있고
+  `node platform-src/build.cjs` 로 `ZEN_Manufacturing_Platform_11.0.html` 과 `index.html` 을 만든다.
+  고치고 → 빌드 → 두 HTML 을 함께 커밋한다. (Netlify 배포에 빌드 단계는 없다 — 빌드한 HTML 을 올린다.)
+- 구조와 어디를 고치는지는 `platform-src/README.md`.
+- 내장 현장 앱(창고·세척·오리콘·세이프보이스 등)은 레포의 원본 파일에서 읽는다 — 원본을 고치고 다시 빌드.

@@ -1,0 +1,52 @@
+  /* ===== 연동 준비 슬롯 미리보기 ===== */
+  .spv{border-radius:3px;padding:18px 20px;margin-top:4px;border:1px solid rgba(255,255,255,.09)}
+  .spv.w{background:var(--navy)}
+  .spv.a{background:var(--navy)}
+  .spv-h{display:flex;align-items:center;gap:9px;margin-bottom:5px;flex-wrap:wrap}
+  .spv-badge{font-weight:700;font-size:11.5px;padding:5px 11px;border-radius:3px}
+  .spv-badge.w{background:#12b886;color:#04110b}
+  .spv-badge.a{background:#17934f;color:#fff}
+  .spv-nm{color:#e6f0fb;font-weight:700;font-size:15px}
+  .spv-sub{color:#7fa6c8;font-size:12.5px;margin-bottom:14px}
+  .spv-grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .spv-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}
+  .spv-t{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:3px;padding:14px}
+  .spv-t .l{color:#8fb4d6;font-size:12.5px;font-weight:700}
+  .spv-t .v{color:#fff;font-size:22px;font-weight:700;margin-top:6px}
+  .spv-t i{display:block;height:4px;width:42px;border-radius:3px;margin-top:9px}
+  .spv-k{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:3px;padding:11px 12px}
+  .spv-k .l{color:#8fb4d6;font-size:11.5px;font-weight:700}
+  .spv-k .v{color:#fff;font-size:18px;font-weight:700;margin-top:4px}
+  .spv-k .d{font-size:11.5px;font-weight:700;margin-top:2px}
+  .spv-cap{color:#8fb4d6;font-size:12px;font-weight:700;margin-bottom:2px}
+  .spv-b{display:flex;align-items:center;gap:9px;margin-top:8px}
+  .spv-b span{width:58px;color:#b8cde3;font-size:12.5px;font-weight:700}
+  .spv-b .tr{flex:1;height:11px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+  .spv-b .tr i{display:block;height:100%}
+  .spv-b b{width:46px;text-align:right;color:#cfe3ff;font-size:12px;font-weight:700}
+  .spv-act{display:flex;gap:10px;margin-top:15px}
+  .spv-act .save{flex:1;background:#12b886;color:#04110b;font-weight:700;text-align:center;padding:15px;border-radius:3px;font-size:16px}
+  .spv-act .ph{width:120px;background:rgba(255,255,255,.06);color:#cfe3ff;text-align:center;padding:15px;border-radius:3px;font-weight:700}
+  .syshint{margin-top:11px;font-size:12px;color:#93a7c2;background:rgba(127,184,255,.08);border:1px solid rgba(127,184,255,.16);border-radius:3px;padding:9px 12px;line-height:1.55}
+  .syshint b{color:#cfe0f2}
+
+  /* ===== 창고 예측 배치도 (히트맵) ===== */
+  .whlg{display:inline-flex;align-items:center;gap:4px}
+  .whlg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+  .whmap{display:grid;grid-template-columns:repeat(5,1fr);gap:11px}
+  @media(max-width:1100px){.whmap{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:680px){.whmap{grid-template-columns:repeat(2,1fr)}}
+  .whz{position:relative;border-radius:3px;padding:13px 13px 12px;background:var(--navy) 14%,var(--panel)),var(--panel));border:1px solid color-mix(in srgb,var(--hc) 45%,transparent);overflow:hidden}
+  .whz::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--hc)}
+  .whz.al{animation:whpulse 1.8s ease-in-out infinite}
+  @keyframes whpulse{0%,100%{box-shadow:none}50%{box-shadow:none}}
+  .whz .zn{font-size:12px;font-weight:700;color:var(--ink);line-height:1.3;min-height:31px;padding-left:4px}
+  .whz .zr{font-size:26px;font-weight:700;color:var(--hc);letter-spacing:-.5px;padding-left:2px}
+  .whz .zr small{font-size:13px;font-weight:700}
+  .whz .zp{font-size:11.5px;color:var(--muted);font-weight:700;padding-left:2px;margin-top:1px}
+  .whz .zc{font-size:11px;color:var(--muted);margin-top:5px;padding-left:2px}
+  .whz .zt{display:inline-block;margin-top:8px;font-size:10.5px;font-weight:700;color:#fff;padding:3px 9px;border-radius:3px}
+
+  .app{display:none;grid-template-columns:230px 1fr;min-height:100vh}
+  .app.show{display:grid}
+
