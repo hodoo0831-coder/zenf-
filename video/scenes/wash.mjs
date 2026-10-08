@@ -109,6 +109,8 @@ for(const w of [
 /* ───────── 시작 ───────── */
 fs.mkdirSync(OUT,{recursive:true});
 const TMP=fs.mkdtempSync(path.join(process.env.WASH_TMP||os.tmpdir(),'zen_wash_'));          // 임시 폴더에서 녹화(다른 구간과 폴더를 공유해도 섞이지 않게)
+if(!process.env.WASH_NOWAIT){const w0=Date.now();while(os.loadavg()[0]>3.5&&Date.now()-w0<60000)await new Promise(r=>setTimeout(r,2000));   // 다른 작업으로 CPU 가 바쁘면 녹화가 끊기므로 잠시 기다린다(최대 60초)
+  if(Date.now()-w0>2500)console.log('  (부하 대기 '+Math.round((Date.now()-w0)/1000)+'초, load '+os.loadavg()[0].toFixed(1)+')');}
 const {browser,be}=await launch();
 const state=await be.call(HOST,'/api/state',{method:'POST',body:{waiting,washing,records:buildRecords()}});
 if(!state.ok)throw new Error('샘플 데이터 저장 실패');
@@ -169,7 +171,7 @@ await s.scene('priority',5,async()=>{
   await tap('.logout-btn',500);
   await tap(role('세척실'),800);
   await sh('2a_washroom_home');
-  s.toast('AUTO','방금 등록한 건이 세척실에 바로 도착 — 대기·세척중·완료를 한눈에',3600);
+  s.toast('AUTO','생산라인이 등록한 도착 건이 세척실 화면에 표시 — 기기 간 10초 주기로 서버 동기화',3800);
   await sleep(500);
   await tap('nav.tabs button[data-tab="priority"]',600);
   s.toast('점수','HIGH(15분 이내) · MEDIUM(45분 이내) · LOW 자동 분류',3800);
@@ -177,7 +179,7 @@ await s.scene('priority',5,async()=>{
 },{hold:true});
 
 /* ═════════ 장면 3 — 세척실: 시작 · 종료 기록 ═════════ */
-await show('세척 시작·종료는 두 번의 터치','대기시간·세척시간·지연/여유(분)를 앱이 자동 계산해 기록합니다');
+await show('세척 시작·종료는 두 번의 터치','대기시간·세척시간·지연/여유(분)를 앱이 자동 계산해 기록합니다',true);
 let startMsg='',endMsg='';
 await s.scene('startend',7.5,async()=>{
   await tap('nav.tabs button[data-tab="home"]',450);
@@ -193,7 +195,7 @@ await s.scene('startend',7.5,async()=>{
   await sh('3d_running');
   await tap('#runActionButtons .btn-stop',500);
   endMsg=await txt('#toast');await sh('3e_finished');
-  s.toast('NEW','종료하면 지연/여유가 기록에 남고 관리자 화면으로 즉시 전송',3800);
+  s.toast('NEW','종료하면 지연/여유가 기록으로 남아 서버로 전송 — 관리자 화면이 5초 주기로 조회',3800);
 },{hold:true});
 console.log('  앱 토스트:',startMsg,'|',endMsg);
 await sleep(1500);                                                           // 마지막 저장(push) 확정
@@ -247,7 +249,7 @@ const kpi={wait:await txt('#kpiAvgWait'),wash:await txt('#kpiAvgWash'),loss:awai
   done:await txt('#countDone'),washing:await txt('#countWashing'),high:await txt('#countHigh')};
 console.log('  KPI',JSON.stringify(kpi));
 await show('핵심 지표와 차트가 실시간으로 채워집니다','대기시간·세척시간·대기 LOSS·필요시간 준수율 — 도착~종료 기록에서 자동 집계');
-await s.scene('dash-charts',4.5,async()=>{
+await s.scene('dash-charts',4.2,async()=>{
   await scrollTo(250);await sleep(400);
   s.toast('점수','필요시간 준수율 '+kpi.ontime+' · 평균 세척 '+kpi.wash+'분 · 평균 대기 '+kpi.wait+'분',3600);
   await sleep(1000);await sh('5a_kpi');
@@ -258,7 +260,7 @@ await s.scene('dash-charts',4.5,async()=>{
 
 /* ═════════ 장면 6 — 대시보드: 우선순위 표 · 완료 기록 ═════════ */
 await show('우선순위 표 · 오늘 완료 기록','HIGH = 시작 필요 시각이 15분 이내이거나 이미 지난 건 · 지연/여유(분) 기록');
-await s.scene('dash-tables',3.5,async()=>{
+await s.scene('dash-tables',3.2,async()=>{
   const y=await topOf('.table-wrap',20);
   await scrollTo(y);await sleep(1500);await sh('6a_table');
   await scrollTo(y+640);await sleep(1400);await sh('6b_records');

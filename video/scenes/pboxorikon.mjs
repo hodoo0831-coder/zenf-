@@ -1,16 +1,25 @@
 /**
  * 데모 영상 구간 — 간접작업(P-BOX · 오리콘): 현장 작업자 모바일 입력 → 5초 주기로 관리자 대시보드 자동 집계
  *
- *   node video/scenes/pboxorikon.mjs <출력폴더>   → <출력폴더>/seg_pboxorikon.webm + seg_pboxorikon.json  (약 34초)
- *   SHOTS=<폴더> …                                → 장면마다 스크린샷 저장
+ *   node video/scenes/pboxorikon.mjs <출력폴더>   → <출력폴더>/seg_pboxorikon.webm + seg_pboxorikon.json  (장면 34~35초 + 앞뒤 여유 약 1초)
+ *   SHOTS=<폴더> …        장면마다 스크린샷 저장(켜면 동작이 느려져 영상 길이가 늘어난다 — 확인용)
+ *   SEED_ONLY=1 …         샘플 데이터만 만들어 앱의 이상 감지 규칙으로 미리 계산해 출력하고 끝낸다
+ *   DEBUG_T=1 …           클릭마다 걸린 시간 출력
+ *
+ * 장면: ① P-BOX 작업자 앱 입력(8초) ② 관리자 "오늘" 집계 + 다른 기기 입력 자동 반영(8초) ③ 작업자별 시간당 생산성 ④ 평균 대비 편차·이상 감지
+ *       ⑤ 주간계획 대비 실적 ⑥ 오리콘 작업자 앱 입력 ⑦ 오리콘 관리자 작업자 분석
  *
  * 정직성 원칙
  *  - 값은 전부 실제 앱 · 실제 Worker 코드(pbox-orikon-db)로 만든다. DOM 을 고쳐 쓰지 않는다.
- *    · 작업자 앱 화면에서 직접 입력하는 건: P-BOX 1건(공동작업), 오리콘 1건, 그리고 "다른 기기"(별도 브라우저 컨텍스트)의 작업자 앱에서 1건.
- *    · 과거 약 2주치는 시연용 샘플 — 작업자 앱이 보내는 것과 같은 모양으로 be.call('/records') 에 넣는다.
- *    · 이번 주 소요량(주간계획)은 앱이 읽는 저장 키(zenf_plan_*)에 미리 둔다 — 앱의 "소요량 입력" 값과 같은 자리.
+ *    · 작업자 앱 화면에서 직접 입력하는 건: P-BOX 1건(공동작업 2명), 오리콘 1건, 그리고 "다른 기기"(별도 브라우저 컨텍스트, 화면엔 안 나옴)의 작업자 앱에서 1건.
+ *    · 과거 약 2주치(P-BOX·오리콘 각 40여 건)는 시연용 샘플 — 작업자 앱이 보내는 것과 같은 필드로 be.call('/records') 에 넣는다.
+ *    · 이번 주 소요량(주간계획)은 앱이 읽는 저장 키(zenf_plan_*)에 미리 둔다 — 앱의 "소요량 입력" 이 저장하는 자리와 같다.
  *  - 자막의 수치는 화면에서 읽어 온 값(DOM 텍스트)으로 만든다. 하드코딩하지 않는다.
- *  - 작업자 이름은 익명("작업자 A" …). 암호·PIN 입력 화면 없음(이 앱들엔 암호 게이트 없음).
+ *  - 작업자 이름은 익명("작업자 A" …). 암호·PIN 입력 화면 없음(이 앱들엔 암호 게이트가 없다).
+ *  - 앱 코드·lib.mjs 는 건드리지 않는다. 영상용 보정은 initScript 의 스타일뿐: 스플래시 숨김, 관리자 첫 조회 전 0 값 깜빡임 가림, 자막 폭/위치 변형.
+ *
+ * 알려진 앱 이슈(영상엔 영향 없게 피했지만 고쳐야 함): worker-site/orikon 은 서버로 보낼 때 part: record.part 를 쓰는데
+ *   기록의 필드는 boxType 이라 박스 종류(中/大)가 서버에 null 로 저장된다 → 관리자 오리콘 화면에서 그 건은 中/大 집계에서 빠진다.
  */
 import path from 'path';
 import fs from 'fs';
@@ -138,8 +147,9 @@ const INIT=(planP,planO)=>{
   };
   if(!inject()){const mo=new MutationObserver(()=>{if(inject())mo.disconnect();});mo.observe(document,{childList:true,subtree:true});}
   if(adm){
-    document.documentElement.classList.add('zwait');
-    const done=()=>document.documentElement.classList.remove('zwait');
+    const done=()=>{if(document.documentElement)document.documentElement.classList.remove('zwait');};
+    const arm=()=>{if(!document.documentElement)return false;document.documentElement.classList.add('zwait');return true;};
+    if(!arm()){const mo3=new MutationObserver(()=>{if(arm())mo3.disconnect();});mo3.observe(document,{childList:true});}
     const mo2=new MutationObserver(()=>{const e=document.getElementById('cloudStatus');if(e&&/실시간/.test(e.textContent)){done();mo2.disconnect();}});
     mo2.observe(document,{childList:true,subtree:true,characterData:true});
     setTimeout(done,2500);
@@ -252,9 +262,13 @@ await sc('P-BOX 작업자 입력',7,async()=>{
   await scrollTo('#qtyField',420,150);
   await clk('#quickQtyPlt button[data-qty="2"]',{pause:300,steps:10});
   await s.shot('02_worker_filled');
-  await clk('#submitBtn',{pause:700,steps:10});
+  await clk('#submitBtn',{pause:900,steps:10});
   await s.shot('03_worker_done');
   N.workerToast=await txt('#toast');
+  await scrollTo(0,450);
+  await clk('.tab[data-tab="history"]',{pause:500,steps:12});   // 방금 등록한 건이 기록 목록에 쌓인다
+  N.history=await txt('#historyContainer');console.log('  작업자 앱 기록 탭(화면):',N.history.slice(0,90));
+  await s.shot('03b_worker_history');
 });
 
 /* ───────── 2. P-BOX 관리자 대시보드 : 방금 입력 → 합산 → 다른 기기 입력도 자동 반영 ───────── */
@@ -279,6 +293,10 @@ await sc('P-BOX 관리자 실시간 집계',8,async()=>{
   await cap('SYSTEM · 간접작업','다른 기기의 입력까지 자동으로 합산',short(N.t2)+' — 새로고침 없이 반영');
   await s.toast('AUTO','다른 기기 입력도 자동 합산',2800);
   await s.shot('05_admin_after_dev2');
+  // 합산된 부위·유형 비중 차트까지 천천히 훑어 보이고 다시 맨 위로
+  await sleep(500);await scrollTo(330,900);await sleep(900);
+  await s.shot('05b_admin_charts');
+  await scrollTo(0,700);
 },[50,20]);
 await dev2.close();
 
