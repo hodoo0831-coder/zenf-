@@ -15,6 +15,7 @@ import fs from 'fs';
 import {fileURLToPath} from 'url';
 import {launch,session,ROOT} from '../lib.mjs';
 
+process.env.TZ='Asia/Seoul';   // 브라우저 시계도 KST — 앱 안의 시각 표기와 Worker 의 KST 제출시각을 맞춘다
 const OUT=path.resolve(process.argv[2]||path.join(path.dirname(fileURLToPath(import.meta.url)),'..','out'));
 const WH='wh-stack.hodoo0831.workers.dev';
 const kstToday=()=>new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
@@ -73,7 +74,46 @@ await s.sample(true);
 await s.cap('SYSTEM · 창고','현장 작업자 — 구역별 적치 입력','폰·태블릿에서 12개 구역 카드를 눌러 파렛트 수를 입력');
 await s.scene('작업자 구역 목록',4,async()=>{
   await s.shot('01_list');
-},{hold:false});
+  await s.click(p.locator('button.z',{hasText:'OC동 지하 A구역'}),600);
+},{hold:true});
+
+/* ───────── 2. 구역 입력 ───────── */
+await s.scene('구역 입력',8,async()=>{
+  await s.shot('02_open');
+  await s.type('#totIn','128',110);
+  await p.keyboard.press('Enter');await sleep(900);
+  await s.shot('03_enter');
+  await s.click(p.locator('button',{hasText:'+10'}),700);
+  await s.click(p.locator('button',{hasText:'+10'}),700);
+  await s.shot('04_bump');
+},{hold:true});
+
+await s.scene('제출',3,async()=>{
+  await s.click('#send',900);
+  await s.shot('05_sent');
+},{hold:true});
+
+/* ───────── 3. 관리자 앱 ───────── */
+await s.open(file('admin.html'),2200);
+await s.sample(true);
+await s.cap('SYSTEM · 창고','관리자 — 작업자 제출이 자동으로 도착','화면 새로고침 없이 구역별 제출 현황이 모인다');
+await s.shot('10_admin_open');
+await s.click('#atabs button[data-t="sub"]',900);
+await s.shot('11_sub');
+await s.click('#cApply',1200);
+await s.shot('12_applied');
+await s.click('#atabs button[data-t="map"]',1200);
+await s.shot('13_map');
+await p.evaluate(()=>window.scrollTo({top:500}));await sleep(800);
+await s.shot('14_map2');
+await p.evaluate(()=>window.scrollTo({top:1000}));await sleep(800);
+await s.shot('15_map3');
+await s.click('#atabs button[data-t="now"]',1200);
+await s.shot('16_now');
+await s.click('#atabs button[data-t="rep"]',1200);
+await s.shot('17_rep');
+await p.evaluate(()=>window.scrollTo({top:600}));await sleep(800);
+await s.shot('18_rep2');
 
 await s.finish();
 await browser.close();
