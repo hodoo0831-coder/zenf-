@@ -53,16 +53,18 @@ let role='center';
 
 /* ============ VIEWS ============ */
 const V={};
-const CAPA_LINES=[["32104","직선","직선4호",21000,30000,1,2,1,0],["32105","직선","직선5호",21840,31200,1,5,1,2],["32111","직선","직선11호",19320,27600,1,6,1,2],["32113","직선","직선13호",24360,34800,1,6,1,3],["32114","직선","직선14호",22680,32400,1,6,1,3],["32115","직선","직선15호",21840,31200,1,5,1,3],["32116","직선","직선16호",28560,40800,1,7,1,4],["32117","초격차","세정초격차 1호",16200,18000,2,2,2,2],["32118","초격차","세정초격차 2호",16200,18000,2,2,2,2],["32119","초격차","세정초격차 3호",16200,18000,2,4,2,4],["32120","초격차","세정초격차 4호",17550,19500,2,4,2,4],["32163","직선","리필3호",8820,12600,1,2,1,2],["32171","직선","대용량 충전",3360,4800,1,2,0,0],["32202","멀티","멀티셀2호",7140,10200,1,1,1,1],["32203","멀티","멀티셀3호",7140,10200,1,1,1,0],["32206","멀티","멀티셀6호",14280,20400,1,3,1,3],["32207","멀티","멀티셀7호",14280,20400,1,3,2,3],["32208","멀티","멀티셀8호",14280,20400,1,3,1,3],["32209","멀티","세럼충전기",25200,36000,1,0,1,0],["32222","HnB기타","크림2호",3360,4800,1,3,1,1],["32223","HnB기타","크림3호",2150,3000,1,3,1,0],["32232","튜브","튜브2호",17000,23000,1,0,1,0],["32233","튜브","튜브3호",17000,23000,1,0,1,0],["32234","튜브","튜브4호",18000,25000,1,0,1,0],["32235","튜브","튜브5호",18000,25000,1,0,1,0],["32236","튜브","튜브6호",18000,25000,1,0,1,0],["32237","튜브","튜브7호",20000,27000,1,0,1,0],["32238","튜브","튜브8호",17000,23000,1,2,1,2],["32239","튜브","튜브9호(초음파)",13000,18600,0,0,0,0],["32302","치약","치약충전2호",45000,60000,1,1,0,0],["32303","치약","치약충전3호",45000,60000,1,2,1,2],["32304","치약","치약충전4호",20000,28000,1,1,0,0],["32305","치약","치약충전5호",45000,60000,1,2,1,2],["32306","치약","치약충전6호",50000,65000,1,2,1,1],["32322","치약","치약수축2호",15000,20000,1,0,0,0],["32324","치약","치약수축4호",15000,20000,1,0,1,0],["32325","치약","치약수축5호",16000,21000,1,0,1,0],["32331","치약","치약기획",7000,10000,1,4,0,0],["32341","치약","일회용 치약충전",70000,100000,1,1,0,0],["32401","염모","염모제 충전1호",15000,18000,1,1,1,1],["32402","염모","염모제 충전3호",11000,15000,1,0,1,0],["32403","염모","염모제 충전5호",11000,15000,0,0,0,0],["32411","염모","염모제 직구성1호",15000,18000,1,1,1,0],["32412","염모","염모제 직구성2호",11000,15000,1,4,0,0],["32413","염모","염모제 직구성3호",11000,15000,1,4,0,0],["32415","염모","염모제 직구성5호",11000,15000,1,1,1,1],["32416","염모","염모제 직구성6호",5500,7000,1,1,1,0],["32417","염모","염모제 직구성7호",17000,23000,1,2,1,2],["32432","염모","염모제 파우치2호",10000,13000,1,0,0,0],["32433","염모","염모제 파우치3호",16500,21000,0,0,0,0],["32434","염모","염모제 파우치4호",16500,21000,0,0,0,0],["32435","염모","염모제 파우치5호",20000,27000,1,0,1,0],["32436","염모","염모제 파우치6호",17000,23000,1,0,1,0],["32442","염모","산화제 충전2호",10400,14000,1,1,1,1],["32443","염모","산화제 충전3호",2000,2700,1,1,1,0],["32445","염모","산화제 충전5호",8800,12400,1,0,1,0],["32446","염모","산화제 충전6호",11000,15000,0,0,0,0],["32447","염모","산화제 충전7호",8000,11000,1,1,0,0],["32448","염모","산화제 충전8호",17000,23000,1,0,1,0],["32451","염모","염모제 기획",9000,12400,1,10,0,0],["32901","HnB기타","팜플1호",56700,81000,1,0,1,0],["32902","HnB기타","팜플2호(FNC)",40000,55000,0,0,0,0],["32903","HnB기타","팜플3호",56700,81000,1,0,1,0],["32906","HnB기타","팜플6호(FNC)",40000,55000,0,0,0,0],["32907","HnB기타","팜플7호(FNC)",40000,55000,0,0,0,0],["32908","HnB기타","팜플8호",56700,81000,1,0,0,0],["32911","HnB기타","턴테이블1호",14280,20400,1,2,1,1],["32913","HnB기타","턴테이블3호",14280,20400,1,3,1,1],["32914","HnB기타","턴테이블4호",14280,20400,1,1,0,0]];
+const CAPA_LINES=[["32104","직선","직선4호",21600,27360,1,2,1,0],["32105","직선","직선5호",24300,30780,1,5,1,3],["32111","직선","직선11호",16200,20520,1,6,1,3],["32113","직선","직선13호",26100,33060,1,6,1,4],["32114","직선","직선14호",24300,30780,1,6,1,4],["32115","직선","직선15호",18000,22800,1,5,1,3],["32116","직선","직선16호",30600,38760,1,7,1,4],["32117","초격차","세정초격차 1호",16200,20520,2,2,2,2],["32118","초격차","세정초격차 2호",16200,20520,2,2,2,2],["32119","초격차","세정초격차 3호",16200,20520,2,3,2,3],["32120","초격차","세정초격차 4호",16200,20520,2,4,2,4],["32163","직선","리필3호",9000,11400,1,2,1,2],["32171","직선","대용량 충전",3150,3990,1,2,0,0],["32202","멀티","멀티셀2호",7650,9690,1,1,1,0],["32203","멀티","멀티셀3호",7650,9690,1,1,1,1],["32206","멀티","멀티셀6호",15750,19950,1,3,1,2],["32207","멀티","멀티셀7호",15750,19950,1,3,1,3],["32208","멀티","멀티셀8호",15750,19950,1,3,1,2],["32209","멀티","세럼충전기",15750,19950,1,0,1,0],["32222","HnB기타","크림2호",5400,6840,1,3,1,0],["32223","HnB기타","크림3호",5850,7410,1,3,1,0],["32232","튜브","튜브2호",20250,25650,2,0,1,0],["32233","튜브","튜브3호",18900,23940,2,0,1,0],["32234","튜브","튜브4호",22500,28500,2,0,1,0],["32235","튜브","튜브5호",22500,28500,2,0,1,0],["32236","튜브","튜브6호",22500,28500,2,0,1,0],["32237","튜브","튜브7호",24300,30780,1,0,1,0],["32238","튜브","튜브8호",20250,25650,1,2,1,2],["32239","튜브","튜브9호(초음파)",0,0,0,0,0,0],["32302","치약","치약충전2호",67500,85500,1,2,0,0],["32303","치약","치약충전3호",67500,85500,1,2,0,0],["32304","치약","치약충전4호",29250,37050,1,2,1,1],["32305","치약","치약충전5호",67500,85500,1,1,1,2],["32306","치약","치약충전6호",67500,85500,1,1,1,2],["32322","치약","치약수축2호",22500,28500,1,0,0,0],["32324","치약","치약수축4호",22500,28500,1,1,1,0],["32325","치약","치약수축5호",22500,28500,1,1,1,0],["32331","치약","치약기획",4500,5700,1,4,0,0],["32341","치약","일회용 치약충전",99000,125400,1,1,0,0],["32401","염모","염모제 충전1호",15750,19950,1,1,1,1],["32402","염모","염모제 충전3호",11250,14250,1,0,1,0],["32403","염모","염모제 충전5호",15750,19950,0.5,0,0.5,0],["32411","염모","염모제 직구성1호",15750,19950,1,1,1,0],["32412","염모","염모제 직구성2호",11000,15000,1,4,0,0],["32413","염모","염모제 직구성3호",11250,14250,1,4,0,0],["32415","염모","염모제 직구성5호",15750,19950,1,1,1,1],["32416","염모","염모제 직구성6호",7200,9120,1,1,1,0],["32417","염모","염모제 직구성7호",27000,34200,1,2,1,2],["32432","염모","염모제 파우치2호",10000,13000,1,0,0,0],["32433","염모","염모제 파우치3호",7200,9120,0.5,0,0.5,0],["32434","염모","염모제 파우치4호",7200,9120,0.5,0,0.5,0],["32435","염모","염모제 파우치5호",20000,27000,1,0,1,0],["32436","염모","염모제 파우치6호",27000,34200,1,0,1,0],["32442","염모","산화제 충전2호",11250,14250,1,1,1,1],["32443","염모","산화제 충전3호",2250,2850,1,1,1,0],["32445","염모","산화제 충전5호",11250,14250,1,0,1,0],["32446","염모","산화제 충전6호",15750,19950,0.5,0,0.5,0],["32447","염모","산화제 충전7호",8000,11000,1,1,0,0],["32448","염모","산화제 충전8호",27000,34200,1,0,1,0],["32451","염모","염모제 기획",9000,12400,1,10,0,0],["32901","HnB기타","팜플1호",49500,62700,1,0,1,0],["32902","HnB기타","팜플2호(FNC)",0,0,0,0,0,0],["32903","HnB기타","팜플3호",49500,62700,1,0,0,0],["32906","HnB기타","팜플6호(FNC)",0,0,0,0,0,0],["32907","HnB기타","팜플7호(FNC)",0,0,0,0,0,0],["32908","HnB기타","팜플8호",49500,62700,1,0,1,0],["32911","HnB기타","턴테이블1호",14400,18240,1,3,1,2],["32913","HnB기타","턴테이블3호",14400,18240,1,3,1,2],["32914","HnB기타","턴테이블4호",14400,18240,1,1,0,0],["N-01","직선","동기화 직선14호",22500,28500,0,1,0,0]];
 const PLAN_SEED={"32113":80934,"32115":58000,"32116":85440,"32117":75000,"32118":78016,"32119":143032,"32120":127659,"32163":31404,"32202":33004,"32206":63012,"32207":66000,"32208":33866,"32209":70616,"32233":113812,"32234":72000,"32235":99420,"32236":155796,"32237":154292,"32238":97016,"32305":151800,"32306":171600,"32324":39600,"32325":57200,"32401":43080,"32403":54000,"32411":43080,"32415":54000,"32416":51604,"32417":104272,"32433":154812,"32434":154812,"32435":26400,"32436":104272,"32443":9800,"32446":54000,"32448":104208,"32903":90000,"32907":9200,"32911":64904,"32913":41220};
 
 /* ===== 주간계획 부하율(실 CAPA·표준인원 연동) ===== */
 let loadPlan=PLAN_SEED, loadDays=6, loadBase='c75', loadFilter=null, loadPlanName='33주 확정(내장 샘플)';
 function _lnum(v){v=String(v).replace(/[, ]/g,'');const m=v.match(/\d+/g);return m?+m[0]:0;}
 /* ===== 라인 마스터(기준 데이터) — CAPA표·인원표 업로드로 갱신 =====
-   CAPA_LINES 는 두 기준 파일(AP 라인별 CAPA / 표준·가용 인원표)을 코드에
-   내장한 초기값이다. 같은 파일을 업로드하면 DB.master 가 그 값을 덮고,
-   부하율·필요인원 계산 전체가 새 기준을 따른다. */
+   CAPA_LINES 는 'AP 라인별 인원·CAPA 기준표'(HnB·튜브·염모제·치약 4개 시트)를 코드에
+   내장한 초기값이다: [작업장코드, 그룹, 라인명, 정상 CAPA, 잔업 CAPA, 표준 OP, 표준 작업자, 가용 OP, 가용 작업자].
+   CAPA = 분당 케파 × 450분(7.5hr 정규) / × 570분(9.5hr 잔업) — 표의 정상·잔업 열과 같다.
+   표에 CAPA(분)가 비어 있는 라인은 기존 값을 두고, 가동 안 하는 라인(표준·가용 인원 모두 없음)은 0 이다.
+   같은 형식의 파일을 업로드하면 DB.master 가 그 값을 덮고, 부하율·필요인원 계산 전체가 새 기준을 따른다. */
 function LMASTER(){return (DB.master&&DB.master.rows&&DB.master.rows.length)?DB.master.rows:CAPA_LINES;}
 function _mnum(v){const m=String(v==null?'':v).replace(/,/g,'').match(/\d+(?:\.\d+)?/);return m?+m[0]:0;}
 function _mkey(v){return String(v||'').replace(/\s+/g,'').toLowerCase();}
@@ -122,23 +124,35 @@ function _staffSheets(wb){const out=[];
     if(hr>=0)out.push({nm,a,hr});}
   return out;}
 function isStaffWB(wb){return _staffSheets(wb).length>0;}
+/* 라인명 찾기 — 표에는 '염모제 직구성1호(염모제충전1호)' 처럼 괄호로 짝 설비를 덧붙인 이름이 있다.
+   정확히 같은 이름 → 괄호 앞 이름 → 괄호 안 이름 순으로 맞춘다. */
+function _lineRow(byName,name){
+  const k=_mkey(name); if(byName[k])return byName[k];
+  const base=k.replace(/[(（].*$/,''); if(base&&byName[base])return byName[base];
+  const m=k.match(/[(（]([^)）]*)/); if(m&&byName[m[1]])return byName[m[1]];
+  return null;}
 function applyStaffMaster(wb,fname){
   const sheets=_staffSheets(wb), rows=_masterClone();
   const byName={};rows.forEach(r=>{byName[_mkey(r[2])]=r;});
-  let upd=0;const miss=[];
+  let upd=0,capaUpd=0;const miss=[];
   for(const {a,hr} of sheets){
     const li=a[hr].findIndex(c=>/라인명/.test(String(c)));
+    const ci=a[hr].findIndex(c=>/CAPA/i.test(String(c)));      /* 인원·CAPA 합본 표 — 'CAPA' 아래 첫 열이 분당 케파(분) */
     for(let i=hr+1;i<a.length;i++){
       const r=a[i], name=String(r[li]||'').trim();
       if(!name||/^[\d.,\s]+$/.test(name))continue;              /* 빈 행·합계 행 제외 */
-      const row=byName[_mkey(name)];
+      /* 라인명만 있고 인원·CAPA 칸이 전부 빈 행(자리표시)은 '0' 이 아니라 '자료 없음' — 덮어쓰지 않는다 */
+      if(![li+1,li+2,li+3,li+4].some(j=>String(r[j]||'').trim())&&!(ci>=0&&String(r[ci]||'').trim()))continue;
+      const row=_lineRow(byName,name);
       const v=[_mnum(r[li+1]),_mnum(r[li+2]),_mnum(r[li+3]),_mnum(r[li+4])];
-      if(row){row[5]=v[0];row[6]=v[1];row[7]=v[2];row[8]=v[3];upd++;}
+      if(row){row[5]=v[0];row[6]=v[1];row[7]=v[2];row[8]=v[3];upd++;
+        const mpm=ci>=0?_mnum(r[ci]):0;                           /* 분당 케파 → 정상(450분)·잔업(570분) CAPA */
+        if(mpm>0){row[3]=Math.round(mpm*450);row[4]=Math.round(mpm*570);capaUpd++;}}
       else miss.push(name);
     }
   }
   DB.master=Object.assign(DB.master||{},{rows,staffName:fname,staffAt:new Date().toISOString().slice(0,10)});
-  saveDB();return {upd,miss:[...new Set(miss)]};
+  saveDB();return {upd,capaUpd,miss:[...new Set(miss)]};
 }
 function masterStatus(){
   const m=DB.master||{};
@@ -171,7 +185,7 @@ function loadUpload(input){const f=input.files[0];if(!f)return;const rd=new File
       const st=applyStaffMaster(wb,f.name);
       if(DB.plan)applyPlanCascade(DB.plan,DB.loadPlanName||'주간계획',DB.loadPlan||{});
       rerender();
-      toast('인원 기준 반영 — '+st.upd+'개 라인 표준·가용 인원 갱신'+(st.miss.length?' · 미매칭 '+st.miss.length+'건('+st.miss.slice(0,3).join(', ')+(st.miss.length>3?' 외':'')+')':''));
+      toast('인원 기준 반영 — '+st.upd+'개 라인 표준·가용 인원'+(st.capaUpd?' · CAPA '+st.capaUpd+'개':'')+' 갱신'+(st.miss.length?' · 미매칭 '+st.miss.length+'건('+st.miss.slice(0,3).join(', ')+(st.miss.length>3?' 외':'')+')':''));
       go('load');return;
     }
     if(typeof isCapaWB==='function'&&isCapaWB(wb)){
@@ -231,7 +245,7 @@ function loadDayView(){
   const baseBtn=(k,lab)=>`<button class="btn ${loadBase===k?'p':''}" style="padding:5px 10px" onclick="loadBase='${k}';go('load')">${lab}</button>`;
   const head=`<div class="card" style="margin-bottom:14px;padding:13px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <div class="chead">일간 생산량 대비 필요 인원</div>
-    <span class="mini">호기 CAPA(${loadBase==='c75'?'7.5hr 정규':'10.5hr 잔업'}) × 1일</span>
+    <span class="mini">호기 CAPA(${loadBase==='c75'?'7.5hr 정규':'9.5hr 잔업'}) × 1일</span>
     <span style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
       <span class="mini">단위</span>${unitBtn('week','주간')}${unitBtn('day','일간')}
       <span class="mini" style="margin-left:6px">기준</span>${baseBtn('c75','정규')}${baseBtn('c105','잔업')}
@@ -304,7 +318,7 @@ function loadDayView(){
         <div class="r">최대 필요일 — ${peak?peak.date.slice(5)+'('+wdOf(peak.date)+') '+peak.need+'명':'-'}</div>
         <div class="s">${peak?`부하율 ${peak.load}% · 계획 ${(peak.qty/1000).toFixed(1)}천개 · 이 날 기준으로 T/O를 잡으면 나머지 요일은 여유`:''}</div></div></div>
       <div class="mini" style="margin-top:10px;line-height:1.7">필요 인원 = <b>표준인원 × (일 계획량 ÷ 일 CAPA)</b>.
-        일 CAPA는 ${loadBase==='c75'?'7.5hr 정규':'10.5hr 잔업'} 기준이며, 위 [기준] 버튼으로 바꿔 비교할 수 있습니다.</div></div>
+        일 CAPA는 ${loadBase==='c75'?'7.5hr 정규':'9.5hr 잔업'} 기준이며, 위 [기준] 버튼으로 바꿔 비교할 수 있습니다.</div></div>
   </div>
   ${ledger('그룹별 일간 필요 인원',loadDate.slice(5)+'('+wdOf(loadDate)+') 기준 · '+gs.length+'개 그룹 — 클릭하여 펼침','<div class="tblscroll"><table class="tb tbsticky"><thead><tr><th style="text-align:left">그룹</th><th>부하율</th><th>표준</th><th>가용</th><th>필요</th><th>과부족</th></tr></thead><tbody>'+grows+'</tbody></table></div>')}
   ${ledger('라인별 일간 필요 인원',loadDate.slice(5)+'('+wdOf(loadDate)+') 기준 · 가동 '+cur.lines+'개 라인 — 클릭하여 펼침','<input class="tblsearch" oninput="tblFilter(this)" placeholder="라인 검색 (예: 튜브, 염모)…"><div class="tblscroll"><table class="tb tbsticky"><thead><tr><th style="text-align:left">라인</th><th>그룹</th><th>일 계획</th><th>일 CAPA</th><th>부하율</th><th>표준</th><th>가용</th><th>필요</th><th>과부족</th></tr></thead><tbody>'+lrows+'</tbody></table></div>')}`;
@@ -331,7 +345,7 @@ function loadView(){
   const tbl=shown.map(r=>`<tr><td style="text-align:left">${r.name}</td><td>${r.grp}</td><td>${r.wk.toLocaleString()}</td><td>${(r.cap*loadDays).toLocaleString()}</td><td style="color:${gcol(r.load)};font-weight:700">${r.load}%</td><td>${r.need}</td><td>${r.avail}</td><td>${r.needAdj}</td><td class="${r.gap>0?'neg':r.gap<0?'pos':'zero'}">${r.gap>0?'+'+r.gap:r.gap}</td></tr>`).join('');
   const filterChip=loadFilter?`<span class="tag t-blue" style="cursor:pointer" onclick="loadFilter=null;go('load')">${loadFilter} 필터 ✕</span>`:'';
   return `
-  <div class="card" style="margin-bottom:14px;padding:13px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div class="chead">주간계획 부하율 · 필요인원</div><span class="tag t-blue">${loadPlanName}</span><span class="mini">호기 CAPA(${base==='c75'?'7.5hr 정규':'10.5hr 잔업'}) × ${loadDays}일</span><span style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="mini">단위</span>${unitBtn('week','주간')}${unitBtn('day','일간')}<span class="mini" style="margin-left:6px">기준</span>${baseBtn('c75','정규')}${baseBtn('c105','잔업')}<span class="mini" style="margin-left:6px">가동</span>${dayBtn(5)}${dayBtn(6)}<label class="btn" style="cursor:pointer" onclick="document.getElementById('loadFile').click()">↑ 주간계획 업로드</label><input id="loadFile" type="file" accept=".xlsx,.xls" style="display:none" onchange="loadUpload(this)"></span></div></div>
+  <div class="card" style="margin-bottom:14px;padding:13px"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div class="chead">주간계획 부하율 · 필요인원</div><span class="tag t-blue">${loadPlanName}</span><span class="mini">호기 CAPA(${base==='c75'?'7.5hr 정규':'9.5hr 잔업'}) × ${loadDays}일</span><span style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="mini">단위</span>${unitBtn('week','주간')}${unitBtn('day','일간')}<span class="mini" style="margin-left:6px">기준</span>${baseBtn('c75','정규')}${baseBtn('c105','잔업')}<span class="mini" style="margin-left:6px">가동</span>${dayBtn(5)}${dayBtn(6)}<label class="btn" style="cursor:pointer" onclick="document.getElementById('loadFile').click()">↑ 주간계획 업로드</label><input id="loadFile" type="file" accept=".xlsx,.xls" style="display:none" onchange="loadUpload(this)"></span></div></div>
   
   ${mline}
   <div class="kstrip">
@@ -344,7 +358,7 @@ function loadView(){
     <div class="card"><h3>그룹별 부하율 <span class="hint">클릭 → 라인 필터 · 100%↑ 잔업·증원</span></h3>${gbars}</div>
     <div class="card"><h3>AI 인력 재배치 추천 <span class="hint">여유 그룹 → 과부하 그룹</span></h3>${reco}</div>
   </div>
-  ${ledger('라인별 부하율 · 필요인원','CAPA·표준인원 실데이터 연동 · '+shown.length+'개 라인 — 클릭하여 펼침','<input class="tblsearch" oninput="tblFilter(this)" placeholder="라인 검색 (예: 튜브, 염모)…"><div class="tblscroll"><table class="tb tbsticky"><thead><tr><th style="text-align:left">라인</th><th>그룹</th><th>주간계획</th><th>주CAPA</th><th>부하율</th><th>표준</th><th>가용</th><th>필요*</th><th>과부족</th></tr></thead><tbody>'+tbl+'</tbody></table></div><div class="mini" style="margin-top:6px">* 필요 = 표준인원 × 부하율. CAPA 기준: '+(base==='c75'?'7.5hr 정규':'10.5hr 잔업')+' · 부하율 100%↑ = 잔업 또는 증원 필요.</div>')}`;
+  ${ledger('라인별 부하율 · 필요인원','CAPA·표준인원 실데이터 연동 · '+shown.length+'개 라인 — 클릭하여 펼침','<input class="tblsearch" oninput="tblFilter(this)" placeholder="라인 검색 (예: 튜브, 염모)…"><div class="tblscroll"><table class="tb tbsticky"><thead><tr><th style="text-align:left">라인</th><th>그룹</th><th>주간계획</th><th>주CAPA</th><th>부하율</th><th>표준</th><th>가용</th><th>필요*</th><th>과부족</th></tr></thead><tbody>'+tbl+'</tbody></table></div><div class="mini" style="margin-top:6px">* 필요 = 표준인원 × 부하율. CAPA 기준: '+(base==='c75'?'7.5hr 정규':'9.5hr 잔업')+' · 부하율 100%↑ = 잔업 또는 증원 필요.</div>')}`;
 }
 
 V.home=()=>{
