@@ -7,7 +7,7 @@
  * 정직성 원칙
  *  - 서버는 실제 netlify/functions/report.mjs 핸들러를 그대로 호출한다. 바뀐 것은 @netlify/blobs 의
  *    getStore 한 줄(메모리 스텁)뿐이며, 변환본은 메모리(data: URL)에서만 만들고 원본 파일은 건드리지 않는다.
- *  - 앱(ZEN_SafeVoice.html)은 가상 주소(https://safevoice.example.com)에서 열어 /api/report 가 핸들러로 가게 한다.
+ *  - 앱(ZEN_SafeVoice.html)은 가상 주소(https://zen-ap-manufacturing.netlify.app)에서 열어 /api/report 가 핸들러로 가게 한다.
  *  - 샘플 신고 7건은 작업자 POST(+관리자 update)로 핸들러에 넣는다(화면 DOM 에 값을 쓰지 않는다).
  *    서버 접수 시각만 "하루 이틀 전"으로 보이도록 시연 중 Date 를 앞당겨서 넣었다.
  *  - 영상 중 작업자 화면에서 직접 입력·제출하는 1건은 화면 조작 그대로 실제 API 로 들어간다.
@@ -20,7 +20,7 @@ import path from 'path';
 import {launch,session,ROOT} from '../lib.mjs';
 
 const OUT=path.resolve(process.argv[2]||path.join(ROOT,'video','out'));
-const ORIGIN='https://safevoice.example.com';          // 가상 주소(예약 도메인) — 화면 QR 공고문에 찍히는 주소
+const ORIGIN='https://zen-ap-manufacturing.netlify.app';          // 가상 주소(예약 도메인) — 화면 QR 공고문에 찍히는 주소
 const PIN=process.env.ADMIN_PIN||'1234';
 
 /* ───────── 1) 실제 report.mjs 핸들러 불러오기(@netlify/blobs 만 메모리 스텁으로) ───────── */
