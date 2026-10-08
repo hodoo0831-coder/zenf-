@@ -231,7 +231,7 @@ const N={};   // 화면에서 읽은 값(자막용)
 
 /** 장면 — 목표 초에 맞춰 남은 시간은 커서를 천천히 흘리며 채운다(정지 화면 방지). 동작이 더 오래 걸리면 그만큼 길어진다 */
 async function sc(label,secs,fn,tail=[40,30]){
-  await s.scene(label,secs,async()=>{const end=Date.now()+secs*1000;await fn(end);await drift(end-Date.now(),...tail);},{hold:true});
+  await s.scene(label,secs,async()=>{const end=Date.now()+secs*1000;await fn(end);await drift(end-Date.now(),...tail);await s.shot('end_'+label.replace(/\s+/g,'_'));},{hold:true});
 }
 const profs=async(root)=>{   // 작업자 카드의 이름·시간당 생산성(PLT/MH)을 화면에서 읽는다
   const names=await txts(root+' .pc-name');
@@ -241,7 +241,7 @@ const profs=async(root)=>{   // 작업자 카드의 이름·시간당 생산성(
 
 /* ───────── 1. P-BOX 작업자 앱 (모바일 레이아웃) ───────── */
 await open(W_PBOX,500);
-await cap('SYSTEM · 간접작업','현장 작업자는 폰으로 입력','큰 버튼만 눌러 등록 — 이름을 "+" 로 이으면 공동작업(맨아워 자동)','nar');
+await cap('SYSTEM · 간접작업','현장 작업자는 폰으로 입력','큰 버튼으로 등록 · 이름을 "+" 로 이으면 공동작업','nar');
 await sc('P-BOX 작업자 입력',7,async()=>{
   await s.shot('01_worker_start');
   await clk('#workerName',{pause:120,steps:10});
@@ -266,7 +266,7 @@ await sc('P-BOX 관리자 실시간 집계',8,async()=>{
   console.log('  오늘(1건):',JSON.stringify(N.t1));
   const short=o=>`${o.info.replace(/^[\d-]+ · /,'오늘 ')} · ${o.plt.replace('PLT',' PLT')} · ${o.mh.replace('MH',' MH')}`;
   await cap('SYSTEM · 간접작업','방금 입력한 건이 "오늘" 집계에 합산',short(N.t1)+' (공동 2명 × 9h)');
-  await s.toast('LIVE','서버(D1)를 5초 주기로 자동 조회',3000);
+  await s.toast('LIVE','서버(D1)를 5초 주기로 자동 조회',2300);
   // 다른 기기에서 "등록 완료" — 다음 서버 조회 직전에 눌러 반영이 곧바로 보이게 한다
   // 서버 조회가 5초 주기이므로, 다음 조회 약 3초 전에 눌러 "1건 → 2건" 이 보이도록 한다(주기를 못 맞춰도 최대 5초 안에 반영)
   const last=polls[polls.length-1]||Date.now();let next=last+5000;if(next<Date.now())next+=5000*Math.ceil((Date.now()-next)/5000);
@@ -315,7 +315,7 @@ await sc('P-BOX 주간계획',3.4,async()=>{
 
 /* ───────── 6. 오리콘 : 작업자 앱 → 관리자 ───────── */
 await open(W_ORI,400);
-await cap('SYSTEM · 간접작업','오리콘도 같은 방식으로 입력','中·大 박스 · 세척·분류·수리 · 1 PLT = 120 EA 자동 환산','nar');
+await cap('SYSTEM · 간접작업','오리콘도 같은 방식으로 입력','中·大 박스 · 세척·분류·수리 · 1 PLT = 120 EA','nar');
 await sc('오리콘 작업자 입력',3.6,async()=>{
   await clk('#workerName',{pause:100,steps:10});
   await p.keyboard.type('작업자 E',70);await sleep(150);

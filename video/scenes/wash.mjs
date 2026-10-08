@@ -123,8 +123,10 @@ if(FAKE){await s.ctx.clock.install({time:new Date(NOW)});console.log('(업무시
 /* 공통 도우미 */
 const waitSplash=async(page)=>{await page.waitForSelector('#splashScreen',{state:'detached',timeout:8000}).catch(()=>{});};
 const show=async(title,sub,narrow=false)=>{await s.cap(TAG,title,sub);await p.evaluate(n=>{const e=document.getElementById('zcap2');if(e)e.style.maxWidth=n?'380px':'';},narrow);await s.sample(true);};
-const scrollTo=(y)=>p.evaluate(y=>window.scrollTo({top:y,behavior:'smooth'}),y);
-const topOf=(sel,off=20)=>p.evaluate(([sel,off])=>document.querySelector(sel).getBoundingClientRect().top+scrollY-off,[sel,off]);
+/* 스크롤 대상: 문서(대시보드) 또는 body(작업자 앱 — body 가 스크롤 영역) */
+const SCR='(()=>{const c=[document.scrollingElement,document.body];return c.find(e=>e&&e.scrollHeight>e.clientHeight+20)||document.scrollingElement;})()';
+const scrollTo=(y)=>p.evaluate(`${SCR}.scrollTo({top:${y},behavior:'smooth'})`);
+const topOf=(sel,off=20)=>p.evaluate(`document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect().top+${SCR}.scrollTop-${off}`);
 const txt=(sel)=>p.locator(sel).first().innerText();
 const L0=Date.now();const sh=async(t)=>{if(process.env.LAPS)console.log('   lap',t,Date.now()-L0);return s.shot(t);};
 /* 빠른 클릭 — 커서가 부드럽게 이동하되 한 번에 ~1초 안에 끝낸다 */
