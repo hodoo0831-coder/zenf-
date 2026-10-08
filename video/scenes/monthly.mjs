@@ -142,7 +142,7 @@ let seed='[]';
 const s=await session(browser,be,'monthly',TMP,{initScript:initFor(seed)});
 const {p,sleep}=s;
 /* 한 가지 우회: 기본 자막은 740px 폭이라 표 위를 가리므로, 자막 폭·글자 크기를 장면마다 줄인다 */
-await p.addInitScript(()=>{const add=()=>{const st=document.createElement('style');st.textContent='#zcap2.nr{max-width:322px!important}#zcap2.top{top:46px!important;bottom:auto!important}#zcap2.nr .h{font-size:22px!important}#zcap2.nr .s{font-size:14px!important}#zcap2.md{max-width:560px!important}';document.head.appendChild(st);};
+await p.addInitScript(()=>{const add=()=>{const st=document.createElement('style');st.textContent='#zcap2.nr{max-width:322px!important}#zcap2.top{top:46px!important;bottom:auto!important}#zcap2.nr .h{font-size:22px!important}#zcap2.nr .s{font-size:14px!important}#zcap2.md{max-width:560px!important}#zcur{transition:left .42s cubic-bezier(.4,0,.2,1),top .42s cubic-bezier(.4,0,.2,1),transform .1s!important}';document.head.appendChild(st);};
   if(document.head)add();else document.addEventListener('DOMContentLoaded',add);});
 const show=async(title,sub,mode='')=>{await s.cap(TAG,title,sub);await p.evaluate(m=>{const e=document.getElementById('zcap2');if(e){e.className=m;e.style.maxWidth='';}},mode);await s.sample(true);};
 const SCR='document.scrollingElement';
@@ -152,13 +152,18 @@ const scrollTo=(y,ms=1000)=>p.evaluate(([y,ms])=>new Promise(res=>{const e=docum
   const step=now=>{const t=Math.min(1,(now-t0)/ms);e.scrollTo({top:y0+(y-y0)*ease(t),behavior:'instant'});t<1?requestAnimationFrame(step):res();};requestAnimationFrame(step);}),[y,ms]);
 const topOf=(sel,off=24)=>p.evaluate(([sel,off])=>document.querySelector(sel).getBoundingClientRect().top+document.scrollingElement.scrollTop-off,[sel,off]);
 const txt=(sel)=>p.locator(sel).first().innerText().then(t=>t.replace(/\s+/g,' ').trim());
-const tap=async(loc,pause=350,steps=14)=>{const l=typeof loc==='string'?p.locator(loc).first():loc;
-  try{let bb=await l.boundingBox();
-    if(!bb||bb.y<40||bb.y+bb.height>860){await l.scrollIntoViewIfNeeded({timeout:2500});bb=await l.boundingBox();}
-    await p.mouse.move(bb.x+bb.width/2,bb.y+bb.height/2,{steps});await sleep(90);await p.mouse.down();await sleep(70);await p.mouse.up();await sleep(pause);return true;}
+/* 커서: 실제 마우스는 2스텝으로 보내고, 화면의 커서(#zcur)는 CSS 전환으로 0.42초 동안 미끄러지게 한다
+   (Playwright 의 steps 는 한 스텝마다 왕복이 들어 느리다 — 클릭은 커서가 도착한 뒤에 눌린다) */
+const GL=470;
+const center=async(loc)=>{const l=typeof loc==='string'?p.locator(loc).first():loc;
+  let bb=await l.boundingBox();
+  if(!bb||bb.y<40||bb.y+bb.height>860){await l.scrollIntoViewIfNeeded({timeout:2500});bb=await l.boundingBox();}
+  return {x:bb.x+bb.width/2,y:bb.y+bb.height/2};};
+const tap=async(loc,pause=300)=>{
+  try{const c=await center(loc);await p.mouse.move(c.x,c.y,{steps:2});await sleep(GL);await p.mouse.down();await sleep(70);await p.mouse.up();await sleep(pause);return true;}
   catch(e){console.log('  (탭 실패)',String(e).split('\n')[0].slice(0,100));return false;}};
-const hover=async(loc,pause=300,steps=14)=>{const l=typeof loc==='string'?p.locator(loc).first():loc;
-  try{const bb=await l.boundingBox();await p.mouse.move(bb.x+bb.width/2,bb.y+bb.height/2,{steps});await sleep(pause);}catch(e){console.log('  (호버 실패)',String(e).split('\n')[0].slice(0,100));}};
+const hover=async(loc,pause=150)=>{
+  try{const c=await center(loc);await p.mouse.move(c.x,c.y,{steps:2});await sleep(GL+pause);}catch(e){console.log('  (호버 실패)',String(e).split('\n')[0].slice(0,100));}};
 const closeModal=async()=>{await tap('#modalBg.active .modal-foot button.primary',450);};
 const L0=Date.now();const sh=async(t)=>{if(process.env.LAPS)console.log('   lap',t,((Date.now()-L0)/1000).toFixed(2));return s.shot(t);};
 
@@ -166,22 +171,22 @@ const L0=Date.now();const sh=async(t)=>{if(process.env.LAPS)console.log('   lap'
 const mode=(m)=>p.evaluate(m=>{const e=document.getElementById('zcap2');if(e)e.className=m;},m);
 const waitModal=(sel)=>p.waitForSelector(sel,{timeout:3000}).catch(()=>{});
 
-/* ═════════ 장면 1 — 마감 엑셀 업로드 → 월·양식·라인 자동 인식 ═════════ */
+/* ═════════ 장면 1 — 마감 엑셀 업로드 → 월·양식·라인·브랜드 자동 인식 ═════════ */
 await s.open(APP,500);
 await p.evaluate(()=>window.hideBackupToast&&window.hideBackupToast());
-await p.mouse.move(1180,420);                                                  // 커서를 화면 안으로
+await p.mouse.move(1180,430);                                                  // 커서를 화면 안으로
 const prevYm=await txt('.report .report-head-left h2');                        // 업로드 전에 보이는 보고서(지난 달)
 console.log('  업로드 전 보고서:',prevYm);
 await show('매월 마감 엑셀, 한 번만 올리세요','정산 엑셀을 끌어다 놓기만 하면 분석이 시작됩니다');
 let fileMsg='';
-await s.scene('upload',4.8,async()=>{
-  await sleep(300);
-  s.toast('UPLOAD','마감 엑셀(.xlsx)을 드래그하거나 클릭해서 선택',2600);
+await s.scene('upload',4.4,async()=>{
+  await sleep(250);
+  s.toast('UPLOAD','마감 엑셀(.xlsx)을 드래그하거나 클릭해서 선택',1900);
   const dz=await p.locator('#dropzone').boundingBox();
-  await p.mouse.move(dz.x+dz.width*0.55,dz.y+dz.height*0.5,{steps:16});await sleep(250);
+  await p.mouse.move(dz.x+dz.width*0.55,dz.y+dz.height*0.5,{steps:2});await sleep(GL+80);
   await sh('1a_dropzone_hover');
   const [fc]=await Promise.all([p.waitForEvent('filechooser'),(async()=>{await p.mouse.down();await sleep(80);await p.mouse.up();})()]);
-  await sleep(350);                                                           // 파일 선택창
+  await sleep(300);                                                           // 파일 선택창
   await fc.setFiles(payload(MONTHS[MONTHS.length-1]));
   await p.waitForFunction(ym=>document.getElementById('fileResult').innerText.includes(ym),MONTHS[MONTHS.length-1],{timeout:15000});
   await p.evaluate(()=>window.hideBackupToast&&window.hideBackupToast());
@@ -190,12 +195,14 @@ await s.scene('upload',4.8,async()=>{
   const ym=(fileMsg.match(/\d{4}-\d{2}/)||[''])[0];
   const lines=(fileMsg.match(/라인 (\d+)개/)||[])[1],items=(fileMsg.match(/항목 (\d+)개/)||[])[1];
   const src=(fileMsg.match(/·\s*(AP|데일리뷰티)\s*·/)||[])[1];
-  await show(ym+' 마감 엑셀 → 자동 인식 완료','파일명에서 월·양식('+src+'), 시트에서 라인 '+lines+'개 · 업무 항목 '+items+'개 · 브랜드를 읽어 냅니다');
-  s.toast('AUTO','월 · 양식 · 라인 · 브랜드를 자동 인식 — 직접 입력 없음',2800);
-  await hover('#fileResult .file-result',500,10);
+  const brands=await p.evaluate(()=>new Set(Object.values(window._currentState.curr.lineBrands).flatMap(o=>Object.keys(o))).size);
+  console.log('  브랜드 수(앱 상태):',brands);
+  await show(ym+' 마감 엑셀 → 자동 인식 완료','파일명에서 월·양식('+src+'), 시트에서 라인 '+lines+'개 · 브랜드 '+brands+'개 · 업무 항목 '+items+'개를 읽어 냅니다');
+  s.toast('AUTO','월 · 양식 · 라인 · 브랜드를 자동 인식 — 직접 입력 없음',2600);
+  await hover('#fileResult .file-result',100);
   await sh('1b_recognized');
-  await scrollTo(await topOf('.report-head',90),800);
-  await hover('.report-head .meta-row',250,10);
+  await scrollTo(await topOf('.report-head',90),700);
+  await hover('.report-head .meta-row',100);
   await sh('1c_head');
 },{hold:true});
 const meta=await txt('.report-head .meta-row');
@@ -209,85 +216,93 @@ console.log('  KPI',JSON.stringify(KP));
 const num=(t)=>(t.match(/[+\-−]?[\d.,]+%/)||[''])[0].replace('−','-');
 await show('핵심 지표와 전월 증감이 자동 계산','총 마감액 '+KP.total+' ('+num(KP.totalD)+') · 생산도급 '+KP.prod+' ('+num(KP.prodD)+') · 업무도급 '+KP.bus+' ('+num(KP.busD)+')');
 let alertRows=[];
-await s.scene('kpi-alerts',4.4,async()=>{
-  s.toast('증감','전월·전년 동월·직접 선택 — 비교 기준은 버튼으로 바꿉니다',2400);
-  await hover('.kpi-grid .kpi:nth-child(1)',200,10);
-  await hover('.kpi-grid .kpi:nth-child(2)',200,8);
-  await hover('.kpi-grid .kpi:nth-child(3)',200,8);
+await s.scene('kpi-alerts',4.0,async()=>{
+  s.toast('증감','비교 기준(전월·전년 동월·직접 선택)은 버튼으로 바꿉니다',2000);
+  await hover('.kpi-grid .kpi:nth-child(1)',120);
+  await hover('.kpi-grid .kpi:nth-child(3)',120);
   await sh('2a_kpi');
   await show('±3% 넘는 변동은 이상치로 자동 탐지','이상치 '+KP.alerts+' — 눌러서 항목별 전월 대비 증감 확인');
-  await tap('.kpi-grid .kpi.alert',500,10);                                     // 이상치 KPI 클릭 → 전체 목록
+  await tap('.kpi-grid .kpi.alert',150);                                         // 이상치 KPI 클릭 → 전체 목록
   await mode('nr');
   await waitModal('#modalBody .al-row');
-  alertRows=await p.locator('#modalBody .al-row').allInnerTexts();
-  console.log('  이상치 목록',alertRows.map(t=>t.replace(/\s+/g,' ')).join(' | '));
+  alertRows=(await p.locator('#modalBody .al-row').allInnerTexts()).map(x=>x.replace(/\s+/g,' ').trim());
+  console.log('  이상치 목록',alertRows.join(' | '));
   await sh('2b_alert_modal');
-  await sleep(700);
+  await sleep(500);
 },{hold:true});
 
 /* ═════════ 장면 3 — 이상치 라인 → 상세 드릴다운 ═════════ */
-const topLine=(alertRows.map(t=>t.replace(/\s+/g,' ')).find(t=>/상세/.test(t))||'').replace(/^[▲▼]\s*/,'').split(' 상세')[0].trim();
-console.log('  드릴 대상 라인:',topLine);
-await show('이상치 라인을 누르면 브랜드·단가·물량까지','"'+topLine+'" — 어느 브랜드가 얼마나 움직였는지','nr');
+const topRow=alertRows.find(t=>/상세/.test(t))||'';
+const topLine=topRow.replace(/^[▲▼]\s*/,'').split(' 상세')[0].trim();
+const topFlow=(topRow.match(/[\d,.]+[만억]\s*→\s*[\d,.]+[만억]/)||[''])[0];
+const topPct=(topRow.match(/[+\-−][\d.]+%/)||[''])[0];
+console.log('  드릴 대상 라인:',topLine,topFlow,topPct);
+await show('이상치 라인을 누르면 브랜드·단가·물량까지','"'+topLine+'" '+topFlow+' ('+topPct+') — 어느 브랜드가 움직였는지','nr');
 let cellTitle='';
-await s.scene('drill-cell',3.8,async()=>{
-  await tap(p.locator('#modalBody .al-row-click').filter({hasText:topLine}).first(),300,10);
+await s.scene('drill-cell',3.4,async()=>{
+  s.toast('DRILL','라인 → 브랜드 → 단가·물량 — 이상치 원인을 클릭으로 추적',2400);
+  await tap(p.locator('#modalBody .al-row-click').filter({hasText:topLine}).first(),150);
   await waitModal('#modalBg.active .cd-line');
-  await sleep(250);
+  await sleep(200);
   cellTitle=await txt('#modalBg.active .cd-line').catch(()=>'');
   await sh('3a_cell_drill');
-  await hover('#modalBg.active .cd-kpis',300,8);
-  await sleep(900);
+  await hover('#modalBg.active .cd-kpis',150);
+  await sleep(500);
   await closeModal();
 },{hold:true});
 
 /* ═════════ 장면 4 — 경영 요약(Executive Summary) + 보고서 자동 생성 ═════════ */
 const summary=await txt('.summary-box .summary-text');
 console.log('  요약:',summary);
-await show('경영 요약이 문장으로 자동 작성됩니다','증감·이상치·최대 변동 항목을 요약 → 메일·PPT·공지문·CSV로 바로 출력');
-await s.scene('summary',5.2,async()=>{
-  await scrollTo(await topOf('.summary-box',110),900);
-  await hover('.summary-box',350,10);
+const sum1=(summary.match(/^(.*?\))\.\s/)||[,summary])[1];
+await show('경영 요약이 문장으로 자동 작성됩니다',sum1+' · 이상치 '+KP.alerts+' → 메일·PPT·공지문·CSV로 출력');
+await s.scene('summary',5.4,async()=>{
+  await scrollTo(await topOf('.summary-box',110),850);
+  await hover('.summary-box',100);
   await sh('4a_summary');
-  s.toast('REPORT','요약·이상치·증감 → 임원 보고 메일 · PPT 아웃라인 · 현장 공지문 · CSV',3000);
-  await hover('.action-card:nth-child(3)',150,8);
-  await hover('.action-card:nth-child(2)',150,6);
-  await tap('.action-card:nth-child(1)',250,6);                                  // 임원 메일 생성
+  s.toast('REPORT','요약·이상치·증감 → 임원 보고 메일 · PPT 아웃라인 · 현장 공지문 · CSV',2600);
+  await hover('.action-card:nth-child(2)',80);
+  await tap('.action-card:nth-child(1)',150);                                    // 임원 메일 생성
   await mode('nr');
   await waitModal('#modalBody textarea');
   await sh('4b_mail');
-  await sleep(500);
+  await sleep(450);
   await p.locator('#modalBody textarea').evaluate(e=>e.scrollTo({top:230,behavior:'smooth'})).catch(()=>{});
-  await sleep(1100);
+  await sleep(1000);
   await sh('4c_mail2');
   await closeModal();
 },{hold:true});
 
 /* ═════════ 장면 5 — 라인 × 월 히트맵 ═════════ */
 await show('라인 × 월 히트맵으로 한눈에','색이 진할수록 정산 금액이 큰 달 — 셀을 누르면 그 달의 브랜드·단가·물량');
-await s.scene('heatmap',3.2,async()=>{
-  await scrollTo(await topOf('.heatmap-wrap',72),1000);
+await s.scene('heatmap',3.0,async()=>{
+  s.toast('HEATMAP','라인 × 월 정산액 — 진한 칸일수록 금액이 큰 달',2400);
+  await scrollTo(await topOf('.heatmap-wrap',72),900);
   await sh('5a_heatmap');
   const rows=p.locator('.heatmap tbody tr');
   const cellAt=(r,c)=>rows.nth(r).locator('td.cell').nth(c);
-  await hover(cellAt(0,3),180,10);await hover(cellAt(0,6),180,8);await hover(cellAt(3,6),180,8);await hover(cellAt(5,6),250,8);
+  await hover(cellAt(0,2),0);await hover(cellAt(0,6),0);await hover(cellAt(3,6),0);
   await sh('5b_heat_hover');
 },{hold:true});
 
 /* ═════════ 장면 6 — 워터폴(전월 대비 증감 분해) ═════════ */
-await show('전월 대비 증감은 워터폴로 분해','어느 라인이 총액을 올리고 내렸는지 — 막대를 누르면 브랜드별 증감','top');
-await s.scene('waterfall',4.8,async()=>{
-  await scrollTo(await topOf('.waterfall',150),1300);
+const wfCap=await txt('.wf-caption').catch(()=>'');
+console.log('  워터폴:',wfCap);
+await show('전월 대비 증감은 워터폴로 분해',wfCap+' — 막대를 누르면 브랜드별 증감','top');
+await s.scene('waterfall',4.4,async()=>{
+  await scrollTo(await topOf('.waterfall',150),1200);
   await sh('6a_waterfall');
-  const cap=await txt('.wf-caption').catch(()=>'');
-  console.log('  워터폴:',cap);
   const idx=await p.evaluate(l=>[...document.querySelectorAll('.waterfall-svg rect.wf-bar')].findIndex(r=>(r.querySelector('title')?.textContent||'').startsWith(l+':')),topLine);
   console.log('  워터폴 막대 idx',idx);
-  if(idx>=0)await tap(p.locator('.waterfall-svg rect.wf-bar').nth(idx),300,10);
-  await mode('nr');
+  s.toast('DRILL','막대 클릭 → 어느 브랜드 때문에 늘고 줄었는지 분해',2000);
+  if(idx>=0)await tap(p.locator('.waterfall-svg rect.wf-bar').nth(idx),150);
   await waitModal('#modalBg.active .wfd-row');
+  const wrow=(await p.locator('#modalBg.active .wfd-row').first().innerText().catch(()=>'')).replace(/\s+/g,' ').trim();
+  const wb=wrow.split(' ')[0],wd=(wrow.match(/[+\-−][\d,.]+[만억]/)||[''])[0];
+  console.log('  워터폴 드릴 첫 행:',wrow);
+  await show(topLine+' 증가분은 '+wb+' '+wd+' 때문','브랜드별 증감을 자동으로 분해','nr');
   await sh('6b_wf_drill');
-  await sleep(1100);
+  await sleep(1000);
   await closeModal();
 },{hold:true});
 

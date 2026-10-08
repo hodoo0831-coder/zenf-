@@ -79,6 +79,7 @@ const initScript=`(function(){
   css('#splash{display:none!important}'                                  /* 스플래시는 영상에서 생략 */
     +'#pinbg{visibility:hidden!important}'                               /* PIN 창은 화면에 보이지 않게 */
     +'#zcap2{left:28px!important;max-width:296px!important}#zcap2 .h{font-size:23px!important}#zcap2 .s{font-size:14px!important}'   /* 자막이 가운데 앱 열(≈340~1100px)을 가리지 않게 왼쪽 여백에 */
+    +'.toast{left:auto!important;right:24px!important;bottom:60px!important;transform:none!important;max-width:300px!important;border-radius:16px!important}.toast.show{transform:none!important}'   /* 앱 자체 토스트는 가운데 열 밖(우하단)으로 — 관리자 버튼을 가리지 않게(위치만) */
     +'#ztoast{right:18px!important;top:24px!important}#ztoast .k{max-width:300px!important}');
   window.print=function(){};                                             /* 인쇄 대화상자 막기 — PDF 는 미리보기로 보여줌 */
 })();`;
@@ -137,14 +138,14 @@ const sub1=await txt('#sSub');                                           // "15:
 const clock=await txt('#clockTxt');
 await s.cap(TAG,'공장 위치 기준 실시간 체감온도',`${locName} · ${sub1}`);
 await s.shot('1a_live');
-await s.scene("live",4.8,async()=>{
-  await hover('.chip.sel',9);await sleep(250);
+await s.scene("live",4.4,async()=>{
+  await hover('.chip.sel',9);await sleep(200);
   await s.toast('AUTO','기상청 초단기실황으로 10분마다 자동 갱신 — 장애 시 기상모델로 자동 대체',3300);
-  await sleep(500);lap('s1 chip');
+  await sleep(300);lap('s1 chip');
   await hover('#clock',8);
   await s.toast('시간대',`무더위 시간대(14~17시)는 시계가 주황색으로 — 지금 ${clock}`,2600);
-  await sleep(700);lap('s1 clock');
-  await smoothTo(380);await sleep(800);                                  // 아래로 — 슬라이더·체감온도 카드가 한 화면에
+  await sleep(400);lap('s1 clock');
+  await smoothTo(380);await sleep(700);                                  // 아래로 — 슬라이더·체감온도 카드가 한 화면에
   const at=await txt('#atV'),bd=await txt('#badge'),title=await txt('#actTitle');
   await hover('#result',8);
   await s.cap(TAG,`체감온도 ${at}℃ — ‘${bd}’ 단계`,`기온·습도로 기상청 체감온도식을 계산 → ${title}`);
@@ -155,13 +156,14 @@ await s.scene("live",4.8,async()=>{
 const t0=await num('#tempV'),h0=await num('#rhV');
 await s.cap(TAG,'현장 상황대로 직접 입력',`기온 ${t0.toFixed(1)}℃ · 습도 ${h0}% — 슬라이더를 움직이면 체감온도와 단계가 즉시 다시 계산됩니다`);
 let banner='';
-await s.scene("manual",9.0,async()=>{
+await s.scene("manual",8.6,async()=>{
   await s.toast('수기','기온·습도를 직접 조정 — 실시간 복귀는 [갱신]',2800);
-  await drag("#temp",t0,38.8,20,45,1900);lap('s2 drag');
+  await drag("#temp",t0,38.8,20,45,1700);lap('s2 drag');
+  await sleep(400);                                                        // 체감온도 숫자 애니메이션(0.38초)이 끝난 뒤 값을 읽는다
   const at=await txt('#atV'),bd=await txt('#badge'),tt=await txt('#tempV'),act=await txt('#actTitle');
   await s.cap(TAG,`기온 ${tt}℃ → 체감 ${at}℃ ‘${bd}’`,`${act} — 단계별 색과 조치 안내가 바뀝니다`);
   await s.shot('2a_danger');
-  await sleep(650);lap('s2 danger');
+  await sleep(150);lap('s2 danger');
   /* 알람 기준 */
   await tap('#alarmSel',150,9);await p.keyboard.press('Escape').catch(()=>{});
   await p.selectOption('#alarmSel','33');await sleep(150);
@@ -169,10 +171,9 @@ await s.scene("manual",9.0,async()=>{
   await smoothTo(0);                                                       // 배너는 문서 맨 위에 생긴다
   await s.cap(TAG,'기준 이상이면 즉시 알람','알람 기준 ‘주의 33℃’ — 화면 배너와 함께 경고음·진동·푸시 알림');
   await s.toast('ALARM',banner,3000);
-  await sleep(900);await s.shot('2b_alarm');lap('s2 alarm');
-  await sleep(500);
+  await sleep(700);await s.shot('2b_alarm');lap('s2 alarm');
   /* 확인 체크 */
-  await p.evaluate(()=>document.getElementById('ackCard').scrollIntoView({block:'center',behavior:'smooth'}));await sleep(800);
+  await p.evaluate(()=>document.getElementById('ackCard').scrollIntoView({block:'center',behavior:'smooth'}));await sleep(700);
   await s.cap(TAG,'알림 확인 체크','“확인했습니다”를 누르면 이름·시각이 서버에 기록되어 관리자가 확인합니다');
   await tap('#ackName',100,8);await p.keyboard.type('작업자 A',{delay:70});await sleep(150);
   await tap('#ackBtn',200,8);
@@ -185,7 +186,7 @@ await s.cap(TAG,'관리자 — 시간별 기록','[관리자 · 시간별 기록
 await s.scene("admin",12.2,async()=>{
   /* 페이지를 내려 단계별 조치 기준표를 지나 관리자 버튼으로 (푸터 개발자 표기는 화면 밖) */
   await p.evaluate(()=>{const r=document.getElementById('adminOpen').getBoundingClientRect();window.scrollTo({top:window.scrollY+r.bottom-868,behavior:'smooth'});});
-  await sleep(1000);
+  await sleep(900);
   await tap('#adminOpen',150,10);
   await p.evaluate((pin)=>{document.getElementById('pinInput').value=pin;document.getElementById('pinOk').click();},PIN);    // PIN 창은 CSS 로 가려져 있음
   await p.waitForSelector('#admin.show .sum-card',{timeout:6000});await sleep(150);
@@ -193,7 +194,7 @@ await s.scene("admin",12.2,async()=>{
   await s.cap(TAG,'시간별 체감온도 기록',`최근 7일 · 1시간 단위 — 오늘 일 최고 체감 ${mx}, 이후 시간은 예보(흐리게)`);
   await s.toast('AUTO','기상 API 시간별 자료를 체감온도로 환산해 단계별 색으로 표시',2800);
   await s.shot('3a_dash');lap('s3 dash');
-  await sleep(900);
+  await sleep(500);
   /* 가장 더웠던 날 */
   await tap(p.locator('.adm-tab').nth(3),250,10);
   const tabTxt=await txt('.adm-tab.sel');
@@ -201,20 +202,20 @@ await s.scene("admin",12.2,async()=>{
   const cw=(await txt('#admSum .sum-card:nth-child(2) .sv')).replace(/\s+/g,''),cd=(await txt('#admSum .sum-card:nth-child(3) .sv')).replace(/\s+/g,'');
   await s.cap(TAG,`${tabTxt} — 경고 이상 시간 확인`,`일 최고 ${mx2} · 경고(35℃↑) ${cw} · 위험(38℃↑) ${cd}`);
   await s.shot('3b_hotday');lap('s3 hot');
-  await sleep(1000);
+  await sleep(500);
   /* 시간별 표 */
   await tap(p.locator('.adm-view-btn[data-v="table"]'),200,10);
   await s.cap(TAG,'시간별 표 — 기온·습도·체감온도·단계','경고 이상 시간대는 숫자 색으로 눈에 띄게 표시');
-  await p.evaluate(()=>document.querySelector('.adm-body').scrollTo({top:330,behavior:'smooth'}));await sleep(1300);
+  await p.evaluate(()=>document.querySelector('.adm-body').scrollTo({top:330,behavior:'smooth'}));await sleep(800);
   await s.shot('3c_table');lap('s3 table');
   /* 확인 현황 */
   await p.evaluate(()=>document.querySelector('.adm-body').scrollTo({top:0,behavior:'smooth'}));await sleep(550);
-  await tap(p.locator('.adm-view-btn[data-v="ack"]'),500,10);
+  await tap(p.locator('.adm-view-btn[data-v="ack"]'),350,10);
   const firstAck=await txt('#admAck .sh-row:nth-child(3)');
   await s.cap(TAG,'확인 현황 — 누가 언제 확인했나','방금 작업자 화면에서 누른 확인이 맨 위에 기록됩니다');
   await s.shot('3d_ack');lap('s3 ack');
   console.log('  확인 현황 첫 행:',firstAck.replace(/\s+/g,' '));
-  await sleep(700);
+  await sleep(300);
   /* PDF */
   await tap('#admPdf',200,10);
   await p.evaluate(()=>{const st=document.createElement('style');
@@ -223,7 +224,7 @@ await s.scene("admin",12.2,async()=>{
   await s.cap(TAG,'PDF 보고서','일 최고 체감·경고/위험 시간·차트·시간별 표를 A4 일일기록으로 — 인쇄 또는 PDF 저장');
   await s.toast('PDF','[PDF] 버튼 한 번으로 일일 보고서 생성',3000);
   await s.shot('3e_pdf');lap('s3 pdf');
-  await sleep(900);
+  await sleep(500);
   await p.evaluate(()=>document.getElementById('printArea').scrollTo({top:430,behavior:'smooth'}));
 },{hold:true});
 
