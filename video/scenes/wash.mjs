@@ -13,6 +13,7 @@
  */
 import {launch,session,ROOT} from '../lib.mjs';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 const OUT=path.resolve(process.argv[2]||path.join(ROOT,'video','out'));
@@ -107,150 +108,166 @@ for(const w of [
 
 /* ───────── 시작 ───────── */
 fs.mkdirSync(OUT,{recursive:true});
+const TMP=fs.mkdtempSync(path.join(process.env.WASH_TMP||os.tmpdir(),'zen_wash_'));          // 임시 폴더에서 녹화(다른 구간과 폴더를 공유해도 섞이지 않게)
 const {browser,be}=await launch();
 const state=await be.call(HOST,'/api/state',{method:'POST',body:{waiting,washing,records:buildRecords()}});
 if(!state.ok)throw new Error('샘플 데이터 저장 실패');
-const s=await session(browser,be,'wash',OUT,{initScript:()=>{try{sessionStorage.setItem('zeniel_dash_auth_v1','ok');}catch(e){}}});
+const s=await session(browser,be,'wash',TMP,{initScript:()=>{try{sessionStorage.setItem('zeniel_dash_auth_v1','ok');}catch(e){}}});
 const {p,sleep}=s;
+/* 앱의 알림 토스트가 좌하단 자막과 겹치지 않게 우하단으로 옮긴다(위치만 — 내용·동작은 앱 그대로) */
+const TOAST_CSS=()=>{const add=()=>{const st=document.createElement('style');st.textContent='.toast{left:auto!important;right:24px!important;bottom:60px!important;transform:none!important;max-width:520px}.toast.show{transform:none!important}';document.head.appendChild(st);};
+  if(document.head)add();else document.addEventListener('DOMContentLoaded',add);};
+await p.addInitScript(TOAST_CSS);
 if(FAKE){await s.ctx.clock.install({time:new Date(NOW)});console.log('(업무시간대가 아니라 브라우저 시계를 '+new Date(NOW).toTimeString().slice(0,5)+' 로 맞춤)');}
-await s.sample(true);
 
 /* 공통 도우미 */
 const waitSplash=async(page)=>{await page.waitForSelector('#splashScreen',{state:'detached',timeout:8000}).catch(()=>{});};
-const show=async(tag,title,sub,narrow=false)=>{await s.cap(tag,title,sub);await p.evaluate(n=>{const e=document.getElementById('zcap2');if(e)e.style.maxWidth=n?'380px':'';},narrow);await s.sample(true);};
-const smoothTo=(sel,y)=>p.evaluate(([sel,y])=>{const e=sel?document.querySelector(sel):window;e.scrollTo({top:y,behavior:'smooth'});},[sel,y]);
-const scrollTop=(y)=>p.evaluate(y=>window.scrollTo({top:y,behavior:'smooth'}),y);
+const show=async(title,sub,narrow=false)=>{await s.cap(TAG,title,sub);await p.evaluate(n=>{const e=document.getElementById('zcap2');if(e)e.style.maxWidth=n?'380px':'';},narrow);await s.sample(true);};
+const scrollTo=(y)=>p.evaluate(y=>window.scrollTo({top:y,behavior:'smooth'}),y);
+const topOf=(sel,off=20)=>p.evaluate(([sel,off])=>document.querySelector(sel).getBoundingClientRect().top+scrollY-off,[sel,off]);
 const txt=(sel)=>p.locator(sel).first().innerText();
-const sh=(t)=>s.shot(t);
-const keepFor=async(ms,t0)=>{const left=ms-(Date.now()-t0);if(left>0)await sleep(left);};
-
-/* 시계 보정이 필요하면 time 입력 문자열(12시간제)을 계산 */
+const L0=Date.now();const sh=async(t)=>{if(process.env.LAPS)console.log('   lap',t,Date.now()-L0);return s.shot(t);};
+/* 빠른 클릭 — 커서가 부드럽게 이동하되 한 번에 ~1초 안에 끝낸다 */
+const tap=async(loc,pause=350,steps=6)=>{const l=typeof loc==='string'?p.locator(loc).first():loc;
+  try{let bb=await l.boundingBox();
+    if(!bb||bb.y<60||bb.y+bb.height>880){await l.scrollIntoViewIfNeeded({timeout:2500});bb=await l.boundingBox();}
+    await p.mouse.move(bb.x+bb.width/2,bb.y+bb.height/2,{steps});await sleep(70);await p.mouse.down();await sleep(50);await p.mouse.up();await sleep(pause);return true;}
+  catch(e){console.log('  (탭 실패)',String(e).split('\n')[0].slice(0,100));return false;}};
+const role=(name)=>p.locator('.login-btn').filter({has:p.locator('.role-name',{hasText:new RegExp('^'+name+'$')})});
 const to12=(ms)=>{const d=new Date(ms);const h=d.getHours();return {hh:pad(h%12===0?12:h%12),mm:pad(d.getMinutes()),ap:h>=12?'P':'A'};};
 
 /* ═════════ 장면 1 — 생산라인: 도착 등록 ═════════ */
 await s.open(WORKER,300);await waitSplash(p);await sleep(300);
-let eTimeLabel='';
-await show(TAG,'생산라인은 라인만 고르면 끝 — 도착 등록','호퍼·탱크를 세척실에 놓고 점도·필요시간만 입력하면 도착 시각이 자동 기록됩니다');
-await s.scene('arrival',9,async()=>{
-  await sleep(700);
-  await s.click(p.locator('.login-btn',{hasText:'생산라인 및 설비'}),900);
+await s.sample(true);
+await show('생산라인은 라인만 고르면 끝 — 도착 등록','호퍼·탱크를 세척실에 놓고 점도·필요시간만 입력하면 도착 시각이 자동 기록됩니다');
+await s.scene('arrival',9.5,async()=>{
+  await sleep(300);
+  await tap(role('생산라인 및 설비'),700);
   await sh('1a_arrival_screen');
-  await s.click('#groupFilterArrival .group-chip[data-grp="염모제"]',700);
-  await s.click(p.locator('#lineGridArrival .line-card',{hasText:'염모제 충전3호'}),700);
-  await show(TAG,'점도 분류 + 필요 시간 입력','"몇 시까지 세척 완료" — 수기 인계장에 적던 시각을 그대로 디지털로',true);
-  s.toast('NEW','필요 시간 직접 입력 — 우선순위 계산의 기준이 됩니다',4200);
-  // 필요시간: 지금 + 135분 으로 직접 입력
-  const want=NOW+135*MIN;const t=to12(want);eTimeLabel=t.hh+':'+t.mm+' '+t.ap+'M';
-  await p.locator('#arrivalRequiredTime').focus();await sleep(300);
-  await p.keyboard.type(t.hh+t.mm+t.ap,{delay:130});await sleep(400);
-  await s.click('#arrivalProductType',250);
-  await p.selectOption('#arrivalProductType','C4|1제 (염모제)');await sleep(600);
-  await s.type('#arrivalItem','M312',80);
+  await tap('#groupFilterArrival .group-chip[data-grp="염모제"]',450);
+  await tap(p.locator('#lineGridArrival .line-card',{hasText:'염모제 충전3호'}),500);
+  await show('점도 분류 + 필요 시간 입력','"몇 시까지 세척 완료" — 수기 인계장에 적던 시각을 그대로 디지털로',true);
+  s.toast('NEW','필요 시간 직접 입력 — 우선순위 계산의 기준이 됩니다',3800);
+  const t=to12(NOW+135*MIN);                                               // 필요시간: 지금 + 135분
+  await p.locator('#arrivalRequiredTime').focus();await sleep(150);
+  await p.keyboard.type(t.hh+t.mm+t.ap,{delay:90});await sleep(250);
+  await p.selectOption('#arrivalProductType','C4|1제 (염모제)');await sleep(350);
+  await p.keyboard.press('Tab');await p.keyboard.type('M312',{delay:60});await sleep(150);
   await sh('1b_modal_filled');
-  await p.locator('#modalArrival .modal').evaluate(e=>e.scrollTo({top:9999,behavior:'smooth'}));await sleep(600);
-  await s.click('#modalArrival .btn-arrival',500);
-  await show(TAG,'도착 등록 완료 — 세척실에 바로 알림','자주 쓰는 라인에 자동 등록 · 서버에 저장되어 모든 기기가 공유');
+  await p.locator('#modalArrival .modal').evaluate(e=>e.scrollTo({top:9999,behavior:'smooth'}));await sleep(300);
+  await tap('#modalArrival .btn-arrival',400);
+  await show('도착 등록 완료 — 세척실에 바로 알림','자주 쓰는 라인에 자동 등록 · 서버에 저장되어 모든 기기가 공유');
+  await scrollTo(0);await sleep(400);
   await sh('1c_registered');
 },{hold:true});
 
 /* ═════════ 장면 2 — 세척실: 우선순위 ═════════ */
-await show(TAG,'세척실 — 우선순위가 자동으로 정렬','필요시간 − 예상 세척시간 − 점도별 버퍼 = 시작해야 할 시각');
-await s.scene('priority',8,async()=>{
-  await s.click('.logout-btn',700);
-  await s.click(p.locator('.login-btn',{hasText:'세척실'}),1100);
+await show('세척실 — 우선순위가 자동으로 정렬','시작 필요 시각 = 필요시간 − 예상 세척시간 − 점도별 버퍼');
+await s.scene('priority',5,async()=>{
+  await tap('.logout-btn',500);
+  await tap(role('세척실'),800);
   await sh('2a_washroom_home');
-  s.toast('AUTO','방금 등록한 건이 세척실 화면에 바로 도착 — 대기·세척중·완료를 한눈에',4200);
-  await sleep(1200);
-  await s.click('nav.tabs button[data-tab="priority"]',900);
+  s.toast('AUTO','방금 등록한 건이 세척실에 바로 도착 — 대기·세척중·완료를 한눈에',3600);
+  await sleep(500);
+  await tap('nav.tabs button[data-tab="priority"]',600);
+  s.toast('점수','HIGH(15분 이내) · MEDIUM(45분 이내) · LOW 자동 분류',3800);
   await sh('2b_priority');
-  s.toast('점수','HIGH·MEDIUM·LOW 로 자동 분류 — 시작 필요 시각이 임박한 순서',4200);
-  await sleep(1800);
 },{hold:true});
 
 /* ═════════ 장면 3 — 세척실: 시작 · 종료 기록 ═════════ */
-await show(TAG,'세척 시작·종료는 두 번의 터치','대기시간·세척시간·지연/여유(분)를 앱이 자동 계산해 기록합니다');
+await show('세척 시작·종료는 두 번의 터치','대기시간·세척시간·지연/여유(분)를 앱이 자동 계산해 기록합니다');
 let startMsg='',endMsg='';
-await s.scene('startend',9,async()=>{
-  await s.click('nav.tabs button[data-tab="home"]',700);
-  await s.click('#homeSummaryRow .summary-card[data-filter="waiting"]',900);
+await s.scene('startend',7.5,async()=>{
+  await tap('nav.tabs button[data-tab="home"]',450);
+  await tap('#homeSummaryRow .summary-card[data-filter="waiting"]',600);
   await sh('3a_waiting_panel');
-  await s.click('#filterPanelBody .filter-item',900);                       // 최우선 건
+  await tap('#filterPanelBody .filter-item',700);                           // 최우선(HIGH) 건
   await sh('3b_start_modal');
-  s.toast('AUTO','도착 후 대기시간 · 시작 권장 시각까지 자동 계산해서 보여줍니다',4200);
-  await sleep(1200);
-  await s.click('#modalStart .btn-start',500);
+  s.toast('AUTO','도착 후 대기시간과 시작 권장 시각을 자동 계산해서 보여줍니다',3800);
+  await sleep(1100);
+  await tap('#modalStart .btn-start',700);
   startMsg=await txt('#toast');await sh('3c_started');
-  await s.click('#homeSummaryRow .summary-card[data-filter="waiting"]',200).catch(()=>{});
-  await p.evaluate(()=>clearHomeFilter());await sleep(400);
-  await s.click(p.locator('#activeLines .line-card',{hasText:'치약충전6호'}),900);
+  await tap(p.locator('#activeLines .line-card',{hasText:'치약충전6호'}),700);
   await sh('3d_running');
-  await s.click('#runActionButtons .btn-stop',500);
+  await tap('#runActionButtons .btn-stop',500);
   endMsg=await txt('#toast');await sh('3e_finished');
-  s.toast('NEW','종료하면 지연/여유가 기록에 남고 관리자 대시보드로 즉시 전송',4200);
+  s.toast('NEW','종료하면 지연/여유가 기록에 남고 관리자 화면으로 즉시 전송',3800);
 },{hold:true});
 console.log('  앱 토스트:',startMsg,'|',endMsg);
 await sleep(1500);                                                           // 마지막 저장(push) 확정
 const srv=await be.call(HOST,'/api/state');
 console.log('  서버 상태: 대기',Object.keys(srv.data.waiting).length,'세척중',Object.keys(srv.data.washing).length,'기록',srv.data.records.length);
 
-/* 다른 태블릿(보이지 않는 두 번째 브라우저) — 대시보드를 보는 동안 실제 앱으로 도착 등록 */
+/* 다른 태블릿(화면에 나오지 않는 두 번째 브라우저) — 대시보드를 보는 동안 실제 앱으로 도착 등록 */
 const ctx2=await browser.newContext({viewport:{width:1440,height:900}});
 await ctx2.route(/^https:\/\//,be.handler);
-if(FAKE)await ctx2.clock.install({time:new Date(NOW+2*60000)});
+if(FAKE)await ctx2.clock.install({time:new Date(NOW+2*MIN)});
 const p2=await ctx2.newPage();
 await p2.goto(WORKER);await waitSplash(p2);
-await p2.locator('.login-btn',{hasText:'생산라인 및 설비'}).click();await sleep(500);
-const otherTablet=async()=>{
-  await p2.locator('#searchArrival').fill('세정 자동 2');await sleep(200);
-  await p2.locator('#lineGridArrival .line-card',{hasText:'세정 자동 2호'}).click();await sleep(300);
+await p2.locator('.login-btn').filter({has:p2.locator('.role-name',{hasText:/^생산라인 및 설비$/})}).click();await sleep(500);
+const otherPrepare=async()=>{                                                // 모달을 채워 둔다(등록 버튼 직전까지)
+  await p2.locator('#searchArrival').fill('세정 자동 2');await sleep(150);
+  await p2.locator('#lineGridArrival .line-card',{hasText:'세정 자동 2호'}).click();await sleep(250);
   const w=new Date((FAKE?NOW+2*MIN:Date.now())+50*MIN);
   await p2.locator('#arrivalRequiredTime').fill(pad(w.getHours())+':'+pad(w.getMinutes()));
   await p2.selectOption('#arrivalProductType',{index:1});
   await p2.locator('#arrivalItem').fill('S207');
-  await p2.locator('#modalArrival .btn-arrival').click();
-  await sleep(1200);
 };
+const otherRegister=()=>p2.locator('#modalArrival .btn-arrival').click();      // 다른 태블릿에서 [도착 등록]
 
 /* ═════════ 장면 4 — 관리자 대시보드: 자동 반영 ═════════ */
-await p.goto(DASH);await waitSplash(p);await sleep(700);
+await p.goto(DASH);await waitSplash(p);await sleep(600);
 const num=async(id)=>parseInt(await txt('#'+id),10);
-let before=await num('countWait');
-await show(TAG,'관리자 — 현장 입력이 자동으로 반영','로그인 없이 5초마다 서버를 조회 · 새로고침 불필요');
-await s.scene('dash-live',9,async()=>{
-  await sh('4a_dash_top');
-  s.toast('AUTO','작업자 앱의 입력 → 서버 → 관리자 화면까지 5초 안에 자동 반영',4200);
-  await sleep(2200);
-  const done=otherTablet();                                                  // 다른 태블릿에서 도착 등록
+const before=await num('countWait');
+await otherPrepare();
+const pulledAt=()=>p.evaluate(()=>SYNC.lastPulledAt?SYNC.lastPulledAt.getTime():0);
+{const t0=await pulledAt();const w0=Date.now();while(Date.now()-w0<7000&&(await pulledAt())===t0)await sleep(100);}   // 5초 주기 조회 직후에 장면을 시작
+await show('관리자 — 현장 입력이 자동으로 반영','5초마다 서버를 조회 · 새로고침 불필요');
+await s.sample(true);
+await s.scene('dash-live',7,async()=>{
+  s.toast('AUTO','작업자 앱 입력 → 서버 → 관리자 화면까지 5초 안에 자동 반영',3200);
+  const sb=await p.locator('#syncStatus').boundingBox();
+  await p.mouse.move(sb.x+sb.width*0.5,sb.y+sb.height*0.5,{steps:14});             // 커서: "Cloud 실시간 연동" 표시 위로
+  await sleep(900);
+  const cb=await p.locator('.summary-grid .card').first().boundingBox();
+  await p.mouse.move(cb.x+cb.width*0.7,cb.y+cb.height*0.6,{steps:14});             // 커서: "대기 중" 카드 위로
+  await sleep(400);
+  await otherRegister();                                                      // 다른 태블릿에서 도착 등록 → 다음 조회(≈5초 주기)에 반영
   let after=before;const t0=Date.now();
-  while(Date.now()-t0<8000){after=await num('countWait');if(after!==before)break;await sleep(250);}
-  await done;
-  console.log('  대기 중',before,'→',after);
-  if(after!==before)s.toast('NEW','다른 태블릿에서 도착 등록 → 대기 중 '+before+'건 → '+after+'건 자동 갱신',4200);
+  while(Date.now()-t0<6000){after=await num('countWait');if(after!==before)break;await sleep(150);}
+  console.log('  대기 중',before,'→',after,'('+(Date.now()-t0)+'ms)');
+  if(after!==before)s.toast('NEW','다른 태블릿에서 도착 등록 → 대기 중 '+before+'건 → '+after+'건',3000);
   await sh('4b_dash_updated');
-  await sleep(600);
 },{hold:true});
 
-/* ═════════ 장면 5 — 대시보드: 지표 · 차트 · 기록 ═════════ */
+/* ═════════ 장면 5 — 대시보드: 지표 · 차트 ═════════ */
 const kpi={wait:await txt('#kpiAvgWait'),wash:await txt('#kpiAvgWash'),loss:await txt('#kpiTotalWait'),ontime:await txt('#kpiOnTimeRate'),
   done:await txt('#countDone'),washing:await txt('#countWashing'),high:await txt('#countHigh')};
 console.log('  KPI',JSON.stringify(kpi));
-await show(TAG,'핵심 지표와 차트가 실시간으로 채워집니다','대기시간·세척시간·대기 LOSS·필요시간 준수율 — 도착~종료 기록에서 자동 집계');
-await s.scene('dash-charts',8,async()=>{
-  await scrollTop(250);await sleep(1400);await sh('5a_kpi');
-  s.toast('점수','필요시간 준수율 '+kpi.ontime+' · 평균 세척 '+kpi.wash+'분 · 평균 대기 '+kpi.wait+'분',4200);
-  const y=await p.evaluate(()=>document.querySelector('.charts-section').getBoundingClientRect().top+scrollY-20);
-  await scrollTop(y);await sleep(1800);await sh('5b_charts');
-  await scrollTop(y+330);await sleep(1800);await sh('5c_charts2');
+await show('핵심 지표와 차트가 실시간으로 채워집니다','대기시간·세척시간·대기 LOSS·필요시간 준수율 — 도착~종료 기록에서 자동 집계');
+await s.scene('dash-charts',4.5,async()=>{
+  await scrollTo(250);await sleep(400);
+  s.toast('점수','필요시간 준수율 '+kpi.ontime+' · 평균 세척 '+kpi.wash+'분 · 평균 대기 '+kpi.wait+'분',3600);
+  await sleep(1000);await sh('5a_kpi');
+  const y=await topOf('.chart-card',40);
+  await scrollTo(y);await sleep(1500);await sh('5b_charts');
+  await scrollTo(await topOf('.chart-card-wide',60));await sleep(1300);await sh('5c_charts2');
 },{hold:true});
 
-await show(TAG,'우선순위 표 · 오늘 완료 기록','HIGH 는 시작 필요 시각이 지난 건 — 지연/여유(분)까지 기록으로 남습니다');
-await s.scene('dash-tables',6,async()=>{
-  const y=await p.evaluate(()=>document.querySelector('.table-wrap').getBoundingClientRect().top+scrollY-20);
-  await scrollTop(y);await sleep(1800);await sh('6a_table');
-  await scrollTop(y+520);await sleep(1800);await sh('6b_records');
+/* ═════════ 장면 6 — 대시보드: 우선순위 표 · 완료 기록 ═════════ */
+await show('우선순위 표 · 오늘 완료 기록','HIGH = 시작 필요 시각이 15분 이내이거나 이미 지난 건 · 지연/여유(분) 기록');
+await s.scene('dash-tables',3.5,async()=>{
+  const y=await topOf('.table-wrap',20);
+  await scrollTo(y);await sleep(1500);await sh('6a_table');
+  await scrollTo(y+640);await sleep(1400);await sh('6b_records');
 },{hold:true});
 
+/* 끝내기 — 임시 폴더의 결과를 출력 폴더로 옮긴다 */
 await s.finish();
+fs.copyFileSync(path.join(TMP,'seg_wash.webm'),path.join(OUT,'seg_wash.webm'));
+fs.copyFileSync(path.join(TMP,'seg_wash.json'),path.join(OUT,'seg_wash.json'));
+fs.rmSync(TMP,{recursive:true,force:true});
 await ctx2.close();await browser.close();
-console.log('완료 →',path.join(OUT,'seg_wash.webm'));
+const tot=JSON.parse(fs.readFileSync(path.join(OUT,'seg_wash.json'),'utf8')).reduce((a,m)=>a+(m.end-m.start),0);
+console.log('완료 →',path.join(OUT,'seg_wash.webm'),'· 장면 합계',tot.toFixed(1)+'초');
 process.exit(0);

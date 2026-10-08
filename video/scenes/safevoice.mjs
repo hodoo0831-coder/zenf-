@@ -15,6 +15,7 @@
  *    unlockTry(pin(),true) → 서버가 x-sv-pin 검증)를 그대로 타도록 /admin 페이지에서만 initScript 로 저장해 둔다.
  */
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import {launch,session,ROOT} from '../lib.mjs';
 
@@ -95,15 +96,21 @@ await seed();
 /* ───────── 3) 브라우저 · 가상 주소 라우트 ───────── */
 const {browser,be}=await launch();
 const initScript=`(function(){
-  try{sessionStorage.setItem('sv_splash','1');}catch(e){}                      // 스플래시는 첫 방문에 한 번만 — 영상에선 생략
+  // init script 는 문서가 만들어지기 전에 돌아 documentElement 가 아직 없다 → 생기는 즉시 <style> 을 넣는다
+  var css=function(t){var add=function(){var st=document.createElement('style');st.textContent=t;(document.head||document.documentElement).appendChild(st);};
+    if(document.documentElement)add();else{var mo=new MutationObserver(function(){if(document.documentElement){mo.disconnect();add();}});mo.observe(document,{childList:true});}};
+  try{sessionStorage.setItem('sv_splash','1');}catch(e){}                       // 스플래시는 첫 방문에 한 번만 — 영상에선 생략
   if(/^\\/admin/.test(location.pathname)){
-    try{localStorage.setItem('sv_admin_pin',${JSON.stringify(PIN)});}catch(e){} // 관리자 PIN 저장값(앱의 정상 경로로 접수함 진입)
-    var st=document.createElement('style');st.textContent='#pin-card{display:none!important}'; // 로딩 중 PIN 안내 카드가 번쩍이지 않게
-    (document.head||document.documentElement).appendChild(st);
+    try{localStorage.setItem('sv_admin_pin',${JSON.stringify(PIN)});}catch(e){}  // 관리자 PIN 저장값(앱의 정상 경로로 접수함 진입)
+    css('#pin-card{display:none!important}');                                    // 로딩 중 PIN 안내 카드가 번쩍이지 않게
+  }else{
+    css('#zcap2{max-width:340px}');                                              // 자막이 모바일 폭 입력 열(가운데)을 가리지 않게 좁힌다
   }
 })();`;
-const s=await session(browser,be,'safevoice',OUT,{initScript});
+const WORK=fs.mkdtempSync(path.join(os.tmpdir(),'sv-rec-'));   // 녹화는 전용 임시 폴더에서 하고 끝나면 출력 폴더로 복사(다른 구간 파일과 섞이지 않게)
+const s=await session(browser,be,'safevoice',WORK,{initScript});
 const {p,sleep}=s;
+const V0=Date.now();const elapsed=()=>(Date.now()-V0)/1000;   // 서버가 바쁠 때 녹화가 늘어지지 않게, 선택 동작은 일정보다 늦으면 건너뛴다
 const HTML=fs.readFileSync(path.join(ROOT,'ZEN_SafeVoice.html'));
 await s.ctx.route(new RegExp('^'+ORIGIN.replace(/[.]/g,'\\.')+'/'),async route=>{
   const req=route.request();const u=new URL(req.url());
@@ -124,121 +131,139 @@ await s.ctx.route(new RegExp('^'+ORIGIN.replace(/[.]/g,'\\.')+'/'),async route=>
   }catch(e){return route.fulfill({status:500,contentType:'application/json',body:JSON.stringify({ok:false,error:String(e)})});}
 });
 
-/* ───────── 4) 조작 도구 ───────── */
+/* ───────── 4) 조작 도구 (lib.click 의 20단계 커서 이동은 녹화 중 너무 느려 가볍게 다시 구현) ───────── */
 const TAG='SYSTEM 01 · 안전';
+const B=(sec)=>process.env.NOPAD?0:sec;   // NOPAD=1 이면 장면 길이를 채우지 않고 동작 자체의 소요 시간만 잰다
 const L=(x)=>typeof x==='string'?p.locator(x).first():x;
-const focusEl=async(loc,block='center')=>{await L(loc).evaluate((e,b)=>e.scrollIntoView({block:b,behavior:'smooth'}),block);await sleep(520);};
-const tap=async(loc,pause=600,block)=>{await focusEl(loc,block);return s.click(loc,pause);};
-const typeIn=async(loc,text,delay=55)=>{await focusEl(loc);await s.type(loc,text,delay);};
+/** 이미 화면 가운데 영역에 있으면 가만히 두고, 아니면 부드럽게 스크롤 */
+const focusEl=async(loc,block='center')=>{
+  const need=await L(loc).evaluate((e,b)=>{const r=e.getBoundingClientRect();const ok=r.top>120&&r.bottom<660&&b==='center';
+    if(!ok)e.scrollIntoView({block:b,behavior:'smooth'});return !ok;},block);
+  if(need)await sleep(360);};
+/** 부드럽게 스크롤 → 커서가 걸어가 → 누른다 */
+const tap=async(loc,pause=350,block='center')=>{const l=L(loc);await focusEl(l,block);const bb=await l.boundingBox();if(!bb)return false;
+  await p.mouse.move(bb.x+bb.width/2,bb.y+bb.height/2,{steps:5});await sleep(70);await p.mouse.down();await sleep(50);await p.mouse.up();await sleep(pause);return true;};
+const typeIn=async(loc,text,delay=40)=>{await tap(loc,60);await p.keyboard.type(text,{delay});await sleep(150);};
 /** 네이티브 select: 커서로 눌러 보이고 값 선택 */
-const pick=async(sel,value,pause=550)=>{const l=p.locator(sel);await focusEl(l);await s.click(l,200);await p.keyboard.press('Escape').catch(()=>{});
-  await p.selectOption(sel,value);await sleep(pause);};
-const nudge=async()=>{await p.mouse.move(720,420,{steps:4});};
+const pick=async(sel,value,pause=250)=>{await tap(sel,80);await p.keyboard.press('Escape').catch(()=>{});await p.selectOption(sel,value);await sleep(pause);};
+const nudge=async()=>{await p.mouse.move(700,430,{steps:4});};
 const txt=async(sel)=>(await p.locator(sel).first().innerText()).trim();
+const toTop=async()=>{await p.evaluate(()=>window.scrollTo({top:0,behavior:'smooth'}));await sleep(450);};
 
 /* ───────── 5) 작업자 화면 ───────── */
-await s.open(ORIGIN+'/report',500);
+await s.open(ORIGIN+'/report',350);
 await s.sample(true);
-await s.cap(TAG,'작업자 — 위험 신고 30초 접수','4대 실천 분류 · 제목 · 구역 → 세부 위치 · 긴급도 · 상세 · 사진(선택) · 이름');
-await s.scene('worker-form',9,async()=>{
-  await sleep(500);
+await s.cap(TAG,'작업자 — 위험 신고','분류 · 제목 · 구역→세부 위치 · 긴급도 · 사진 · 이름');
+await s.scene('worker-form',B(7.2),async()=>{
   await s.shot('01_form_top');
-  await tap(p.locator('#chips-cat button',{hasText:'젠프'}).first(),450,'center');
-  await typeIn('#in-title','통로 적재물 충돌 위험',50);
-  await s.toast('NEW','구역 → 세부 위치 2단계 선택 · QR 로 들어오면 위치가 자동 입력',4200);
-  await pick('#sel-area','생산동',350);
-  await pick('#sel-loc','포장재창고',350);
+  await tap(p.locator('#chips-cat button',{hasText:'젠프'}).first(),250);
+  await typeIn('#in-title','통로 적재물 충돌 위험',35);
+  await s.toast('NEW','구역 → 세부 위치 2단계 선택 · QR 로 들어오면 위치 자동 입력',4200);
+  await pick('#sel-area','생산동',200);
+  await pick('#sel-loc','포장재창고',200);
   await s.shot('02_loc');
-  await typeIn('#in-content','포장재 파렛트가 통로로 튀어나와 지게차와 부딪힐 위험이 있습니다.',22);
-  await tap(p.locator('#sev-grid button[data-v="긴급"]'),450);
+  await typeIn('#in-content','파렛트가 통로로 튀어나와 충돌 위험이 있어요.',16);
+  await tap(p.locator('#sev-grid button[data-v="긴급"]'),250);
   await s.shot('03_sev');
-  await typeIn('#in-name','작업자 A',60);
+  await s.toast('OPT','사진 첨부는 선택 — 있으면 조치가 훨씬 빨라요',3600);
+  await typeIn('#in-name','작업자 A',40);
   await s.shot('04_name');
 },{hold:true});
 
-await s.scene('worker-submit',6,async()=>{
-  await s.cap(TAG,'제출하면 바로 접수번호 발급','오프라인이면 기기에 임시 저장 후 연결되면 자동 전송');
-  await tap(p.locator('#btn-submit'),300);
+await s.scene('worker-submit',B(4.4),async()=>{
+  await s.cap(TAG,'제출 즉시 접수번호 발급','오프라인이면 기기에 임시 저장 후 자동 전송');
+  await tap(p.locator('#btn-submit'),150);
   await p.waitForSelector('#view-done',{state:'visible',timeout:6000});
-  await sleep(900);
+  await sleep(500);
   await s.shot('05_done');
   const rid=(await txt('#done-rid'));
-  await s.toast('AUTO',rid+' · 관리자 접수함에 즉시 반영',4200);
-  await sleep(900);
-  await tap(p.locator('#btn-gomine'),500);
+  await s.toast('AUTO',rid+' · 관리자 접수함에 바로 도착',3600);
+  await sleep(700);
+  await tap(p.locator('#btn-gomine'),250);
   await p.waitForSelector('#mine-list .mycard',{timeout:6000});
   const n=await txt('#mine-count');
-  await s.cap(TAG,'내 신고 현황 — '+n,'처리 상태·조치 결과를 신고자도 확인 (개인정보 없이 상태만 조회)');
+  await s.cap(TAG,'내 신고 현황 — '+n,'처리 상태·조치 결과를 신고자도 확인 (상태만 조회)');
   await s.shot('06_mine');
 },{hold:true});
 
 /* ───────── 6) 관리자 화면 ───────── */
-await s.scene('admin-inbox',9,async()=>{
-  await tap(p.locator('#rt-admin'),100,'center');
+await s.scene('admin-inbox',B(7.8),async()=>{
+  await tap(p.locator('#rt-admin'),60);
   await p.waitForURL(/\/admin/,{timeout:8000});
   await p.waitForSelector('#inbox-main',{state:'visible',timeout:8000});
   await p.waitForSelector('#rlist .ritem',{timeout:8000});
-  await sleep(300);
   await s.sample(true);await nudge();
   const st=async()=>({all:await txt('#st-all'),nw:await txt('#st-new'),wk:await txt('#st-work'),dn:await txt('#st-done')});
   const a=await st();
   await s.cap(TAG,'관리자 — 접수함 한눈에',`전체 ${a.all}건 · 접수 ${a.nw} · 진행중 ${a.wk} · 완료 ${a.dn} — 방금 제출한 신고가 맨 위`);
-  await s.toast('LIVE','작업자 제출이 새로고침 없이 접수함 맨 위로',4200);
+  await s.toast('NEW','긴급도·분류·구역별 색 표시 — 방금 제출한 신고가 맨 위에 도착',3800);
   await s.shot('07_inbox');
-  await sleep(1300);
-  // 맨 위(방금 제출한 신고) 열기
+  await sleep(500);
   const top=p.locator('#rlist .ritem').first();
-  await tap(top.locator('.rhead'),700,'start');
-  await s.cap(TAG,'상태 · 조치 결과 · 메모','선택한 조치 결과와 메모는 신고자의 “내 신고”에 그대로 표시');
+  await tap(top.locator('.rhead'),450,'start');
+  await s.cap(TAG,'상태 · 조치 결과 · 메모','선택한 조치 결과와 메모는 신고자의 “내 신고”에도 표시');
   await s.shot('08_open');
-  await tap(top.locator('.chips.rslt button',{hasText:'보수·발주 진행'}),500);
-  await typeIn(top.locator('.memo-row textarea'),'지게차 통로 구획선 재도색 예정',50);
-  await tap(top.locator('.memo-row button'),600);
+  await tap(top.locator('.chips.rslt button',{hasText:'보수·발주 진행'}),250);
+  await typeIn(top.locator('.memo-row textarea'),'구획선 재도색 예정',35);
+  await tap(top.locator('.memo-row button'),350);
   await s.shot('09_memo');
-  await tap(top.locator('.stbtns button',{hasText:'진행중'}),900,'center');   // 상태 변경 → 목록 갱신
+  await tap(top.locator('.stbtns button',{hasText:'진행중'}),600);   // 상태 변경 → 목록 갱신
   const b=await st();
-  await s.cap(TAG,'상태 변경 즉시 집계 반영',`접수 ${a.nw}→${b.nw} · 진행중 ${a.wk}→${b.wk} · 완료 ${b.dn}`);
+  await s.cap(TAG,'상태를 바꾸면 집계도 바로 갱신',`접수 ${a.nw}→${b.nw} · 진행중 ${a.wk}→${b.wk} · 완료 ${b.dn}`);
   await s.shot('10_status');
 },{hold:true});
 
-await s.scene('admin-export',5,async()=>{
-  await p.evaluate(()=>window.scrollTo({top:0,behavior:'smooth'}));await sleep(700);
+await s.scene('admin-export',B(3.8),async()=>{
+  await toTop();
   await s.cap(TAG,'엑셀 · PPT · PDF 로 바로 보고','필터한 목록 그대로 내보내기 — 사진은 PPT·PDF 에 포함');
-  await s.toast('EXPORT','신고내역 엑셀 · 보고용 PPT · 인쇄용 PDF',4200);
-  await tap(p.locator('#btn-xlsx'),900,'center');
+  await s.toast('EXPORT','신고내역 엑셀 · 보고용 PPT · 인쇄용 PDF 한 번에',3600);
+  await tap(p.locator('#btn-xlsx'),700);
   await s.shot('11_xlsx');
-  await tap(p.locator('#view-toggle button[data-v="digest"]'),800,'center');
-  await s.cap(TAG,'일괄 정리 — 상태별로 묶어 한 번에','회의·보고용으로 접수 → 진행중 → 완료 순으로 정렬');
-  await p.evaluate(()=>window.scrollBy({top:420,behavior:'smooth'}));
-  await sleep(900);
+  if(elapsed()<23.5){
+    await tap(p.locator('#view-toggle button[data-v="digest"]'),500);
+    await s.cap(TAG,'일괄 정리 — 상태별로 묶어 보기','회의·보고용으로 접수 → 진행중 → 완료 순');
+    await p.evaluate(()=>window.scrollBy({top:380,behavior:'smooth'}));
+    await sleep(700);
+  }else console.log('  (늦어서 일괄 정리 장면 생략)');
   await s.shot('12_digest');
 },{hold:true});
 
-await s.scene('admin-poster',5,async()=>{
-  await p.evaluate(()=>window.scrollTo({top:0,behavior:'smooth'}));await sleep(500);
-  await s.cap(TAG,'QR 공고문 — 위치별로 자동 생성','QR 을 찍으면 해당 위치가 신고 폼에 자동 입력');
-  await tap(p.locator('#tab-btn-poster'),500,'center');
-  await typeIn('#adm-locs','생산동 · 치약 라인\n생산동 · 포장재창고',35);
-  await tap(p.locator('#btn-gen'),700,'center');
+await s.scene('admin-poster',B(4.2),async()=>{
+  await toTop();
+  await s.cap(TAG,'QR 공고문 — 위치별 자동 생성','QR 을 찍으면 해당 위치가 신고 폼에 자동 입력');
+  await p.evaluate(()=>{const e=document.getElementById('zcap2');if(e){e.style.left='auto';e.style.right='46px';}});   // 공고문은 왼쪽에 생기므로 자막을 오른쪽 아래로
+  await tap(p.locator('#tab-btn-poster'),250);
+  await typeIn('#adm-locs',elapsed()<26?'생산동 · 치약 라인\n생산동 · 포장재창고':'생산동 · 포장재창고',22);
+  await tap(p.locator('#btn-gen'),450);
   await p.evaluate(()=>document.querySelector('#posters').scrollIntoView({block:'start',behavior:'smooth'}));
-  await sleep(800);
+  await sleep(700);
   await s.shot('13_poster');
 },{hold:true});
 
 /* ───────── 7) 다시 작업자 — 관리자 처리 결과가 내 신고에 ───────── */
-await s.scene('worker-loop',4,async()=>{
-  await p.evaluate(()=>window.scrollTo({top:0,behavior:'smooth'}));await sleep(500);
-  await tap(p.locator('#rt-worker'),100,'center');
+await s.scene('worker-loop',B(3.2),async()=>{
+  await toTop();
+  await tap(p.locator('#rt-worker'),60);
   await p.waitForSelector('#tb-mine',{state:'visible',timeout:8000});
-  await sleep(300);
   await s.sample(true);await nudge();
-  await s.cap(TAG,'처리 결과가 신고자에게 돌아옵니다','관리자가 바꾼 상태·조치 결과·메모가 작업자 “내 신고”에 반영');
-  await tap(p.locator('#tb-mine'),400,'center');
+  await s.cap(TAG,'처리 결과가 신고자에게 돌아옵니다','관리자가 바꾼 상태·조치 결과·메모가 “내 신고”에 반영');
+  await tap(p.locator('#tb-mine'),250);
   await p.waitForFunction(()=>/진행중/.test(document.querySelector('#mine-list')?.innerText||''),null,{timeout:6000}).catch(()=>{});
   await sleep(300);
   await s.shot('14_loop');
 },{hold:true});
 
-await s.finish();
+/* lib.finish() 는 페이지 이동(작업자↔관리자) 뒤 p.video().path() 가 실제 파일과 달라 실패한다 → 폴더의 webm 을 직접 찾는다 */
+await s.ctx.close();
+const findVids=()=>fs.readdirSync(WORK).filter(f=>/\.webm$/.test(f)).map(f=>path.join(WORK,f));
+let vids=findVids();
+for(let i=0;i<40&&vids.length!==1;i++){await new Promise(r=>setTimeout(r,250));vids=findVids();}   // 영상 파일이 디스크에 완성될 때까지 기다린다
+if(vids.length!==1)throw new Error('녹화 파일을 찾지 못함: '+vids.join(','));
+fs.mkdirSync(OUT,{recursive:true});
+const dest=path.join(OUT,'seg_safevoice.webm');
+fs.copyFileSync(vids[0],dest);
+fs.writeFileSync(dest.replace(/\.webm$/,'.json'),JSON.stringify(s.marks,null,1));
+fs.rmSync(WORK,{recursive:true,force:true});
+console.log('저장 →',dest);
 await browser.close();
 process.exit(0);
