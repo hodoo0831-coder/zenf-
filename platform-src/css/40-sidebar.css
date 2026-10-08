@@ -14,7 +14,14 @@
   .nav .user .av{width:30px;height:30px;border-radius:3px;background:#2e4d6b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
   .nav .user .nm{font-weight:700}.nav .user .rl{color:#9fb6d1;font-size:11px}
   .nav .user .out{margin-left:auto;color:#9fb6d1;cursor:pointer;font-size:15px;min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center}
-  .nav .roleswitch{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+  /* 사용자 카드: 위줄 = 아바타·이름·로그아웃, 아래줄 = 역할 칩 3개를 카드 폭 가득 */
+  .nav .user{display:grid;grid-template-columns:30px minmax(0,1fr) 40px;column-gap:9px;align-items:center}
+  .nav .user>div:nth-child(2){display:contents}
+  .nav .user .av{grid-column:1;grid-row:1/3}
+  .nav .user .nm,.nav .user .rl{grid-column:2}
+  .nav .user .out{grid-column:3;grid-row:1/3;margin-left:0}
+  .nav .roleswitch{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px}
+  .nav .roleswitch .rchip{justify-content:center;padding:3px 4px}
   .nav .rchip{font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;background:#20406097;border:1px solid #33547a;color:#bcd0e8;cursor:pointer;transition:.12s;min-height:40px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
   .nav .rchip:hover{border-color:#4f7fb0}
   .nav .rchip.on{background:#0f2438;border-color:#0f2438;color:#fff}

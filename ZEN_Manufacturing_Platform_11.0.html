@@ -139,7 +139,14 @@
   .nav .user .av{width:30px;height:30px;border-radius:3px;background:#2e4d6b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
   .nav .user .nm{font-weight:700}.nav .user .rl{color:#9fb6d1;font-size:11px}
   .nav .user .out{margin-left:auto;color:#9fb6d1;cursor:pointer;font-size:15px;min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center}
-  .nav .roleswitch{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+  /* 사용자 카드: 위줄 = 아바타·이름·로그아웃, 아래줄 = 역할 칩 3개를 카드 폭 가득 */
+  .nav .user{display:grid;grid-template-columns:30px minmax(0,1fr) 40px;column-gap:9px;align-items:center}
+  .nav .user>div:nth-child(2){display:contents}
+  .nav .user .av{grid-column:1;grid-row:1/3}
+  .nav .user .nm,.nav .user .rl{grid-column:2}
+  .nav .user .out{grid-column:3;grid-row:1/3;margin-left:0}
+  .nav .roleswitch{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px}
+  .nav .roleswitch .rchip{justify-content:center;padding:3px 4px}
   .nav .rchip{font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;background:#20406097;border:1px solid #33547a;color:#bcd0e8;cursor:pointer;transition:.12s;min-height:40px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
   .nav .rchip:hover{border-color:#4f7fb0}
   .nav .rchip.on{background:#0f2438;border-color:#0f2438;color:#fff}
@@ -324,7 +331,8 @@
   .rmeta div span{display:inline-block;width:30px;font-size:10px;font-weight:700;color:var(--muted2);letter-spacing:.04em}
   .rmeta div b{color:#0f2438;font-weight:700}
   .rmeta i{font-style:normal;font-size:10.5px;font-weight:700;border-radius:3px;padding:3px 8px}
-  @media(max-width:900px){.rbook,.rbook tr,.rbook td{display:block;width:100%}
+  @media(max-width:900px){.rbook,.rbook tbody,.rbook tr,.rbook td{display:block;width:100%}
+    .rbook tr:has(>th){display:none}
     .rbook thead,.rbook th{display:none}
     .rbook tr{border:1px solid var(--line);border-radius:3px;margin-bottom:10px;padding:4px 0;background:var(--panel)}
     .rbook tr.rlive{border-color:#f0b9b2}
@@ -1852,7 +1860,7 @@ V.home=()=>{
   /* 홈은 요약만 — 판단 본문은 조치 추적이 원본(단일 소스). 별도 배열을 두면 문구가 갈라진다 */
   const _rank={crit:0,warn:1,ok:2};
   const preds=collectJudgments().slice().sort((a,b)=>_rank[a.lv]-_rank[b.lv]).slice(0,4);
-  const predCard=`<div class="card" style="margin-top:16px"><div class="chead" style="margin-bottom:10px">오늘 AI 판단 <span class="mtag mp">요약</span><span style="text-transform:none;letter-spacing:0;font-weight:700;color:var(--muted);margin-left:8px">우선순위 상위 ${preds.length}건</span><button class="btn p" style="margin-left:auto;padding:6px 13px;flex:none" onclick="go('track')">전체 ${collectJudgments().length}건 · 조치 추적 →</button></div>
+  const predCard=`<div class="card" style="margin-top:16px"><div class="chead" style="margin-bottom:10px;display:flex;align-items:center;flex-wrap:wrap;gap:8px">오늘 AI 판단 <span class="mtag mp">요약</span><span style="text-transform:none;letter-spacing:0;font-weight:700;color:var(--muted)">우선순위 상위 ${preds.length}건</span><button class="btn p" style="margin-left:auto;padding:6px 13px;flex:none" onclick="go('track')">전체 ${collectJudgments().length}건 · 조치 추적 →</button></div>
     <div class="predgrid">${preds.map(x=>`<div class="pred ${x.lv}"><div class="ph"><span class="ico sm ${x.lv==='crit'?'r':x.lv==='warn'?'a':''}">${svic(x.ic,15)}</span><span class="pr">${escHtml(x.r)}</span><span class="predlv ${x.lv}">${x.lv==='crit'?'긴급':x.lv==='warn'?'경고':'정상'}</span></div><div class="prule">적용 기준 ${escHtml(x.rule)}</div></div>`).join('')}</div></div>`;
   const judgments=collectJudgments(),priority=judgments.find(x=>x.lv==='crit')||judgments.find(x=>x.lv==='warn')||judgments[0];
   const decisionFlow=`<div class="flowhead"><div class="flowstep"><b>1</b>현재 상태</div><span class="flowarrow">→</span><div class="flowstep"><b>2</b>위험 예측</div><span class="flowarrow">→</span><div class="flowstep"><b>3</b>AI 판단</div><span class="flowarrow">→</span><div class="flowstep on"><b>4</b>조치 실행</div></div>
