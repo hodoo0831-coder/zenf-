@@ -26,20 +26,22 @@ const OVERLAY_JS=()=>{
     if(document.getElementById('zcap2'))return;
     const F='"NanumGothicEmbedded","Noto Sans CJK KR","Nanum Gothic","Malgun Gothic",sans-serif';
     const css=document.createElement('style');
+    /* 제니엘 톤 — 네이비(#0f2438) · 흰 바탕 · 헤어라인. 그라데이션·원형 커서 없음 */
     css.textContent=
      `#zcap2{position:fixed;left:46px;bottom:46px;z-index:2147483000;max-width:760px;display:none;font-family:${F};pointer-events:none}`
-    +`#zcap2 .t{display:inline-block;background:linear-gradient(90deg,#1769e0,#10a37f);color:#fff;font:800 13px/1 ${F};letter-spacing:.14em;padding:8px 14px;border-radius:4px 4px 0 0}`
-    +`#zcap2 .b{display:block;background:#0b1624;border-radius:0 12px 12px 12px;padding:16px 24px 17px;box-shadow:0 14px 36px rgba(0,0,0,.28)}`
-    +`#zcap2 .h{color:#fff;font:800 28px/1.25 ${F};word-break:keep-all}`
-    +`#zcap2 .s{color:#7cc4ff;font:700 15px/1.4 ${F};margin-top:6px;word-break:keep-all}`
+    +`#zcap2 .t{display:inline-block;background:#fff;color:#0f2438;border:1px solid #0f2438;border-bottom:0;font:700 12px/1 ${F};letter-spacing:.14em;padding:8px 13px;border-radius:3px 3px 0 0;margin-left:0}`
+    +`#zcap2 .b{display:block;background:#0f2438;border-radius:0 3px 3px 3px;padding:16px 24px 17px;box-shadow:0 10px 30px rgba(15,36,56,.28)}`
+    +`#zcap2 .h{color:#fff;font:700 27px/1.28 ${F};word-break:keep-all}`
+    +`#zcap2 .s{color:#c9d6e6;font:400 15px/1.5 ${F};margin-top:6px;word-break:keep-all}`
     +`#ztoast{position:fixed;right:34px;top:34px;z-index:2147483000;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none;font-family:${F}}`
-    +`#ztoast .k{display:flex;gap:10px;align-items:center;background:#0b1624;color:#fff;border-radius:10px;padding:11px 16px;box-shadow:0 10px 28px rgba(0,0,0,.28);max-width:520px;font:700 15px/1.4 ${F};word-break:keep-all;animation:zin .35s ease both}`
-    +`#ztoast .k i{font-style:normal;background:#10c27c;color:#04231a;font:800 11px/1 ${F};letter-spacing:.08em;padding:5px 8px;border-radius:5px;flex:none}`
+    +`#ztoast .k{display:flex;gap:11px;align-items:center;background:#fff;color:#0f2438;border:1px solid #cfd8e3;border-left:4px solid #0f2438;border-radius:3px;padding:11px 16px;box-shadow:0 8px 24px rgba(15,36,56,.2);max-width:520px;font:700 15px/1.45 ${F};word-break:keep-all;animation:zin .35s ease both}`
+    +`#ztoast .k i{font-style:normal;background:#0f2438;color:#fff;font:700 11px/1 ${F};letter-spacing:.08em;padding:5px 8px;border-radius:2px;flex:none}`
     +`#ztoast .k.out{animation:zout .35s ease both}`
     +`@keyframes zin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}@keyframes zout{to{opacity:0;transform:translateY(-8px)}}`
-    +`#zsample{position:fixed;right:18px;bottom:14px;z-index:2147483000;background:rgba(11,22,36,.82);color:#cfe3f5;font:700 12px/1 ${F};padding:7px 11px;border-radius:6px;pointer-events:none;display:none}`
-    +`#zcur{position:fixed;z-index:2147483001;width:24px;height:24px;margin:-12px 0 0 -12px;border:2px solid #0f2438;background:rgba(255,255,255,.88);border-radius:50%;pointer-events:none;left:-60px;top:-60px;transition:transform .12s}`
-    +`#zcur.dn{transform:scale(.6);background:rgba(15,36,56,.5)}`;
+    +`#zsample{position:fixed;right:18px;bottom:14px;z-index:2147483000;background:#fff;color:#44566e;border:1px solid #cfd8e3;font:700 12px/1 ${F};padding:7px 11px;border-radius:3px;pointer-events:none;display:none}`
+    +`#zcur{position:fixed;z-index:2147483001;width:22px;height:28px;margin:-2px 0 0 -2px;pointer-events:none;left:-60px;top:-60px;transition:transform .1s;transform-origin:3px 3px;`
+    +`background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='28' viewBox='0 0 22 28'><path d='M3 2 L3 21 L8 16.5 L11.5 24 L14.5 22.7 L11.2 15.3 L18 15 Z' fill='%230f2438' stroke='white' stroke-width='1.6' stroke-linejoin='round'/></svg>") no-repeat}`
+    +`#zcur.dn{transform:scale(.82)}`;
     document.head.appendChild(css);
     for(const id of ['zcap2','ztoast','zsample','zcur']){const e=document.createElement('div');e.id=id;document.body.appendChild(e);}
     const k=document.getElementById('zcur');
