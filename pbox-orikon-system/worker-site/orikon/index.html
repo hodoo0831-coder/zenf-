@@ -1462,7 +1462,7 @@ async function syncRecordToWorker(record) {
             date: record.date,
             worker: record.worker || '',
             worker_count: record.workerCount || 1,
-            part: record.part || null,
+            part: record.boxType || record.part || null,   // 오리콘의 中/大 는 boxType — part 만 보내면 서버에 null 로 저장돼 관리자 中/大 집계에서 빠진다
             work_type: record.workType || null,
             qty_plt: parseFloat(record.qty) || 0,
             qty_ea: parseInt(record.ea) || 0,
