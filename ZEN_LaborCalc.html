@@ -85,6 +85,12 @@ input[type=range]{width:100%;accent-color:var(--brand);height:6px}
   .bar{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}
   h1{font-size:21px}.upl{margin-left:0;width:100%}.tblx input{width:66px}.tblx input.sm{width:46px}.tblx td,.tblx th{padding:7px 3px}
 }
+@media (max-width:480px){
+  .wrap{padding:16px 12px 60px}.pad{padding:14px 10px}.tblx{font-size:12px}.tblx th{font-size:10px;word-break:keep-all}
+  .tblx td.g{word-break:keep-all}.tblx input{width:52px;font-size:12px;padding:6px 2px}.two>*{min-width:0}.tblx td,.tblx th{padding:7px 2px}
+}
+@media (max-width:360px){.wrap{padding-left:6px;padding-right:6px}.pad{padding:12px 3px}.tblx{margin-top:6px}.tblx{font-size:11px}.tblx th{font-size:9.5px}.tblx input{width:42px;font-size:11px;padding:6px 1px}.tblx tfoot td.calc{font-size:12px}.tblx td,.tblx th{padding:7px 1px}}
+.wchip,.chip,.btn,.upbtn{min-height:40px}.upbtn{display:inline-flex;align-items:center}.tblx input,.tonum{min-height:40px}
 @media print{body{background:#fff}.actions,.upl,input[type=range]{display:none}}
 </style>
 </head>
@@ -120,7 +126,7 @@ input[type=range]{width:100%;accent-color:var(--brand);height:6px}
     </div>
     <div class="field">
       <div class="flab">보유 TO <span class="fv"><input id="to" type="number" value="108" class="tonum"></span></div>
-      <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5">정직 97 + 단기 11 = 108 / 부하 기준 정규 98명</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5">정직 97 + 단기 11 = 108 / 부하 기준 정규 <span id="hc-sum">98</span>명</div>
     </div>
   </div>
 
@@ -129,7 +135,7 @@ input[type=range]{width:100%;accent-color:var(--brand);height:6px}
   <div class="kpis">
     <div class="kpi neu"><div class="tag"></div><div class="kl">총 필요인원</div><div class="kn" id="k1n">—</div><div class="ks" id="k1s">—</div></div>
     <div class="kpi" id="k2"><div class="tag"></div><div class="kl">보유 TO 대비</div><div class="kn" id="k2n">—</div><div class="ks">부족(−)/여유(+)</div></div>
-    <div class="kpi neu"><div class="tag"></div><div class="kl">전체 부하율</div><div class="kn" id="k3n">—</div><div class="ks">필요÷정규 98</div></div>
+    <div class="kpi neu"><div class="tag"></div><div class="kl">전체 부하율</div><div class="kn" id="k3n">—</div><div class="ks">필요÷정규 <span id="k3hc">98</span></div></div>
     <div class="kpi" id="k4"><div class="tag"></div><div class="kl">부족 그룹</div><div class="kn" id="k4n">—</div><div class="ks">부하율>1</div></div>
   </div>
 
@@ -163,6 +169,20 @@ input[type=range]{width:100%;accent-color:var(--brand);height:6px}
 const CAP={세정자동:623000,직선:246881,멀티:470479,치약:840000,튜브:644562,염모:276000};
 const HC={세정자동:18,직선:18,멀티:22,치약:13,튜브:9,염모:18};
 const GK=Object.keys(CAP);
+const HC_SUM=GK.reduce((a,g)=>a+HC[g],0); // 부하 기준 정규 합계 — 문구·전체 부하율·결론이 모두 이 값을 따른다(하드코딩 금지)
+/* ===== 새 기준표('AP 라인별 인원·CAPA 기준표')와의 대응 — 플랫폼 본체 40-computed-home.js CAPA_LINES 기준 =====
+   이 계산기의 6개 그룹 ↔ CAPA_LINES 그룹(라인명) 대응(계획표 자동합산 aggregate() 규칙과 동일):
+     세정자동 = 초격차(세정초격차 1~4호)
+     직선     = 직선(직선4·5·11·13·14·15·16호) + 리필3호 (대용량 충전·동기화 직선14호는 aggregate() 규칙상 어느 그룹에도 안 잡혀 제외)
+     멀티     = 멀티(멀티셀2·3·6·7·8호, 세럼충전기) + HnB기타 중 턴테이블1·3·4호   (크림2·3호·팜플은 제외)
+     치약     = 치약(충전2~6호·일회용 충전·수축·기획 …)  ※ 계획량은 '충전'만 합산
+     튜브     = 튜브(튜브2~9호)
+     염모     = 염모(염모제·산화제 …)
+   ★ 정규인원(HC)·인력 주CAPA(CAP)는 새 기준표의 '표준 필요 인원 합'·'라인 CAPA 합'과 의미가 달라 교체하지 않았다.
+     - HC = '부하 기준 정규'(인력시뮬 부하율원본의 정규 배치). 표준 필요(OP+작업자)는 전 라인 동시 가동 가정이라 그룹별 약 2배(예: 직선 44 vs 18).
+     - CAP = '표준 크루 주간 소화량'(설비 CAPA 아님, 실가동·효율·교대 반영). 새 표의 분당케파×450(정상)/×570(잔업)은 설비 CAPA.
+     새 기준 그룹 합계(참고): 세정 표준19/가용19, 직선(+리필) 표준47/가용31, 멀티(+턴테이블) 표준27/가용20,
+     치약 표준25/가용10, 튜브 표준14/가용9, 염모 표준46/가용19 */
 // 내장 주 데이터 (계획표 확정본에서 중복제거 규칙 적용)
 const WEEKS={
  '28주 확정':{세정자동:633390,직선:331020,멀티:459011,치약:685224,튜브:1056311,염모:510948},
@@ -199,7 +219,7 @@ function buildRows(){
 }
 let chart;
 function render(){
-  let tPlan=0,tNeed=0,shortG=0;const tHc=98,tCap=Object.values(CAP).reduce((a,b)=>a+b,0);
+  let tPlan=0,tNeed=0,shortG=0;const tHc=HC_SUM,tCap=Object.values(CAP).reduce((a,b)=>a+b,0);
   GK.forEach(g=>{const load=loadG(g),need=HC[g]*load,diff=HC[g]-need;
     tPlan+=D[g]*(1+st.g/100);tNeed+=need;if(load>1.0001)shortG++;
     const tr=document.querySelector(`tr[data-g="${g}"]`);
@@ -208,7 +228,7 @@ function render(){
     const dc=tr.querySelector('.c-diff');dc.textContent=(diff>=0?'+':'')+diff.toFixed(1);dc.style.color=diff>=0?C.surp:C.short;
     tr.className=load>1.0001?'short':(load<0.9?'surp':'');});
   const to=TO(),diffTO=to-tNeed,overall=tNeed/tHc;
-  set('f-hc',tHc);set('f-cap',fmt(tCap));set('f-plan',fmt(tPlan));set('f-load',overall.toFixed(2));set('f-need',tNeed.toFixed(1));
+  set('f-hc',tHc);set('hc-sum',HC_SUM);set('k3hc',HC_SUM);set('f-cap',fmt(tCap));set('f-plan',fmt(tPlan));set('f-load',overall.toFixed(2));set('f-need',tNeed.toFixed(1));
   const fd=document.getElementById('f-diff');fd.textContent=(diffTO>=0?'+':'')+diffTO.toFixed(1);fd.style.color=diffTO>=0?C.surp:C.short;
 
   document.querySelector('#k1n').innerHTML=tNeed.toFixed(1)+'<span class="ku">명</span>';set('k1s',curWeek+' / TO '+to);
@@ -226,7 +246,7 @@ function render(){
   const gtxt=st.g>0?`+${st.g}% 반영`:(st.g<0?`${st.g}% 반영`:'계획 그대로');
   const sn=GK.filter(g=>loadG(g)>1);
   let conc;
-  if(diffTO<0) conc=`<b>${curWeek}</b>(${gtxt}) 총 필요 <b>${tNeed.toFixed(0)}명</b>, 보유 TO ${to}명 대비 <b>${Math.abs(diffTO).toFixed(0)}명 부족</b>. 부하 초과 ${shortG}개 그룹(${sn.join(', ')}). 정규 98명 기준 <b>${(98-tNeed).toFixed(0)}명</b> 부족.`;
+  if(diffTO<0) conc=`<b>${curWeek}</b>(${gtxt}) 총 필요 <b>${tNeed.toFixed(0)}명</b>, 보유 TO ${to}명 대비 <b>${Math.abs(diffTO).toFixed(0)}명 부족</b>. 부하 초과 ${shortG}개 그룹(${sn.join(', ')}). 정규 ${HC_SUM}명 기준으로는 <b>${Math.abs(HC_SUM-tNeed).toFixed(0)}명</b> ${tNeed>HC_SUM?'부족':'여유'}.`;
   else conc=`<b>${curWeek}</b>(${gtxt}) 총 필요 <b>${tNeed.toFixed(0)}명</b>, 보유 TO ${to}명 내 <b>${diffTO.toFixed(0)}명 여유</b>${sn.length?' · 단 '+sn.join('·')+' 부하 초과':''}.`;
   document.getElementById('conc').innerHTML=conc;
 
