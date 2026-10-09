@@ -275,7 +275,7 @@ function whURL(){return gzURL('whA');}
 const _safeC={};function safeAppURL(){return _docURL(_safeC,_zd('safe'));}
 const _heatC={};function heatURL(){return _docURL(_heatC,_zd('heat'));}
 /* 연동 현장 앱 — gzip+base64 내장 (배포 방식과 무관하게 동작) */
-const GZDOC={};['svW','washW','washA','pboxA','pboxW','oriA','oriW','whA','whW'].forEach(function(k){Object.defineProperty(GZDOC,k,{get:function(){return _zd(k)},enumerable:true});});
+const GZDOC={};['svW','svA','washW','washA','pboxA','pboxW','oriA','oriW','whA','whW'].forEach(function(k){Object.defineProperty(GZDOC,k,{get:function(){return _zd(k)},enumerable:true});});
 const _gzC={}; let _gzReady=false;
 async function _gunzipB64(b64){
   const bin=atob(b64), by=new Uint8Array(bin.length);
@@ -305,8 +305,7 @@ const SYS_SUB={
     live:{pbox:{worker:LIVE_URL.orikonWorker,admin:LIVE_URL.pboxAdmin},
           orikon:{worker:LIVE_URL.orikonWorker,admin:LIVE_URL.orikonAdmin}}}
 };
-const SV_SITE='https://zen-ap-manufacturing.netlify.app';
-const INT_LIVE={safevoice:{worker:SV_SITE+'/report',admin:SV_SITE+'/admin'},wash:{admin:LIVE_URL.wash},safe:{worker:LIVE_URL.safe,admin:LIVE_URL.safe},heat:{worker:LIVE_URL.heat,admin:LIVE_URL.heat}};
+const INT_LIVE={safevoice:{worker:'https://safetyvoice-worker.netlify.app',admin:'https://safetyvoice-admin.netlify.app'},wash:{admin:LIVE_URL.wash},safe:{worker:LIVE_URL.safe,admin:LIVE_URL.safe},heat:{worker:LIVE_URL.heat,admin:LIVE_URL.heat}};
 let sysSubView={};
 function sysSubK(s){const d=SYS_SUB[s&&s.id];return d?(sysSubView[s.id]||d.list[0].k):null;}
 function setSysSub(id,k){sysSubView[id]=k;go(cur);}
