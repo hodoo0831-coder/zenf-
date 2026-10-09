@@ -7,6 +7,7 @@
  * 구간마다 <출력 폴더>/seg_<이름>.webm 과 .json(장면 시작/끝 초) 을 만든다.
  * 이어 붙이기는 ffmpeg 로 별도 처리(video/README.md).
  */
+const PIN=process.env.ZEN_PIN||'';   // 로그인 PIN — 소스에 적지 않는다: ZEN_PIN=… node …
 import {chromium} from 'playwright';
 import fs from 'fs';
 import path from 'path';
@@ -91,7 +92,7 @@ async function platform(){
   await s.scene('login',9,async()=>{
     await sleep(1800);
     for(const r of ['현장','관리자','센터'])await s.click(p.locator('.roles button',{hasText:r}).first(),600);
-    const pin=p.locator('input[type=password]').first();await s.click(pin,200);await p.keyboard.type('1996',{delay:200});await sleep(250);await p.keyboard.press('Enter');await sleep(2200);
+    const pin=p.locator('input[type=password]').first();await s.click(pin,200);await p.keyboard.type(PIN,{delay:200});await sleep(250);await p.keyboard.press('Enter');await sleep(2200);
   },{hold:true});
   await s.cap('CONTROL TOWER','컨트롤타워 — 현황을 한 화면에','계획·예측 → 현황·실측 → 판단·조치 → 보고, 메뉴 순서가 곧 업무 순서');
   await s.scene('home',8,async()=>{await goV('home');});

@@ -6,6 +6,7 @@
  *   node video/scenes/platform.mjs <출력폴더> [main|clean|indirect|stock|safe|report|all]
  * 값은 로컬 시험 백엔드(실제 Worker 코드)에 시연용 샘플로 넣은 것이다. LIVE=1 이면 실제 서버로 나간다.
  */
+const PIN=process.env.ZEN_PIN||'';   // 로그인 PIN — 소스에 적지 않는다: ZEN_PIN=… node …
 import path from 'path';
 import {launch,session,ROOT} from '../lib.mjs';
 import {seedPlatform} from '../seed.mjs';
@@ -19,7 +20,7 @@ async function open(name,{recordLogin=false}={}){
   const s=await session(browser,be,name,OUT);
   await s.open('file://'+path.join(ROOT,'index.html'),800);
   if(!recordLogin){
-    await s.p.fill('input[type=password]','1996');await s.p.keyboard.press('Enter');
+    await s.p.fill('input[type=password]',PIN);await s.p.keyboard.press('Enter');
     await s.sleep(4500);
     await s.sample(true);
   }
@@ -37,7 +38,7 @@ async function main(){
   await s.scene('login',9,async()=>{
     await s.sleep(1800);
     for(const r of ['현장','관리자','센터'])await s.click(p.locator('.roles button',{hasText:r}).first(),600);
-    const pin=p.locator('input[type=password]').first();await s.click(pin,200);await p.keyboard.type('1996',{delay:200});await s.sleep(250);await p.keyboard.press('Enter');await s.sleep(4200);
+    const pin=p.locator('input[type=password]').first();await s.click(pin,200);await p.keyboard.type(PIN,{delay:200});await s.sleep(250);await p.keyboard.press('Enter');await s.sleep(4200);
   },{hold:true});
   await s.cap('CONTROL TOWER','컨트롤타워 — 현황을 한 화면에','생산·인력·세척·창고·안전·품질을 실측으로 종합하고, 오늘의 판단을 우선순위로 올립니다');
   await s.scene('home',10,async()=>{await go_('home');await s.toast('LIVE','실적·세척·창고·기상 4종이 60초마다 들어와 판단을 다시 계산합니다',6000);});

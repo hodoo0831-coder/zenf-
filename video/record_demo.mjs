@@ -8,6 +8,7 @@
  * 필요: playwright (npm i playwright) + Chromium.  CHROMIUM=/경로 로 브라우저 실행 파일 지정 가능.
  * 소리는 들어 있지 않다 — 대본을 읽은 음성을 편집 프로그램에서 얹는다.
  */
+const PIN=process.env.ZEN_PIN||'';   // 로그인 PIN — 소스에 적지 않는다: ZEN_PIN=… node …
 import {chromium} from 'playwright';
 import fs from 'fs';
 import path from 'path';
@@ -104,7 +105,7 @@ async function scene(i,acts,hold){
   if(process.env.SHOTS)await p.screenshot({path:path.join(process.env.SHOTS,'s'+String(i).padStart(2,'0')+'.png')});
 }
 
-async function silentLogin(){const pin=p.locator('input[type=password]').first();await pin.fill('1996');await p.keyboard.press('Enter');await sleep(2500);}
+async function silentLogin(){const pin=p.locator('input[type=password]').first();await pin.fill(PIN);await p.keyboard.press('Enter');await sleep(2500);}
 if(ONLY&&!ONLY.has(0)&&!ONLY.has(1)){await silentLogin();await p.evaluate(()=>{const c=document.getElementById('zcap');if(c)c.style.display='block';});}
 /* S1 로그인 화면 */
 await scene(0,async()=>{await sleep(2500);});
@@ -112,7 +113,7 @@ await scene(0,async()=>{await sleep(2500);});
 await scene(1,async()=>{
   for(const r of ['현장','관리자']){await click(p.locator('.roles button',{hasText:r}).first(),{pause:700});}
   await click(p.locator('.roles button',{hasText:'센터'}).first(),{pause:500});
-  const pin=p.locator('input[type=password]').first();await click(pin,{pause:200});await p.keyboard.type('1996',{delay:220});await sleep(300);await p.keyboard.press('Enter');await sleep(2500);
+  const pin=p.locator('input[type=password]').first();await click(pin,{pause:200});await p.keyboard.type(PIN,{delay:220});await sleep(300);await p.keyboard.press('Enter');await sleep(2500);
 });
 await p.evaluate(()=>{const c=document.getElementById('zcap');if(c)c.style.display='block';});
 await scene(2,async()=>{await goV('home');await sleep(1200);});
