@@ -1,25 +1,22 @@
   /* ===== Sidebar (네이비) ===== */
-  .nav{background:var(--navy);border-right:1px solid #16304c;padding:16px 12px;display:flex;flex-direction:column;gap:5px;position:sticky;top:0;height:100vh;overflow:auto}
+  .nav{padding:16px 12px;display:flex;flex-direction:column;gap:5px;position:sticky;top:0;height:100vh;overflow:auto;border-right:1px solid var(--line);background:#fff}
   .nav .logo{padding:6px 8px 12px}
-  .nav .logo .t{font-size:17px;font-weight:700;color:#fff}.nav .logo .t span{color:#7fc3ad}
-  .nav .logo .s{font-size:11px;color:#9fb6d1;margin-top:2px}
-  .nav a{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:3px;color:#cdddf0;font-size:13.5px;font-weight:700;cursor:pointer;text-decoration:none;border:1px solid transparent;transition:.13s;min-height:40px;box-sizing:border-box}
-  .nav a .ic{width:20px;display:inline-flex;align-items:center;justify-content:center;opacity:.9}
+  .nav .logo .t{font-size:17px;font-weight:700;color:#1b2736}.nav .logo .t span{color:#0f2438}
+  .nav .logo .s{font-size:11px;margin-top:2px;color:#8d9db4}
+  .nav a{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:3px;font-size:13.5px;cursor:pointer;text-decoration:none;border:1px solid transparent;min-height:40px;box-sizing:border-box;font-weight:700;transition:background .22s,color .22s,transform .18s;color:#44566e}
+  .nav a .ic{width:20px;display:inline-flex;align-items:center;justify-content:center;opacity:.75}
   .nav a .badge{margin-left:auto;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px}
   .nav a:hover{background:#244a6f}
   .nav a.on{background:#2b558014;background:var(--navy);border-color:#3f8f63;color:#fff;box-shadow:none}
-  .nav .sec{font-size:10.5px;color:#7f9abb;font-weight:700;letter-spacing:.2px;padding:12px 10px 5px}
+  .nav .sec{font-size:10.5px;letter-spacing:.2px;padding:12px 10px 5px;font-weight:700;color:#8d9db4}
   .nav .spacer{flex:1}
-  .nav .user{border:1px solid #33547a;border-radius:3px;padding:10px 11px;background:#20406097;font-size:12px;display:flex;align-items:center;gap:9px;color:#eaf1fb}
-  .nav .user .av{width:30px;height:30px;border-radius:3px;background:#2e4d6b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
-  .nav .user .nm{font-weight:700}.nav .user .rl{color:#9fb6d1;font-size:11px}
-  .nav .user .out{margin-left:auto;color:#9fb6d1;cursor:pointer;font-size:15px;min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center}
+  .nav .user{border-radius:3px;padding:10px 11px;font-size:12px;gap:9px;display:grid;grid-template-columns:30px minmax(0,1fr) 40px;column-gap:9px;align-items:center;color:#1b2736;background:#fff;border:1px solid var(--line)}
+  .nav .user .av{width:30px;height:30px;border-radius:3px;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;grid-column:1;grid-row:1/3;background:#f7f8f8 !important;border:1px solid #cdeeda}
+  .nav .user .nm{font-weight:700;color:#1b2736}.nav .user .rl{font-size:11px;color:#8d9db4}
+  .nav .user .out{color:#9fb6d1;cursor:pointer;font-size:15px;min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center;grid-column:3;grid-row:1/3;margin-left:0}
   /* 사용자 카드: 위줄 = 아바타·이름·로그아웃, 아래줄 = 역할 칩 3개를 카드 폭 가득 */
-  .nav .user{display:grid;grid-template-columns:30px minmax(0,1fr) 40px;column-gap:9px;align-items:center}
   .nav .user>div:nth-child(2){display:contents}
-  .nav .user .av{grid-column:1;grid-row:1/3}
   .nav .user .nm,.nav .user .rl{grid-column:2}
-  .nav .user .out{grid-column:3;grid-row:1/3;margin-left:0}
   .nav .roleswitch{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px}
   .nav .roleswitch .rchip{justify-content:center;padding:3px 4px}
   .nav .rchip{font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;background:#20406097;border:1px solid #33547a;color:#bcd0e8;cursor:pointer;transition:.12s;min-height:40px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
@@ -29,7 +26,7 @@
   .stage{padding:20px 24px 32px;min-width:0}
   .bar{display:flex;align-items:center;gap:16px;margin-bottom:18px}
   .bar>*{min-width:0}
-  .chead{flex-wrap:wrap}
+  .chead{flex-wrap:wrap;font-size:10.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted2);font-weight:700}
   .bar h1{font-size:23px;font-weight:700;margin:0;color:var(--navy)}
   .bar .sub{color:var(--muted);font-size:12.5px;margin-top:3px;white-space:normal;overflow-wrap:anywhere}
   .bar .right{margin-left:auto;display:flex;align-items:center;gap:12px}
@@ -39,7 +36,7 @@
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
   .src{font-size:11px;font-weight:700;padding:5px 11px;border-radius:3px;border:1px solid var(--line2);background:#fff;color:var(--muted)}
   .src.live{color:#22a05f;border-color:#b8e6cc;background:#f7f8f8}
-  .btn{border:1px solid var(--line2);background:#fff;color:var(--navy);padding:9px 14px;border-radius:3px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;gap:7px;align-items:center;transition:.14s;box-shadow:none}
+  .btn{border:1px solid var(--line2);background:#fff;padding:9px 14px;border-radius:3px;font-size:13px;cursor:pointer;display:inline-flex;gap:7px;align-items:center;transition:.14s;box-shadow:none;font-weight:700;color:#26394F;border-color:#C6D3E4}
   .btn:hover{border-color:var(--blue);color:var(--blue)}
   /* 흰 글자 기준 명암비: 밝은 끝 #0f2438 4.85:1, 어두운 끝 #16365b 7.76:1 (AA 4.5:1 충족).
      이전 #0f2438 는 3.49:1, 이를 덮던 평면 #0f2438 는 3.13:1 이었다. */
