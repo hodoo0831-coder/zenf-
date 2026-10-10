@@ -51,6 +51,47 @@ const OVERLAY_JS=()=>{
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 };
 
+
+/* ── 부드러운 스크롤 ──
+   헤드리스 녹화에서는 브라우저 기본 smooth 스크롤(컴포지터 애니메이션)이 프레임이 끊겨 찍힌다.
+   behavior:'smooth' 요청을 가로채 requestAnimationFrame 으로 직접(easeInOut) 굴린다 — 앱 코드는 그대로 둔다. */
+const SMOOTH_JS=()=>{
+  if(window.__zsmooth)return;window.__zsmooth=1;
+  const oWS=window.scrollTo.bind(window),oEI=Element.prototype.scrollIntoView;
+  const oES=Element.prototype.scrollTo,oEB=Element.prototype.scrollBy;
+  const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+  const running=new WeakMap();
+  const isWin=c=>c===window;
+  const getY=c=>isWin(c)?window.scrollY:c.scrollTop;
+  const setY=(c,y)=>{if(isWin(c))oWS({top:y,left:window.scrollX,behavior:'instant'});else oES.call(c,{top:y,left:c.scrollLeft,behavior:'instant'});};
+  const maxY=c=>isWin(c)?Math.max(0,document.documentElement.scrollHeight-window.innerHeight):Math.max(0,c.scrollHeight-c.clientHeight);
+  function anim(c,y1){
+    y1=Math.max(0,Math.min(maxY(c),y1));const y0=getY(c),d=y1-y0;if(Math.abs(d)<1)return;
+    const dur=Math.min(1500,380+Math.abs(d)*0.75),t0=performance.now();
+    const id={};running.set(c,id);
+    const step=now=>{if(running.get(c)!==id)return;const t=Math.min(1,(now-t0)/dur);setY(c,y0+d*ease(t));if(t<1)requestAnimationFrame(step);else running.delete(c);};
+    requestAnimationFrame(step);
+  }
+  const parse=(a,b)=>typeof a==='object'&&a?{x:a.left,y:a.top,smooth:a.behavior==='smooth'}:{x:a,y:b,smooth:false};
+  window.scrollTo=function(a,b){const o=parse(a,b);if(!o.smooth)return oWS.apply(window,arguments);if(o.y!=null)anim(window,o.y);else oWS(a);};
+  window.scrollBy=function(a,b){const o=parse(a,b);if(!o.smooth)return window.scroll?oWS(window.scrollX+(o.x||0),window.scrollY+(o.y||0)):0;anim(window,window.scrollY+(o.y||0));};
+  Element.prototype.scrollTo=function(a,b){const o=parse(a,b);const c=(this===document.documentElement||this===document.scrollingElement)?window:this;
+    if(!o.smooth)return oES.apply(this,arguments);if(o.y!=null)anim(c,o.y);};
+  Element.prototype.scrollBy=function(a,b){const o=parse(a,b);const c=(this===document.documentElement||this===document.scrollingElement)?window:this;
+    if(!o.smooth)return oEB.apply(this,arguments);anim(c,getY(c)+(o.y||0));};
+  Element.prototype.scrollIntoView=function(a){
+    if(!(a&&typeof a==='object'&&a.behavior==='smooth'))return oEI.apply(this,arguments);
+    let c=this.parentElement;while(c&&c!==document.body&&c!==document.documentElement){const o=getComputedStyle(c).overflowY;if((o==='auto'||o==='scroll')&&c.scrollHeight>c.clientHeight+2)break;c=c.parentElement;}
+    const win=!c||c===document.body||c===document.documentElement;const cont=win?window:c;
+    const r=this.getBoundingClientRect();const cr=win?{top:0,bottom:window.innerHeight,height:window.innerHeight}:c.getBoundingClientRect();
+    const blk=a.block||'start';let delta;
+    if(blk==='center')delta=(r.top+r.height/2)-(cr.top+cr.height/2);
+    else if(blk==='end')delta=r.bottom-cr.bottom;
+    else if(blk==='nearest'){delta=r.top<cr.top?r.top-cr.top:(r.bottom>cr.bottom?r.bottom-cr.bottom:0);}
+    else delta=r.top-cr.top;
+    anim(cont,getY(cont)+delta);};
+};
+
 /** 브라우저 + 로컬 백엔드. LIVE=1 이면 백엔드 대신 실제 workers.dev 로 나간다(인터넷이 되는 PC 용). */
 export async function launch(){
   const browser=await chromium.launch({executablePath:process.env.CHROMIUM||'/opt/pw-browsers/chromium',
@@ -65,6 +106,7 @@ export async function session(browser,be,name,outDir,{initScript,mobile=false}={
   if(!process.env.LIVE)await ctx.route(/^https:\/\//,be.handler);
   const p=await ctx.newPage();const t0=Date.now();const marks=[];
   await p.addInitScript(OVERLAY_JS);
+  await p.addInitScript(SMOOTH_JS);
   if(initScript)await p.addInitScript(initScript);
   const sleep=(ms)=>p.waitForTimeout(ms);
   const api={p,ctx,sleep,marks,be,
@@ -81,12 +123,15 @@ export async function session(browser,be,name,outDir,{initScript,mobile=false}={
         await api.move(bb.x+bb.width/2,bb.y+bb.height/2);await sleep(150);await p.mouse.down();await sleep(80);await p.mouse.up();await sleep(pause);return true;}
       catch(e){console.log('  (클릭 건너뜀)',String(e).split('\n')[0].slice(0,90));return false;}},
     async type(loc,text,delay=70){const l=typeof loc==='string'?p.locator(loc).first():loc;await api.click(l,150);await p.keyboard.type(text,{delay});await sleep(250);},
-    async glide(ms,sel){
-      const info=await p.evaluate((sel)=>{let e=sel?document.querySelector(sel):document.scrollingElement;while(e&&e!==document.body){const o=getComputedStyle(e).overflowY;if((o==='auto'||o==='scroll')&&e.scrollHeight>e.clientHeight+20)break;e=e.parentElement;}
+    async glide(ms,sel){/* 본문을 천천히 내렸다 올린다 — 한 번의 rAF 루프(끊김 없음) */
+      const info=await p.evaluate((sel)=>{let e=sel?document.querySelector(sel):document.getElementById('view');while(e&&e!==document.body){const o=getComputedStyle(e).overflowY;if((o==='auto'||o==='scroll')&&e.scrollHeight>e.clientHeight+20)break;e=e.parentElement;}
         if(!e||e===document.body)e=document.scrollingElement;window.__zs=e;return{max:e.scrollHeight-e.clientHeight};},sel||null);
       if(info.max<30){await sleep(ms);return;}
-      const n=Math.max(6,Math.round(ms/300));
-      for(let i=1;i<=n;i++){await p.evaluate(([i,n])=>{const e=window.__zs;e.scrollTo({top:(e.scrollHeight-e.clientHeight)*0.45*Math.min(1,i/(n*0.8)),behavior:'smooth'});},[i,n]);await sleep(ms/n);}},
+      await p.evaluate(({ms,max})=>new Promise(res=>{const e=window.__zs,y1=max*0.45,t0=performance.now(),dur=ms*0.85;
+        const oES=Element.prototype.scrollTo;
+        const step=now=>{const t=Math.min(1,(now-t0)/dur);const k=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;oES.call(e,{top:y1*k,behavior:'instant'});if(t<1)requestAnimationFrame(step);else res();};
+        requestAnimationFrame(step);}),{ms,max:info.max});
+      const left=ms-ms*0.85;if(left>0)await sleep(left);},
     /** 장면: 목표 시간(초)에 맞춰 동작 뒤를 채운다. hold=true 면 가만히, 아니면 본문을 천천히 훑는다 */
     async scene(label,secs,fn,{hold=false}={}){
       const a=Date.now();marks.push({label,start:(a-t0)/1000});console.log(((a-t0)/1000).toFixed(1)+'s '+label);

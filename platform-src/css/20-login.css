@@ -1,7 +1,7 @@
   /* ===== Login (브랜드 네이비 유지) ===== */
   .login{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(900px 600px at 50% 5%,#2c4a68 0,#1b3350 55%,#152a44 100%)}
-  .login .box{width:390px;max-width:92vw;border:1px solid #2f4d6e;border-radius:3px;padding:32px;background:var(--navy);box-shadow:none;color:#eaf1fb}
+    background:radial-gradient(900px 600px at 50% 5%,#2c4a68 0,#1b3350 55%,#152a44 100%);overflow:hidden}
+  .login .box{width:390px;max-width:92vw;border:1px solid #2f4d6e;border-radius:3px;padding:32px;background:var(--navy);box-shadow:none;color:#eaf1fb;position:relative;z-index:1}
   .login .brand{font-size:26px;font-weight:700;text-align:center;letter-spacing:-.3px}
   .login .brand span{color:#7fc3ad}
   .login .tagline{text-align:center;color:#cfe0f2;font-size:13px;font-weight:700;margin-top:4px}
@@ -16,10 +16,10 @@
   .roles button .e{display:block;font-size:20px;margin-bottom:4px}
   .roles button.on{border-color:#7fc3ad;background:#255079;box-shadow:none}
   .login input,.login select{width:100%;border:1.5px solid #4a76a8;background:#1b3a5c;color:#ffffff;border-radius:3px;padding:13px 14px;font-size:15px;font-weight:700}
-  .login select{appearance:none;-webkit-appearance:none;padding-right:40px;cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%238fc6ff' stroke-width='2.2' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 14px center}
+  .login select{appearance:none;-webkit-appearance:none;padding-right:40px;cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%235f7288' stroke-width='2.2' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 14px center}
   .login select optgroup{background:#12283f;color:#8fc6ff;font-weight:700}
   .login select option{background:#12283f;color:#fff;font-weight:700}
-  .login .go{width:100%;margin-top:18px;border:none;border-radius:3px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;color:#12263c;background:var(--navy)}
+  .login .go{width:100%;margin-top:18px;border-radius:3px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;background:#fff;color:#0f2438;border:1px solid #fff}
   .login .go:hover{filter:brightness(1.05)}
   .login .note{text-align:center;color:#7f97b4;font-size:11px;margin-top:14px}
 

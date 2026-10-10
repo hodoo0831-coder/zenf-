@@ -28,6 +28,29 @@ const WORK_RECORDS_DDL=`CREATE TABLE IF NOT EXISTS work_records(
   id TEXT PRIMARY KEY, system TEXT, date TEXT, worker TEXT, worker_count INTEGER, part TEXT, work_type TEXT,
   qty_plt REAL, qty_ea INTEGER, input_unit TEXT, start_time TEXT, end_time TEXT, man_hour REAL, memo TEXT, created_at TEXT)`;
 
+/* ── 젠키퍼 Worker 흉내(세이프티 보이스 저장소) ──
+   실제 Cloudflare Worker 코드는 저장소에 없다. 배포된 두 화면(safetyvoice/worker.html·admin.html)이 쓰는 계약만 구현한다:
+     POST /            신고 접수  {reportNo,datetime,title,level,zone,content,status,reporter,photos,kind,site,area,anonymous,reporterType,company,…} → {ok:true,id}
+     POST /            {action:'update', id, status, reply} → 상태·답변 갱신
+     GET  /reports     → {reports:[…]}   (최신순)
+   값은 전부 메모리에만 있고 영상 녹화용 시연 데이터다. */
+export const ZK_REPORTS=[];
+let zkSeq=0;
+async function zenkeeperMock(route,req,u){
+  const H={'access-control-allow-origin':'*','access-control-allow-headers':'content-type','access-control-allow-methods':'GET,POST,OPTIONS'};
+  const json=(o,st=200)=>route.fulfill({status:st,contentType:'application/json',headers:H,body:JSON.stringify(o)});
+  if(req.method()==='OPTIONS')return route.fulfill({status:204,headers:H});
+  const p=u.pathname.replace(/\/+$/,'')||'/';
+  if(req.method()==='GET'&&p==='/reports')return json({ok:true,reports:[...ZK_REPORTS].sort((a,b)=>String(b.ts||b.datetime).localeCompare(String(a.ts||a.datetime)))});
+  if(req.method()==='POST'&&p==='/'){
+    let b={};try{b=JSON.parse(req.postData()||'{}');}catch(e){}
+    if(b.action==='update'){const r=ZK_REPORTS.find(x=>x.id===b.id||x.serverId===b.id||x.reportNo===b.id);
+      if(!r)return json({ok:false,error:'not found'},404);if(b.status)r.status=b.status;if('reply' in b)r.reply=b.reply;r.updatedAt=new Date().toISOString();return json({ok:true,id:r.id});}
+    const id='r_'+(++zkSeq)+'_'+Date.now().toString(36);
+    ZK_REPORTS.push(Object.assign({id,ts:new Date().toISOString()},b));return json({ok:true,id});}
+  return json({ok:false,error:'not found'},404);
+}
+
 export async function startBackend(){
   const mk=async(file)=>(await import(pathToFileURL(path.join(ROOT,file)).href)).default;
   const wash=await mk('wash-system/backend/wash-worker.js');
@@ -43,6 +66,7 @@ export async function startBackend(){
   /** Playwright context.route 핸들러 — 알려진 호스트는 Worker 로, 나머지는 막는다. 등록은 정규식으로(ctx.route(/^https:\/\//, handler)) — 'https://**' 글롭은 잡히지 않는다 */
   const handler=async(route)=>{
     const req=route.request();const u=new URL(req.url());
+    if(u.hostname==='zenkeeper.hodoo0831.workers.dev')return zenkeeperMock(route,req,u);
     if(u.hostname==='kma-proxy.hodoo0831.workers.dev'){/* 기상청 실황 프록시 흉내 — 시연용 고정값 */
       return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({temp:27.4,rh:63,baseTime:'1500'})});}
     const h=hosts[u.hostname];

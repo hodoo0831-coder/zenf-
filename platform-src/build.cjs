@@ -78,7 +78,7 @@ const EMBED = {
   opl: ['ZEN_OPL_Generator.html', 'b64'], mon: ['ZEN_Monthly_Report.html', 'b64'],
   lab: ['ZEN_LaborCalc.html', 'b64'], safe: ['ZENF_Safety_App_v65.html', 'b64'],
   heat: ['ZEN_HeatWatch.html', 'b64'],
-  svW: ['ZEN_SafeVoice.html', 'gz'],
+  svW: ['safetyvoice/worker.html', 'gz'], svA: ['safetyvoice/admin.html', 'gz'],
   washW: ['wash-system/frontend/index.html', 'gz'], washA: ['wash-system/frontend/dashboard.html', 'gz'],
   pboxA: ['pbox-orikon-system/admin-site/pbox/index.html', 'gz'], pboxW: ['pbox-orikon-system/worker-site/pbox/index.html', 'gz'],
   oriA: ['pbox-orikon-system/admin-site/orikon/index.html', 'gz'], oriW: ['pbox-orikon-system/worker-site/orikon/index.html', 'gz'],

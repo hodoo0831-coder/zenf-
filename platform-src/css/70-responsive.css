@@ -27,7 +27,7 @@
   .grid,.g2,.g3,.g4,.viz,.dash,.statrow,.predgrid,.decisiongrid,
   .aband,.lines-grid,.whmap,.aiband .arecos{grid-template-columns:1fr!important}
   /* 작은 타일은 2열 유지 */
-  .otiles,.sysboard,.gquad,.livekpis{grid-template-columns:repeat(2,1fr)!important}
+  .otiles,.sysboard,.gquad,.livekpis{grid-template-columns:repeat(2,1fr)}
   /* 타이포 축소 */
   .hero .htitle{font-size:20px}
   .hero .hl .t{font-size:18px}
@@ -60,6 +60,5 @@
 #view a[onclick]{padding-top:15px;padding-bottom:15px}
 
 /* 가로 스크롤 최종 방어 */
-body{max-width:100%;overflow-x:clip}
 html{height:auto;min-height:100%}
 

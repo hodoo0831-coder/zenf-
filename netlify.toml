@@ -24,27 +24,27 @@
   to = "/ZEN_Manufacturing_Platform_11.0.html"
   status = 301
 
-# 세이프보이스(현장 위험 신고·개선 제안): /report는 QR용 짧은 주소
+# 세이프티 보이스: 배포본(현장 safetyvoice-worker / 관리자 safetyvoice-admin)으로 보낸다.
+# 예전 QR·링크(/report 등)는 그대로 살아 있고 새 주소로 넘어간다. (옛 ZEN_SafeVoice.html·netlify/functions/report.mjs 는 더 쓰지 않는다)
 [[redirects]]
   from = "/report"
-  to = "/ZEN_SafeVoice.html"
-  status = 200
+  to = "https://safetyvoice-worker.netlify.app/"
+  status = 302
 
 [[redirects]]
   from = "/r"
-  to = "/ZEN_SafeVoice.html"
-  status = 200
+  to = "https://safetyvoice-worker.netlify.app/"
+  status = 302
 
 [[redirects]]
   from = "/safevoice"
-  to = "/ZEN_SafeVoice.html"
-  status = 200
+  to = "https://safetyvoice-worker.netlify.app/"
+  status = 302
 
-# 관리자 전용 주소 (같은 앱, 경로로 화면 분기)
 [[redirects]]
   from = "/admin"
-  to = "/ZEN_SafeVoice.html"
-  status = 200
+  to = "https://safetyvoice-admin.netlify.app/"
+  status = 302
 
 # 젠타임(통합 근태관리): 근태 원천등록 · ERP 직접 전송
 [[redirects]]

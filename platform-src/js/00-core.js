@@ -103,7 +103,7 @@ const DEFAULT_DB={
     {id:'wash',name:'세척실 작업 우선순위 자동 추천 시스템',icon:'',agent:'clean',urls:{worker:'internal:gz:washW',admin:'internal:gz:washA'}},
     {id:'orikon',name:'오리콘·P-BOX 작업실적 통합관리 시스템',icon:'',agent:[],urls:{worker:'internal:gz:pboxW',admin:'internal:gz:pboxA'}},
     {id:'wh',name:'포장재 창고 적치 관리 시스템',icon:'',agent:'stock',urls:{worker:'internal:gz:whW',admin:'internal:gz:whA'}},
-    {id:'safevoice',name:'세이프보이스 (현장 위험 신고·접수함)',icon:'',agent:'safe',urls:{worker:'internal:gz:svW',admin:'internal:gz:svW#admin'}},{id:'heat',name:'젠프 히트워치 (옥외 체감온도·KOSHA)',icon:'',agent:'safe',urls:{worker:'internal:heat',admin:'internal:heat'}},
+    {id:'safevoice',name:'세이프티 보이스 (현장 위험·건의·제보 접수함)',icon:'',agent:'safe',urls:{worker:'internal:gz:svW',admin:'internal:gz:svA'}},{id:'heat',name:'젠프 히트워치 (옥외 체감온도·KOSHA)',icon:'',agent:'safe',urls:{worker:'internal:heat',admin:'internal:heat'}},
     {id:'zenkeeper',name:'ZEN Keeper 안전관리 (제니엘 4대 실천)',icon:'',agent:'safe',urls:{worker:'internal:safe',admin:'internal:safe'}},
   ],
   plan:null, // 주간 생산계획(엑셀 업로드 시 채워짐)
