@@ -295,8 +295,28 @@ function areaOf(r){ if(r.area) return r.area; const z=(r.zone||'').split(' · ')
 function noOf(r){ return r.reportNo || fmtKST(r.ts||r.datetime||Date.now()); }
 
 /* ---- PIN 게이트 ---- */
-const PWKEY='sv_admin_pw', DEFAULT_PW='1996';
-function savedPw(){ return localStorage.getItem(PWKEY) || DEFAULT_PW; }
+/* 비밀번호는 소스·저장소에 평문으로 두지 않는다 — SHA-256 해시만 비교한다.
+   (4자리 숫자는 해시여도 무차별 대입에 약하다. 접근 통제가 아니라 실수 방지 수준이며, 진짜 보호는 서버 쪽 인증이 필요하다.) */
+const PWKEY='sv_admin_pw', PWHASH_KEY='sv_admin_pwh', DEFAULT_PW_HASH='3d1e557b540ac045b3b327994a351f08a443f9216f9b2b8d3a0f42b58671ac83';
+function sha256hex(s){
+  function r(n,x){return (x>>>n)|(x<<(32-n));}
+  const K=[];let p=2,c=0;while(c<64){let pr=true;for(let i=2;i*i<=p;i++)if(p%i===0){pr=false;break;}if(pr){{const q=Math.pow(p,1/3);K[c++]=((q-Math.floor(q))*4294967296)|0;}}p++;}
+  const H=[];p=2;c=0;while(c<8){let pr=true;for(let i=2;i*i<=p;i++)if(p%i===0){pr=false;break;}if(pr){{const q=Math.pow(p,.5);H[c++]=((q-Math.floor(q))*4294967296)|0;}}p++;}
+  const b=unescape(encodeURIComponent(s));const l=b.length;const n=(((l+8)>>6)+1)*16;const w=new Array(n).fill(0);
+  for(let i=0;i<l;i++)w[i>>2]|=b.charCodeAt(i)<<(24-(i%4)*8);
+  w[l>>2]|=0x80<<(24-(l%4)*8);w[n-1]=l*8;
+  for(let j=0;j<n;j+=16){const x=w.slice(j,j+16);for(let i=16;i<64;i++){const a=x[i-15],d=x[i-2];x[i]=(x[i-16]+(r(7,a)^r(18,a)^(a>>>3))+x[i-7]+(r(17,d)^r(19,d)^(d>>>10)))|0;}
+    let [a,bb,cc,dd,e,f,g,h]=H;
+    for(let i=0;i<64;i++){const t1=(h+(r(6,e)^r(11,e)^r(25,e))+((e&f)^(~e&g))+K[i]+x[i])|0;const t2=((r(2,a)^r(13,a)^r(22,a))+((a&bb)^(a&cc)^(bb&cc)))|0;h=g;g=f;f=e;e=(dd+t1)|0;dd=cc;cc=bb;bb=a;a=(t1+t2)|0;}
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+bb)|0;H[2]=(H[2]+cc)|0;H[3]=(H[3]+dd)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;}
+  return H.map(v=>('00000000'+(v>>>0).toString(16)).slice(-8)).join('');
+}
+function pwOk(v){
+  const hs=localStorage.getItem(PWHASH_KEY); if(hs) return sha256hex(v)===hs;
+  const legacy=localStorage.getItem(PWKEY);                         /* 예전에 평문으로 저장한 비밀번호가 있으면 한 번 맞춰 보고 해시로 옮긴다 */
+  if(legacy){ if(v!==legacy) return false; localStorage.setItem(PWHASH_KEY,sha256hex(v)); localStorage.removeItem(PWKEY); return true; }
+  return sha256hex(v)===DEFAULT_PW_HASH;
+}
 let rows=[], filter='all', seen=new Set(), first=true, timer=null, freshIds=new Set();
 let similarMap={}, phashCache=new Map(), simRunSeq=0;
 
@@ -352,19 +372,19 @@ async function computeSimilarGroups(){
   similarMap=map; render();
 }
 
-function enter(){
-  const v=($('pin').value||'').trim();
-  if(v!==savedPw()) return toast('비밀번호가 달라요');
+function enter(skipCheck){
+  /* 이미 이 탭에서 통과한 세션(sv_admin_ok)이면 다시 비교하지 않는다 — 새로고침할 때 게이트가 또 뜨던 문제 */
+  if(skipCheck!==true){ const v=($('pin').value||'').trim(); if(!pwOk(v)) return toast('비밀번호가 달라요'); }
   sessionStorage.setItem('sv_admin_ok','1');
   $('gate').style.display='none'; $('inbox').style.display='block'; $('tabs').style.display='flex'; $('lockBtn').style.display='block'; $('hookBtn').style.display='block';
   const fs=$('fSite'); SV_SITES.concat(['기타']).forEach(s=>{ const o=document.createElement('option'); o.textContent=s; fs.appendChild(o); });
   load(); timer=setInterval(load,15000);
   try{ if('Notification' in window && Notification.permission==='default') Notification.requestPermission(); }catch(e){}
 }
-$('go').onclick=enter; $('pin').addEventListener('keydown',e=>{ if(e.key==='Enter') enter(); });
+$('go').onclick=()=>enter(); $('pin').addEventListener('keydown',e=>{ if(e.key==='Enter') enter(); });
 $('lockBtn').onclick=function(){
   const cur=prompt('새 비밀번호를 정하시거나, 취소를 눌러 그냥 잠그세요.\n(빈 값이면 비밀번호는 그대로 두고 잠급니다)');
-  if(cur){ localStorage.setItem(PWKEY,cur.trim()); toast('비밀번호를 바꿨어요'); }
+  if(cur){ localStorage.setItem(PWHASH_KEY,sha256hex(cur.trim())); localStorage.removeItem(PWKEY); toast('비밀번호를 바꿨어요'); }
   sessionStorage.removeItem('sv_admin_ok'); location.reload();
 };
 const HOOKKEY='sv_webhook';
@@ -382,7 +402,7 @@ function notifyWebhook(list){
   const text='🚨 세이프티 보이스 위험사항 '+list.length+'건 접수\n'+lines.join('\n');
   try{ fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})}); }catch(e){}
 }
-if(sessionStorage.getItem('sv_admin_ok')) enter();
+if(sessionStorage.getItem('sv_admin_ok')) enter(true);
 
 /* ---- 데이터 ---- */
 async function fetchAll(){
@@ -429,7 +449,7 @@ function visible(){
     const k=svKindOf(x), site=siteOf(x), status=x.status||'접수';
     if(filter==='today'&&!isToday(x.ts||x.datetime)) return false;
     if(filter==='open'&&status!=='접수') return false;
-    if(filter==='working'&&status!=='처리중') return false;
+    if(filter==='working'&&status!=='조치중'&&status!=='처리중') return false;   /* 실제 상태값은 '조치중' — '처리중'으로만 걸러 항상 0건이던 문제 */
     if(filter==='danger'&&!(k==='danger'&&status!=='완료')) return false;
     if(t&&k!==t) return false;
     if(s&&site!==s) return false;
@@ -812,6 +832,8 @@ function makePoster(){
     '<div class="pfoot">제작 및 문의 ZENIEL 제조사업부 · 센터장 이민아 · 010-5249-0831 · 010-5885-0832</div></div>';
   new QRCode(holder.querySelector('.c'),{text:url,width:240,height:240,correctLevel:QRCode.CorrectLevel.M});
 }
+/* onclick="…()" 속성에서 부르는 함수는 전역이어야 한다 — 즉시실행함수 안에 있어 ReferenceError 가 나던 QR·부착문 탭 */
+window.setQrSub=setQrSub; window.setQrRole=setQrRole; window.makeQR=makeQR; window.setPosterRole=setPosterRole; window.makePoster=makePoster;
 })();
 (function(){
   var t0=Date.now(), MIN=1650;
