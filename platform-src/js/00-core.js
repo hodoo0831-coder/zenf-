@@ -82,8 +82,8 @@ const DEFAULT_DB={
     {key:'HnB',label:'HnB 라인',cls:'l-hnb', need:20,on:13,leave:1,edu:3, target:30000,actual:19500,capa:34000,end:'18:40', clElapsed:7.0,clTransfer:0.8, defect:1.6, oeeA:88,oeeP:85},
     {key:'FnC',label:'FnC 라인',cls:'l-fnc', need:14,on:11,leave:0,edu:0, target:28000,actual:23800,capa:30000,end:'16:40', clElapsed:0.4,clTransfer:0.0, defect:1.1, oeeA:94,oeeP:91},
   ],
-  work:[{lab:'정상 근무',n:80,color:'#22a05f'},{lab:'연차',n:12,color:'#d98a2b'},{lab:'교육/출장',n:3,color:'#3b82f6'}], // 직접 정규 계약TO 95 = 출근 83(정상 80+교육 3) + 연차·휴가 12
-  headcount:{need:95,cur:83}, // 생산도급 직접 정규: 계약TO 95 / 출근 83 (일단위 인원 현황 26년 10/01 기준). 라인별 need·on·leave·edu 합과 일치
+  work:[{lab:'정상 근무',n:80,color:'#22a05f'},{lab:'연차',n:12,color:'#d98a2b'},{lab:'교육/출장',n:3,color:'#3b82f6'}], // 직접 정규 보유인원 95 = 출근 83(정상 80+교육 3) + 연차·휴가 12
+  headcount:{need:95,cur:83}, // 생산도급 직접 정규: 보유인원 95 / 출근 83 (일단위 인원 현황 26년 10/01 기준). 라인별 need·on·leave·edu 합과 일치
   stock:[
     {name:'튜브 원단',unit:'ROLL',onhand:38,dailyUse:32,lead:1,moq:200,targetDays:10},
     {name:'인쇄 잉크',unit:'KG',onhand:12,dailyUse:15,lead:1,moq:100,targetDays:10},

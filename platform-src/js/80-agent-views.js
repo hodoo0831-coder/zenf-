@@ -317,7 +317,7 @@ function laborLiveCard(){
       <br><span class="mut2">간접작업(P-BOX·오리콘) 실적에 기록된 인원만 집계됩니다. 라인 생산 인원은 출퇴근·배치를 기록하는 연결 시스템이 없어 아래 기준값으로 표시됩니다.</span></div>
   </div>`;
 }
-/* 계약TO 대비 출근 현황 — '일단위 인원 현황(26년)' 10/01 기준 (센터 관리 대장 수치). 도급 구분별 합계만 표시 */
+/* 보유인원 대비 출근 현황 — '일단위 인원 현황(26년)' 10/01 기준 (센터 관리 대장 수치). 도급 구분별 합계만 표시 */
 const CONTRACT_STAFF={asof:'10/01',rows:[
   {g:'생산도급',n:'간접 (센터장·계획·주임·PM 등)',to:44,now:42},
   {g:'생산도급',n:'직접 정규 (OP·작업자)',to:95,now:83,key:1},
@@ -329,7 +329,7 @@ const CONTRACT_STAFF={asof:'10/01',rows:[
 function contractStaffCard(){
   const R=CONTRACT_STAFF.rows;
   const tr=R.map(r=>{const d=r.now-r.to;return `<tr${r.sum?' style="font-weight:800;background:var(--tint)"':''}><td>${r.n}</td><td>${r.to}</td><td>${r.now}</td><td class="${d<0?'neg':'zero'}">${d}</td><td>${r.leave!=null?r.leave:'·'}</td></tr>`;}).join('');
-  return `<div class="card" style="margin-bottom:14px"><h3>도급별 계약TO 대비 출근 <span class="hint">${CONTRACT_STAFF.asof} 기준 · 일단위 인원 현황(26년)</span></h3><div style="overflow-x:auto"><table class="tb"><thead><tr><th>구분</th><th>계약TO</th><th>출근</th><th>과부족</th><th>휴가·이동</th></tr></thead><tbody>${tr}</tbody></table></div><div class="mini" style="margin-top:8px">직접 정규 계약TO 95명이 아래 라인별 배치(필요)의 기준입니다. 출근 83명은 라인별 투입 합계와 같습니다.</div></div>`;
+  return `<div class="card" style="margin-bottom:14px"><h3>도급별 보유인원 대비 출근 <span class="hint">${CONTRACT_STAFF.asof} 기준 · 일단위 인원 현황(26년)</span></h3><div style="overflow-x:auto"><table class="tb"><thead><tr><th>구분</th><th>보유인원</th><th>출근</th><th>과부족</th><th>휴가·이동</th></tr></thead><tbody>${tr}</tbody></table></div><div class="mini" style="margin-top:8px">직접 정규 보유인원 95명이 아래 라인별 배치(필요)의 기준입니다. 출근 83명은 라인별 투입 합계와 같습니다.</div></div>`;
 }
 function laborStatus(){
   function people(l){let c=[];for(let i=0;i<l.on;i++)c.push(pi('on'));for(let i=0;i<l.leave;i++)c.push(pi('leave'));for(let i=0;i<l.edu;i++)c.push(pi('edu'));for(let i=0;i<Math.max(0,l.need-G.cur(l));i++)c.push(pi('empty'));return c.join('');}
