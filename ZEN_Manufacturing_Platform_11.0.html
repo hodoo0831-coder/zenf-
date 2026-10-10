@@ -43,31 +43,32 @@
   html,body{margin:0;height:100%}
   body{background:var(--navy) fixed,var(--bg);word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased;word-break:keep-all;color:var(--ink);max-width:100%;overflow-x:clip;font-family:'NanumGothicEmbedded','NanumGothic','Nanum Gothic','나눔고딕','Malgun Gothic','맑은 고딕',system-ui,-apple-system,sans-serif}
 
-  /* ===== Login (브랜드 네이비 유지) ===== */
-  .login{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
-    background:radial-gradient(900px 600px at 50% 5%,#2c4a68 0,#1b3350 55%,#152a44 100%);overflow:hidden}
-  .login .box{width:390px;max-width:92vw;border:1px solid #2f4d6e;border-radius:3px;padding:32px;background:var(--navy);box-shadow:none;color:#eaf1fb;position:relative;z-index:1}
-  .login .brand{font-size:26px;font-weight:700;text-align:center;letter-spacing:-.3px}
-  .login .brand span{color:#7fc3ad}
-  .login .tagline{text-align:center;color:#cfe0f2;font-size:13px;font-weight:700;margin-top:4px}
-  .login .thesis{text-align:center;font-size:15px;color:#eaf1fb;margin:12px 0 12px;padding:10px 12px;border-radius:3px;background:var(--navy);font-weight:700}
-  .login .thesis b{color:#9ff0cf}
-  .login .caps{text-align:center;color:#9fb6d1;font-size:11.5px;line-height:1.7;margin-bottom:20px;word-break:keep-all}
-  .login .caps b{color:#cfe0f2}
-  .login .sub{text-align:center;color:#9fb6d1;font-size:12.5px;margin:5px 0 22px}
-  .login label{font-size:12px;color:#9fb6d1;font-weight:700;display:block;margin:14px 0 7px}
+  /* ===== Login (제니엘 화이트: 흰 바탕 · 네이비 · 헤어라인) ===== */
+  .login{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden}
+  .login .box{width:400px;max-width:92vw;border:1px solid var(--line);border-top:3px solid var(--navy);border-radius:3px;padding:32px;background:#fff;box-shadow:none;color:var(--ink);position:relative;z-index:1}
+  .login .brand{font-size:25px;line-height:1.25;font-weight:700;text-align:center;letter-spacing:-.3px;color:var(--navy)}
+  .login .brand span{color:var(--navy);letter-spacing:.04em}
+  .login .tagline{text-align:center;color:var(--muted);font-size:13px;font-weight:700;margin-top:4px}
+  .login .thesis{text-align:center;font-size:15px;color:#fff;margin:14px 0 12px;padding:11px 12px;border-radius:3px;background:var(--navy);font-weight:700}
+  .login .thesis b{color:#fff;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+  .login .caps{text-align:center;color:var(--muted2);font-size:11.5px;line-height:1.7;margin-bottom:20px;word-break:keep-all}
+  .login .caps b{color:var(--muted)}
+  .login .sub{text-align:center;color:var(--muted2);font-size:12.5px;margin:5px 0 22px}
+  .login label{font-size:12px;color:var(--muted);font-weight:700;display:block;margin:14px 0 7px}
   .roles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .roles button{border:1px solid #345677;background:#1d3a58;color:#eaf1fb;border-radius:3px;padding:12px 4px;cursor:pointer;font-weight:700;font-size:13px;transition:.14s}
+  .roles button{border:1px solid var(--line2);background:#fff;color:var(--muted);border-radius:3px;padding:12px 4px;cursor:pointer;font-weight:700;font-size:13px;transition:.14s;min-height:44px}
+  .roles button:hover{border-color:var(--navy);color:var(--navy)}
   .roles button .e{display:block;font-size:20px;margin-bottom:4px}
-  .roles button.on{border-color:#7fc3ad;background:#255079;box-shadow:none}
-  .login input,.login select{width:100%;border:1.5px solid #4a76a8;background:#1b3a5c;color:#ffffff;border-radius:3px;padding:13px 14px;font-size:15px;font-weight:700}
+  .roles button.on{border-color:var(--navy);background:var(--navy);color:#fff;box-shadow:none}
+  .login input,.login select{width:100%;border:1px solid var(--line2);background:#fff;color:var(--ink);border-radius:3px;padding:13px 14px;font-size:15px;font-weight:700;min-height:44px}
+  .login input:focus,.login select:focus{outline:none;border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy)}
+  .login input::placeholder{color:var(--faint);font-weight:400}
   .login select{appearance:none;-webkit-appearance:none;padding-right:40px;cursor:pointer;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%235f7288' stroke-width='2.2' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 14px center}
-  .login select optgroup{background:#12283f;color:#8fc6ff;font-weight:700}
-  .login select option{background:#12283f;color:#fff;font-weight:700}
-  .login .go{width:100%;margin-top:18px;border-radius:3px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;background:#fff;color:#0f2438;border:1px solid #fff}
-  .login .go:hover{filter:brightness(1.05)}
-  .login .note{text-align:center;color:#7f97b4;font-size:11px;margin-top:14px}
-
+  .login select optgroup{background:#fff;color:var(--navy);font-weight:700}
+  .login select option{background:#fff;color:var(--ink);font-weight:700}
+  .login .go{width:100%;margin-top:18px;border-radius:3px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;background:var(--navy);color:#fff;border:1px solid var(--navy);min-height:48px}
+  .login .go:hover{background:#16365b}
+  .login .note{text-align:center;color:var(--muted2);font-size:11px;margin-top:14px}
   /* ===== 연동 준비 슬롯 미리보기 ===== */
   .spv{border-radius:3px;padding:18px 20px;margin-top:4px;border:1px solid rgba(255,255,255,.09)}
   .spv.w{background:var(--navy)}
@@ -689,7 +690,7 @@ html{height:auto;min-height:100%}
     <select id="scopeSel"></select>
     <label>사번 / 비밀번호</label>
     <input id="pw" type="password" inputmode="numeric" maxlength="8" placeholder="접속 비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()">
-    <div id="pwErr" style="display:none;color:#ff8f8f;font-size:12px;font-weight:700;margin-top:7px">비밀번호가 올바르지 않습니다. 관리자에게 문의하세요.</div>
+    <div id="pwErr" style="display:none;color:#c25a52;font-size:12px;font-weight:700;margin-top:7px">비밀번호가 올바르지 않습니다. 관리자에게 문의하세요.</div>
     <button class="go" onclick="doLogin()">로그인</button>
     <div class="note" style="margin-top:10px"> 사내 인증 — 접속 기록은 감사 로그에 저장됩니다</div>
   </div>
@@ -4095,10 +4096,8 @@ fillScope('center');
 </style>
 <style>
 /* ══ 화이트 톤 — 세이프보이스처럼 흰 면 + 헤어라인 (마지막 로드로 우선 적용) ══
-   로그인 화면은 어두운 톤 그대로 둔다. 구조·기능은 건드리지 않고 색만 바꾼다. */
+   로그인 화면도 같은 흰 톤이다(20-login.css). 구조·기능은 건드리지 않고 색만 바꾼다. */
 body,.stage,#view{background:#fff}
-/* 로그인 — 어두운 카드 위에서 버튼이 보이도록 (네이비 위 네이비였다) */
-.login .go:hover{background:#e6edf5!important;filter:none}
 /* 좌측 메뉴 — 활성은 색 면이 아니라 네이비 글자 + 왼쪽 막대 */
 .nav a.on{background:#f7f8f8!important;color:#0f2438!important;border-color:transparent!important;box-shadow:inset 3px 0 0 #0f2438!important}
 .rchip{background:#fff!important;border:1px solid var(--line)!important;color:var(--muted)!important}
