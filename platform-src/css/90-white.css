@@ -1,9 +1,7 @@
 
 /* ══ 화이트 톤 — 세이프보이스처럼 흰 면 + 헤어라인 (마지막 로드로 우선 적용) ══
-   로그인 화면은 어두운 톤 그대로 둔다. 구조·기능은 건드리지 않고 색만 바꾼다. */
+   로그인 화면도 같은 흰 톤이다(20-login.css). 구조·기능은 건드리지 않고 색만 바꾼다. */
 body,.stage,#view{background:#fff}
-/* 로그인 — 어두운 카드 위에서 버튼이 보이도록 (네이비 위 네이비였다) */
-.login .go:hover{background:#e6edf5!important;filter:none}
 /* 좌측 메뉴 — 활성은 색 면이 아니라 네이비 글자 + 왼쪽 막대 */
 .nav a.on{background:#f7f8f8!important;color:#0f2438!important;border-color:transparent!important;box-shadow:inset 3px 0 0 #0f2438!important}
 .rchip{background:#fff!important;border:1px solid var(--line)!important;color:var(--muted)!important}
