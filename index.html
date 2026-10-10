@@ -3980,7 +3980,7 @@ function fillScope(r){
   if(r==='field'){lbl.textContent='담당 사업부 (현장)';
     sel.innerHTML=Object.keys(ZONES).map(z=>`<option value="${z}">${z}</option>`).join('');}
   else if(r==='admin'){lbl.textContent='담당 사업부 (관리자)';
-    sel.innerHTML=[`<option value="전체">전체 사업부</option>`].concat(Object.keys(ZONES).map(z=>`<option value="${z}">${z}</option>`)).join('');}
+    sel.innerHTML=[`<option value="전체">전체</option>`].concat(Object.keys(ZONES).map(z=>`<option value="${z}">${z}</option>`)).join('');}
   else{lbl.textContent='운영 범위 (센터)';sel.innerHTML=`<option value="전체">전체 라인 (종합 상황판 · 전권)</option>`;}
   sel.disabled=(r==='center');
 }
