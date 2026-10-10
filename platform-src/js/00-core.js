@@ -75,15 +75,15 @@ function tblFilter(inp){const q=inp.value.trim().toLowerCase();const tbl=inp.par
 const DEFAULT_DB={
   rate:92.6,
   lines:[
-    {key:'튜브',label:'튜브 라인',cls:'l-tube', need:18,on:16,leave:1,edu:0, target:42000,actual:31500,capa:45000,end:'17:40', clElapsed:11.0,clTransfer:0.3, defect:2.4, oeeA:91,oeeP:88},
-    {key:'치약충전',label:'치약충전 라인',cls:'l-fill', need:16,on:15,leave:1,edu:0, target:38000,actual:30400,capa:40000,end:'17:10', clElapsed:4.0,clTransfer:0.0, defect:1.2, oeeA:95,oeeP:92},
-    {key:'일회용',label:'일회용 라인',cls:'l-once', need:12,on:9,leave:1,edu:0, target:60000,actual:39000,capa:68000,end:'18:20', clElapsed:9.5,clTransfer:1.0, defect:2.9, oeeA:86,oeeP:83},
+    {key:'튜브',label:'튜브 라인',cls:'l-tube', need:18,on:14,leave:1,edu:0, target:42000,actual:31500,capa:45000,end:'17:40', clElapsed:11.0,clTransfer:0.3, defect:2.4, oeeA:91,oeeP:88},
+    {key:'치약충전',label:'치약충전 라인',cls:'l-fill', need:16,on:14,leave:1,edu:0, target:38000,actual:30400,capa:40000,end:'17:10', clElapsed:4.0,clTransfer:0.0, defect:1.2, oeeA:95,oeeP:92},
+    {key:'일회용',label:'일회용 라인',cls:'l-once', need:12,on:8,leave:1,edu:0, target:60000,actual:39000,capa:68000,end:'18:20', clElapsed:9.5,clTransfer:1.0, defect:2.9, oeeA:86,oeeP:83},
     {key:'초격차',label:'초격차 라인',cls:'l-cham', need:15,on:16,leave:0,edu:0, target:25000,actual:21250,capa:26000,end:'16:50', clElapsed:3.2,clTransfer:0.0, defect:0.9, oeeA:96,oeeP:94},
-    {key:'HnB',label:'HnB 라인',cls:'l-hnb', need:20,on:14,leave:1,edu:3, target:30000,actual:19500,capa:34000,end:'18:40', clElapsed:7.0,clTransfer:0.8, defect:1.6, oeeA:88,oeeP:85},
-    {key:'FnC',label:'FnC 라인',cls:'l-fnc', need:14,on:14,leave:1,edu:0, target:28000,actual:23800,capa:30000,end:'16:40', clElapsed:0.4,clTransfer:0.0, defect:1.1, oeeA:94,oeeP:91},
+    {key:'HnB',label:'HnB 라인',cls:'l-hnb', need:20,on:13,leave:1,edu:3, target:30000,actual:19500,capa:34000,end:'18:40', clElapsed:7.0,clTransfer:0.8, defect:1.6, oeeA:88,oeeP:85},
+    {key:'FnC',label:'FnC 라인',cls:'l-fnc', need:14,on:11,leave:0,edu:0, target:28000,actual:23800,capa:30000,end:'16:40', clElapsed:0.4,clTransfer:0.0, defect:1.1, oeeA:94,oeeP:91},
   ],
-  work:[{lab:'정상 근무',n:76,color:'#22a05f'},{lab:'연차',n:11,color:'#d98a2b'},{lab:'교육/출장',n:5,color:'#3b82f6'}],
-  headcount:{need:95,cur:88}, // 관제 집계(교육·이동대기 포함)
+  work:[{lab:'정상 근무',n:80,color:'#22a05f'},{lab:'연차',n:12,color:'#d98a2b'},{lab:'교육/출장',n:3,color:'#3b82f6'}], // 직접 정규 계약TO 95 = 출근 83(정상 80+교육 3) + 연차·휴가 12
+  headcount:{need:95,cur:83}, // 생산도급 직접 정규: 계약TO 95 / 출근 83 (일단위 인원 현황 26년 10/01 기준). 라인별 need·on·leave·edu 합과 일치
   stock:[
     {name:'튜브 원단',unit:'ROLL',onhand:38,dailyUse:32,lead:1,moq:200,targetDays:10},
     {name:'인쇄 잉크',unit:'KG',onhand:12,dailyUse:15,lead:1,moq:100,targetDays:10},

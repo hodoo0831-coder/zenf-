@@ -374,7 +374,7 @@ V.home=()=>{
       ${hm('생산 달성률',tp.ach+'<small>%</small>',[68,71,70,74,72,73,tp.ach],'#7fe0b0')}
       ${hm('OEE',oee+'<small>%</small>',[79,81,80,82,81,80,oee],'#7fe0b0')}
       ${hm('불량률',df+'<small>%</small>',DB.qualTrend.map(d=>d.v),'#c25a52')}
-      ${hm('투입 / 필요',cur+'<small>/'+need+'명</small>',[86,88,85,88,90,88,cur],'#cb9447')}
+      ${hm('투입 / 필요',cur+'<small>/'+need+'명</small>',[81,84,82,85,83,83,cur],'#cb9447')}
     </div></div>`;
   const tiles=[
     {id:'prod',ic:'activity',n:'생산',v:tp.ach+'%',c:tp.ach>=80?'#4a8a60':'#cb9447'},
