@@ -326,11 +326,17 @@ const CONTRACT_STAFF={asof:'10/01',rows:[
   {g:'업무도급',n:'정규 (공작·세척·적재·포장재·원료·내용물)',to:80,now:76},
   {g:'업무도급',n:'비정규',to:18,now:18},
   {g:'업무도급',n:'업무도급 총원',to:98,now:94,sum:1,leave:4}]};
+function opPoolBlock(){
+  const z=OP_POOL.zone, zs=Object.keys(z).map(k=>`<span class="chip">${k} ${z[k]}명</span>`).join(' ');
+  const top=Object.entries(OP_POOL.grp).sort((a,b)=>b[1]-a[1]).map(([g,n])=>`${g} ${n}`).join(' · ');
+  return `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line,#e3e8ee)"><div style="font-weight:800;font-size:13px;margin-bottom:6px">OP 다능공 ${OP_POOL.total}명 <span class="hint">OP 다능공 표 기준 · 구역별</span></div><div style="display:flex;gap:6px;flex-wrap:wrap">${zs}</div><div class="mini" style="margin-top:8px">그룹별 투입 가능 OP(중복 제외): ${top}. 보유인원표의 OP 69명(수습 4명 포함)과 1명 차이입니다. 결원 라인 재배치를 권고할 때 "투입 가능 다능공"으로 함께 표시됩니다.</div></div>`;
+}
 function contractStaffCard(){
   const R=CONTRACT_STAFF.rows;
   const tr=R.map(r=>{const d=r.now-r.to;return `<tr${r.sum?' style="font-weight:800;background:var(--tint)"':''}><td>${r.n}</td><td>${r.to}</td><td>${r.now}</td><td class="${d<0?'neg':'zero'}">${d}</td><td>${r.leave!=null?r.leave:'·'}</td></tr>`;}).join('');
-  return `<div class="card" style="margin-bottom:14px"><h3>도급별 보유인원 대비 출근 <span class="hint">${CONTRACT_STAFF.asof} 기준 · 일단위 인원 현황(26년)</span></h3><div style="overflow-x:auto"><table class="tb"><thead><tr><th>구분</th><th>보유인원</th><th>출근</th><th>과부족</th><th>휴가·이동</th></tr></thead><tbody>${tr}</tbody></table></div><div class="mini" style="margin-top:8px">직접 정규 보유인원 95명이 아래 라인별 배치(필요)의 기준입니다. 출근 83명은 라인별 투입 합계와 같습니다.</div></div>`;
+  return `<div class="card" style="margin-bottom:14px"><h3>도급별 보유인원 대비 출근 <span class="hint">${CONTRACT_STAFF.asof} 기준 · 일단위 인원 현황(26년)</span></h3><div style="overflow-x:auto"><table class="tb"><thead><tr><th>구분</th><th>보유인원</th><th>출근</th><th>과부족</th><th>휴가·이동</th></tr></thead><tbody>${tr}</tbody></table></div><div class="mini" style="margin-top:8px">직접 정규 보유인원 95명이 아래 라인별 배치(필요)의 기준입니다. 출근 83명은 라인별 투입 합계와 같습니다.</div>${opPoolBlock()}</div>`;
 }
+const OPGRP_OF={'튜브':'튜브','치약충전':'치약','초격차':'초격차'}; /* 인력 Agent 라인 → 다능공 그룹(대응이 분명한 라인만) */
 function laborStatus(){
   function people(l){let c=[];for(let i=0;i<l.on;i++)c.push(pi('on'));for(let i=0;i<l.leave;i++)c.push(pi('leave'));for(let i=0;i<l.edu;i++)c.push(pi('edu'));for(let i=0;i<Math.max(0,l.need-G.cur(l));i++)c.push(pi('empty'));return c.join('');}
   const L=myLines();
@@ -339,7 +345,7 @@ function laborStatus(){
   const surplus=L.filter(l=>G.cur(l)-l.need>0).map(l=>l.key);
   const deficit=L.filter(l=>G.cur(l)-l.need<0);
   const gap=headNeed()-headCur();
-  const recos=deficit.slice(0,2).map((l,i)=>({lv:i===0?'crit':'warn',r:`${surplus[i]||'여유 라인'} → ${l.key} 1명 이동`,s:`결원 ${l.need-G.cur(l)}명 중 1명 재배치`}));
+  const recos=deficit.slice(0,2).map((l,i)=>({lv:i===0?'crit':'warn',r:`${surplus[i]||'여유 라인'} → ${l.key} 1명 이동`,s:`결원 ${l.need-G.cur(l)}명 중 1명 재배치${OPGRP_OF[l.key]&&opGrp(OPGRP_OF[l.key])!=null?` · ${OPGRP_OF[l.key]} 라인 투입 가능 다능공 ${opGrp(OPGRP_OF[l.key])}명`:''}`}));
   recos.push({lv:'warn',r:`잔업 — 잔여 부족 ${Math.max(0,shortSum()-Math.min(2,surplus.length))}명`,s:'재배치 후 잔여분 잔업 (인건비 검토)'});
   const aib=aiBand('인력','투입 < 필요',`부족 <b>${gap}명</b> — ${deficit.map(l=>l.key).join('·')||'없음'} 결원. ${surplus.length?`여유 ${surplus.join('·')}에서 재배치 우선`:'여유 라인 없음 · 잔업/증원 검토'}.`,recos);
   return `
