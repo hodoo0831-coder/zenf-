@@ -2688,6 +2688,40 @@ function zaicCharts(){
       ${zaicTrend(pb)}
     </div></div>`;
 }
+/* ===== 에이전트별 향상 효과 — 적용 전·후 소요시간/지표. 값은 보고서(3장)와 같다.
+   세척·창고는 정량 측정치가 아직 없어 수치를 만들어 넣지 않는다: 센터가 측정값을 입력하면 그때부터 계산해 표시한다(DB.effect, 브라우저 저장). */
+const AGENT_EFFECT=[
+  {k:'plan',   n:'생산·계획',m:'지연오더 취합·정리',     b:'주 120분',a:'주 5분',v:'▼96%',s:'소요시간 실측'},
+  {k:'labor',  n:'인력',     m:'부하율·필요 T/O 산출',   b:'주 30분', a:'즉시',  v:'즉시', s:'소요시간 실측'},
+  {k:'clean',  n:'세척',     m:'세척 순번 결정 소요시간', unit:'분/일',input:1},
+  {k:'stock',  n:'창고',     m:'구역 적치 점검·취합 소요시간',unit:'분/주',input:1},
+  {k:'indirect',n:'간접작업',m:'인시생산성(누계)',        b:'0.33 PLT/MH',a:'0.37 PLT/MH',v:'+12%',s:'D1 실측 22건'},
+  {k:'safe',   n:'안전',     m:'TBM·폭염 사전 통보',     b:'수기',    a:'자동',  v:'100%', s:'점검이력'},
+  {k:'quality',n:'품질',     m:'OPL 교육자료 제작',      b:'40분/건', a:'5분/건',v:'▼88%', s:'소요시간 실측'},
+  {k:'report', n:'분석·보고',m:'일일 운영보고 작성',     b:'60분/일', a:'5분/일',v:'▼92%', s:'소요시간 실측'}];
+function effSet(k,f,v){DB.effect=DB.effect||{};(DB.effect[k]=DB.effect[k]||{})[f]=(v===''||isNaN(+v)||+v<0)?null:+v;saveDB();rerender();}
+function agentEffectCard(){
+  const E=DB.effect||{};
+  const tile=x=>{
+    let v=x.v,b=x.b,a=x.a,s=x.s,body;
+    if(x.input){const e=E[x.k]||{},ok=e.b>0&&e.a!=null&&e.a>=0;
+      if(ok){const pct=Math.round((1-e.a/e.b)*100);v=pct>=0?'▼'+pct+'%':'▲'+(-pct)+'%';b=e.b+x.unit;a=e.a+x.unit;s='입력 측정값';}
+      const inp=(f,ph)=>`<input type="number" min="0" inputmode="decimal" placeholder="${ph}" value="${e[f]!=null?e[f]:''}" onchange="effSet('${x.k}','${f}',this.value)" style="width:100%;min-width:0;min-height:40px;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:0 9px;font:inherit">`;
+      body=`<div style="font-size:24px;font-weight:700;color:${ok?'var(--navy)':'var(--muted)'};margin-top:4px">${ok?v:'측정 전'}</div>
+        <div style="font-size:12.5px;font-weight:700;margin-top:4px">${x.m}</div>
+        ${ok?`<div class="mini" style="margin-top:3px">${b} → ${a}</div>`:`<div class="mini" style="margin-top:3px">수치를 만들어 넣지 않았습니다 — 측정값을 입력하면 계산합니다</div>`}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">${inp('b','적용 전')}${inp('a','적용 후')}</div>
+        <div class="mini" style="margin-top:6px">단위 ${x.unit} · ${ok?s:'근거 : 센터 입력 측정값'}</div>`;
+    }else body=`<div style="font-size:24px;font-weight:700;color:var(--navy);margin-top:4px">${v}</div>
+        <div style="font-size:12.5px;font-weight:700;margin-top:4px">${x.m}</div>
+        <div class="mini" style="margin-top:3px">${b} → ${a}</div>
+        <div class="mini" style="margin-top:6px">근거 : ${s}</div>`;
+    return `<div style="border:1px solid var(--line);border-radius:12px;padding:13px 15px;background:#fff;min-width:0"><div style="font-size:12px;font-weight:700;color:var(--muted)">${x.n} Agent</div>${body}</div>`;
+  };
+  return `<div class="card" id="agentEffect" style="margin-bottom:14px"><h3>에이전트별 향상 효과 <span class="hint">적용 전 → 후 · 근거 병기</span></h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px">${AGENT_EFFECT.map(tile).join('')}</div>
+    <div class="mini" style="margin-top:10px">월 절감 합계 33.6시간 = 일일보고 18.3 + 지연오더 7.7 + OPL 4.7 + 부하율·T/O 2.0 + 월마감 0.9 (적용 전·후 소요시간 실측). 세척·창고는 정량 측정치가 없어 측정값 입력 후에만 표시합니다.</div></div>`;
+}
 V.zaic=()=>{
   const J=collectJudgments();
   const need=J.filter(x=>x.lv!=='ok'), done=need.filter(x=>actGet(actKey(x)).st==='done').length;
@@ -2736,6 +2770,7 @@ V.zaic=()=>{
       <b>해석 주의</b> — 주차 단위로 끊으면 2주차 0.44 PLT/MH(+33%)이지만, 시스템별 생산성이 다르고
       (<b>P-BOX 0.33 / 오리콘 0.22</b>) 주차 간 작업 구성비가 달라 <b>생산성 개선분과 구성 변화분이 분리되지 않습니다</b>.
       표본도 22건으로 유의성 검정이 불가하여, 위 카드는 <b>누계 +12%</b>만 성과로 제시합니다.</div></div>
+  ${agentEffectCard()}
   ${zaicCharts()}
   <div class="card" style="margin-top:16px">${bars}
     <div class="mini" style="margin-top:11px">제니엘 제조사업부 사업3팀 — 「제조 현장 통합 운영 AI Agent : 데이터가 아니라 '판단'을 자동화한다」</div></div>`;

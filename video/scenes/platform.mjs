@@ -79,6 +79,17 @@ async function agent(k){
   await s.finish();
 }
 
-const jobs=WHICH==='all'?['main',...Object.keys(AG)]:[WHICH];
-for(const j of jobs){if(j==='main')await main();else await agent(j);}
+/* 에이전트별 향상 효과 — 성과지표 탭의 카드. 측정값이 없는 항목(세척·창고)은 '측정 전'으로 보이는 그대로 찍는다 */
+async function effect(){
+  const s=await open('plat_effect');
+  await s.cap('AGENT별 성과','에이전트별 향상 효과','적용 전 → 후 수치와 근거를 에이전트마다 병기 — 측정값이 없는 항목은 수치를 만들지 않습니다');
+  await s.scene('effect',9,async()=>{
+    await s.p.evaluate(()=>setVtab('judge','zaic'));await s.sleep(800);
+    await s.p.evaluate(()=>{const e=document.getElementById('agentEffect');if(e)e.scrollIntoView({block:'start'});});await s.sleep(400);
+  },{hold:true});
+  await s.finish();
+}
+
+const jobs=WHICH==='all'?['main',...Object.keys(AG),'effect']:[WHICH];
+for(const j of jobs){if(j==='main')await main();else if(j==='effect')await effect();else await agent(j);}
 await browser.close();
