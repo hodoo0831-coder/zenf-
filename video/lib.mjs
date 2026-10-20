@@ -33,7 +33,7 @@ const OVERLAY_JS=()=>{
     +`#zcap2 .b{display:block;background:#0f2438;border-radius:0 3px 3px 3px;padding:16px 24px 17px;box-shadow:0 10px 30px rgba(15,36,56,.28)}`
     +`#zcap2 .h{color:#fff;font:700 27px/1.28 ${F};word-break:keep-all}`
     +`#zcap2 .s{color:#c9d6e6;font:400 15px/1.5 ${F};margin-top:6px;word-break:keep-all}`
-    +`#ztoast{position:fixed;right:34px;top:34px;z-index:2147483000;display:flex;flex-direction:column;gap:10px;align-items:flex-end;pointer-events:none;font-family:${F}}`
+    +`#ztoast{position:fixed;right:34px;bottom:58px;z-index:2147483000;display:flex;flex-direction:column-reverse;gap:10px;align-items:flex-end;pointer-events:none;font-family:${F}}`
     +`#ztoast .k{display:flex;gap:11px;align-items:center;background:#fff;color:#0f2438;border:1px solid #cfd8e3;border-left:4px solid #0f2438;border-radius:3px;padding:11px 16px;box-shadow:0 8px 24px rgba(15,36,56,.2);max-width:520px;font:700 15px/1.45 ${F};word-break:keep-all;animation:zin .35s ease both}`
     +`#ztoast .k i{font-style:normal;background:#0f2438;color:#fff;font:700 11px/1 ${F};letter-spacing:.08em;padding:5px 8px;border-radius:2px;flex:none}`
     +`#ztoast .k.out{animation:zout .35s ease both}`
