@@ -1,0 +1,173 @@
+<!doctype html><meta charset=utf-8>
+<title>ZEN 영상 모션 그래픽 — render(scene,t) 로 프레임을 결정적으로 그린다</title>
+<style>
+@font-face{font-family:N;src:url(../../.claude/skills/zen-ui/assets/nanum_400.woff2)}
+@font-face{font-family:N;font-weight:700;src:url(../../.claude/skills/zen-ui/assets/nanum_700.woff2)}
+*{box-sizing:border-box;margin:0}
+html,body{width:1920px;height:1200px;overflow:hidden;background:#fff;font-family:N,'Noto Sans CJK KR',sans-serif;color:#0D1A2B}
+#st{position:absolute;inset:0;background:#fff}
+#st.dark{background:#0F2438}
+.a{position:absolute}
+.lab{font-size:26px;font-weight:700;color:#6B7E96;letter-spacing:.5px}
+.h1{font-size:68px;font-weight:700;color:#0F2438;line-height:1.2}
+.chip{position:absolute;width:360px;height:92px;background:#fff;border:1.5px solid #D7E1EF;border-radius:4px;display:flex;align-items:center;gap:18px;padding:0 22px;font-size:27px;font-weight:700;color:#0F2438;box-shadow:0 6px 18px rgba(15,36,56,.08)}
+.chip i{font-style:normal;width:46px;height:46px;border-radius:3px;background:#0F2438;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;flex:none}
+.card{position:absolute;background:#fff;border:1.5px solid #D7E1EF;border-radius:4px}
+.tile{position:absolute;width:410px;height:290px;background:#fff;border:1.5px solid #D7E1EF;border-radius:4px;padding:26px 30px}
+.tile.off{border-style:dashed}
+.tile .n{font-size:24px;font-weight:700;color:#6B7E96}
+.tile .v{font-size:78px;font-weight:700;color:#0F2438;margin-top:6px;line-height:1.1}
+.tile .m{font-size:27px;font-weight:700;color:#0D1A2B;margin-top:10px}
+.tile .s{font-size:22px;color:#42556D;margin-top:6px}
+.tile .b{position:absolute;left:30px;right:30px;bottom:28px;height:10px}
+.tile .b i{position:absolute;left:0;top:0;height:10px;display:block}
+.row .t{position:absolute;font-size:31px;font-weight:700;color:#0D1A2B}
+.row .d{position:absolute;font-size:22px;color:#6B7E96}
+.big{font-weight:700;color:#0F2438}
+.k{position:absolute;font-weight:700}
+</style>
+<div id=st></div>
+<script>
+const ST=document.getElementById('st');
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const P=(t,a,b)=>clamp((t-a)/(b-a));
+const E=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;               // easeInOutCubic
+const O=x=>1-Math.pow(1-x,3);                                   // easeOutCubic
+const B=x=>{const c=1.70158,d=c+1;return 1+d*Math.pow(x-1,3)+c*Math.pow(x-1,2)};  // easeOutBack
+function el(cls,html,css){const d=document.createElement('div');d.className=cls;if(html!=null)d.innerHTML=html;if(css)d.style.cssText=css;ST.appendChild(d);return d}
+function set(d,o){for(const k in o)d.style[k]=o[k]}
+function fade(d,a,b,rise=24,t){const p=O(P(t,a,b));d.style.opacity=p;d.style.transform=`translateY(${(1-p)*rise}px)`}
+let CUR=null,S={};
+function clear(){ST.innerHTML='';ST.className='';S={}}
+
+/* ───────── 1. 문제 → 해결 (hook) ───────── */
+function build_hook(){
+  S.lab=el('a lab','문제 · 매일 반복되는 수기 취합','left:120px;top:96px');
+  S.h1=el('a h1','매일 아침, 엑셀 6개를 열어<br>손으로 합산합니다','left:120px;top:150px;width:1500px');
+  S.h2=el('a h1','흩어진 데이터를<br>하나의 판단 레이어로','left:120px;top:150px;width:1500px;opacity:0');
+  const names=['생산계획·실적.xlsx','인력·연차.xlsx','안전점검(TBM).xlsx','폭염·온열.xlsx','세척 우선순위.xlsx','품질 이슈.xlsx'];
+  const pos=[[130,470,-3],[560,430,2],[150,640,3],[590,600,-2],[120,810,-2],[570,780,3]];
+  S.chips=names.map((n,i)=>{const c=el('chip',`<i>XLS</i>${n}`,`left:${pos[i][0]}px;top:${pos[i][1]}px;opacity:0`);c._p=pos[i];return c});
+  S.shot=el('a','', 'left:120px;top:430px;width:1040px;height:655px;background:#fff url(ui-home.png) center/cover;border:1.5px solid #D7E1EF;border-radius:4px;box-shadow:0 14px 40px rgba(15,36,56,.16);opacity:0');
+  S.sw=el('card','','left:1200px;top:430px;width:660px;height:380px');
+  S.swl=el('a lab','수기 합산','left:1240px;top:462px');
+  S.swn=el('a big','0','left:1240px;top:520px;font-size:170px;line-height:1;white-space:nowrap');
+  S.sws=el('a','보고 1건 · 매일','left:1240px;top:735px;font-size:28px;font-weight:700;color:#6B7E96');
+  S.res=el('a','판단은 코드화된 룰이, 취합은 플랫폼이','left:1200px;top:850px;width:660px;font-size:34px;font-weight:700;color:#0F2438;opacity:0;line-height:1.35');
+  S.d=el('a','<span style="font-size:150px">60분</span><span style="font-size:90px;color:#6B7E96;margin:0 28px">→</span><span style="font-size:150px;color:#0F2438">5분</span>','left:120px;top:1030px;font-weight:700;color:#A6BAD8;opacity:0;white-space:nowrap');
+}
+function r_hook(t){
+  fade(S.lab,0.1,0.8,12,t);
+  const h1on=1-O(P(t,4.9,5.6));fade(S.h1,0.3,1.3,30,t);if(t>4.9)S.h1.style.opacity=Math.min(S.h1.style.opacity,h1on);
+  const h2=O(P(t,5.4,6.4));S.h2.style.opacity=h2;S.h2.style.transform=`translateY(${(1-h2)*30}px)`;
+  S.chips.forEach((c,i)=>{
+    const a=1.3+i*0.28,p=B(P(t,a,a+0.5)),cv=E(P(t,5.0,6.3)),cx=480,cy=730;
+    const x=c._p[0]+(cx-c._p[0]-180)*cv,y=c._p[1]+(cy-c._p[1]-46)*cv;
+    set(c,{left:x+'px',top:y+'px',opacity:String(clamp(P(t,a,a+0.3))*(1-P(t,5.6,6.3))),transform:`rotate(${c._p[2]*(1-cv)}deg) scale(${(0.8+0.2*p)*(1-0.55*cv)})`});
+  });
+  const so=O(P(t,5.7,6.6));S.shot.style.opacity=so;S.shot.style.transform=`scale(${0.94+0.06*so})`;
+  // 스톱워치 숫자: 0→60 (2.0~5.0초) → 60이 지워지고 5 (5.2~6.6초)
+  const U='<span style="font-size:56px;color:#6B7E96;margin-left:10px">분</span>';
+  if(t<5.2){S.swn.innerHTML=Math.round(60*E(P(t,2.0,5.0)))+U;S.swn.style.color='#C25A52';}
+  else{const k=E(P(t,5.2,6.6));S.swn.style.color='#0F2438';
+    S.swn.innerHTML=`<span style="color:#A6BAD8;text-decoration:line-through;text-decoration-thickness:8px;opacity:${1-0.4*k}">60</span><span style="font-size:80px;color:#6B7E96;margin:0 22px">→</span>${Math.round(60-55*k)}`+U;}
+  S.swl.textContent=t>5.6?'자동 집계':'수기 합산';
+  fade(S.sw,1.6,2.2,20,t);fade(S.swl,1.8,2.4,12,t);fade(S.swn,1.8,2.4,12,t);fade(S.sws,1.8,2.4,12,t);
+  S.res.style.opacity=O(P(t,6.8,7.6));S.res.style.transform=`translateY(${(1-O(P(t,6.8,7.6)))*20}px)`;
+}
+
+/* ───────── 2. 성과: 월 36.3h → 2.8h ───────── */
+function build_results(){
+  S.lab=el('a lab','성과 · 도입 전후 비교','left:120px;top:96px');
+  S.h1=el('a h1','관리자 1인, 월 반복업무<br>36.3시간 → 2.8시간','left:120px;top:150px;width:1700px');
+  S.rows=[['일일 운영보고','60분 → 5분 · 월 20일',20.0,1.67],['지연오더 취합·정리','120분 → 5분 · 월 4주',8.0,0.33],['OPL 교육자료 제작','40분 → 5분 · 월 8건',5.33,0.67],['부하율·필요 T/O 산출','30분 → 즉시 · 월 4주',2.0,0.0],['월마감 보고 작성','60분 → 5분 · 월 1회',1.0,0.08]].map((r,i)=>{
+    const y=470+i*128;const o={y};
+    o.t=el('a','<div style="font-size:32px;font-weight:700;color:#0D1A2B">'+r[0]+'</div><div style="font-size:22px;color:#6B7E96;margin-top:2px">'+r[1]+'</div>',`left:120px;top:${y}px;width:420px;opacity:0`);
+    o.b=el('a','',`left:560px;top:${y+8}px;height:34px;width:0;background:#C6D3E4`);
+    o.a=el('a','',`left:560px;top:${y+52}px;height:34px;width:0;background:#0F2438`);
+    o.bv=el('a',r[2].toFixed(1)+'h',`left:560px;top:${y+8}px;font-size:26px;font-weight:700;color:#6B7E96;opacity:0;line-height:34px`);
+    o.av=el('a',r[3]===0?'즉시':r[3].toFixed(1)+'h',`left:560px;top:${y+52}px;font-size:26px;font-weight:700;color:#0F2438;opacity:0;line-height:34px`);
+    o.r=r;return o});
+  S.lg=el('a','<span style="display:inline-block;width:20px;height:20px;background:#C6D3E4;margin-right:10px;vertical-align:-3px"></span>적용 전 &nbsp;&nbsp; <span style="display:inline-block;width:20px;height:20px;background:#0F2438;margin-right:10px;vertical-align:-3px"></span>적용 후','left:560px;top:425px;font-size:24px;font-weight:700;color:#42556D');
+  S.p=el('card','','left:1290px;top:440px;width:540px;height:560px');
+  S.pn=el('a big','0','left:1330px;top:470px;font-size:110px;color:#A6BAD8;line-height:1');
+  S.pl=el('a lab','월 반복업무 (관리자 1인)','left:1330px;top:600px;font-size:24px');
+  S.pa=el('a big','▼92%','left:1330px;top:650px;font-size:128px;opacity:0;line-height:1');
+  S.ps=el('a','월 33.6시간 절감<br>연 400시간 이상','left:1330px;top:850px;font-size:36px;font-weight:700;color:#0F2438;line-height:1.4;opacity:0');
+  S.ft=el('a','산출 : 적용 전·후 1회 소요시간(실측) × 월 빈도 · 관리자 1인 기준','left:120px;top:1115px;font-size:24px;color:#6B7E96;opacity:0');
+}
+function r_results(t){
+  fade(S.lab,0.1,0.7,12,t);fade(S.h1,0.2,1.1,30,t);fade(S.lg,1.2,1.8,10,t);fade(S.p,1.2,1.9,20,t);
+  S.rows.forEach((o,i)=>{const a=1.4+i*0.75;fade(o.t,a,a+0.5,16,t);
+    const pb=E(P(t,a+0.2,a+1.1)),pa=E(P(t,a+0.7,a+1.4));
+    const wb=o.r[2]/20*600*pb,wa=Math.max(o.r[3]/20*600,o.r[3]===0?4:0)*pa;
+    set(o.b,{width:wb+'px'});set(o.a,{width:Math.max(wa,pa>0?4:0)+'px'});
+    set(o.bv,{left:(560+wb+14)+'px',opacity:String(P(t,a+0.8,a+1.2))});set(o.av,{left:(560+Math.max(wa,4)+14)+'px',opacity:String(P(t,a+1.3,a+1.7))});});
+  const c=P(t,1.6,5.6);S.pn.textContent=(36.3*E(c)).toFixed(1)+'h';
+  if(t>6.0){const k=E(P(t,6.0,7.2));S.pn.textContent=(36.3+(2.8-36.3)*k).toFixed(1)+'h';S.pn.style.color=`rgb(${Math.round(166+(15-166)*k)},${Math.round(186+(36-186)*k)},${Math.round(216+(56-216)*k)})`}
+  fade(S.pn,1.4,2.0,12,t);fade(S.pl,1.6,2.2,10,t);
+  const q=O(P(t,7.0,7.9));S.pa.style.opacity=q;S.pa.style.transform=`scale(${0.85+0.15*q})`;fade(S.ps,7.8,8.6,14,t);fade(S.ft,8.6,9.4,6,t);
+}
+
+/* ───────── 3. 에이전트별 성과 ───────── */
+function build_agents(){
+  S.lab=el('a lab','성과 · 에이전트별','left:120px;top:96px');
+  S.h1=el('a h1','에이전트마다 적용 전후를 측정했다','left:120px;top:150px;width:1700px');
+  const T=[['생산·계획','96','▼%','지연오더 취합·정리','주 120분 → 5분',[1,5/120]],['인력','즉시','','부하율·필요 T/O 산출','주 30분 → 즉시',[1,0]],['세척','측정 전','','세척 순번 결정','점수 기반 자동 추천',null],['창고','측정 전','','구역 적치 점검·취합','12개 구역 자동 판정',null],
+          ['간접작업','12','+%','인시생산성 (누계)','0.33 → 0.37 PLT/MH',[0.33/0.37,1]],['안전','100','%','TBM·폭염 사전 통보','수기 → 자동','full'],['품질','88','▼%','OPL 교육자료 제작','40분 → 5분 / 건',[1,0.125]],['분석·보고','92','▼%','일일 운영보고 작성','60분 → 5분 / 일',[1,5/60]]];
+  S.tiles=T.map((x,i)=>{const col=i%4,row=Math.floor(i/4);
+    const d=el('tile'+(x[5]===null?' off':''),`<div class=n>${x[0]} Agent</div><div class=v style="${x[5]===null?'color:#6B7E96;font-size:62px;margin-top:20px':''}"></div><div class=m>${x[3]}</div><div class=s>${x[4]}</div><div class=b><i style="background:#C6D3E4;width:0"></i><i style="top:14px;background:#0F2438;width:0"></i></div>`,`left:${120+col*440}px;top:${420+row*320}px;opacity:0`);
+    d._x=x;d._v=d.querySelector('.v');d._b=d.querySelectorAll('.b i');if(x[5]===null)d.querySelector('.b').style.display='none';return d});
+  S.ft=el('a','월 33.6시간 = 일일보고 18.3 + 지연오더 7.7 + OPL 4.7 + 부하율·T/O 2.0 + 월마감 0.9 &nbsp;·&nbsp; 세척·창고는 측정 후 반영','left:120px;top:1080px;font-size:26px;font-weight:700;color:#0F2438;opacity:0');
+}
+function r_agents(t){
+  fade(S.lab,0.1,0.7,12,t);fade(S.h1,0.2,1.0,30,t);
+  S.tiles.forEach((d,i)=>{const a=0.9+i*0.42,p=B(P(t,a,a+0.5));set(d,{opacity:String(clamp(P(t,a,a+0.3))),transform:`translateY(${(1-clamp(p,0,1.05))*30}px)`});
+    const x=d._x,c=E(P(t,a+0.25,a+1.2));
+    if(x[1]==='즉시'||x[1]==='측정 전')d._v.textContent=c>0.15?x[1]:'';else d._v.textContent=(x[2]==='▼%'?'▼':x[2]==='+%'?'+':'')+Math.round(parseInt(x[1])*c)+'%';
+    const bs=d._b;if(x[5]==='full'){bs[1].style.width=(350*c)+'px';bs[0].style.width='0'}else if(x[5]){bs[0].style.width=(350*x[5][0]*c)+'px';bs[1].style.width=(Math.max(350*x[5][1],x[5][1]===0?4:0)*E(P(t,a+0.6,a+1.4)))+'px'}});
+  fade(S.ft,0.9+8*0.42+0.6,0.9+8*0.42+1.2,8,t);
+}
+
+/* ───────── 4. 8 Agent × 실연동 ───────── */
+function build_matrix(){
+  S.lab=el('a lab','구조 · 8 Agent × 현장 앱 실연동','left:120px;top:96px');
+  S.h1=el('a h1','8개 Agent 가동 —<br>현장 앱 6종이 5개 Agent에 직결','left:120px;top:150px;width:1700px');
+  const SYS=['젠키퍼','히트워치','오리콘·P-BOX','세척실','창고 적치','월마감'];
+  const AG=[['생산·계획',[],'주간계획 엑셀'],['인력',[],'인원·CAPA'],['세척',[3],''],['창고',[4],''],['간접작업',[2],''],['품질',[],'기준 데이터'],['안전',[0,1],''],['분석·보고',[5],'']];
+  S.hd=SYS.map((s,j)=>el('a',s,`left:${560+j*150}px;top:455px;width:150px;text-align:center;font-size:23px;font-weight:700;color:#6B7E96;opacity:0`));
+  S.hx=el('a','엑셀·기준','left:1480px;top:455px;width:260px;text-align:center;font-size:23px;font-weight:700;color:#6B7E96;opacity:0');
+  S.ln=el('a','','left:120px;top:500px;width:1640px;height:3px;background:#0F2438;opacity:0');
+  S.rows=AG.map((r,i)=>{const y=520+i*74;const o={};
+    o.n=el('a',r[0],`left:120px;top:${y}px;width:420px;font-size:32px;font-weight:700;color:#0D1A2B;line-height:60px;opacity:0`);
+    o.l=el('a','',`left:120px;top:${y+66}px;width:1640px;height:1.5px;background:#E3E9F2;opacity:0`);
+    o.d=[0,1,2,3,4,5].map(j=>{const live=r[1].includes(j);return el('a','',`left:${560+j*150+75-(live?19:6)}px;top:${y+(live?11:24)}px;width:${live?38:12}px;height:${live?38:12}px;border-radius:50%;background:${live?'#0F2438':'#D7E1EF'};opacity:0`)});
+    o.x=el('a',r[2]||'·',`left:1480px;top:${y}px;width:260px;text-align:center;font-size:24px;font-weight:700;color:${r[2]?'#42556D':'#C6D3E4'};line-height:60px;opacity:0`);o.r=r;return o});
+  S.fn=el('a','●  실시간 연동 (현장 앱 입력이 5초~60초 주기로 판단에 반영) &nbsp;&nbsp; 생산·계획 / 인력 / 품질은 엑셀 업로드·기준 데이터 기반','left:120px;top:1135px;font-size:25px;font-weight:700;color:#42556D;opacity:0');
+}
+function r_matrix(t){
+  fade(S.lab,0.1,0.7,12,t);fade(S.h1,0.2,1.0,30,t);
+  S.hd.forEach((h,j)=>fade(h,0.9+j*0.08,1.4+j*0.08,8,t));fade(S.hx,1.4,1.9,8,t);fade(S.ln,1.0,1.6,0,t);
+  S.rows.forEach((o,i)=>{const a=1.4+i*0.32;fade(o.n,a,a+0.4,12,t);fade(o.l,a,a+0.4,0,t);fade(o.x,a+0.1,a+0.5,10,t);
+    o.d.forEach((d,j)=>{const live=o.r[1].includes(j);const p=live?B(P(t,a+0.5+j*0.03,a+1.0+j*0.03)):O(P(t,a+0.1,a+0.5));d.style.opacity=live?clamp(P(t,a+0.5,a+0.7)):p;d.style.transform=`scale(${live?clamp(p,0,1.1):1})`;})});
+  fade(S.fn,4.6,5.3,8,t);
+}
+
+/* ───────── 5. 엔딩 ───────── */
+function build_end(){
+  ST.className='dark';
+  S.lab=el('a','2026 제2회 ZAIC · ZEN Manufacturing Platform','left:120px;top:110px;font-size:28px;font-weight:700;color:#A6BAD8;letter-spacing:.5px');
+  S.l1=el('a','취합하는 사람에서,','left:120px;top:230px;font-size:112px;font-weight:700;color:#fff;white-space:nowrap');
+  S.l2=el('a','판단하는 사람으로.','left:120px;top:380px;font-size:112px;font-weight:700;color:#fff;white-space:nowrap');
+  S.st=[['룰 32개','관리자 경험의 코드화'],['월 33.6h','반복업무 절감 (관리자 1인)'],['토큰 0','운영 중 AI 호출 없음']].map((x,i)=>el('a',`<div style="font-size:70px;font-weight:700;color:#fff">${x[0]}</div><div style="font-size:26px;color:#A6BAD8;margin-top:8px">${x[1]}</div>`,`left:${120+i*560}px;top:720px;width:520px;padding-left:34px;border-left:2px solid #2A4363;opacity:0`));
+  S.u=el('a','https://zen-ap-manufacturing.netlify.app/','left:120px;top:1010px;font-size:36px;font-weight:700;color:#fff;opacity:0');
+  S.f=el('a','제니엘 제조사업부 사업3팀 · AP 대전공장','left:120px;top:1075px;font-size:26px;color:#7B93B3;opacity:0');
+}
+function r_end(t){
+  fade(S.lab,0.1,0.8,12,t);fade(S.l1,0.5,1.5,40,t);fade(S.l2,1.4,2.4,40,t);
+  S.st.forEach((s,i)=>fade(s,3.0+i*0.35,3.6+i*0.35,24,t));fade(S.u,4.8,5.5,10,t);fade(S.f,5.2,5.9,6,t);
+}
+const SC={hook:[build_hook,r_hook],results:[build_results,r_results],agents:[build_agents,r_agents],matrix:[build_matrix,r_matrix],end:[build_end,r_end]};
+window.setup=name=>{clear();SC[name][0]();CUR=name};
+window.render=t=>{SC[CUR][1](t)};
+</script>
