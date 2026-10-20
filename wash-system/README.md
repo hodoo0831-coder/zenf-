@@ -19,7 +19,7 @@
 | 구분 | URL | 접근 |
 |---|---|---|
 | 작업자용 앱 | https://wash-worker.netlify.app | 게이트 없음 |
-| 관리자용 대시보드 | https://wash-admin.netlify.app | `zeniel1996` |
+| 관리자용 대시보드 | https://wash-admin.netlify.app | (비밀번호는 담당자에게 문의) |
 | 백엔드 API | https://wash-db.hodoo0831.workers.dev | 내부용 |
 
 ---
@@ -116,7 +116,7 @@ https://wash-db.hodoo0831.workers.dev/health
 | 대상 | 방식 |
 |---|---|
 | 작업자용 앱 | 오픈 (현장 사용) |
-| 관리자용 대시보드 | 진입 비번 `zeniel1996` |
+| 관리자용 대시보드 | 진입 비번 (비밀번호는 담당자에게 문의) |
 | 데이터 전송 | HTTPS 암호화 |
 | DB 접근 | Cloudflare 계정 인증 |
 

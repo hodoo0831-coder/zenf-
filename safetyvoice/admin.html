@@ -297,7 +297,7 @@ function noOf(r){ return r.reportNo || fmtKST(r.ts||r.datetime||Date.now()); }
 /* ---- PIN 게이트 ---- */
 /* 비밀번호는 소스·저장소에 평문으로 두지 않는다 — SHA-256 해시만 비교한다.
    (4자리 숫자는 해시여도 무차별 대입에 약하다. 접근 통제가 아니라 실수 방지 수준이며, 진짜 보호는 서버 쪽 인증이 필요하다.) */
-const PWKEY='sv_admin_pw', PWHASH_KEY='sv_admin_pwh', DEFAULT_PW_HASH='3d1e557b540ac045b3b327994a351f08a443f9216f9b2b8d3a0f42b58671ac83';
+const PWKEY='sv_admin_pw', PWHASH_KEY='sv_admin_pwh', DEFAULT_PW_HASH='3d1e557b540ac045b3b327994a351f08a443f9216f9b2b8d3a0f42b58671ac83'; /* zen-pin-hash */
 function sha256hex(s){
   function r(n,x){return (x>>>n)|(x<<(32-n));}
   const K=[];let p=2,c=0;while(c<64){let pr=true;for(let i=2;i*i<=p;i++)if(p%i===0){pr=false;break;}if(pr){{const q=Math.pow(p,1/3);K[c++]=((q-Math.floor(q))*4294967296)|0;}}p++;}

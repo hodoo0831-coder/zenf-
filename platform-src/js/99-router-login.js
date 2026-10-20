@@ -62,7 +62,7 @@ function fillScope(r){
 }
 document.querySelectorAll('#roles button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#roles button').forEach(x=>x.classList.remove('on'));b.classList.add('on');fillScope(b.dataset.role);});
 /* 보안: 비밀번호는 SHA-256 해시로만 보관 — 소스 열람으로 원문 확인 불가 */
-const ACCESS_HASH='3d1e557b540ac045b3b327994a351f08a443f9216f9b2b8d3a0f42b58671ac83';
+const ACCESS_HASH='3d1e557b540ac045b3b327994a351f08a443f9216f9b2b8d3a0f42b58671ac83'; /* zen-pin-hash */
 async function sha256(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
 function _lock(){try{return JSON.parse(localStorage.getItem('zen_lock')||'{}');}catch(e){return {};}}
 let _idleT=null;

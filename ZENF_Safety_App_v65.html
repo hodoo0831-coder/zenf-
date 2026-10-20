@@ -631,7 +631,23 @@ const MASCOT = {"thumb": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK4AAACW
 const HKEYS = Object.keys(HEROES);
 const HERO_LABEL = {zenf:'안전(젠프)', zenqual:'품질(젠큐)', zenclean:'2S(젠클린)', zengreen:'환경(젠그린)'};
 const NOTION_URL = 'https://app.notion.com/p/59db228e9d76474580f169dff666127a';
-const ADMIN_PIN = '1996';
+const ADMIN_PIN_HASH = '3d1e557b540ac045b3b327994a351f08a443f9216f9b2b8d3a0f42b58671ac83'; /* zen-pin-hash */
+/* 비밀번호는 소스에 평문으로 두지 않는다 — SHA-256 해시만 비교한다(scripts/set-pin.mjs 로 한꺼번에 바꾼다).
+   4자리 숫자는 해시여도 무차별 대입에 약하다: 접근 통제가 아니라 실수 방지 수준이며 진짜 보호는 서버 쪽 인증이 필요하다. */
+function sha256hex(s){
+  function r(n,x){return (x>>>n)|(x<<(32-n));}
+  const K=[];let p=2,c=0;while(c<64){let pr=true;for(let i=2;i*i<=p;i++)if(p%i===0){pr=false;break;}if(pr){{const q=Math.pow(p,1/3);K[c++]=((q-Math.floor(q))*4294967296)|0;}}p++;}
+  const H=[];p=2;c=0;while(c<8){let pr=true;for(let i=2;i*i<=p;i++)if(p%i===0){pr=false;break;}if(pr){{const q=Math.pow(p,.5);H[c++]=((q-Math.floor(q))*4294967296)|0;}}p++;}
+  const b=unescape(encodeURIComponent(s));const l=b.length;const n=(((l+8)>>6)+1)*16;const w=new Array(n).fill(0);
+  for(let i=0;i<l;i++)w[i>>2]|=b.charCodeAt(i)<<(24-(i%4)*8);
+  w[l>>2]|=0x80<<(24-(l%4)*8);w[n-1]=l*8;
+  for(let j=0;j<n;j+=16){const x=w.slice(j,j+16);for(let i=16;i<64;i++){const a=x[i-15],d=x[i-2];x[i]=(x[i-16]+(r(7,a)^r(18,a)^(a>>>3))+x[i-7]+(r(17,d)^r(19,d)^(d>>>10)))|0;}
+    let [a,bb,cc,dd,e,f,g,h]=H;
+    for(let i=0;i<64;i++){const t1=(h+(r(6,e)^r(11,e)^r(25,e))+((e&f)^(~e&g))+K[i]+x[i])|0;const t2=((r(2,a)^r(13,a)^r(22,a))+((a&bb)^(a&cc)^(bb&cc)))|0;h=g;g=f;f=e;e=(dd+t1)|0;dd=cc;cc=bb;bb=a;a=(t1+t2)|0;}
+    H[0]=(H[0]+a)|0;H[1]=(H[1]+bb)|0;H[2]=(H[2]+cc)|0;H[3]=(H[3]+dd)|0;H[4]=(H[4]+e)|0;H[5]=(H[5]+f)|0;H[6]=(H[6]+g)|0;H[7]=(H[7]+h)|0;}
+  return H.map(v=>('00000000'+(v>>>0).toString(16)).slice(-8)).join('');
+}
+
 const K = {rep:'zenf:reports', log:'zenf:checklog', set:'zenf:settings', cfg:'zenf:config'};
 
 let state = {role:'worker', tab:'home', hero:'zenf', reports:[], log:[], settings:{}, config:{}, draft:{}, tbm:{}, checkItems:{}, managerAuthed:false, reportPhotos:[]};
@@ -699,7 +715,7 @@ function applyRole(r){
 function openPin(){ $('pinModal').classList.add('show'); $('pinInput').value=''; $('pinErr').textContent=''; setTimeout(()=>$('pinInput').focus(),60); }
 function closePin(){ $('pinModal').classList.remove('show'); }
 function submitPin(){
-  if($('pinInput').value === ADMIN_PIN){
+  if(sha256hex($('pinInput').value) === ADMIN_PIN_HASH){
     state.managerAuthed = true; closePin(); applyRole('manager'); toast('관리자 모드로 전환됐어요');
   } else {
     $('pinErr').textContent = 'PIN이 올바르지 않습니다'; $('pinInput').value='';
@@ -1157,7 +1173,7 @@ function statsSection(reps){
     </section>`;
 }
 function getEmerg(){
-  const d={contacts:[{label:'안전관리자 (박병용 차장)',phone:'010-4466-7471'},{label:'안전보건관리책임자 (이민아 센터장)',phone:'010-5249-0831'},{label:'보건관리자',phone:''},{label:'소방·구급',phone:'119'}],
+  const d={contacts:[{label:'안전관리자',phone:''},{label:'안전보건관리책임자',phone:''},{label:'보건관리자',phone:''},{label:'소방·구급',phone:'119'}],
     assembly:'정문 앞 주차장 (1집결지)',
     evac:'가까운 비상구로 대피 → 대피로 따라 집결지 이동 → 인원 확인',
     extinguisher:'각 생산라인 기둥, 세척실 입구, 출하장 벽면',

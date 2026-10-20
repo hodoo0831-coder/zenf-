@@ -69,3 +69,6 @@
   [headers.values]
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000"
+    Permissions-Policy = "payment=(), usb=(), bluetooth=(), serial=()"
+    # X-Frame-Options / CSP frame-ancestors 는 넣지 않았다 — 사내 포털 등에서 이 사이트를 iframe 으로 임베드하는지 확인된 뒤에 추가한다.
