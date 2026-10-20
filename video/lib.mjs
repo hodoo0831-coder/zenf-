@@ -102,9 +102,21 @@ export async function launch(){
 
 export async function session(browser,be,name,outDir,{initScript,mobile=false}={}){
   fs.mkdirSync(outDir,{recursive:true});
-  const ctx=await browser.newContext({viewport:{width:1440,height:900},recordVideo:{dir:outDir,size:{width:1440,height:900}}});
+  /* HQ=1 : 고화질 모드 — 장치 배율 1.5(2160×1350)로 그려 CDP 스크린캐스트(JPEG q95)로 받고, 끝에서 1920×1200 H.264 로 인코딩한다.
+     Playwright 기본 녹화(VP8·저비트레이트)보다 글자가 또렷하다. FFMPEG=<ffmpeg 경로> 가 필요하다. */
+  const HQ=!!process.env.HQ;
+  const ctx=await browser.newContext(HQ?{viewport:{width:1440,height:900},deviceScaleFactor:1.5}:{viewport:{width:1440,height:900},recordVideo:{dir:outDir,size:{width:1440,height:900}}});
   if(!process.env.LIVE)await ctx.route(/^https:\/\//,be.handler);
   const p=await ctx.newPage();const t0=Date.now();const marks=[];
+  let hq=null;
+  if(HQ){
+    const fdir=path.join(outDir,'_frames_'+name);fs.rmSync(fdir,{recursive:true,force:true});fs.mkdirSync(fdir,{recursive:true});
+    const cdp=await ctx.newCDPSession(p);const list=[];let n=0;const pend=[];
+    cdp.on('Page.screencastFrame',f=>{const i=n++;list.push({t:f.metadata.timestamp,wall:Date.now(),f:'f'+String(i).padStart(6,'0')+'.jpg'});
+      pend.push(fs.promises.writeFile(path.join(fdir,list[i].f),Buffer.from(f.data,'base64')));cdp.send('Page.screencastFrameAck',{sessionId:f.sessionId}).catch(()=>{});});
+    await cdp.send('Page.startScreencast',{format:'jpeg',quality:95,maxWidth:2160,maxHeight:1350,everyNthFrame:1});
+    hq={cdp,list,pend,fdir};
+  }
   await p.addInitScript(OVERLAY_JS);
   await p.addInitScript(SMOOTH_JS);
   if(initScript)await p.addInitScript(initScript);
@@ -140,7 +152,23 @@ export async function session(browser,be,name,outDir,{initScript,mobile=false}={
       marks[marks.length-1].end=(Date.now()-t0)/1000;},
     /** 장면 사이에 화면 상태를 눈으로 확인하려고 스냅샷 저장(SHOTS=폴더) */
     async shot(tag){if(process.env.SHOTS){fs.mkdirSync(process.env.SHOTS,{recursive:true});await p.screenshot({path:path.join(process.env.SHOTS,name+'_'+tag+'.png')});}},
-    async finish(){const v=p.video();await ctx.close();const f=path.join(outDir,'seg_'+name+'.webm');fs.copyFileSync(await v.path(),f);fs.unlinkSync(await v.path());
+    async finish(){
+      if(hq){
+        await hq.cdp.send('Page.stopScreencast').catch(()=>{});await Promise.all(hq.pend);await ctx.close();
+        const L=hq.list;if(!L.length)throw new Error('스크린캐스트 프레임이 없다');
+        const lead=Math.max(0,(L[0].wall-t0)/1000);                     // 첫 프레임이 늦게 오면 앞을 같은 프레임으로 채워 t0 에 맞춘다
+        const txt=[];for(let i=0;i<L.length;i++){const d=i<L.length-1?Math.max(0.001,L[i+1].t-L[i].t):0.05;txt.push("file '"+L[i].f+"'","duration "+d.toFixed(4));}
+        txt.push("file '"+L[L.length-1].f+"'");
+        fs.writeFileSync(path.join(hq.fdir,'list.txt'),txt.join('\n'));
+        const f=path.join(outDir,'seg_'+name+'.mp4');
+        const {execFileSync}=await import('child_process');
+        execFileSync(process.env.FFMPEG||'ffmpeg',['-v','error','-y','-f','concat','-safe','0','-i',path.join(hq.fdir,'list.txt'),
+          '-vf',`fps=30,tpad=start_duration=${lead.toFixed(3)}:start_mode=clone,scale=1920:1200:flags=lanczos,format=yuv420p`,
+          '-c:v','libx264','-crf','14','-preset','medium','-movflags','+faststart',f],{stdio:'inherit'});
+        fs.rmSync(hq.fdir,{recursive:true,force:true});
+        fs.writeFileSync(f.replace(/\.mp4$/,'.json'),JSON.stringify(marks,null,1));console.log('저장 →',f);return f;
+      }
+      const v=p.video();await ctx.close();const f=path.join(outDir,'seg_'+name+'.webm');fs.copyFileSync(await v.path(),f);fs.unlinkSync(await v.path());
       fs.writeFileSync(f.replace(/\.webm$/,'.json'),JSON.stringify(marks,null,1));console.log('저장 →',f);return f;}
   };
   return api;

@@ -308,11 +308,11 @@ await s.scene('waterfall',4.4,async()=>{
 
 /* 끝내기 — 임시 폴더의 결과를 출력 폴더로 옮긴다 */
 await s.finish();
-fs.copyFileSync(path.join(TMP,'seg_monthly.webm'),path.join(OUT,'seg_monthly.webm'));
+fs.copyFileSync(path.join(TMP,'seg_monthly.'+(process.env.HQ?'mp4':'webm')),path.join(OUT,'seg_monthly.'+(process.env.HQ?'mp4':'webm')));
 fs.copyFileSync(path.join(TMP,'seg_monthly.json'),path.join(OUT,'seg_monthly.json'));
 if(process.env.KEEP_XLSX)fs.cpSync(XDIR,process.env.KEEP_XLSX,{recursive:true});
 fs.rmSync(TMP,{recursive:true,force:true});
 await browser.close();
 const tot=JSON.parse(fs.readFileSync(path.join(OUT,'seg_monthly.json'),'utf8')).reduce((a,m)=>a+(m.end-m.start),0);
-console.log('완료 →',path.join(OUT,'seg_monthly.webm'),'· 장면 합계',tot.toFixed(1)+'초');
+console.log('완료 →',path.join(OUT,'seg_monthly.'+(process.env.HQ?'mp4':'webm')),'· 장면 합계',tot.toFixed(1)+'초');
 process.exit(0);

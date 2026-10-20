@@ -27,8 +27,8 @@ const OUT=path.resolve(process.argv[2]||path.join(ROOT,'video','out'));
 const APP='file://'+path.join(ROOT,'ZEN_HeatWatch.html');
 const TAG='SYSTEM · 히트워치';
 const src=fs.readFileSync(path.join(ROOT,'ZEN_HeatWatch.html'),'utf8');
-const PIN=(src.match(/const PIN='([^']+)'/)||[])[1];
-if(!PIN)throw new Error('앱 소스에서 PIN 상수를 찾지 못함');
+const PIN=process.env.ZEN_PIN||'';   // 앱 소스에는 해시만 있다 — 실행할 때 ZEN_PIN=… 로 넘긴다
+if(!PIN)throw new Error('ZEN_PIN 환경변수가 필요합니다');
 
 /* ───────── 시연 시각 · 시간별 기상 곡선 (결정적) ───────── */
 const NOW=new Date(2026,7,12,15,20,0);                       // 2026-08-12(수) 15:20
@@ -230,10 +230,10 @@ await s.scene("admin",12.2,async()=>{
 
 /* 끝내기 */
 await s.finish();
-fs.copyFileSync(path.join(TMP,'seg_heatwatch.webm'),path.join(OUT,'seg_heatwatch.webm'));
+fs.copyFileSync(path.join(TMP,'seg_heatwatch.'+(process.env.HQ?'mp4':'webm')),path.join(OUT,'seg_heatwatch.'+(process.env.HQ?'mp4':'webm')));
 fs.copyFileSync(path.join(TMP,'seg_heatwatch.json'),path.join(OUT,'seg_heatwatch.json'));
 fs.rmSync(TMP,{recursive:true,force:true});
 await browser.close();
 const tot=JSON.parse(fs.readFileSync(path.join(OUT,'seg_heatwatch.json'),'utf8')).reduce((a,m)=>a+(m.end-m.start),0);
-console.log('완료 →',path.join(OUT,'seg_heatwatch.webm'),'· 장면 합계',tot.toFixed(1)+'초');
+console.log('완료 →',path.join(OUT,'seg_heatwatch.'+(process.env.HQ?'mp4':'webm')),'· 장면 합계',tot.toFixed(1)+'초');
 process.exit(0);

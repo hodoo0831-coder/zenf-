@@ -246,6 +246,7 @@ await s.scene('admin',B(8.8),async()=>{
 },{hold:true});
 
 /* ───────── 마무리 (lib.finish 대신 임시 폴더에서 찾아 복사) ───────── */
+if(process.env.HQ){await s.finish();await browser.close();process.exit(0);}
 await s.ctx.close();
 const findVids=()=>fs.readdirSync(WORK).filter(f=>/\.webm$/.test(f)).map(f=>path.join(WORK,f));
 let vids=findVids();

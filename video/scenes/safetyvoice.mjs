@@ -266,6 +266,7 @@ await s.scene('worker-mine',B(3.8),async()=>{
 },{hold:true});
 
 /* lib.finish() 는 페이지 이동(가상 주소 변경) 뒤 p.video().path() 가 실제 파일과 달라 실패할 수 있다 → 폴더의 webm 을 직접 찾는다 */
+if(process.env.HQ){await s.finish();await browser.close();process.exit(0);}
 await s.ctx.close();
 const findVids=()=>fs.readdirSync(WORK).filter(f=>/\.webm$/.test(f)).map(f=>path.join(WORK,f));
 let vids=findVids();

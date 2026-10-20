@@ -222,6 +222,7 @@ const tab=async(id,off=112)=>{await clk(`.tab-btn[data-tab="${id}"]`,{pause:60,s
 
 /* lib 의 finish 는 v.path() 가 실제 파일명과 어긋나는 경우가 있어(다른 컨텍스트를 함께 썼을 때) 직접 마무리한다 */
 async function finish(){
+  if(process.env.HQ){await s.finish();return;}
   const v=s.p.video();
   await s.ctx.close();
   let src=null;try{src=await v.path();}catch(e){}

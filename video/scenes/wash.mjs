@@ -268,10 +268,10 @@ await s.scene('dash-tables',3.2,async()=>{
 
 /* 끝내기 — 임시 폴더의 결과를 출력 폴더로 옮긴다 */
 await s.finish();
-fs.copyFileSync(path.join(TMP,'seg_wash.webm'),path.join(OUT,'seg_wash.webm'));
+fs.copyFileSync(path.join(TMP,'seg_wash.'+(process.env.HQ?'mp4':'webm')),path.join(OUT,'seg_wash.'+(process.env.HQ?'mp4':'webm')));
 fs.copyFileSync(path.join(TMP,'seg_wash.json'),path.join(OUT,'seg_wash.json'));
 fs.rmSync(TMP,{recursive:true,force:true});
 await ctx2.close();await browser.close();
 const tot=JSON.parse(fs.readFileSync(path.join(OUT,'seg_wash.json'),'utf8')).reduce((a,m)=>a+(m.end-m.start),0);
-console.log('완료 →',path.join(OUT,'seg_wash.webm'),'· 장면 합계',tot.toFixed(1)+'초');
+console.log('완료 →',path.join(OUT,'seg_wash.'+(process.env.HQ?'mp4':'webm')),'· 장면 합계',tot.toFixed(1)+'초');
 process.exit(0);
