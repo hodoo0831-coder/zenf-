@@ -64,6 +64,10 @@ function buildDailyBrief(){
   const orders=DB.stock.filter(s=>G.stock(s).need);
   const overZones=whZones().filter(z=>z.rate>=100).length;
   const worstDef=[...L].sort((a,b)=>b.defect-a.defect)[0];
+  /* 간접작업 — 현장 앱(P-BOX·오리콘) 입력이 실시간으로 들어와 있을 때만 보고문에 넣는다 */
+  const lv=(typeof LIVE!=='undefined'&&LIVE.status==='live'&&LIVE.today&&LIVE.today.kpi)||null;
+  const lp=lv&&lv.pbox, lo=lv&&lv.orikon, la=lv&&(LIVE.today.alerts||[])[0];
+  const indirect=lp&&lp.records?` 간접  P-BOX ${fmtN(lp.totalPLT)}PLT·${fmtN(lp.totalMH)}MH·생산성 ${lp.pltPerMH}PLT/MH`+(lo&&lo.records?` / 오리콘 ${fmtN(lo.totalPLT)}PLT`:'')+(la?`\n     ${la.title} — ${la.detail}`:' · 편차 없음'):'';
   const dt=todayKR(), bar='━━━━━━━━━━━━━';
   const oneLine=`[AP헤어앤뷰티 ${dt}] 달성 ${tp.ach}% · 인력 ${gap>0?'−'+gap+'명':'충족'} · 폭염 ${w.wbgt>=28?w.wbgt+'℃ 경고':'주의'} · 불량 ${df}% · 발주 ${orders.length}건${behind.length?' — 지연 '+behind.join('·'):''}`;
   const msg=[
@@ -74,8 +78,9 @@ function buildDailyBrief(){
     ` 안전  WBGT ${w.wbgt}℃ ${w.wbgt>=28?'경고':'주의'} · 무재해 ${w.noAccident}일`+(undone.length?`\n     TBM 미실시 ${undone.join('·')}`:' · TBM 100%'),
     ` 품질  불량 ${df}% (목표 1.5%) · 최다유형 ${DB.paretoNames[0]} · 최다라인 ${worstDef.key}`,
     ` 창고  발주 ${orders.length}건`+(orders.length?`(${orders.map(s=>s.name).join('·')})`:'')+(overZones?` · 적치초과 ${overZones}구역`:''),
+    ...(indirect?[indirect]:[]),
     bar,
-    ` 금일조치: 인력 재배치 · 발주 ${orders.length}건 · 세척 ${cleanN}라인`,
+    ` 금일조치: 인력 재배치 · 발주 ${orders.length}건 · 세척 ${cleanN}라인`+(la?' · 생산성 편차 확인':''),
     ` 익일리스크: ${orders.length?'자재 미입고 시 라인중단 · ':''}${w.wbgt>=28?'폭염 지속':'특이 리스크 낮음'}`,
   ].join('\n');
   return {oneLine,msg};

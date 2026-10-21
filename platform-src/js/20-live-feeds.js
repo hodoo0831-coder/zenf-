@@ -314,7 +314,8 @@ async function liveStart(){
 }
 function liveRetry(){toast('실시간 연결을 다시 시도합니다…');liveDirect(false);}
 async function liveRefresh(){
-  if(!LIVE.apiBase){LIVE.status='demo';LIVE.brief=localBrief(LIVE.today);if(cur==='home')go('home');return;}
+  /* 통합 API 주소가 없으면 현장 앱 Worker 를 직접 다시 조회한다(이전에는 기준값 상태로 되돌아갔다) */
+  if(!LIVE.apiBase){await liveDirect(false);return;}
   const base=LIVE.apiBase.replace(/\/+$/,'');
   LIVE.status='loading';if(cur==='home')go('home');
   try{
