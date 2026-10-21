@@ -118,6 +118,9 @@ export async function session(browser,be,name,outDir,{initScript,mobile=false}={
     hq={cdp,list,pend,fdir};
   }
   await p.addInitScript(OVERLAY_JS);
+  /* NOOV=1 : 자막·토스트·샘플 표시·커서를 모두 숨긴다 — 슬라이드용 깨끗한 화면 캡처(SHOTS)를 얻을 때 */
+  if(process.env.NOOV)await p.addInitScript(()=>{const add=()=>{const st=document.createElement('style');st.textContent='#zcap2,#ztoast,#zsample,#zcur{display:none!important}';(document.head||document.documentElement).appendChild(st);};
+    if(document.head||document.documentElement)add();else document.addEventListener('DOMContentLoaded',add);});
   await p.addInitScript(SMOOTH_JS);
   if(initScript)await p.addInitScript(initScript);
   const sleep=(ms)=>p.waitForTimeout(ms);
