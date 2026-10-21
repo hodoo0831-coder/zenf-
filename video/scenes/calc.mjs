@@ -1,22 +1,30 @@
 /**
- * 인력 T/O 계산기 — "데이터를 넣으면 결과가 어떻게 나오는가" 구간
- *   node video/scenes/calc.mjs <출력폴더>
- * 계산기는 로컬 파일(ZEN_LaborCalc.html)이다. 차트(Chart.js)는 CDN 이라 오프라인에서 비므로 그 카드는 가리고 표·결론만 찍는다.
+ * "데이터를 넣으면 결과가 어떻게 나오는가" 구간 — 플랫폼 계획·예측 화면에 주간계획 엑셀을 올린다.
+ *   ZEN_PIN=… PLAN_XLSX=<주간계획.xlsx> node video/scenes/calc.mjs <출력폴더>
+ * 계획 파일은 실제 현장 데이터이므로 레포에 넣지 않는다 — PLAN_XLSX 로 경로만 넘긴다.
  */
 import path from 'path';
+import fs from 'fs';
 import {launch,session,ROOT} from '../lib.mjs';
+import {seedPlatform} from '../seed.mjs';
 const OUT=path.resolve(process.argv[2]||path.join(ROOT,'video','out'));
+const PIN=process.env.ZEN_PIN||'';
+const PLAN=process.env.PLAN_XLSX;
+if(!PLAN)throw new Error('PLAN_XLSX 환경변수에 주간계획 엑셀 경로를 지정하세요');
 const {browser,be}=await launch();
+if(!process.env.LIVE)await seedPlatform(be);
 const s=await session(browser,be,'plat_calc',OUT);
-await s.open('file://'+path.join(ROOT,'ZEN_LaborCalc.html'),1200);
-await s.p.addStyleTag({content:'.two{grid-template-columns:1fr!important}.two>.card:nth-child(2){display:none}'});
+await s.open('file://'+path.join(ROOT,'index.html'),800);
+await s.p.fill('input[type=password]',PIN);await s.p.keyboard.press('Enter');
+await s.sleep(4500);
 await s.sample(true);
-await s.cap('입력 → 결과','계획 수량을 넣으면 필요 인원이 즉시','신장율·계획량을 바꾸면 부하율과 부족 인원이 바로 다시 계산됩니다');
+await s.p.evaluate(()=>go('load'));await s.sleep(900);
+await s.cap('입력 → 결과','43주 확정 계획을 올리면 필요 인원이 바로','계획 수량 ÷ 호기 CAPA = 부하율, 표준 인원 × 부하율 = 필요 인원');
 await s.scene('calc',13,async()=>{
-  await s.sleep(2200);
-  await s.click(s.p.locator('[data-g="10"]').first(),2600);       // 신장율 +10%
-  await s.click(s.p.locator('[data-g="0"]').first(),900);
-  const inp=s.p.locator('tr[data-g="튜브"] input').first();
-  await s.click(inp,300);await inp.press('Control+A');await s.p.keyboard.type('800000',{delay:150});await s.sleep(2400);   // 튜브 계획량 직접 입력
+  await s.sleep(1800);
+  await s.p.setInputFiles('#loadFile',{name:'43주_확정계획.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer:fs.readFileSync(PLAN)});   // 43주 확정 주간계획 업로드
+  await s.sleep(3800);
+  await s.click(s.p.locator('#view button',{hasText:'5일'}).first(),3200);   // 가동 6일 → 5일: 필요 인원 즉시 재계산
+  await s.click(s.p.locator('#view button',{hasText:'6일'}).first(),2200);
 },{hold:true});
 await s.finish();await browser.close();
