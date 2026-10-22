@@ -53,11 +53,8 @@ await P.scene('after',13,async()=>{
 },{hold:true});
 
 /* ── ②-2 시각화 자동 생성 : 입력·계획이 차트로 ── */
-await P.cap('⑤ 시각화','입력과 계획이 차트로 자동 생성됩니다','부위·유형별 작업량 → 라인별 달성률·시간대별 추이 → OEE 구성·LOSS 분석 (시연 샘플 데이터)');
-await P.scene('viz',20,async()=>{
-  /* 간접작업 Agent : 방금 입력이 반영된 부위·유형별 작업량 막대 */
-  await P.p.evaluate(()=>{const e=[...document.querySelectorAll('#view *')].find(x=>x.children.length===0&&/부위·유형별/.test(x.textContent));if(e)e.scrollIntoView({behavior:'smooth',block:'center'});});
-  await P.sleep(3200);
+await P.cap('⑤ 시각화','입력과 계획이 차트로 자동 생성됩니다','라인별 달성률 · 시간대별 추이 → OEE 구성 · LOSS 분석 → 경영 보고 3종 (시연 샘플 데이터)');
+await P.scene('viz',17,async()=>{
   /* 생산·계획 Agent : 라인별 목표 대비 실적 + 시간대별 생산 추이 */
   await go('prod');await P.sleep(300);
   await P.p.evaluate(()=>{const e=[...document.querySelectorAll('#view *')].find(x=>x.children.length===0&&/라인별 목표 대비 실적/.test(x.textContent));if(e)e.scrollIntoView({behavior:'smooth',block:'center'});});
