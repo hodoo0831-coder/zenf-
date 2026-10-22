@@ -21,7 +21,8 @@ await P.sample(true);
 const go=async(id)=>{await P.p.evaluate(x=>go(x),id);await P.sleep(700);};
 await go('orikonwash');
 await P.cap('입력 전','간접작업 Agent — 지금의 집계','P-BOX · 오리콘 실적을 5초~60초 주기로 서버(D1)에서 가져와 집계합니다');
-await P.scene('before',6,async()=>{await P.sleep(1500);},{hold:true});
+let beforeVal='';
+await P.scene('before',6,async()=>{await P.sleep(1500);beforeVal=await P.p.evaluate(()=>{const m=document.getElementById('view').innerText.match(/시간당 생산성\s*([\d.]+)/);return m?m[1]:'';});},{hold:true});
 const t_before=P.marks[P.marks.length-1];
 
 /* ── ① 작업자 앱 입력 ── */
@@ -50,6 +51,10 @@ await P.scene('after',13,async()=>{
   await P.p.evaluate(()=>{const e=[...document.querySelectorAll('#view .card')].find(c=>/AI 통합 브리핑/.test(c.innerText));if(e)e.scrollIntoView({behavior:'smooth',block:'center'});});
   await P.sleep(1600);
   await P.toast('편차','작업자 G 0.11 PLT/MH — 평균 대비 크게 낮음 → 자동 표시',4200);
+  /* 입력 전·후 숫자를 큰 카드로 짚는다(값은 화면에서 읽은 것) */
+  await P.p.evaluate(([b])=>{const t=document.getElementById('view').innerText;const m=t.match(/시간당 생산성\s*([\d.]+)/);const a=m?m[1]:'';
+    const e=document.createElement('div');e.id='zdelta';e.style.cssText='position:fixed;left:50%;top:92px;transform:translateX(-50%);z-index:2147483000;background:#0f2438;color:#fff;border-radius:6px;padding:16px 30px;font:700 30px/1.3 "NanumGothicEmbedded","Noto Sans CJK KR",sans-serif;box-shadow:0 12px 34px rgba(15,36,56,.35);text-align:center';
+    e.innerHTML='시간당 생산성 <span style="color:#9fc0ff">'+b+'</span> → <span style="color:#ffd27a">'+a+'</span> PLT/MH<div style="font:400 16px/1.5 sans-serif;color:#c9d6e6;margin-top:4px">입력 한 건이 집계에 반영되고 작업자 편차가 자동 감지됩니다</div>';document.body.appendChild(e);setTimeout(()=>e.remove(),4200);},[beforeVal]);
 },{hold:true});
 
 /* ── ②-2 시각화 자동 생성 : 입력·계획이 차트로 ── */
@@ -89,5 +94,10 @@ await P.scene('report',13,async()=>{
   await P.click(P.p.locator('button',{hasText:'보고문 복사'}).first(),1200);
   await P.toast('보고','메신저 보고문 완성 — 취합 60분 → 5분',4200);
 },{hold:true});
+/* ── 다른 현장 앱도 같은 흐름 : 세척 Agent · 창고 Agent 판단 화면 ── */
+await P.cap('다른 앱도 같은 흐름','세척 Agent — 도착 등록이 우선순위 판단으로','제품·색상 전환 40% · 세척주기 35% · 생산부하 25% 점수 (시연 샘플 데이터)');
+await P.scene('clean',8,async()=>{await go('clean');await P.sleep(600);},{hold:true});
+await P.cap('다른 앱도 같은 흐름','창고 Agent — 적치 입력이 초과 구역·이동 제안으로','현장 입력 앱(wh-stack)의 구역별 적치 수치를 판단 (시연 샘플 데이터)');
+await P.scene('stock',8,async()=>{await go('stock');await P.sleep(600);},{hold:true});
 await P.finish();
 await browser.close();
