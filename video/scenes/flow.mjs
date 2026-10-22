@@ -54,17 +54,18 @@ await P.scene('after',13,async()=>{
   /* 입력 전·후 숫자를 큰 카드로 짚는다(값은 화면에서 읽은 것) */
   await P.p.evaluate(([b])=>{const t=document.getElementById('view').innerText;const m=t.match(/시간당 생산성\s*([\d.]+)/);const a=m?m[1]:'';
     const e=document.createElement('div');e.id='zdelta';e.style.cssText='position:fixed;left:50%;top:92px;transform:translateX(-50%);z-index:2147483000;background:#0f2438;color:#fff;border-radius:6px;padding:16px 30px;font:700 30px/1.3 "NanumGothicEmbedded","Noto Sans CJK KR",sans-serif;box-shadow:0 12px 34px rgba(15,36,56,.35);text-align:center';
-    e.innerHTML='시간당 생산성 <span style="color:#9fc0ff">'+b+'</span> → <span style="color:#ffd27a">'+a+'</span> PLT/MH<div style="font:400 16px/1.5 sans-serif;color:#c9d6e6;margin-top:4px">입력 한 건이 집계에 반영되고 작업자 편차가 자동 감지됩니다</div>';document.body.appendChild(e);setTimeout(()=>e.remove(),4200);},[beforeVal]);
+    e.innerHTML='시간당 생산성 <span style="color:#9fc0ff">'+b+'</span> → <span style="color:#ffd27a">'+a+'</span> PLT/MH<div style="font:400 16px/1.5 sans-serif;color:#c9d6e6;margin-top:4px">시간당 생산성 = 총 PLT ÷ 총 MH · 공동작업은 인원수로 나눠 개인별 계산 → 편차 자동 감지</div>';document.body.appendChild(e);setTimeout(()=>e.remove(),4200);},[beforeVal]);
 },{hold:true});
 
 /* ── ②-2 시각화 자동 생성 : 입력·계획이 차트로 ── */
-await P.cap('⑤ 시각화','입력과 계획이 차트로 자동 생성됩니다','라인별 달성률 · 시간대별 추이 → OEE 구성 · LOSS 분석 → 경영 보고 3종 (시연 샘플 데이터)');
+await P.cap('시각화','생산·계획 Agent — 달성률·시간대별 추이 자동 차트','달성률 = 실적 ÷ 목표 · CAPA 부하와 예상 종료 시각까지 (시연 샘플 데이터)');
 await P.scene('viz',17,async()=>{
   /* 생산·계획 Agent : 라인별 목표 대비 실적 + 시간대별 생산 추이 */
   await go('prod');await P.sleep(300);
   await P.p.evaluate(()=>{const e=[...document.querySelectorAll('#view *')].find(x=>x.children.length===0&&/라인별 목표 대비 실적/.test(x.textContent));if(e)e.scrollIntoView({behavior:'smooth',block:'center'});});
   await P.sleep(5200);
   /* 분석·보고 Agent : OEE 구성 · 라인별 OEE · 원가 LOSS, 경영 보고 3종 */
+  await P.cap('시각화','분석·보고 Agent — OEE 구성·LOSS 분석 자동 차트','OEE = 가동률 × 성능 × 양품률 · 경영 보고 엑셀·PDF·PPT 3종 즉시 생성 (기준값 기반 시연)');
   await go('insight');await P.sleep(2600);
   await P.toast('보고','엑셀 · PDF · PPT 경영 보고 3종을 즉시 생성',3800);
   await P.p.evaluate(()=>{const e=[...document.querySelectorAll('#view *')].find(x=>x.children.length===0&&/OEE 구성 분해/.test(x.textContent));if(e)e.scrollIntoView({behavior:'smooth',block:'start'});});
@@ -94,10 +95,5 @@ await P.scene('report',13,async()=>{
   await P.click(P.p.locator('button',{hasText:'보고문 복사'}).first(),1200);
   await P.toast('보고','메신저 보고문 완성 — 취합 60분 → 5분',4200);
 },{hold:true});
-/* ── 다른 현장 앱도 같은 흐름 : 세척 Agent · 창고 Agent 판단 화면 ── */
-await P.cap('다른 앱도 같은 흐름','세척 Agent — 도착 등록이 우선순위 판단으로','제품·색상 전환 40% · 세척주기 35% · 생산부하 25% 점수 (시연 샘플 데이터)');
-await P.scene('clean',8,async()=>{await go('clean');await P.sleep(600);},{hold:true});
-await P.cap('다른 앱도 같은 흐름','창고 Agent — 적치 입력이 초과 구역·이동 제안으로','현장 입력 앱(wh-stack)의 구역별 적치 수치를 판단 (시연 샘플 데이터)');
-await P.scene('stock',8,async()=>{await go('stock');await P.sleep(600);},{hold:true});
 await P.finish();
 await browser.close();
