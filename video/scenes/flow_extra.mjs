@@ -21,5 +21,13 @@ await P.cap('시각화','품질 Agent — 불량률 추이와 원인 파레토',
 await P.scene('quality',7,async()=>{await go('qual');await P.sleep(400);},{hold:true});
 await P.cap('시각화','안전 Agent — 체감온도·TBM·위험요인 자동 판단','WBGT 28℃ 이상이면 휴식·냉방 조치를 추천 (시연 샘플 데이터)');
 await P.scene('safety',7,async()=>{await go('safe');await P.sleep(400);},{hold:true});
+await P.cap('보고서 자동 작성','분석·보고 Agent — 엑셀 · PDF · PPT 경영 보고를 즉시 생성','버튼 한 번으로 요약·라인 KPI·LOSS·인력 4시트 엑셀, 인쇄용 PDF, 임원 보고 4슬라이드 PPT (시연 샘플 데이터)');
+await P.scene('export',12,async()=>{
+  await go('insight');await P.sleep(1200);
+  for(const t of ['엑셀','PDF','PPT']){
+    const b=P.p.locator('#view button, #view .btn, #view [onclick]',{hasText:t}).first();
+    await P.click(b,1800);
+  }
+},{hold:true});
 await P.finish();
 await browser.close();
