@@ -1,0 +1,21 @@
+name = "attendance-hub"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "attendance-hub-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+# ② 자동 검증 스케줄 — 익일 06:00 KST = 21:00 UTC (전일자 대상)
+# 활성화하려면 아래 주석을 풀고 src/index.ts에 scheduled() 핸들러를 추가한다.
+# [triggers]
+# crons = ["0 21 * * *"]
+
+# 배포 전 체크리스트 (10.확인사항 총괄 C-1~C-4와 연결)
+#  1) wrangler d1 create attendance-hub-db 실행 후 database_id 교체
+#  2) 신규 구축   : npm run db:init
+#     기존 DB 있음: npm run db:backup → npm run db:migrate
+#  3) HMS 수집 경로 확정 전까지는 /api/collect/csv (수동 업로드)로 운영
+#  4) ERP 전송(/api/export/erp)은 Phase 2에서 실제 연계 전까지 파일 생성만 수행
+#  5) 인증 미구현 상태이므로 공개 배포 금지 — Cloudflare Access로 접근을 막고 사용할 것
